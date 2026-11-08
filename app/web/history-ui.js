@@ -1,0 +1,13 @@
+/* Copyright (c) 2026 Damian Gulczynski. */
+'use strict';
+(()=>{
+ const bar=document.createElement('div');bar.className='workspace-history';bar.innerHTML='<button id="workspace-undo" title="Undo · Ctrl+Z">↶ Undo</button><button id="workspace-redo" title="Redo · Ctrl+Y">↷ Redo</button><span id="workspace-history-status" class="tiny" role="status"></span>';document.querySelector('header').append(bar);let pending=false;
+ function choices(){const draft=window.ScanTools?.draftHistory();return {draft,undo:draft?.active&&draft.undo_count?draft:state?.history,redo:draft?.active&&draft.redo_count?draft:state?.history};}
+ function sync(){const c=choices();for(const [redo,key] of [[false,'undo'],[true,'redo']]){const info=c[key],available=!!info?.[key+'_count'],label=info?.[key+'_label'];for(const id of ['workspace-'+key,'estimate-'+key,'job-'+key+'-edit']){const b=$(id);if(!b)continue;b.disabled=busy||pending||!available;b.title=available?`${redo?'Redo':'Undo'}: ${label} · ${redo?'Ctrl+Y':'Ctrl+Z'}`:`Nothing to ${key}`;}if(key==='undo')$('workspace-history-status').textContent=available?'Undo: '+label:'No recent edit';}}
+ async function apply(redo=false){if(busy||pending)return false;if(window.ScanTools?.cancelGesture?.()){sync();return true;}const c=choices(),key=redo?'redo':'undo';if(c.draft?.active&&c.draft[key+'_count']){window.ScanTools.undoNodes(redo);sync();return true;}if(!state?.history?.[key+'_count'])return false;pending=true;sync();try{setBusy(true);const result=await post('/api/history',{action:key});setBusy(false);window.LimitBoxUI?.end();window.JobUI?.setLimitPreview(null);window.JobUI?.clearSelection();window.JobUI?.clearCleaningPreview();await poll();await window.ScanTools?.restoreHistory();await window.CadUI?.load(true);try{await window.ShapeSelectionUI?.refreshLibrary?.();}catch{}notice(`${redo?'Redone':'Undone'}: ${result.label}`);return true;}catch(e){setBusy(false);notice(e.message,true);return false;}finally{pending=false;sync();}}
+ $('workspace-undo').onclick=()=>apply(false);$('workspace-redo').onclick=()=>apply(true);
+ // Capture once, ahead of the legacy survey/workspace keyboard listeners.
+ // Text inputs retain the browser's own text-edit undo behavior.
+ document.addEventListener('keydown',e=>{if(!(e.ctrlKey||e.metaKey)||!['z','y'].includes(e.key.toLowerCase())||e.altKey)return;if(['INPUT','TEXTAREA','SELECT'].includes(e.target.tagName)||e.target.isContentEditable)return;const modal=document.querySelector('dialog[open]:not(#scan-tools-dialog)');if(modal)return;e.preventDefault();e.stopImmediatePropagation();apply(e.key.toLowerCase()==='y'||e.shiftKey);},true);
+ window.HistoryUI={sync,apply};sync();
+})();

@@ -1,0 +1,103 @@
+/* Copyright (c) 2026 Damian Gulczynski. Survey workspace, 0.17. */
+:root{--ts-ribbon-surface:#f5f7f9;--ts-ribbon-text:#203b4a;--ts-ribbon-border:#d5dfe5;--ts-focus:#078c83}
+body{font-family:"Segoe UI",Arial,sans-serif;color:var(--ts-ribbon-text)}
+header{height:38px;min-height:38px;padding:0 16px;background:#173444}
+.brand{font-size:13px;letter-spacing:1.4px}.brand-icon{font-size:22px}
+#ribbon{background:var(--ts-ribbon-surface);border-bottom:1px solid #bacbd4;box-shadow:0 2px 5px #1637480a;position:relative;z-index:24}
+.ribbon-tabs{height:35px;padding:0 10px;background:#fff;scrollbar-width:thin;gap:1px;min-height:35px}
+.ribbon-tabs button{font-size:12px;padding:6px 14px;color:#405a6a;min-height:34px}
+.ribbon-tabs button[aria-selected=true]{background:#edf7f5;color:#096d67;box-shadow:inset 0 -3px #0e9387;font-weight:650}
+.ribbon-tabs button:focus-visible,.ribbon-command:focus-visible,.ribbon-popup button:focus-visible{outline:2px solid var(--ts-focus);outline-offset:-2px}
+.ribbon-tabs button:hover{background:#f0f5f6}
+#ribbon-collapse{min-width:32px;padding:4px 9px;position:sticky;right:0;background:#fff}
+.ribbon-panel{height:auto!important;min-height:103px!important;padding:7px 12px 4px;display:flex;align-items:stretch;overflow-x:auto;overflow-y:hidden;scrollbar-width:thin;box-sizing:border-box}
+.ribbon-group{position:relative;min-width:0;flex:0 0 auto;display:flex;flex-direction:column;padding:0 10px;border-right:1px solid var(--ts-ribbon-border);gap:0}
+.ribbon-group:first-child{padding-left:0}.ribbon-group:last-child{border-right:0}
+.ribbon-buttons{display:flex;align-items:stretch;gap:3px;flex:1 0 auto;min-height:74px}
+.ribbon-command{position:relative;flex:none;width:84px!important;height:74px!important;min-height:74px!important;padding:5px 4px!important;display:flex;flex-direction:column;justify-content:center;align-items:center;gap:7px;line-height:1.25;background:transparent;border:1px solid transparent;border-radius:5px;color:#203b4a;font-weight:500;font-size:11px}
+.ribbon-command svg{width:27px;height:27px;min-width:27px;stroke-width:1.5;color:#247b80}
+.ribbon-command.ribbon-command-wide{width:144px!important}
+.ribbon-command>span{font-size:11px;white-space:normal;line-height:1.25;max-width:100%;text-align:center;overflow-wrap:normal}
+.ribbon-command:hover{background:#e4f0ef;border-color:#a9cbc6}.ribbon-command:active{background:#d1e9e5}
+.ribbon-command[aria-disabled=true]{opacity:1;color:#7b8b94}.ribbon-command[aria-disabled=true] svg{color:#9baeb6}
+.ribbon-command[aria-disabled=true]:hover{background:#edf1f3;border-color:#d0dce1}
+.ribbon-command.selected-tool{background:#dff1eb;border-color:#90c3b9}
+.ribbon-command.has-menu{padding-right:10px!important}
+.ribbon-command>.ribbon-chevron{position:absolute;right:4px;bottom:7px;width:8px;font-size:11px;color:#5e7c85}
+.ribbon-command-stack{display:flex;flex-direction:column;justify-content:center;gap:1px;min-width:132px;max-width:164px;height:74px;flex:none}
+.ribbon-command.ribbon-command-small{display:flex;flex-direction:row;justify-content:flex-start;align-items:center;gap:7px;width:100%!important;min-height:23px!important;height:23px!important;padding:2px 6px!important;flex:0 1 auto}
+.ribbon-command-small svg{width:18px;height:18px;min-width:18px;stroke-width:1.65}
+.ribbon-command-small>span{text-align:left;font-size:11px;white-space:nowrap;line-height:1.3}
+.ribbon-group-label{flex:0 0 auto;height:auto;min-height:15px;line-height:1.35;font-size:10px;letter-spacing:.1px;color:#5b7481;text-align:center;padding-top:5px;margin:0;white-space:nowrap}
+.ribbon-group-menu{display:none!important}
+.ribbon-group.is-condensed>.ribbon-buttons{display:none}
+.ribbon-group.is-condensed>.ribbon-group-menu{display:flex!important;width:91px!important}
+.ribbon-group.is-condensed>.ribbon-group-label{max-width:91px;overflow:hidden;text-overflow:ellipsis}
+.ribbon-hint{height:24px;min-height:24px;padding:4px 16px;box-sizing:border-box;font-size:11px;line-height:16px;background:#eaf0f3;color:#4e6b79;gap:20px;border-top:1px solid #e0e7eb}
+.ribbon-hint span:first-child{min-width:0}.ribbon-hint span:last-child{font-size:10px}
+.ribbon-collapsed .ribbon-panel,.ribbon-collapsed .ribbon-hint{display:none}
+.ribbon-popup{z-index:500;min-width:290px;max-width:min(440px,calc(100vw - 20px));max-height:calc(100vh - 20px);overflow-y:auto;background:#fff;border:1px solid #b8ccd3;border-radius:8px;box-shadow:0 10px 36px #0f293b33;padding:6px;scrollbar-width:thin}
+.ribbon-popup button{display:flex;gap:11px;align-items:center;width:100%;padding:9px 10px;text-align:left;border:1px solid transparent;background:transparent;color:#203b4a;border-radius:5px}
+.ribbon-popup button:hover{background:#edf6f3;border-color:#c7e0d9}
+.ribbon-popup button svg{width:23px;height:23px;min-width:23px;color:#237d7a;fill:none;stroke:currentColor;stroke-width:1.6}
+.ribbon-popup button strong{font-weight:600;font-size:12px;display:block}.ribbon-popup button small{font-size:11px;color:#617783;line-height:1.45;display:block;margin-top:3px}
+.ribbon-popup button[aria-disabled=true]{color:#82949c}.ribbon-popup button[aria-disabled=true] svg{color:#a5b6bd}
+.ribbon-options{flex:1 0 450px;min-width:430px;max-width:900px;display:grid!important;grid-template-columns:repeat(3,minmax(125px,1fr));grid-template-rows:auto auto auto;gap:7px 18px;padding:0 12px 0 16px;align-items:center;box-sizing:border-box}
+.ribbon-options>label{display:grid;grid-template-columns:minmax(0,1fr) auto;grid-template-rows:auto auto;column-gap:5px;row-gap:1px;align-self:center;font-size:11px;line-height:1.3;min-width:0;width:auto!important;margin:0!important}
+.ribbon-options>label>span:first-child{grid-column:1/-1;grid-row:1;font-size:11px;white-space:nowrap}
+.ribbon-options>label>input[type=range]{grid-column:1;grid-row:2;width:100%!important;min-width:80px;max-width:none;height:18px;margin:2px 0!important;padding:0;accent-color:#0d837a}
+.ribbon-options>label>output,.ribbon-options>label>span:last-child:not(:first-child){grid-column:2;grid-row:2;display:inline-block;font-size:10px;align-self:center;min-width:28px;margin:0!important;line-height:1.2}
+.ribbon-options>label.display-mode-label{display:flex;flex-direction:column;gap:3px;min-width:140px;align-self:center}
+.ribbon-options>label.display-mode-label select{width:100%;max-width:100%;margin:0;padding:5px 6px;font-size:11px;min-height:27px;box-sizing:border-box}
+.ribbon-options>.ribbon-group-label{grid-row:3;grid-column:1/-1;margin:0;padding:1px 0 0;white-space:normal}
+.ribbon-detail-button{display:flex;align-items:center;justify-content:center;gap:7px;font-size:11px;height:30px;min-height:30px;border:1px solid #bfd3d8;border-radius:5px;background:white;padding:4px 8px}
+.ribbon-detail-button svg{height:17px;width:17px;stroke:currentColor;fill:none;stroke-width:1.7}
+.single-workspace main{padding:7px 8px 4px;background:#e9eff3}
+.single-workspace .view-shell{border:1px solid #c7d5dc;border-radius:6px;background:#102936}
+.single-workspace .tool-drawer:not(.floating){top:calc(var(--ts-ribbon-bottom,201px) + 8px)!important;bottom:24px;max-height:calc(100vh - var(--ts-ribbon-bottom,201px) - 32px);border:1px solid #b8ccd5;border-radius:7px;box-shadow:0 8px 30px #163b4d30}
+.single-workspace .tool-drawer-head{background:#f2f7f8;min-height:45px;height:auto;padding:7px 11px;gap:7px}.tool-drawer-head b{font-size:14px}
+.single-workspace #tool-drawer-body{background:#fff;padding:10px;scrollbar-gutter:stable}
+.single-workspace #tool-drawer-body>.tab.drawer-active{padding:4px 2px 12px!important}
+.single-workspace .tool-drawer-body label{font-size:11px;line-height:1.45}.single-workspace .tool-drawer-body input,.single-workspace .tool-drawer-body select{font-size:12px;min-height:29px;box-sizing:border-box}
+.single-workspace .tool-drawer-body input[type=checkbox]{min-height:0;flex:none}
+.single-workspace .tool-drawer-body .surface-card,.single-workspace .tool-drawer-body .reg-card{border-radius:6px;border-color:#dae5e9;padding:11px;margin:9px 0;background:#f8fafb}
+.single-workspace .tool-drawer-body .surface-card h3,.single-workspace .tool-drawer-body .reg-card h3{font-size:12px;line-height:1.45;margin:0 0 8px}
+.single-workspace .tool-drawer-body p,.single-workspace .tool-drawer-body .tiny{font-size:11px;line-height:1.5}
+.single-workspace .tool-drawer-body details>summary{font-size:12px;padding:5px 0;cursor:pointer;font-weight:600}
+.single-workspace .tool-quick-actions{background:#f2f8f7;border-bottom:1px solid #d4e4e0}.single-workspace .tool-quick-actions button{font-size:11px;min-height:29px}
+.single-workspace .tool-drawer [hidden]{display:none!important}
+.single-workspace .job-sidebar{background:#f9fbfc!important;border-radius:6px!important;box-shadow:0 2px 8px #1a405b12!important}
+.job-sidehead{background:#eef4f6;border-bottom:1px solid #d1dfe5}.job-sidehead b{font-size:12px}.job-table td{padding-top:6px;padding-bottom:6px}
+.job-table tr.job-selected{background:#e2f4ef}.job-table .ts-visibility-icon.is-visible{filter:drop-shadow(0 0 2px #e7b81b33)}
+.single-workspace .job-sidebar{padding:0!important}
+.single-workspace .job-sidebar>#job-delete-controls{display:none!important}
+.single-workspace .job-sidebar .scene-list-help{font-size:10px;line-height:1.45;padding:7px 10px!important;margin:0!important}
+.single-workspace .job-sidehead{gap:6px;padding:8px 9px;min-height:36px;box-sizing:border-box}
+.single-workspace .job-sidehead b{font-size:11px;white-space:nowrap;min-width:0}
+.job-sidehead-actions{display:flex;align-items:center;gap:1px;flex:none}.job-sidehead-actions button{min-width:22px!important;max-width:22px;padding:3px!important;line-height:1;font-size:14px!important}
+.single-workspace .job-sidebar .job-table{margin:0 7px;min-height:40px}
+.single-workspace .cad-toolbar{display:none!important}
+.single-workspace .cad-modebar{display:none}
+.single-workspace.cad-model-mode .cad-modebar{display:flex;min-height:32px;gap:9px;padding:4px 10px;background:#f2f7f8;border-bottom:1px solid #ccdde1}
+.single-workspace .cad-modebar>[data-cad-mode],.single-workspace .cad-modebar>span:first-child,#cad-workspace-import,#cad-workspace-export{display:none!important}
+.single-workspace .cad-reference-toggle{margin-left:auto}.single-workspace .cad-console{border-top:1px solid #d0dfe4}
+.parameter-help-inline{display:none!important;margin:4px 0 2px!important;color:#5b7684;font-size:11px!important;font-weight:400;line-height:1.5;grid-column:1/-1;white-space:normal}
+.explain-parameters .parameter-help-inline{display:block!important}.parameter-help-toggle{display:flex;align-items:center;gap:7px;margin:6px 0 12px;font-size:11px!important;color:#3e6c70}
+.ribbon-help-card{position:fixed;z-index:700;pointer-events:none;max-width:min(360px,calc(100vw - 24px));padding:12px 14px;border:1px solid #c2d5da;background:#fff;color:#294857;border-radius:7px;box-shadow:0 8px 30px #142d3d30;font:12px/1.55 "Segoe UI",Arial,sans-serif}
+.ribbon-help-card[hidden]{display:none}.ribbon-help-card b{display:block;margin-bottom:4px;font-size:13px;color:#175f63}.ribbon-help-card .unavailable{display:block;color:#88642b;margin-top:6px}
+.workflow-guide{width:740px}.workflow-guide-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px;margin:16px 0}.workflow-guide-grid button{text-align:left;padding:13px;border:1px solid #cddfe1;border-radius:6px;background:#f5faf9}.workflow-guide-grid strong{display:block;color:#156c69;font-size:13px}.workflow-guide-grid span{display:block;line-height:1.5;margin-top:5px;color:#536f7b;font-size:12px}
+.workflow-guide .guide-close{display:block;margin-left:auto}
+#alignment-hub .alignment-flow{padding:11px 13px;border:1px solid #cddfdf;border-radius:6px;background:#f1f8f7;color:#285b5c;font-size:12px;line-height:1.65}
+#alignment-hub .alignment-actions{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:8px;margin:14px 0}
+#alignment-hub [hidden]{display:none!important}
+#alignment-hub .alignment-actions button{text-align:left;min-height:58px;padding:10px 12px;background:#f7fafb;border:1px solid #cbdde0;border-radius:6px;color:#203b4a}
+#alignment-hub .alignment-actions button:hover{background:#edf6f3;border-color:#93c6bf}
+#alignment-hub .alignment-actions button:disabled{opacity:.55;cursor:default}
+#alignment-hub .alignment-actions strong{display:block;font-size:12px;margin-bottom:4px}
+#alignment-hub .alignment-actions span{display:block;font-size:11px;line-height:1.45;color:#597583}
+#alignment-hub #alignment-hub-designer{width:100%;padding:13px 16px;margin:10px 0;text-align:left}
+#alignment-hub #alignment-hub-designer span{display:block;line-height:1.5;margin-top:4px}
+@media(max-width:1180px){.ribbon-tabs button{padding-left:10px;padding-right:10px}.ribbon-group{padding:0 8px}.ribbon-command{width:78px!important}.ribbon-command-stack{min-width:122px}.ribbon-options{flex-basis:420px;min-width:395px;gap:6px 12px;grid-template-columns:repeat(3,minmax(112px,1fr))}.ribbon-options>label.display-mode-label{min-width:125px}}
+@media(max-width:930px){.ribbon-tabs{padding:0 5px}.ribbon-tabs button{font-size:11px;padding:6px 8px}.ribbon-panel{padding-left:8px;padding-right:8px}.ribbon-group{padding:0 6px}.ribbon-group.is-condensed>.ribbon-group-menu{width:83px!important}.ribbon-group.is-condensed>.ribbon-group-label{max-width:83px}.ribbon-hint{font-size:10px;padding-left:10px}.ribbon-options{min-width:355px;flex-basis:355px;gap:5px 10px;grid-template-columns:repeat(3,minmax(98px,1fr));padding:0 8px}.ribbon-options>label.display-mode-label{min-width:108px}}
+@media(max-width:700px){.ribbon-panel{min-height:103px!important}.ribbon-options{flex:0 0 340px;min-width:340px}.ribbon-options>label>span:first-child{font-size:10px}.ribbon-command-stack{min-width:115px}.workflow-guide-grid{grid-template-columns:1fr}header .local,#ribbon-project-title{display:none}.single-workspace .tool-drawer{max-width:94vw!important;min-width:270px!important}.ribbon-hint span:last-child{display:none}}
+@media(max-height:650px){header{height:32px;min-height:32px}.ribbon-panel{min-height:96px!important}.ribbon-command{min-height:68px!important;height:68px!important}.ribbon-buttons,.ribbon-command-stack{min-height:68px;height:68px}.ribbon-hint{height:21px;min-height:21px;padding-top:2px;padding-bottom:2px}.single-workspace .tool-drawer:not(.floating){bottom:20px}.cad-console .cad-inputrow{padding-top:3px;padding-bottom:3px}}

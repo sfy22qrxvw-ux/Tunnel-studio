@@ -1,0 +1,29 @@
+/* Copyright (c) 2026 Damian Gulczynski. */
+#explorer-delete-dialog{width:min(650px,94vw);max-height:92vh;padding:0;border:1px solid var(--ts-theme-border,#c6d6de);border-radius:12px;background:var(--ts-theme-panel,#fff);color:var(--ts-theme-text,#203b4a);overflow:hidden;box-shadow:0 14px 50px #102b3b40}
+#explorer-delete-dialog[open]{display:flex;flex-direction:column}
+#explorer-delete-dialog>header{display:flex;align-items:center;justify-content:space-between;gap:16px;flex:none;padding:16px 18px;background:var(--ts-theme-surface,#f3f7f9);border-bottom:1px solid var(--ts-theme-border,#c6d6de);height:auto;color:inherit}
+#explorer-delete-dialog>header span{font-size:10px;letter-spacing:.8px;color:var(--ts-theme-muted,#576f7c)}
+#explorer-delete-title{font-size:18px;margin:5px 0 0;color:inherit}
+#explorer-delete-close{border:0;background:transparent;color:inherit;font-size:20px;padding:4px 9px}
+.explorer-delete-body{padding:14px 18px;overflow:auto;min-height:0;font-size:12px;line-height:1.55}
+.explorer-delete-body>p:first-child{margin-top:0}
+#explorer-delete-items{max-height:170px;overflow:auto;list-style:none;padding:5px 10px;border:1px solid var(--ts-theme-border,#c6d6de);border-radius:6px}
+#explorer-delete-items li{display:flex;justify-content:space-between;align-items:start;gap:12px;padding:5px 0;overflow-wrap:anywhere}
+#explorer-delete-items small{color:var(--ts-theme-muted,#576f7c);text-align:right;flex:none}
+.explorer-delete-metrics{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin:14px 0}
+.explorer-delete-metrics>div{display:flex;flex-direction:column;gap:3px;padding:12px;background:var(--ts-theme-surface,#f3f7f9);border:1px solid var(--ts-theme-border,#c6d6de);border-radius:7px}
+.explorer-delete-metrics strong{font-size:20px}.explorer-delete-metrics span{font-size:11px;color:var(--ts-theme-muted,#576f7c)}
+.explorer-delete-consequence{background:var(--ts-theme-warning-bg,#fff8e9);color:var(--ts-theme-warning-text,#765d2b);border:1px solid #b99a5c77;border-radius:7px;padding:11px 13px}
+#explorer-delete-dialog>footer{display:flex;justify-content:flex-end;gap:8px;flex:none;padding:12px 18px;background:var(--ts-theme-surface,#f3f7f9);border-top:1px solid var(--ts-theme-border,#c6d6de)}
+#explorer-delete-dialog>footer button{padding:8px 11px;font-size:12px;line-height:1.3}
+#explorer-delete-apply{background:#ab4135;color:#fff;border-color:#ab4135}#explorer-delete-apply:disabled{opacity:.45}
+#explorer-delete-status{white-space:pre-wrap;color:var(--ts-theme-accent,#087c72);margin:12px 0 0}#explorer-delete-status.error{color:var(--ts-theme-error-text,#a13b2e)}
+#explorer-delete-result{padding:12px;background:var(--ts-theme-hover,#edf6f3);border:1px solid var(--ts-theme-border,#c6d6de);border-radius:7px}#explorer-delete-result h3{margin:0 0 8px;font-size:16px}
+.geometry-group-heading td{background:var(--ts-theme-surface,#edf4f5);border-top:1px solid var(--ts-theme-border,#c6d6de);font-weight:600}
+.geometry-group-heading[aria-selected=true] td{box-shadow:inset 3px 0 var(--ts-theme-accent,#087c72)}
+.geometry-group-heading button{border:0;background:transparent;color:inherit;padding:4px}.geometry-group-heading .geometry-group-title{text-align:left;font-weight:600}.geometry-group-heading small{font-weight:400;color:var(--ts-theme-muted,#576f7c)}
+.geometry-group-heading input,.job-table [data-geometry-select]{width:15px!important;height:15px!important;min-height:0!important;margin:0;accent-color:var(--ts-theme-accent,#087c72)}
+.geometry-group-heading [data-geometry-group-select]{margin-right:6px}
+@media(max-width:480px){#explorer-delete-dialog>footer{flex-wrap:wrap}.explorer-delete-metrics{grid-template-columns:1fr}}
+
+#job-list .geometry-group-heading td{padding:6px 5px}#job-list .geometry-group-controls{display:flex;align-items:center;gap:4px;min-width:0}#job-list .geometry-group-controls input,#job-list .geometry-group-controls [data-geometry-group-toggle]{flex:none}#job-list .geometry-group-title{flex:1;min-width:0;font-size:11px;line-height:1.4;padding:4px 0}#job-list .geometry-group-title small{display:inline;margin:0;font-size:9px;white-space:nowrap}

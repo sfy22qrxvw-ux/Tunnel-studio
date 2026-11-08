@@ -1,0 +1,3 @@
+/* Only hide duplicate branding after the real native caption reports ready. */
+.native-caption body>header .brand{display:none}
+.native-caption #satellite-title{font-size:12px}

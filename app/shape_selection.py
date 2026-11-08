@@ -1,0 +1,281 @@
+# Copyright (c) 2026 Damian Gulczynski.
+"""Review whole-cloud shape matches and edit exact original point identities.
+
+The drawn area is the teaching example, not a search boundary. Bounded owned
+reads, disk-backed evidence and immutable ID/selection files keep the workload
+independent of source point count. Publication replaces a completed preview
+only after revision and cancellation checks. Reviewed removal/separation uses
+the existing atomic scan-edit and workspace Undo path. Geometric matches are
+not a trained semantic classifier, survey control or reconstructed lining.
+"""
+from contextlib import ExitStack
+from pathlib import Path
+import copy
+import math
+import shutil
+import sqlite3
+import uuid
+
+import numpy as np
+from bounded_rows import RowFile
+from project_data_layout import folder as asset_folder
+import feature_selection
+import jobdata
+import registration_pose
+import scan_edits
+import shape_matching
+
+PAGE_SIZE=40
+
+
+def review_view(row,region,sort):
+    """Share one ordering between the review list and pocket navigation."""
+    table='matches m'
+    params=()
+    points='m.points'
+    if region is not None:
+        coverage=row.get('coverage',[])
+        if type(region) is not int or not 0<=region<len(coverage) or 'candidate_count' not in coverage[region]:
+            raise ValueError('Choose a coverage region from this shape search.')
+        table='match_regions r JOIN matches m ON m.id=r.match_id WHERE r.region=?'
+        params=(region,)
+        points='r.points'
+    ordering={'id':'m.id ASC','best':'m.score DESC, m.id ASC','worst':'m.score ASC, m.id ASC',
+              'most':points+' DESC, m.id ASC','fewest':points+' ASC, m.id ASC',
+              'station':'m.station ASC, m.id ASC'}
+    if not isinstance(sort,str) or sort not in ordering:
+        raise ValueError('Choose a candidate sort order.')
+    return table,params,points,ordering[sort]
+
+
+def review_view_args(args):
+    try:
+        region=int(args['region'][0]) if 'region' in args else None
+    except (TypeError,ValueError):
+        raise ValueError('Choose a coverage region from this shape search.') from None
+    return region,args.get('sort',['id'])[0]
+
+
+def source(s, ident):
+    item=next((x for x in s.STATE.get('job_items',[]) if x.get('id')==ident and x.get('kind')=='scan'),None)
+    if item is None:raise ValueError('Choose an existing measured scan.')
+    __import__('registered_cloud').require_current(item)
+    if item.get('merge_archived'):raise ValueError('Choose the current registered cloud rather than an archived merge.')
+    # Explicit source choice permits a hidden scan. Visibility does not remove
+    # its measured data or change the whole-retained-cloud search scope.
+    return item
+
+
+def batches(item, cfg, progress, cancel=lambda:False):
+    """All retained records. Visibility filters are explicitly optional."""
+    meta=item['meta']; n=int(meta['count']); checked=0
+    with ExitStack() as stack:
+        xyz=stack.enter_context(RowFile(meta['file'],'<f8',n,3))
+        mask=stack.enter_context(RowFile(meta['mask_file'],'u1',n)) if meta.get('mask_file') else None
+        for start in range(0,n,shape_matching.BLOCK):
+            shape_matching.emit(progress,cancel,f'Reading whole registered cloud · {min(n,start+shape_matching.BLOCK):,}/{n:,} original points')
+            count=min(shape_matching.BLOCK,n-start); p=registration_pose.points(meta,xyz.read(start,count))
+            keep=np.isfinite(p).all(1)
+            if mask is not None:keep&=mask.read(start,count)==0
+            if cfg['respect_view']:
+                for box in item.get('hidden_boxes',[]):keep&=~jobdata.selection_mask(p,box)
+                if item.get('isolate_box'):keep&=jobdata.selection_mask(p,item['isolate_box'])
+                if item.get('limit_box') and item.get('limit_hide_outside',True):keep&=jobdata.selection_mask(p,{'mode':'box',**item['limit_box']})
+            ids=np.flatnonzero(keep).astype('<i8')+start; checked+=len(ids)
+            if len(ids):yield ids,p[keep],{'mode':'full'}
+
+
+def discard(row):
+    if row and row.get('folder'):shutil.rmtree(row['folder'],ignore_errors=True)
+
+
+def current(s, body=None):
+    row=getattr(s,'SHAPE_SELECTION',None)
+    if not row:raise ValueError('Draw an example and preview similar shapes first.')
+    if body is not None and (body.get('preview_id')!=row['id'] or body.get('revision')!=row['revision']):
+        raise ValueError('The shape review changed. Refresh it before applying an action.')
+    if feature_selection.fingerprint(source(s,row['source_id']))!=row['source_fingerprint']:
+        raise ValueError('The source changed. Preview similar shapes again before editing points.')
+    return row
+
+
+def preview(s, body):
+    item=source(s,body.get('source_id'));mode=body.get('mode','shape')
+    if mode not in ('shape','circle'):raise ValueError('Choose example matching or local-circle cleaning.')
+    if mode=='circle':
+        import section_circle
+        cfg=section_circle.settings(body.get('settings'));example=None
+    else:
+        cfg=shape_matching.settings(body.get('settings'));bank=None
+        if body.get('class_id'):
+            import shape_library
+            bank=shape_library.bank(s,[body['class_id']]);example=None
+        else:example=jobdata.selection_spec(body.get('example') or {})
+        if not bank and example.get('mode') not in ('box','oriented_box','screen_polygon','screen_brush'):
+            raise ValueError('Draw an area around one object or a short section as the example.')
+    before=feature_selection.fingerprint(item); folder=asset_folder(s.WORK,'analysis')/('shape-'+uuid.uuid4().hex)
+    folder.mkdir(); cancelled=lambda:__import__('job_api').CANCEL.is_set()
+    try:
+        if mode=='circle':
+            axis=s.STATE.get('axis');rows=np.array(axis.a,copy=True) if axis is not None else None
+            result=section_circle.run(lambda:batches(item,cfg,s.progress,cancelled),folder,cfg,s.progress,cancelled,axis_rows=rows)
+        else:result=shape_matching.run(lambda:batches(item,cfg,s.progress,cancelled),example,folder,cfg,s.progress,cancelled,bank=bank)
+        if feature_selection.fingerprint(source(s,item['id']))!=before:
+            raise ValueError('The source changed during shape matching. The previous preview is unchanged.')
+        shape_matching.emit(s.progress,cancelled,'Whole-cloud local-circle candidates ready for review' if mode=='circle' else 'Whole-cloud shape candidates ready for review')
+        row={**result,'id':uuid.uuid4().hex,'revision':uuid.uuid4().hex,'source_id':item['id'],'source_name':item['name'],
+             'source_fingerprint':before,'settings':cfg,'example':example,'folder':str(folder),'mode':mode,'class_id':body.get('class_id')}
+        old=getattr(s,'SHAPE_SELECTION',None);s.SHAPE_SELECTION=row;discard(old)
+        return row
+    except BaseException:
+        shutil.rmtree(folder,ignore_errors=True);raise
+
+
+def public(s, page=0, region=None, sort='id', *, include_points=True):
+    row=getattr(s,'SHAPE_SELECTION',None)
+    if not row:return None
+    try:stale=feature_selection.fingerprint(source(s,row['source_id']))!=row['source_fingerprint']
+    except (OSError,ValueError):stale=True
+    db=sqlite3.connect(row['review_file'])
+    try:
+        table,params,points,ordering=review_view(row,region,sort)
+        total=db.execute('SELECT count(*) FROM matches').fetchone()[0]
+        visible=db.execute('SELECT count(*) FROM '+table,params).fetchone()[0] if region is not None else total
+        page=max(0,min(int(page),max(0,math.ceil(visible/PAGE_SIZE)-1)))
+        query=f'''SELECT m.id,m.station,m.angle,m.score,m.side,m.points,m.selected_points,{points}
+                  FROM {table} ORDER BY {ordering} LIMIT ? OFFSET ?'''
+        groups=[dict(id=k,name=(('Outward' if side>0 else 'Inward')+f' departures · near {t:.2f} m') if row.get('mode')=='circle' else f'Shape match {k}',station_m=t,angle_deg=math.degrees(a),similarity_percent=None if row.get('mode')=='circle' else score*100,
+                     side='recess' if side>0 else 'raised',points=n,region_points=regional,
+                     selected_points=selected,selected=selected>0,partial=0<selected<n)
+                for k,t,a,score,side,n,selected,regional in db.execute(query,(*params,PAGE_SIZE,page*PAGE_SIZE))]
+    finally:db.close()
+    out={k:copy.deepcopy(row[k]) for k in ('id','revision','source_id','source_name','mode','settings','statistics','warnings','method','research_dois')}
+    out.update(groups=groups,group_count=visible,total_group_count=total,page=page,region=region,sort=sort,stale=stale,last_edit=copy.deepcopy(row.get('last_edit')))
+    out.update(class_id=row.get('class_id'),library_names=copy.deepcopy(row.get('library_names',{})))
+    out.update(coverage=copy.deepcopy(row.get('coverage',[])),lining_reference=copy.deepcopy(row.get('lining_reference')))
+    for group in out['groups']:
+        if row.get('class_id'):group['name']=row.get('library_names',{}).get(row['class_id'],'Saved shape')+' · match '+str(group['id'])
+    if row.get('circle_sections') is not None:out['circle_sections']=copy.deepcopy(row['circle_sections'])
+    if not include_points:return out
+    with np.load(row['preview_file'],allow_pickle=False) as cached:
+        p=cached['points']; context=cached['context']; labels=cached['labels']; indices=cached['indices']
+        with RowFile(row['selected_file'],'u1',row['count']) as flags:selected=flags.take(indices).astype(bool)
+        all_points=np.vstack([context,p]);origin=np.median(context,axis=0) if len(context) else np.zeros(3)
+        colour=np.tile([.42,.53,.62],(len(all_points),1));colour[len(context):]=[.1,.8,.85]
+        if row.get('mode')=='circle' and 'context_status' in cached:
+            colour[:len(context)]=[.25,.78,.58]
+            colour[np.flatnonzero(cached['context_status']==3)]=[1.,.79,.20]
+        colour[len(context)+np.flatnonzero(selected)]=[1.,.55,.12]
+        out['preview']=dict(origin=origin.tolist(),points=np.c_[all_points-origin,colour].tolist(),source_id=row['source_id'],
+                            count=row['statistics']['input_points'],preview_count=len(all_points),sampled=True,selected_count=row['statistics']['selected_points'])
+        if row.get('mode')!='circle':
+            out['preview']['match_ids']=labels.tolist()
+            if 'regions' in cached:
+                out['preview']['match_regions']=cached['regions'].tolist()
+        if row.get('mode')=='circle' and 'context_station' in cached:
+            out['preview']['stations']=np.r_[cached['context_station'],cached['point_station']].tolist()
+    return out
+
+
+def choose(s, body):
+    row=current(s,body);action=body['action']; mode=body.get('operation')
+    ids=body.get('group_ids',[]);selected=body.get('selected')
+    if action=='select':
+        if mode not in ('all','none','toggle','invert','side'):raise ValueError('Choose Select all, Clear selection or an existing group.')
+        if mode=='side' and (row.get('mode')!='circle' or body.get('side') not in ('inward','outward')):raise ValueError('Choose inward or outward local-circle departures.')
+        if mode in ('toggle','invert'):
+            if not isinstance(ids,list) or not ids or any(type(i) is not int for i in ids):
+                raise ValueError('Choose existing integer shape-match groups.')
+            if mode=='toggle' and type(selected) is not bool:
+                raise ValueError('Choose a selection state.')
+            if mode=='invert' and (len(ids)!=1 or row.get('mode')=='circle'):
+                raise ValueError('Choose one 3D shape match.')
+    elif action=='refine':
+        if mode not in ('keep','exclude'):raise ValueError('Choose Keep within area or Exclude area.')
+        spec=jobdata.selection_spec(body.get('selection') or {})
+    else:raise ValueError('Unknown shape-review selection action.')
+    dest=Path(row['folder'])/(uuid.uuid4().hex+'.selected');counts={};selected_count=0
+    db=sqlite3.connect(row['review_file'])
+    try:
+        if action=='select' and mode in ('toggle','invert'):
+            found=dict(db.execute('SELECT id,selected_points FROM matches WHERE id IN ('+','.join('?' for _ in ids)+')',ids))
+            if found.keys()!=set(ids):raise ValueError('A shape match no longer exists.')
+            if mode=='invert':selected=not found[ids[0]]
+        item=source(s,row['source_id']);meta=item['meta'];n=row['count']
+        with ExitStack() as stack, dest.open('wb') as out:
+            flags=stack.enter_context(RowFile(row['selected_file'],'u1',n));labs=stack.enter_context(RowFile(row['labels_file'],'<i4',n))
+            if action=='refine':
+                original=stack.enter_context(RowFile(row['point_ids_file'],'<i8',n));xyz=stack.enter_context(RowFile(meta['file'],'<f8',meta['count'],3))
+            for start in range(0,n,shape_matching.BLOCK):
+                size=min(shape_matching.BLOCK,n-start);chosen=flags.read(start,size).astype(bool);labels=labs.read(start,size)
+                if action=='refine':
+                    points=registration_pose.points(meta,xyz.take(original.read(start,size)));inside=jobdata.selection_mask(points,spec)
+                    chosen&=inside if mode=='keep' else ~inside
+                elif mode in ('all','none'):chosen[:]=mode=='all'
+                elif mode=='side':chosen=(labels%2)==(1 if body['side']=='inward' else 0)
+                else:chosen[np.isin(labels,ids)]=selected
+                chosen.astype('u1').tofile(out);selected_count+=int(chosen.sum())
+                for k,c in zip(*np.unique(labels[chosen],return_counts=True)):counts[int(k)]=counts.get(int(k),0)+int(c)
+                s.progress(f'Updating original-point shape selection · {start+size:,}/{n:,} candidate IDs')
+        current(s,body);s.progress('Saving reviewed shape selection')
+        db.execute('UPDATE matches SET selected_points=0')
+        db.executemany('UPDATE matches SET selected_points=? WHERE id=?',((c,k) for k,c in counts.items()));db.commit()
+        old=row['selected_file'];row['selected_file']=str(dest);row['statistics']['selected_points']=selected_count;row['revision']=uuid.uuid4().hex
+        try:Path(old).unlink(missing_ok=True)
+        except OSError:pass  # An obsolete locked cache must not undo publication.
+        return row
+    except BaseException:
+        db.rollback();dest.unlink(missing_ok=True);raise
+    finally:db.close()
+
+
+def edit(s, body):
+    row=current(s,body)
+    if body.get('confirmed') is not True:raise ValueError('Review shape candidates before removing or separating points.')
+    total=row['statistics']['selected_points']
+    if not total:raise ValueError('Select shape matches before applying this action.')
+    selected=Path(row['folder'])/(uuid.uuid4().hex+'.edit_ids')
+    try:
+        written=0;n=row['count']
+        with RowFile(row['point_ids_file'],'<i8',n) as ids,RowFile(row['selected_file'],'u1',n) as flags,selected.open('wb') as out:
+            for start in range(0,n,shape_matching.BLOCK):
+                size=min(shape_matching.BLOCK,n-start);use=flags.read(start,size)!=0
+                ids.read(start,size)[use].tofile(out);written+=int(use.sum())
+                s.progress(f'Preparing reviewed shape edit · {start+size:,}/{n:,} candidate identities')
+        if written!=total:raise ValueError('The reviewed shape selection changed before the edit.')
+        current(s,body);item=source(s,row['source_id'])
+        operation='separate_selection' if body['action']=='separate' else 'delete_selection'
+        reason=(f"Local circles · {row['settings']['section_m']:g} m windows · inward {row['settings']['inward_mm']:g} mm / outward {row['settings']['outward_mm']:g} mm") if row.get('mode')=='circle' else 'Reviewed example-shape matches'
+        taught=None
+        if body.get('teach'):
+            import shape_library,shape_library_api
+            with shape_library_api.selected_examples(s,row) as folders:
+                taught=shape_library.transaction(s,folders,body.get('class_id'),'positive',
+                    mutate=lambda:scan_edits.apply(s,item,operation,selected_file={'file':str(selected),'count':total},reason=reason,commit=False))
+        else:scan_edits.apply(s,item,operation,selected_file={'file':str(selected),'count':total},reason=reason)
+        row['last_edit']={'count':total,'action':body['action'],'taught':taught['added'] if taught else 0};return row['last_edit']
+    finally:selected.unlink(missing_ok=True)
+
+
+def get(s,h,path,args):
+    if path!='/api/shape-selection':return False
+    try:page=int(args.get('page',[0])[0])
+    except (TypeError,ValueError):raise ValueError('Enter a valid shape-review page.')
+    region,sort=review_view_args(args)
+    h.send({'defaults':shape_matching.DEFAULTS,'circle_defaults':__import__('section_circle').DEFAULTS,'axis_available':s.STATE.get('axis') is not None,
+            'result':public(s,page,region,sort,include_points=args.get('points',['1'])[0]!='0')});return True
+
+
+def post(s,h,path,body):
+    if path!='/api/shape-selection':return False
+    if s.JOB.get('busy'):raise ValueError('Wait for the current operation to finish.')
+    action=body.get('action')
+    if action=='clear':discard(getattr(s,'SHAPE_SELECTION',None));s.SHAPE_SELECTION=None;h.send({'cleared':True});return True
+    if action not in ('preview','select','refine','delete','separate','inspect'):raise ValueError('Unknown shape-selection action.')
+    request=copy.deepcopy(body)
+    if action!='preview':current(s,request)
+    fn=preview if action=='preview' else choose if action in ('select','refine') else __import__('shape_inspection').prepare if action=='inspect' else edit
+    circle=request.get('mode')=='circle' or (getattr(s,'SHAPE_SELECTION',None) or {}).get('mode')=='circle' and action!='preview'
+    s.start_job(lambda:fn(s,request),'pocket inspection' if action=='inspect' else 'local-circle cleaning' if circle else 'shape matching',
+                native_progress=not (action=='select' and request.get('operation')=='invert'))
+    h.send({'started':True});return True

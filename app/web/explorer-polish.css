@@ -1,0 +1,102 @@
+/* Copyright (c) 2026 Damian Gulczynski. Content-sized project explorer. */
+body.single-workspace .job-sidebar{
+ --explorer-bg:var(--ts-explorer-bg,#f8fbfc);--explorer-surface:var(--ts-explorer-surface,#fff);
+ --explorer-text:var(--ts-explorer-text,#244250);--explorer-muted:var(--ts-explorer-muted,#627d89);
+ --explorer-border:var(--ts-explorer-border,#d8e3e8);--explorer-accent:var(--ts-explorer-accent,#087d75);
+ --explorer-selected:var(--ts-explorer-selected,#e0f0ed);
+ display:flex!important;flex-direction:column;gap:0;padding:0!important;box-sizing:border-box;scrollbar-gutter:auto;
+ background:var(--explorer-bg)!important;color:var(--explorer-text);border:1px solid var(--explorer-border)!important;
+ border-radius:9px!important;box-shadow:0 3px 12px #173d5010!important;overflow:hidden!important;
+}
+body.single-workspace .job-layout{position:relative;grid-template-columns:minmax(0,1fr)!important}
+body.single-workspace .job-main{grid-column:1!important;grid-row:1!important;min-width:0}
+body.single-workspace:not(.job-sidebar-floating) .job-sidebar{position:absolute!important;z-index:14;top:0;right:0;left:auto;width:var(--job-panel-width,300px);align-self:start;height:fit-content;max-height:100%;min-height:0;transition:height .16s ease}
+body.single-workspace.job-sidebar-left:not(.job-sidebar-floating) .job-sidebar{left:0;right:auto}
+body.single-workspace:not(.job-sidebar-floating) #job-splitter{position:absolute;z-index:15;top:0;right:var(--job-panel-width,300px);left:auto;width:5px;height:var(--ts-explorer-height,38px);max-height:100%;grid-column:auto!important;grid-row:auto!important;background:transparent}
+body.single-workspace.job-sidebar-left:not(.job-sidebar-floating) #job-splitter{left:var(--job-panel-width,300px);right:auto}
+body.single-workspace:not(.job-sidebar-floating) #job-splitter:hover{background:color-mix(in srgb,var(--ts-explorer-accent,#087d75) 30%,transparent)}
+body.single-workspace.job-sidebar-left:not(.job-sidebar-collapsed) .cad-hud{left:calc(var(--job-panel-width,300px) + 18px)}
+body.single-workspace .job-layout[data-explorer-detached=true] #job-splitter{display:none!important}
+body.single-workspace .job-layout[data-explorer-detached=true] .cad-hud{left:14px}
+body.single-workspace .job-sidebar .job-sidehead{flex:0 0 auto;min-height:37px;height:37px;box-sizing:border-box;padding:0 8px 0 11px;gap:5px;background:var(--explorer-surface);border-bottom:1px solid var(--explorer-border);color:var(--explorer-text);position:relative}
+body.single-workspace .job-sidebar .job-sidehead>b{font-size:11px;font-weight:650;letter-spacing:.01em;min-width:0;flex:1;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+body.single-workspace .job-sidebar .job-sidehead-actions{display:flex;align-items:center;gap:1px;flex:none}
+body.single-workspace .job-sidebar .job-sidehead-actions button{display:flex;align-items:center;justify-content:center;box-sizing:border-box;width:22px;height:25px;min-width:22px;padding:0;font-size:14px;line-height:1;border:0;border-radius:4px;color:var(--explorer-muted);background:transparent}
+body.single-workspace .job-sidebar .job-sidehead-actions button:hover{color:var(--explorer-accent);background:var(--explorer-selected)}
+body.single-workspace .job-sidebar .job-sidehead-actions>:is(#job-sidebar-left,#job-sidebar-right,#job-sidebar-float,#explorer-detach-native){display:none!important}
+body.single-workspace .job-sidebar #explorer-layout-options{font-size:19px;width:27px}
+body.single-workspace .job-sidebar #cad-panel-tabs{flex:0 0 auto;padding:4px 7px;gap:4px;min-height:0;background:var(--explorer-bg);border-bottom:1px solid var(--explorer-border)}
+body.single-workspace .job-sidebar #cad-panel-tabs button{font-size:11px;padding:6px 5px;color:var(--explorer-muted);border-radius:5px;line-height:1.3}
+body.single-workspace .job-sidebar #cad-panel-tabs button[aria-selected=true]{background:var(--explorer-selected);color:var(--explorer-text)}
+body.single-workspace .job-sidebar .scene-list-help{flex:0 0 auto;padding:6px 11px!important;margin:0!important;font-size:10px;line-height:1.4;color:var(--explorer-muted);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+body.single-workspace .job-sidebar .job-table{flex:0 1 auto!important;min-height:0!important;max-height:none!important;overflow:auto!important;scrollbar-gutter:auto;scrollbar-width:thin;overscroll-behavior:contain;margin:0 6px;padding:0;border:0;box-sizing:border-box;background:var(--explorer-surface);border-radius:5px}
+body.single-workspace .job-sidebar .job-table table{width:100%;table-layout:fixed;border-collapse:collapse;border-spacing:0;margin:0;color:var(--explorer-text)}
+body.single-workspace .job-sidebar .job-table thead{position:sticky;top:0;z-index:2;background:var(--explorer-bg)}
+body.single-workspace .job-sidebar .job-table th{padding:6px 3px;font-size:9px;line-height:1.3;font-weight:650;letter-spacing:.06em;color:var(--explorer-muted);border-bottom:1px solid var(--explorer-border);text-align:left;box-sizing:border-box}
+body.single-workspace .job-sidebar .job-table th:nth-child(1){width:26px}
+body.single-workspace .job-sidebar .job-table th:nth-child(2){width:32px;text-align:center}
+body.single-workspace .job-sidebar .job-table th:nth-child(3){padding-left:9px}
+body.single-workspace #job-list tr[data-scene-item],body.single-workspace #job-list tr[data-cad-row],body.single-workspace #job-list tr[data-geometry-id]{background:var(--explorer-surface);color:var(--explorer-text);transition:background .12s ease;outline-offset:-2px}
+body.single-workspace #job-list tr[data-scene-item]:hover,body.single-workspace #job-list tr[data-cad-row]:hover,body.single-workspace #job-list tr[data-geometry-id]:hover{background:var(--explorer-bg)}
+body.single-workspace #job-list tr[aria-selected=true]{background:var(--explorer-selected)!important;box-shadow:inset 3px 0 var(--explorer-accent)}
+body.single-workspace #job-list tr[data-scene-item]>td,body.single-workspace #job-list tr[data-cad-row]>td,body.single-workspace #job-list tr[data-geometry-id]>td{padding:7px 3px;vertical-align:middle;border-bottom:1px solid var(--explorer-border);box-sizing:border-box}
+body.single-workspace #job-list td.explorer-select,body.single-workspace #job-list td.explorer-visibility{text-align:center}
+body.single-workspace #job-list input[type=checkbox]{width:13px;height:13px;margin:0;vertical-align:middle;accent-color:var(--explorer-accent);cursor:pointer}
+body.single-workspace #job-list .visibility-toggle{width:26px;height:28px;min-width:26px;padding:3px!important;vertical-align:middle}
+body.single-workspace #job-list .visibility-toggle:hover,body.single-workspace #job-list .visibility-toggle:focus-visible{background:var(--explorer-selected)!important;border-color:var(--explorer-border)!important}
+body.single-workspace #job-list .visibility-toggle svg{width:18px;height:18px}
+body.single-workspace #job-list td.explorer-item{padding-left:calc(3px + var(--explorer-depth,0)*11px);padding-right:7px;min-width:0;overflow:hidden}
+body.single-workspace #job-list .explorer-item-line{display:flex;align-items:center;gap:3px;min-width:0;min-height:18px}
+body.single-workspace #job-list .scan-expand,body.single-workspace #job-list .explorer-expander-placeholder{display:inline-flex;align-items:center;justify-content:center;flex:0 0 15px;width:15px;min-width:15px;height:18px;margin:0;padding:0;border:0;background:transparent;color:var(--explorer-muted);font-size:12px;line-height:1}
+body.single-workspace #job-list .scan-expand:hover{color:var(--explorer-accent);background:var(--explorer-selected);border-radius:3px}
+body.single-workspace #job-list .explorer-item-name{display:block;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font-size:11px;font-weight:600;line-height:1.4;overflow-wrap:normal;color:inherit}
+body.single-workspace #job-list .explorer-item-meta{display:flex;flex-wrap:wrap;gap:2px 7px;padding-left:18px;margin:2px 0 0;color:var(--explorer-muted);font-size:9px;line-height:1.4;font-variant-numeric:tabular-nums}
+body.single-workspace #job-list .explorer-item-count{white-space:nowrap}
+body.single-workspace #job-list .explorer-item-status{white-space:nowrap;color:var(--explorer-muted)}
+body.single-workspace #job-list .job-cleaned-badge{display:inline-block;margin:4px 0 0 18px;padding:2px 5px;font-size:8px;line-height:1.25;font-weight:600;color:var(--explorer-accent);background:var(--explorer-selected);border:0;border-radius:3px;letter-spacing:.01em;max-width:calc(100% - 22px);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+body.single-workspace #job-list tr[data-cad-row]>td:last-child>b,body.single-workspace #job-list tr[data-geometry-id]>td:last-child>b{display:inline-block;max-width:calc(100% - 18px);vertical-align:middle;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;overflow-wrap:normal;font-size:11px;font-weight:600;color:inherit}
+body.single-workspace #job-list tr[data-cad-row] small,body.single-workspace #job-list tr[data-geometry-id] small{margin-top:3px;font-size:9px;line-height:1.4;color:var(--explorer-muted)}
+body.single-workspace #job-list .bundle-heading td,body.single-workspace #job-list .cad-model-heading td,body.single-workspace #job-list .geometry-heading{background:var(--explorer-bg);color:var(--explorer-muted);padding:7px!important;border-top:1px solid var(--explorer-border);border-bottom:1px solid var(--explorer-border);font-size:10px!important;line-height:1.4;letter-spacing:.02em}
+body.single-workspace #job-list .bundle-heading b{display:inline-block;max-width:calc(100% - 24px);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;vertical-align:middle;font-weight:650;overflow-wrap:normal;color:var(--explorer-text)}
+body.single-workspace #job-list .bundle-heading button{padding:0 5px 0 0;min-width:18px;color:var(--explorer-muted);font-size:12px}
+body.single-workspace #job-list .bundle-heading small{margin:2px 0 0 20px;font-size:9px;color:var(--explorer-muted)}
+body.single-workspace #job-list .geometry-heading button{font-size:9px;padding:3px 5px;margin:2px 0;color:var(--explorer-text);background:var(--explorer-surface);border-color:var(--explorer-border)}
+body.single-workspace #job-list .scan-connections-row>td{padding:0 7px 8px 58px;background:var(--explorer-surface)}
+body.single-workspace #job-list .scan-connections{margin:0;padding-left:9px;border-left:1px solid var(--explorer-border);font-size:9px;color:var(--explorer-muted)}
+body.single-workspace #job-list .scan-connections button{max-width:100%;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;font-size:10px;padding:4px 6px;color:var(--explorer-text);background:var(--explorer-bg);border-color:var(--explorer-border)}
+body.single-workspace #job-deleted-root>td{padding:0!important;border:0;background:var(--explorer-bg)}
+body.single-workspace #job-deleted-root details>summary{padding:10px 8px;margin:0;border-top:1px solid var(--explorer-border);color:var(--explorer-text);font-size:10px;line-height:1.4;font-weight:600;cursor:pointer}
+body.single-workspace #job-deleted-root .deleted-group{margin:5px 6px;padding:7px;background:var(--explorer-surface);border:1px solid var(--explorer-border);border-radius:5px}
+body.single-workspace #job-deleted-root .deleted-group label{display:flex;gap:7px;align-items:center;min-width:0;font-size:10px}
+body.single-workspace #job-deleted-root .deleted-group b{display:block;min-width:0;overflow:hidden;white-space:nowrap;text-overflow:ellipsis;overflow-wrap:normal}
+body.single-workspace #job-deleted-root small,body.single-workspace #job-deleted-root .tiny{display:block;font-size:9px;line-height:1.5;margin:5px 7px;color:var(--explorer-muted)}
+body.single-workspace #job-deleted-root button{font-size:9px;padding:5px 7px;margin:4px 2px;color:var(--explorer-text);background:var(--explorer-surface);border-color:var(--explorer-border);border-radius:4px}
+body.single-workspace .job-sidebar .explorer-footer{flex:0 0 auto;gap:5px;padding:7px;border-top:1px solid var(--explorer-border);background:var(--explorer-bg)}
+body.single-workspace .job-sidebar .explorer-footer button{display:flex;align-items:center;justify-content:center;gap:6px;min-width:0;min-height:32px;padding:6px 5px;font-size:10px;line-height:1.3;border:1px solid var(--explorer-border);border-radius:5px;background:var(--explorer-surface);color:var(--explorer-text)}
+body.single-workspace .job-sidebar .explorer-footer button svg{width:15px;height:15px;min-width:15px}
+body.single-workspace .job-sidebar .explorer-footer button:hover{border-color:var(--explorer-accent);background:var(--explorer-selected)}
+body.single-workspace .job-sidebar #cad-properties{flex:1 1 auto;min-height:0;overflow:auto;background:var(--explorer-surface);color:var(--explorer-text)}
+body.single-workspace.job-sidebar-collapsed .job-sidebar{height:38px!important;min-height:38px!important;border-radius:6px!important}
+body.single-workspace.job-sidebar-collapsed:not(.job-sidebar-floating) .job-sidebar{width:38px!important}
+body.single-workspace.job-sidebar-collapsed:not(.job-sidebar-floating) #job-splitter{right:38px;left:auto;height:38px}
+body.single-workspace.job-sidebar-left.job-sidebar-collapsed:not(.job-sidebar-floating) #job-splitter{left:38px;right:auto}
+body.single-workspace.job-sidebar-collapsed .job-sidebar .job-sidehead{padding:0;justify-content:center}
+body.single-workspace.job-sidebar-collapsed .job-sidebar .job-sidehead-actions>button:not(#job-collapse-sidebar){display:none}
+.explorer-layout-menu{position:fixed;z-index:550;min-width:220px;padding:5px;border:1px solid var(--ts-explorer-border,#d8e3e8);border-radius:7px;background:var(--ts-explorer-surface,#fff);color:var(--ts-explorer-text,#244250);box-shadow:0 8px 26px #102c4333}
+.explorer-layout-menu[hidden]{display:none}
+.explorer-layout-menu button{display:block;width:100%;min-height:33px;text-align:left;padding:7px 10px;border:0;border-radius:4px;background:transparent;color:inherit;font-size:11px}
+.explorer-layout-menu button:hover,.explorer-layout-menu button:focus-visible{background:var(--ts-explorer-selected,#e0f0ed);color:var(--ts-explorer-text,#244250);outline:none}
+body.satellite-window .explorer-layout-menu{top:100px!important;left:auto!important;right:18px!important}
+@media(max-height:650px){
+ body.single-workspace .job-sidebar .job-sidehead{height:32px;min-height:32px}
+ body.single-workspace .job-sidebar #cad-panel-tabs{padding:3px 6px}
+ body.single-workspace .job-sidebar #cad-panel-tabs button{padding:4px 5px}
+ body.single-workspace .job-sidebar .scene-list-help{display:none}
+ body.single-workspace .job-sidebar .job-table th{padding-top:4px;padding-bottom:4px}
+ body.single-workspace #job-list tr[data-scene-item]>td,body.single-workspace #job-list tr[data-cad-row]>td,body.single-workspace #job-list tr[data-geometry-id]>td{padding-top:5px;padding-bottom:5px}
+ body.single-workspace .job-sidebar .explorer-footer{padding:5px}
+ body.single-workspace .job-sidebar .explorer-footer button{min-height:28px;padding:4px 5px}
+}
+@media(prefers-reduced-motion:reduce){body.single-workspace .job-sidebar{transition:none!important}body.single-workspace #job-list tr{transition:none!important}}
+
+button.scan-colour-swatch,button.scan-colour-preset{background:var(--scan-swatch,#5e8494)!important;color:#11202b!important;border:1px solid #80959f!important}.scan-colour-swatch{width:22px;min-width:22px;height:22px;padding:0;border-radius:5px;line-height:1;flex:none}.scan-colour-preset{width:30px;height:30px;padding:0;border-radius:5px}#scan-appearance-dialog{width:min(480px,90vw)}#scan-appearance-dialog label{display:flex;gap:8px;flex-direction:column;margin:12px 0}#scan-appearance-colour{width:100%;height:40px}

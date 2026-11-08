@@ -1,0 +1,10 @@
+Tunnel Studio
+Copyright (c) 2026 Damian Gulczynski. All rights reserved.
+
+This notice applies to the first-party Tunnel Studio application code, interface
+and report templates supplied in this release. Third-party software, runtimes,
+libraries and components retain their respective copyrights and licence terms.
+See THIRD_PARTY_NOTICES.txt and the licence files supplied with those components.
+
+Tunnel Studio is an independent application. It is not an Amberg Technologies or
+Leica Geosystems product and is not endorsed by those companies.
