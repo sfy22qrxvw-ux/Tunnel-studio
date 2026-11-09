@@ -7,10 +7,10 @@ library before a point edit commits. Library labels share the project's atomic
 save and workspace Undo. No unreviewed candidate becomes a training example.
 This is geometric example reuse, not a guarantee of object recognition.
 """
-from contextlib import contextmanager,ExitStack
+from contextlib import closing,contextmanager,ExitStack
+from io import BytesIO
 from pathlib import Path
 import copy
-import json
 import shutil
 import sqlite3
 import uuid
@@ -41,16 +41,19 @@ def selected_examples(s,row):
     db=sqlite3.connect(row['review_file'])
     try:
         if not db.execute("SELECT 1 FROM sqlite_master WHERE name='group_examples'").fetchone():raise ValueError('Find compact shapes again before teaching this result.')
-        rows=db.execute('SELECT m.id,m.points,m.selected_points,e.path FROM matches m LEFT JOIN group_examples e ON m.id=e.id WHERE m.selected_points>0 ORDER BY m.id').fetchall()
+        packed=any(col[1]=='descriptor' for col in db.execute('PRAGMA table_info(group_examples)'))
+        fields='length(e.descriptor),e.signature' if packed else 'e.path,NULL'
+        rows=db.execute(f'SELECT m.id,m.points,m.selected_points,{fields} FROM matches m LEFT JOIN group_examples e ON m.id=e.id WHERE m.selected_points>0 ORDER BY m.id').fetchall()
     finally:db.close()
     if not rows:raise ValueError('Select confirmed object groups before teaching.')
-    if any(n!=selected for _,n,selected,_ in rows):raise ValueError('Teach complete object groups. Clear partial refinements with Select all, or draw a new manual example.')
-    if any(not p or n>examples.MAX_CAPTURE for _,n,_,p in rows):raise ValueError('A selected group is too large for one compact teaching example. Draw one object more tightly; whole-cloud searches have no input-point cap.')
+    if any(n!=selected for _,n,selected,_,_ in rows):raise ValueError('Teach complete object groups. Clear partial refinements with Select all, or draw a new manual example.')
+    if any(not p or n>examples.MAX_CAPTURE for _,n,_,p,_ in rows):raise ValueError('A selected group is too large for one compact teaching example. Draw one object more tightly; whole-cloud searches have no input-point cap.')
     item=shape_selection.source(s,row['source_id']);meta=item['meta'];n=row['count']
     with staging(s) as folder:
-        targets={ident:folder/str(ident) for ident,_,_,_ in rows}
+        targets={ident:folder/str(ident) for ident,_,_,_,_ in rows}
         for p in targets.values():p.mkdir()
         counts={k:0 for k in targets}
+        bounds={k:(np.full(3,np.inf),np.full(3,-np.inf)) for k in targets}
         with ExitStack() as stack:
             ids=stack.enter_context(RowFile(row['point_ids_file'],'<i8',n))
             labels=stack.enter_context(RowFile(row['labels_file'],'<i4',n))
@@ -60,20 +63,30 @@ def selected_examples(s,row):
                 size=min(shape_matching.BLOCK,n-start);use=flags.read(start,size)!=0;lab=labels.read(start,size)[use]
                 q=registration_pose.points(meta,xyz.take(ids.read(start,size)[use]))
                 for ident in np.unique(lab):
-                    points=q[lab==ident]
-                    with (targets[int(ident)]/'object.xyz64').open('ab') as out:points.astype('<f8',copy=False).tofile(out)
-                    counts[int(ident)]+=len(points)
+                    key=int(ident);points=q[lab==ident]
+                    with (targets[key]/'object.xyz64').open('ab') as out:points.astype('<f8',copy=False).tofile(out)
+                    counts[key]+=len(points)
+                    low,high=bounds[key]
+                    bounds[key]=(np.minimum(low,points.min(0)),np.maximum(high,points.max(0)))
                 s.progress(f'Storing confirmed original observations · {start+size:,}/{n:,} candidate IDs')
-        for serial,(ident,expected,_,descriptor) in enumerate(rows,1):
+        for ident,expected,_,_,_ in rows:
             if counts[ident]!=expected:raise ValueError('The reviewed object changed before teaching. Find shapes again.')
-            p=np.fromfile(targets[ident]/'object.xyz64','<f8').reshape(-1,3)
-            wall=examples.context(item,p.min(0),p.max(0),s.progress)
-            with np.load(descriptor,allow_pickle=False) as raw:
-                mask=raw['mask'].astype(bool);depth=raw['depth'];cell=float(raw['grid_mm']);side=int(raw['side'])
-            t=dict(mask=mask,depth=depth,grid_mm=cell,example_sign=side,size_m=(np.asarray(mask.shape)*cell/1000).tolist())
-            examples.write(targets[ident],p,wall,t,dict(kind='reviewed_match',source_name=item['name'],source_item_id=item['id'],method='Confirmed complete measured component and separate wall context'))
-            s.progress(f'Preparing library examples · {serial}/{len(rows)} objects')
-        yield list(targets.values())
+        with closing(sqlite3.connect(row['review_file'])) as db:
+            for start in range(0,len(rows),16):
+                batch=rows[start:start+16]
+                walls=examples.context_many(item,[bounds[ident] for ident,_,_,_,_ in batch],s.progress)
+                for serial,((ident,_,_,descriptor,_),wall) in enumerate(zip(batch,walls),start+1):
+                    p=np.fromfile(targets[ident]/'object.xyz64','<f8').reshape(-1,3)
+                    if packed:
+                        descriptor=BytesIO(db.execute('SELECT descriptor FROM group_examples WHERE id=?',(ident,)).fetchone()[0])
+                    with np.load(descriptor,allow_pickle=False) as raw:
+                        mask=raw['mask'].astype(bool);depth=raw['depth'];cell=float(raw['grid_mm']);side=int(raw['side'])
+                    t=dict(mask=mask,depth=depth,grid_mm=cell,example_sign=side,size_m=(np.asarray(mask.shape)*cell/1000).tolist())
+                    examples.write(targets[ident],p,wall,t,dict(kind='reviewed_match',source_name=item['name'],source_item_id=item['id'],method='Confirmed complete measured component and separate wall context'),object_saved=True)
+                    s.progress(f'Preparing library examples · {serial}/{len(rows)} objects')
+        signatures=[signature for _,_,_,_,signature in rows if signature]
+        review=dict(scope=row['review_scope'],signatures=signatures) if signatures and row.get('review_scope') else None
+        yield list(targets.values()),review
 
 
 def capture(s,body):
@@ -91,9 +104,9 @@ def capture(s,body):
 def teach(s,body):
     if body.get('confirmed') is not True:raise ValueError('Review the selected objects before confirming their teaching label.')
     row=shape_selection.current(s,body)
-    with selected_examples(s,row) as folders:
+    with selected_examples(s,row) as (folders,review):
         shape_selection.current(s,body);s.progress('Saving reviewed shape examples')
-        result=library.transaction(s,folders,body.get('class_id'),'negative' if body['action']=='reject_selected' else 'positive')
+        result=library.transaction(s,folders,body.get('class_id'),'negative' if body['action']=='reject_selected' else 'positive',review=review)
     row['last_teaching']=result
     return result
 

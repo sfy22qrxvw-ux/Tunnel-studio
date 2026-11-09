@@ -192,7 +192,7 @@ def _stage(s,db,changes,target):
     db.commit();return ident
 
 
-def transaction(s,folders,class_id,label='positive',mutate=None,deactivate=None):
+def transaction(s,folders,class_id,label='positive',mutate=None,deactivate=None,*,review=None):
     """Save teaching and an optional point edit with crash-recoverable labels."""
     with LOCK:
         db=_connect(s);before=copy.deepcopy(s.STATE);created=[];created_claims=[];pending=None
@@ -212,6 +212,8 @@ def transaction(s,folders,class_id,label='positive',mutate=None,deactivate=None)
                 if not row or row[1]!=class_id:raise ValueError('Choose an example from the selected shape type.')
                 if row[0]:changes.extend([claim,1,0] for (claim,) in db.execute('SELECT id FROM claims WHERE example_id=? AND active=1',(ident,)))
             event=dict(id=uuid.uuid4().hex,changes=changes)
+            if review:
+                event['review']=review
             s.progress('Saving confirmed teaching and reviewed point changes')
             s.STATE.setdefault('shape_library_events',[]).append(event)
             pending=_stage(s,db,changes,s.STATE)

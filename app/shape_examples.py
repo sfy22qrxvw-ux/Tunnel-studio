@@ -10,6 +10,8 @@ This is labelled example geometry, not a survey measurement or a neural model.
 """
 from pathlib import Path
 from contextlib import ExitStack
+from heapq import merge
+from itertools import groupby
 import hashlib
 import json
 import math
@@ -47,25 +49,39 @@ def region(item, selection, progress, cap=MAX_CAPTURE):
 
 def context(item, low, high, progress):
     """Bounded actual wall sample; no source points are moved or invented."""
+    return context_many(item,[(low,high)],progress)[0]
+
+
+def context_many(item, crops, progress):
+    """Read overlapping source blocks once for a bounded batch of wall crops."""
     m=item['meta'];pad=.15
-    spec={'mode':'box','minimum':(low-pad).tolist(),'maximum':(high+pad).tolist()}
-    sample=np.empty((0,3));seen=0
+    specs=[{'mode':'box','minimum':(low-pad).tolist(),'maximum':(high+pad).tolist()} for low,high in crops]
+    samples=[np.empty((0,3)) for _ in crops]
+    seen=0
+    boxes=preview_index.world_boxes(m,preview_index.bounds(m,progress))
+
+    def blocks(index,spec):
+        for start,stop in preview_index.selection_blocks(m,spec,progress,boxes=boxes):
+            yield start,stop,index
+
     with ExitStack() as stack:
         xyz=stack.enter_context(RowFile(m['file'],'<f8',m['count'],3))
         mask=stack.enter_context(RowFile(m['mask_file'],'u1',m['count'])) if m.get('mask_file') else None
-        boxes=preview_index.world_boxes(m,preview_index.bounds(m,progress))
-        for start,stop in preview_index.selection_blocks(m,spec,progress,boxes=boxes):
-            for begin in range(start,stop,100000):
-                n=min(100000,stop-begin);p=registration_pose.points(m,xyz.read(begin,n))
-                keep=np.isfinite(p).all(1)&jobdata.selection_mask(p,spec)
-                keep &= ~((p>=low)&(p<=high)).all(1)
-                if mask is not None:keep &= mask.read(begin,n)==0
-                q=p[keep];seen+=len(q)
+        for (start,stop), entries in groupby(merge(*(blocks(i,spec) for i,spec in enumerate(specs))),
+                                           key=lambda entry:entry[:2]):
+            p=registration_pose.points(m,xyz.read(start,stop-start))
+            keep=np.isfinite(p).all(1)
+            if mask is not None:keep &= mask.read(start,stop-start)==0
+            p=p[keep]
+            for _,_,i in entries:
+                low,high=crops[i]
+                inside=jobdata.selection_mask(p,specs[i]) & ~((p>=low)&(p<=high)).all(1)
+                q=p[inside];seen+=len(q)
                 if len(q):
-                    q=np.vstack([sample,q]);_,ix=np.unique(np.floor(q/.003).astype(np.int64),axis=0,return_index=True)
-                    q=q[np.sort(ix)];sample=q[np.linspace(0,len(q)-1,min(len(q),CONTEXT_SAMPLE)).astype(int)]
-                progress(f'Reading separate wall context · {seen:,} nearby observations checked')
-    return sample
+                    q=np.vstack([samples[i],q]);_,ix=np.unique(np.floor(q/.003).astype(np.int64),axis=0,return_index=True)
+                    q=q[np.sort(ix)];samples[i]=q[np.linspace(0,len(q)-1,min(len(q),CONTEXT_SAMPLE)).astype(int)]
+            progress(f'Reading separate wall context · {seen:,} nearby observations checked across {len(crops)} objects')
+    return samples
 
 
 def local_offsets(points,wall,view_direction=None):
@@ -121,10 +137,11 @@ def template(xy, departures, cfg):
                 components=n,example_points=int(original.sum()),footprint_cells=int(chosen.sum()),size_m=(np.asarray(chosen.shape)*cell).tolist()),original
 
 
-def write(folder,points,wall,t,metadata):
+def write(folder,points,wall,t,metadata,*,object_saved=False):
     folder=Path(folder);folder.mkdir(parents=True,exist_ok=True)
     p=np.asarray(points,'<f8');w=np.asarray(wall,'<f8')
-    p.tofile(folder/'object.xyz64');w.tofile(folder/'context.xyz64')
+    if not object_saved:p.tofile(folder/'object.xyz64')
+    w.tofile(folder/'context.xyz64')
     np.savez_compressed(folder/'descriptor.npz',mask=t['mask'],depth=t['depth'],grid_mm=t['grid_mm'])
     data={**metadata,'points':len(p),'context_points':len(w),'grid_mm':t['grid_mm'],
           'side':t.get('side','recess' if t.get('example_sign',1)>0 else 'raised'),'size_m':t['size_m'],'footprint_cells':int(t['mask'].sum()),

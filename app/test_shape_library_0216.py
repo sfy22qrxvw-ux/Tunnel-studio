@@ -147,6 +147,56 @@ class LibraryTests(unittest.TestCase):
             r=matching.run(streamed(p),dict(mode='box',minimum=[6.8,.8,-.2],maximum=[7.2,1.2,.2]),tmp,{'side':'recess'},model=m)
             np.testing.assert_array_equal(np.fromfile(r['point_ids_file'],'<i8'),expected)
 
+    def test_repeat_search_skips_only_confirmed_pockets_and_undo_restores_them(self):
+        model,points,_=scene(empty=True,bolts=True)
+        item=self.scan(points)
+        request=dict(action='preview',source_id=item['id'],
+                     example=dict(mode='box',minimum=[6.8,.8,-.2],maximum=[7.2,1.2,.2]),
+                     settings={'side':'recess'})
+        run=matching.run
+        with mock.patch.object(matching,'run',side_effect=lambda *a,**k:run(*a,model=model,**k)):
+            first=selection.preview(self.s,request)
+            groups=selection.public(self.s,include_points=False)['groups']
+            self.assertEqual(len(groups),2)
+            self.assertFalse((Path(first['folder'])/'descriptors').exists())
+            selection.choose(self.s,dict(action='select',operation='toggle',selected=False,group_ids=[groups[1]['id']],
+                                         preview_id=first['id'],revision=first['revision']))
+            body=dict(action='teach_selected',confirmed=True,class_id=self.ident,
+                      preview_id=first['id'],revision=first['revision'])
+            self.record('teach_selected',lambda:api.teach(self.s,body))
+            self.s.STATE=json.loads((self.s.WORK/'project.json').read_text())
+            second=selection.preview(self.s,request)
+            self.assertEqual(second['reviewed_skipped'],1)
+            remaining=selection.public(self.s,include_points=False)['groups']
+            self.assertEqual([g['station_m'] for g in remaining],[groups[1]['station_m']])
+            included=selection.preview(self.s,dict(request,settings={'side':'recess','include_reviewed':True}))
+            self.assertEqual(included['count'],first['count'])
+            workspace_history.apply(self.s)
+            restored=selection.preview(self.s,request)
+            self.assertEqual(restored['count'],first['count'])
+            self.assertEqual(restored['reviewed_skipped'],0)
+
+    def test_nearby_wall_crops_share_reads_and_keep_exact_samples(self):
+        points,_=local_scene()
+        item=self.scan(points)
+        crops=[(np.array([x-.03,-.04,-.02]),np.array([x+.03,.04,.02])) for x in (0,.01,.02)]
+        read=examples.RowFile.read
+        starts=[]
+        def track(reader,start,count):
+            if reader.path==Path(item['meta']['file']):
+                starts.append(start)
+            return read(reader,start,count)
+        with mock.patch.object(examples.RowFile,'read',track):
+            expected=[examples.context(item,low,high,self.s.progress) for low,high in crops]
+            separate_reads=len(starts)
+            starts.clear()
+            actual=examples.context_many(item,crops,self.s.progress)
+        self.assertTrue(starts)
+        self.assertLess(len(starts),separate_reads)
+        self.assertEqual(len(starts),len(set(starts)))
+        for a,b in zip(actual,expected):
+            np.testing.assert_array_equal(a,b)
+
     def test_remove_and_teach_is_one_undo_and_retains_independent_geometry(self):
         m,p,_=scene(empty=True,bolts=True);item=self.scan(p);original=Path(item['meta']['file']).read_bytes();folder=self.s.WORK/'review';folder.mkdir()
         r=matching.run(streamed(p),dict(mode='box',minimum=[6.8,.8,-.2],maximum=[7.2,1.2,.2]),folder,{'side':'recess'},model=m)

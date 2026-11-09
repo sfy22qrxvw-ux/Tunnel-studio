@@ -34,7 +34,8 @@ BLOCK = 100000
 DISPLAY = 30000
 DEFAULTS = dict(min_offset_mm=5., max_offset_mm=2000., depth_tolerance_mm=15.,
                 grid_mm=10., similarity_percent=75., side='either',
-                continuation='auto', rotations=True, respect_view=False,lining_reference='local')
+                continuation='auto', rotations=True, respect_view=False,lining_reference='local',
+                include_reviewed=False)
 MATCH_SCHEMA = '''CREATE TABLE matches (
     id INTEGER PRIMARY KEY, station REAL NOT NULL, angle REAL NOT NULL,
     score REAL NOT NULL, side INTEGER NOT NULL, points INTEGER NOT NULL DEFAULT 0,
@@ -65,8 +66,8 @@ def settings(raw=None):
         raise ValueError('Choose a compact object or a continuing service.')
     if out['lining_reference'] not in ('local','longitudinal'):
         raise ValueError('Choose a local or longitudinal measured lining reference.')
-    if type(out['rotations']) is not bool or type(out['respect_view']) is not bool:
-        raise ValueError('Rotation and view-filter options must be true or false.')
+    if any(type(out[k]) is not bool for k in ('rotations','respect_view','include_reviewed')):
+        raise ValueError('Rotation, view-filter and reviewed-pocket options must be true or false.')
     return out
 
 
@@ -292,11 +293,11 @@ def _match_fft(evidence, t, cfg, columns, progress, cancel):
     return windows
 
 
-def match(evidence, t, cfg, columns, progress, cancel):
+def match(evidence, t, cfg, columns, progress, cancel, **compact_options):
     if t['long']:
         return _match_fft(evidence,t,cfg,columns,progress,cancel)
     import compact_shapes
-    return compact_shapes.match(evidence,t,cfg,columns,progress,cancel,emit)
+    return compact_shapes.match(evidence,t,cfg,columns,progress,cancel,emit,**compact_options)
 
 
 class Lookup:
@@ -315,7 +316,8 @@ class Lookup:
         return out
 
 
-def run(batches, example, folder, cfg, progress=lambda _:None, cancel=lambda:False, model=None, bank=None):
+def run(batches, example, folder, cfg, progress=lambda _:None, cancel=lambda:False, model=None, bank=None,
+        *, reviewed=()):
     """Return full-density candidate ID files and a bounded review preview."""
     cfg=settings(cfg); example=None if bank else jobdata.selection_spec(example); folder=Path(folder)
     if bank and cfg['continuation']=='long':raise ValueError('Saved shape types describe compact objects. Use a drawn service example for a continuing pipe or duct.')
@@ -336,6 +338,8 @@ def run(batches, example, folder, cfg, progress=lambda _:None, cancel=lambda:Fal
     if columns<8 or columns>50000: raise ValueError('Choose a coarser Shape grid size for this tunnel circumference.')
     evidence=Evidence(folder/'evidence.sqlite'); written=unsupported=example_total=0
     try:
+        review_path=folder/'review.sqlite'
+        evidence.db.execute('ATTACH DATABASE ? AS review',(str(review_path),))
         for ids,p,_ in source():
             emit(progress,cancel,f'Building whole-cloud shape evidence · {written+len(ids):,}/{total:,} original points')
             d,use,supported,angle=candidates(p,model,cfg,with_angle=True); unsupported+=int((~supported).sum());sector=sectors(angle)
@@ -349,10 +353,12 @@ def run(batches, example, folder, cfg, progress=lambda _:None, cancel=lambda:Fal
             t=dict(components=1,long=False,example_points=0,footprint_cells=sum(e['footprint_cells'] for e in positive),size_m=[])
         else:t=template(evidence,cfg,columns)
         emit(progress,cancel,'Example learned. Searching the complete retained cloud for matching footprints and offsets')
+        skipped=set()
+        options=dict(review=True,reviewed=() if cfg['include_reviewed'] else reviewed,skipped=skipped)
         if bank:
             import compact_shapes
-            windows=compact_shapes.match(evidence,None,cfg,columns,progress,cancel,emit,bank=bank,folder=folder)
-        else:windows=match(evidence,t,cfg,columns,progress,cancel)
+            windows=compact_shapes.match(evidence,None,cfg,columns,progress,cancel,emit,bank=bank,**options)
+        else:windows=match(evidence,t,cfg,columns,progress,cancel,**options)
         lookup=Lookup(evidence.db,columns); matched=checked=0
         ids_path=folder/'candidate_ids.bin'; labels_path=folder/'candidate_labels.bin'; flags_path=folder/'selected.bin'
         expected=evidence.db.execute('SELECT coalesce(sum(n),0) FROM cells WHERE gid>0').fetchone()[0]
@@ -380,7 +386,8 @@ def run(batches, example, folder, cfg, progress=lambda _:None, cancel=lambda:Fal
                     preview_regions.extend(region[visible].tolist())
                 matched+=len(local); checked+=len(ids)
         if checked!=total or matched!=expected: raise ValueError('The retained source changed before the exact shape selection was completed.')
-        review_path=folder/'review.sqlite'; review=sqlite3.connect(review_path)
+        emit(progress,cancel,'Saving candidate counts and coverage')
+        review=sqlite3.connect(review_path)
         try:
             review.execute(MATCH_SCHEMA)
             for row in evidence.db.execute('SELECT id,station,angle,score,side FROM matches ORDER BY id'):
@@ -389,11 +396,9 @@ def run(batches, example, folder, cfg, progress=lambda _:None, cancel=lambda:Fal
             review.execute(REGION_SCHEMA)
             review.executemany('INSERT INTO match_regions VALUES(?,?,?)',
                                ((sector,ident,size) for sector,counts in enumerate(region_counts) for ident,size in counts.items()))
-            if evidence.db.execute("SELECT 1 FROM sqlite_master WHERE name='group_examples'").fetchone():
-                review.execute('CREATE TABLE group_examples(id INTEGER PRIMARY KEY,class_id TEXT,example_id TEXT,path TEXT NOT NULL)')
-                review.executemany('INSERT INTO group_examples VALUES(?,?,?,?)',evidence.db.execute('SELECT * FROM group_examples'))
             review.commit()
         finally: review.close()
+        emit(progress,cancel,'Saving the shape review preview')
         context=sample[::max(1,math.ceil(len(sample)/DISPLAY))][:DISPLAY]
         np.savez(folder/'preview.npz',context=context,points=np.asarray(preview,float).reshape(-1,3),labels=np.asarray(preview_labels,'<i4'),
                  indices=np.asarray(preview_indices,'<i8'),regions=np.asarray(preview_regions,'u1'))
@@ -414,7 +419,8 @@ def run(batches, example, folder, cfg, progress=lambda _:None, cancel=lambda:Fal
         if upper[0] and not upper[3] and lower[3]:warnings.append('No matches were selected in the upper region. Review the circumference coverage panel: missing wall support, offset candidates and rejected shape matches are reported separately.')
         return dict(count=matched,point_ids_file=str(ids_path),labels_file=str(labels_path),selected_file=str(flags_path),review_file=str(review_path),preview_file=str(folder/'preview.npz'),
                     statistics=dict(input_points=total,candidate_points=matched,selected_points=matched,unsupported_points=unsupported,example_area_points=example_total,example_candidate_points=t['example_points'],example_footprint_cells=t['footprint_cells'],example_size_m=t['size_m'],continuing_service=t['long'],map_cell_mm=cfg['grid_mm'],calibration_points=len(sample),matching_windows=windows,seconds=round(time.monotonic()-started,3),library_positive=sum(e['label']=='positive' for e in bank['entries']) if bank else 0,library_negative=sum(e['label']=='negative' for e in bank['entries']) if bank else 0),
-                    library_names=bank['names'] if bank else {},coverage=coverage_report,
+                     library_names=bank['names'] if bank else {},coverage=coverage_report,
+                     reviewed_skipped=len(skipped),
                     lining_reference=dict(method='Robust local quadratic measured wall patches' if reference else 'Longitudinal measured reference',
                         supported_patches=reference['valid_patches'] if reference else None,patches=reference['patches'] if reference else None,
                         median_wall_rms_mm=reference['median_wall_rms_mm'] if reference else None,fit_limit_mm=reference['fit_limit_mm'] if reference else None),
