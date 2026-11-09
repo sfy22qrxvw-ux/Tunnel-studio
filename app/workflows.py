@@ -14,11 +14,12 @@ def empty():
     return {'axis':None,'cloud':None,'derived':None,'rings':[],'demo':False,'valid_points':0,'joints':None,'edits':[],'redo':[],'audit':[],'report_ready':False,'clean_ready':False,'report_settings':{},'structures':[],'registration':{},'project_id':None,'project_title':'Untitled project','export_ready':None,'ui':{}}
 
 
-def serial(s):
+def serial(s, *, compact_history=False):
     # Preparing a save/open must not mutate the active workspace. In particular,
     # persisting target edits used to modify it before a failed open was known.
     staged=SimpleNamespace(STATE=copy.deepcopy(s.STATE))
     job_api.sync_active(staged);registration_workspace.persist(staged)
+    if compact_history:scan_edits.compact_project_history(staged.STATE)
     if staged.STATE.get('inspection_result'):
         import inspection_api
         staged.STATE['inspection_result']=inspection_api.current(staged)
@@ -54,7 +55,7 @@ def save_portable_in(s, body):
     copy_id = uuid.uuid4().hex
 
     def write():
-        snapshot = serial(s)
+        snapshot = serial(s, compact_history=True)
         if isinstance(body.get('ui'), dict):
             snapshot['ui'] = copy.deepcopy(body['ui'])
         name = str(body.get('name') or snapshot.get('project_title') or destination.stem).strip()[:120]
@@ -169,13 +170,13 @@ class _Recovery:
         m.setdefault('name',str(name))
         return m
 
-    def history(self,values,n,name,compact=False):
+    def history(self,values,n,name):
         if not isinstance(values,list):
             self.hold('history',name,values,'Invalid edit history. Current point edits are retained.');return []
         out=[]
         for value in values:
             try:
-                v=self.paths(scan_edits.compact_history_entry(value) if compact else value)
+                v=self.paths(value)
                 def masks(x,current=n):
                     if isinstance(x,dict):
                         if x.get('kind') in ('scan','mesh') and isinstance(x.get('meta'),dict):
@@ -241,8 +242,7 @@ def prepare_data(s,data):
             seen.add(x['id']);x.setdefault('name',name);x.setdefault('visible',True)
             x.setdefault('source_bytes',0);x.setdefault('hidden_boxes',[]);x.setdefault('isolate_box',None)
             for key in ('edit_history','redo_history','deleted_groups'):
-                if key in x:x[key]=r.history(x[key],x['meta'].get('count',x['meta'].get('triangles')),name+' · '+key,
-                                              compact=key!='deleted_groups' and isinstance(x.get('deleted_groups'),list))
+                if key in x:x[key]=r.history(x[key],x['meta'].get('count',x['meta'].get('triangles')),name+' · '+key)
             if x.get('setup_photo'):
                 try:x['setup_photo']=r.paths(x['setup_photo'])
                 except (OSError,ValueError) as exc:r.hold('setup_photo',name+' · setup photo',x.pop('setup_photo'),exc);x['photo_notice']='The saved setup photo is unavailable; scan geometry remains available.'
@@ -262,11 +262,8 @@ def prepare_data(s,data):
             try:d[key]=r.meta(d[key],name=key)
             except (OSError,ValueError,KeyError,TypeError) as exc:r.hold('scan',key,d[key],exc);d[key]=None
     if d.get('cloud'):
-        active=next((x for x in entries if x['id']==d.get('active_job_scan') and x['kind']=='scan'
-                     and all(x['meta'].get(key)==d['cloud'].get(key) for key in ('file','mask_file'))),None)
-        compact=active is not None and isinstance(active.get('deleted_groups'),list)
-        d['edits']=r.history(d.get('edits',[]),d['cloud']['count'],'Survey edits',compact=compact)
-        d['redo']=r.history(d.get('redo',[]),d['cloud']['count'],'Survey redo',compact=compact)
+        d['edits']=r.history(d.get('edits',[]),d['cloud']['count'],'Survey edits')
+        d['redo']=r.history(d.get('redo',[]),d['cloud']['count'],'Survey redo')
         try:
             if d['axis'] is None:raise ValueError('No usable alignment is available.')
             d['derived']=r.cache(d.get('derived'),d['cloud']['count'],32)
@@ -509,10 +506,14 @@ def post(s,h,path,body):
     if path=='/api/project-action':
         action=body['action']
         if action in ('save','save_as'):
-            snapshot=serial(s)
+            candidate=copy.deepcopy(s.STATE)
+            staged=SimpleNamespace(STATE=candidate)
+            job_api.sync_active(staged)
+            scan_edits.compact_project_history(candidate)
+            snapshot=serial(staged)
             if isinstance(body.get('ui'),dict):snapshot['ui']=copy.deepcopy(body['ui'])
             data=projects.save_named(s.WORK,snapshot,body.get('name'),action=='save_as')
-            candidate=copy.deepcopy(s.STATE);candidate.update({k:data[k] for k in ('project_id','project_title','saved_at','ui')})
+            candidate.update({k:data[k] for k in ('project_id','project_title','saved_at','ui')})
             candidate['project_preview']=data.get('project_preview')
             _commit_project(s,candidate,reset_view=False);h.send({'saved':True,'project_file':project_location(s)['project_file']})
         elif action=='save_portable_in':

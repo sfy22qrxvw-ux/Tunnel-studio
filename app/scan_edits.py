@@ -471,6 +471,22 @@ def compact_history_entry(entry):
             'group_change': dict(version=1, index=index, before=old, after=new)}
 
 
+def compact_project_history(state):
+    """Compact legacy journals in a project snapshot prepared for an explicit save."""
+    cloud = state.get('cloud')
+    for item in state.get('job_items', []):
+        if item.get('kind') != 'scan' or not isinstance(item.get('deleted_groups'), list):
+            continue
+        for key in ('edit_history', 'redo_history'):
+            if isinstance(item.get(key), list):
+                item[key] = [compact_history_entry(entry) for entry in item[key]]
+        if (item['id'] == state.get('active_job_scan') and cloud
+                and all(item['meta'].get(key) == cloud.get(key) for key in ('file', 'mask_file'))):
+            for key in ('edits', 'redo'):
+                if isinstance(state.get(key), list):
+                    state[key] = [compact_history_entry(entry) for entry in state[key]]
+
+
 def group_change(entry):
     """Validate a compact journal record before recovery or replay."""
     if 'group_change' not in entry:

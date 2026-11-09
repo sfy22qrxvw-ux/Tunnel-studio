@@ -59,7 +59,22 @@ class CompactPointHistoryTests(unittest.TestCase):
             entry.pop('group_change')
             entry.update(before_groups=before, after_groups=after)
         saved = projects.save_named(self.work, self.s.STATE, 'Legacy', True)
-        self.reopen(projects.read_named(self.work, saved['project_id']))
+        named = self.work / 'projects' / (saved['project_id'] + '.json')
+        original_bytes = named.read_bytes()
+        response = SimpleNamespace(send=lambda _: None)
+        workflows.post(self.s, response, '/api/project-action', {'action':'open', 'id':saved['project_id']})
+        self.item = self.s.STATE['job_items'][0]
+        autosaved = projects.read_json(self.work / 'project.json')['job_items'][0]
+        self.assertEqual(autosaved['edit_history'], self.item['edit_history'])
+        self.assertEqual(autosaved['redo_history'], self.item['redo_history'])
+        self.assertIn('before_groups', autosaved['edit_history'][0])
+        self.assertIn('after_groups', autosaved['redo_history'][0])
+        self.assertEqual(named.read_bytes(), original_bytes)
+        workflows.post(self.s, response, '/api/project-action', {'action':'save'})
+        self.item = self.s.STATE['job_items'][0]
+        saved_item = projects.read_json(named)['job_items'][0]
+        self.assertEqual(saved_item['edit_history'], self.item['edit_history'])
+        self.assertEqual(saved_item['redo_history'], self.item['redo_history'])
         for entry in (*self.item['edit_history'], *self.item['redo_history']):
             self.assertEqual(entry['group_change']['version'], 1)
             self.assertNotIn('before_groups', entry)
@@ -125,6 +140,25 @@ class CompactPointHistoryTests(unittest.TestCase):
         legacy = dict(count=-1, group_id='second', before_groups=[first, second],
                       after_groups=[dict(first, active=False), dict(second, active=False)])
         self.assertIs(scan_edits.compact_history_entry(legacy), legacy)
+
+    def test_failed_apply_restores_in_place_nested_group_changes(self):
+        self.edit('delete_selection', self.box(2, 10))
+        ident = self.item['deleted_groups'][0]['id']
+        deleted_points.restore_selection(self.s, [['scan', ident]], self.box(4, 6))
+        before = copy.deepcopy(self.s.STATE)
+        paths = set(self.work.rglob('*'))
+
+        def fail_save():
+            group = self.item['deleted_groups'][0]
+            self.assertFalse(group['active'])
+            group['remaining']['count'] = 999
+            raise OSError('Disk write failed')
+
+        with patch.object(self.s, 'save', side_effect=fail_save):
+            with self.assertRaisesRegex(OSError, 'Disk write failed'):
+                scan_edits.apply(self.s, self.item, 'restore_deleted', group_id=ident)
+        self.assertEqual(self.s.STATE, before)
+        self.assertEqual(set(self.work.rglob('*')), paths)
 
     def test_missing_history_remainder_is_quarantined(self):
         self.edit('delete_selection', self.box(2, 10))
