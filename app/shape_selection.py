@@ -11,6 +11,8 @@ not a trained semantic classifier, survey control or reconstructed lining.
 from contextlib import ExitStack
 from pathlib import Path
 import copy
+import hashlib
+import json
 import math
 import shutil
 import sqlite3
@@ -99,6 +101,14 @@ def current(s, body=None):
     return row
 
 
+def review_scope(item,cfg):
+    """Only suppress repeat footprints from the same source and lining search."""
+    source_signature=(feature_selection.fingerprint(item) if cfg['respect_view']
+                      else __import__('scan_export').signature(item))
+    settings=[cfg[k] for k in ('grid_mm','min_offset_mm','max_offset_mm','lining_reference','respect_view')]
+    return hashlib.sha256(json.dumps([item['id'],source_signature,settings]).encode()).hexdigest()
+
+
 def preview(s, body):
     item=source(s,body.get('source_id'));mode=body.get('mode','shape')
     if mode not in ('shape','circle'):raise ValueError('Choose example matching or local-circle cleaning.')
@@ -113,18 +123,27 @@ def preview(s, body):
         else:example=jobdata.selection_spec(body.get('example') or {})
         if not bank and example.get('mode') not in ('box','oriented_box','screen_polygon','screen_brush'):
             raise ValueError('Draw an area around one object or a short section as the example.')
+    scope=None
+    reviewed=set()
+    if mode=='shape':
+        scope=review_scope(item,cfg)
+        reviewed={signature for event in s.STATE.get('shape_library_events',[])
+                  if (record:=event.get('review')) and record['scope']==scope
+                  for signature in record['signatures']}
     before=feature_selection.fingerprint(item); folder=asset_folder(s.WORK,'analysis')/('shape-'+uuid.uuid4().hex)
     folder.mkdir(); cancelled=lambda:__import__('job_api').CANCEL.is_set()
     try:
         if mode=='circle':
             axis=s.STATE.get('axis');rows=np.array(axis.a,copy=True) if axis is not None else None
             result=section_circle.run(lambda:batches(item,cfg,s.progress,cancelled),folder,cfg,s.progress,cancelled,axis_rows=rows)
-        else:result=shape_matching.run(lambda:batches(item,cfg,s.progress,cancelled),example,folder,cfg,s.progress,cancelled,bank=bank)
+        else:result=shape_matching.run(lambda:batches(item,cfg,s.progress,cancelled),example,folder,cfg,s.progress,cancelled,
+                                      bank=bank,reviewed=reviewed)
         if feature_selection.fingerprint(source(s,item['id']))!=before:
             raise ValueError('The source changed during shape matching. The previous preview is unchanged.')
         shape_matching.emit(s.progress,cancelled,'Whole-cloud local-circle candidates ready for review' if mode=='circle' else 'Whole-cloud shape candidates ready for review')
         row={**result,'id':uuid.uuid4().hex,'revision':uuid.uuid4().hex,'source_id':item['id'],'source_name':item['name'],
-             'source_fingerprint':before,'settings':cfg,'example':example,'folder':str(folder),'mode':mode,'class_id':body.get('class_id')}
+             'source_fingerprint':before,'settings':cfg,'example':example,'folder':str(folder),'mode':mode,
+             'class_id':body.get('class_id'),'review_scope':scope}
         old=getattr(s,'SHAPE_SELECTION',None);s.SHAPE_SELECTION=row;discard(old)
         return row
     except BaseException:
@@ -152,7 +171,8 @@ def public(s, page=0, region=None, sort='id', *, include_points=True):
     out={k:copy.deepcopy(row[k]) for k in ('id','revision','source_id','source_name','mode','settings','statistics','warnings','method','research_dois')}
     out.update(groups=groups,group_count=visible,total_group_count=total,page=page,region=region,sort=sort,stale=stale,last_edit=copy.deepcopy(row.get('last_edit')))
     out.update(class_id=row.get('class_id'),library_names=copy.deepcopy(row.get('library_names',{})))
-    out.update(coverage=copy.deepcopy(row.get('coverage',[])),lining_reference=copy.deepcopy(row.get('lining_reference')))
+    out.update(coverage=copy.deepcopy(row.get('coverage',[])),lining_reference=copy.deepcopy(row.get('lining_reference')),
+               reviewed_skipped=row.get('reviewed_skipped',0))
     for group in out['groups']:
         if row.get('class_id'):group['name']=row.get('library_names',{}).get(row['class_id'],'Saved shape')+' · match '+str(group['id'])
     if row.get('circle_sections') is not None:out['circle_sections']=copy.deepcopy(row['circle_sections'])
@@ -249,8 +269,9 @@ def edit(s, body):
         taught=None
         if body.get('teach'):
             import shape_library,shape_library_api
-            with shape_library_api.selected_examples(s,row) as folders:
+            with shape_library_api.selected_examples(s,row) as (folders,review):
                 taught=shape_library.transaction(s,folders,body.get('class_id'),'positive',
+                     review=review,
                     mutate=lambda:scan_edits.apply(s,item,operation,selected_file={'file':str(selected),'count':total},reason=reason,commit=False))
         else:scan_edits.apply(s,item,operation,selected_file={'file':str(selected),'count':total},reason=reason)
         row['last_edit']={'count':total,'action':body['action'],'taught':taught['added'] if taught else 0};return row['last_edit']

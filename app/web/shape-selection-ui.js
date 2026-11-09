@@ -18,6 +18,7 @@
  ${field('depth','Depth variation between matches · mm',15,.5,1000,'Allows this variation in the depth pattern relative to the fitted lining.')}
  ${field('grid','Shape grid size · mm',10,2,100,'Working resolution for the shape map, not a point limit. Final selection tests all original observations.')}
  <label class="feature-check"><input id="shape-rotations" type="checkbox" checked>Allow different orientations on the lining</label><label class="feature-check"><input id="shape-view-filters" type="checkbox">Restrict search to current view filters</label><p class="feature-hint">Compact objects use their principal directions, including oblique rotations. Continuing services use quarter turns. Leave view filters off to search all retained source points, including areas beyond the limit box or isolated view.</p></details>
+ <label class="feature-check"><input id="shape-include-reviewed" type="checkbox">Show previously reviewed matches<small>Current match settings and incorrect-example filters still apply.</small></label>
  <div class="feature-actions"><button id="shape-run" class="primary">Find across whole cloud</button><button id="shape-stop" hidden>Stop</button></div><p id="shape-status" role="status" aria-live="polite"></p></section>
  <section id="shape-review" class="feature-step" hidden><h3><span>3</span> Review matching points</h3><p id="shape-summary"></p><p class="feature-hint"><b>Orange:</b> selected. <b>Cyan:</b> unselected match. <b>Grey:</b> surrounding scan. These are geometric candidates, not confirmed object identities.</p><div id="shape-warnings" class="feature-warnings"></div><div class="feature-actions"><button type="button" id="shape-pick-3d" aria-pressed="false">Pick matches in 3D</button><button id="shape-all">Select all matches</button><button id="shape-none">Clear selection</button></div><p class="feature-hint">Click a match name to zoom in and load its original points. Checkboxes control removal selection independently.</p><p id="shape-pick-status" class="feature-hint" role="status" aria-live="polite" hidden></p><section id="shape-inspect-panel" class="feature-step" hidden><h4 id="shape-inspect-title">Inspect pocket</h4><p id="shape-inspect-status" role="status" aria-live="polite"></p><div class="feature-actions"><button id="shape-inspect-previous">Previous pocket</button><button id="shape-inspect-next">Next pocket</button><button id="shape-inspect-back">Back to matches</button><button id="shape-inspect-stop" hidden>Stop loading detail</button></div><label class="feature-check"><input type="checkbox" id="shape-inspect-highlight" checked>Highlight pocket · turn off for measured intensity</label><p class="feature-hint">Inspecting does not change the checkboxes or teach the library. Removal and teaching still apply to all selected groups. Nearby lining is a context sample.</p></section><details id="shape-coverage" class="shape-coverage" hidden><summary>Search coverage · crown, walls and invert</summary><p id="shape-coverage-note" class="feature-hint"></p><div id="shape-coverage-grid" class="shape-coverage-grid"></div></details><section class="shape-candidates" aria-labelledby="shape-candidate-title">
   <div class="shape-candidate-heading"><div><span class="feature-eyebrow">MATCH CANDIDATES</span><h4 id="shape-candidate-title" tabindex="-1">All regions</h4></div><button type="button" id="shape-all-regions" hidden>Show all regions</button></div>
@@ -37,7 +38,7 @@
  const status=(message,error=false)=>{el('status').textContent=message;el('status').style.color=error?'var(--danger,#b64c45)':'';};
  function controls(){
   const lock=running||!!busy||browsing,editingLocked=lock||inspectionLoading;
-  for(const id of ['source','box','lasso','polygon','use','side','minimum','maximum','continuation','similarity','depth','grid','rotations','view-filters','reference'])el(id).disabled=editingLocked;
+  for(const id of ['source','box','lasso','polygon','use','side','minimum','maximum','continuation','similarity','depth','grid','rotations','view-filters','reference','include-reviewed'])el(id).disabled=editingLocked;
   for(const id of ['library','type-name','create','refresh-library','use-library'])el(id).disabled=editingLocked;
   for(const id of ['rename','archive','restore'])el(id).disabled=editingLocked||!selectedType();
   el('archive').hidden=!selectedType()?.active;el('restore').hidden=!selectedType()||selectedType().active;
@@ -77,7 +78,7 @@
  function render(){
   el('review').hidden=!result;if(!result){controls();return;}
   const s=result.statistics;
-  el('summary').textContent=`${count(s.input_points)} original points checked · ${count(result.total_group_count)} geometric groups · ${count(s.selected_points)} selected points across all regions. ${s.library_positive?`${count(s.library_positive)} confirmed examples · ${count(s.library_negative)} incorrect examples.`:`Example: ${count(s.example_candidate_points)} off-lining points.`} ${s.continuing_service?'Continuing-service matching.':'Complete compact-shape matching.'}`;
+  el('summary').textContent=`${count(s.input_points)} original points checked · ${count(result.total_group_count)} geometric groups · ${count(s.selected_points)} selected points across all regions. ${s.library_positive?`${count(s.library_positive)} confirmed examples · ${count(s.library_negative)} incorrect examples.`:`Example: ${count(s.example_candidate_points)} off-lining points.`} ${s.continuing_service?'Continuing-service matching.':'Complete compact-shape matching.'} ${result.reviewed_skipped?`${count(result.reviewed_skipped)} previously reviewed pockets skipped.`:''}`;
   el('warnings').innerHTML=[...(result.stale?['Source changed. Find shapes again before editing.']:[]),...result.warnings].map(x=>`<p>${escape(x)}</p>`).join('');
   el('candidate-title').textContent=regionName();
   el('all-regions').hidden=result.region==null;
@@ -99,7 +100,7 @@
   renderCoverage();
   el('page').textContent=result.group_count
    ? `${result.page*40+1}–${Math.min((result.page+1)*40,result.group_count)} of ${count(result.group_count)} candidates`
-   : result.region==null?'No matching groups. Check the example, side, offset range and match settings.':'No candidates in '+regionName()+'.';
+   : result.region==null?(result.reviewed_skipped?'No new matches. Turn on Show previously reviewed matches to see those results again.':'No matching groups. Check the example, side, offset range and match settings.'):'No candidates in '+regionName()+'.';
   controls();
  }
  function renderCoverage(){
@@ -120,7 +121,7 @@
  function settings(){
   for(const id of ['minimum','maximum','similarity','depth','grid'])if(!el(id).checkValidity())throw Error('Check '+el(id).closest('label').querySelector('span').textContent+'.');
   if(+el('minimum').value>=+el('maximum').value)throw Error('Maximum lining offset must exceed the minimum.');
-  return {min_offset_mm:+el('minimum').value,max_offset_mm:+el('maximum').value,depth_tolerance_mm:+el('depth').value,grid_mm:+el('grid').value,similarity_percent:+el('similarity').value,side:el('side').value,continuation:el('continuation').value,rotations:el('rotations').checked,respect_view:el('view-filters').checked,lining_reference:el('reference').value};
+  return {min_offset_mm:+el('minimum').value,max_offset_mm:+el('maximum').value,depth_tolerance_mm:+el('depth').value,grid_mm:+el('grid').value,similarity_percent:+el('similarity').value,side:el('side').value,continuation:el('continuation').value,rotations:el('rotations').checked,respect_view:el('view-filters').checked,lining_reference:el('reference').value,include_reviewed:el('include-reviewed').checked};
  }
  function show(){
   if(!result?.preview||result.stale)return;
@@ -368,7 +369,7 @@
  el('separate').onclick=()=>{if(!el('separate').disabled)run('separate',{confirmed:true,...teaching()});};
  el('normal').onclick=()=>{const view=overviewView;abandonInspection();overviewView=null;window.JobUI.clearCleaningPreview();restoreCamera(view);controls();};
  el('source').onchange=()=>{abandonInspection();overviewView=null;example=null;result=null;dirty=true;el('example').textContent='Draw an example on this source scan.';render();};
- for(const id of ['side','minimum','maximum','continuation','similarity','depth','grid','rotations','view-filters','reference'])el(id).addEventListener('input',changed);
+ for(const id of ['side','minimum','maximum','continuation','similarity','depth','grid','rotations','view-filters','reference','include-reviewed'])el(id).addEventListener('input',changed);
  el('library').onchange=async()=>{changed();try{await refreshLibrary();}catch(e){status(e.message,true);}};
  el('use-library').onchange=changed;el('teach-removal').onchange=controls;
  el('refresh-library').onclick=async()=>{try{await refreshLibrary();}catch(e){status(e.message,true);}};
