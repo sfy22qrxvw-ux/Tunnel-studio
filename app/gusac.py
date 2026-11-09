@@ -257,17 +257,17 @@ def fit_batches(batches, settings, progress=lambda _: None, cancel=lambda: False
     ends = np.r_[starts[1:], len(order)]
     groups = {int(k): order[lo:hi] for k, lo, hi in zip(unique, starts, ends)}
     patches = {}
-    regional_plane_seconds = 0.
-    regional_plane_calls = 0
+    first = dict(points_per_call=[], seconds=0.)
+    extended = dict(points_per_call=[], seconds=0.)
 
-    def fit_patch(indices, key):
-        nonlocal regional_plane_seconds, regional_plane_calls
+    def fit_patch(indices, key, workload):
         arguments = (local[indices], chart['deviation'][indices], chart['radial_unit'][indices],
                      normals[indices], normal_ok[indices], params, int(key))
         started = time.perf_counter()
         patch = _regional_plane(*arguments)
-        regional_plane_seconds += time.perf_counter() - started
-        regional_plane_calls += 1
+        workload['seconds'] += time.perf_counter() - started
+        # Count the points entering the fitter, before its own support tests.
+        workload['points_per_call'].append(len(indices))
         return patch
 
     for number, key in enumerate(unique):
@@ -281,7 +281,7 @@ def fit_batches(batches, settings, progress=lambda _: None, cancel=lambda: False
         centre_s = s0+(si+.5)*window; centre_a = (ai+.5)*step
         delta_a = np.abs(np.arctan2(np.sin(angle[ix]-centre_a), np.cos(angle[ix]-centre_a)))
         ix = ix[(abs(s[ix]-centre_s) <= window*.85) & (delta_a <= step*.85)]
-        patch = fit_patch(ix, key)
+        patch = fit_patch(ix, key, first)
         if patch is None:
             # Sparse wall glimpses behind a service may not supply twenty
             # points in one metre. Extend only the longitudinal fitting halo,
@@ -293,7 +293,7 @@ def fit_batches(batches, settings, progress=lambda _: None, cancel=lambda: False
             extra = np.concatenate(neighbours)
             delta_a = np.abs(np.arctan2(np.sin(angle[extra]-centre_a), np.cos(angle[extra]-centre_a)))
             extra = extra[(abs(s[extra]-centre_s) <= window*4.0) & (delta_a <= step*.85)]
-            patch = fit_patch(extra, key)
+            patch = fit_patch(extra, key, extended)
             if patch is not None:
                 patch['extended_support'] = True
         if patch is not None:
@@ -302,8 +302,9 @@ def fit_batches(batches, settings, progress=lambda _: None, cancel=lambda: False
         raise ValueError('GuSAC could not verify any lining patches. Include more wall and crown, increase the window or reduce minimum support. No source points were changed.')
     model['patches'] = patches
     model['attempted_patches'] = len(unique)
-    model['regional_plane_seconds'] = regional_plane_seconds
-    model['regional_plane_calls'] = regional_plane_calls
+    model['regional_plane_seconds'] = first['seconds'] + extended['seconds']
+    model['regional_plane_calls'] = len(first['points_per_call']) + len(extended['points_per_call'])
+    model['regional_plane_workload'] = dict(first=first, extended=extended)
     return model
 
 
@@ -440,7 +441,9 @@ def run_batches(batches, work, ids_path, labels_path, settings, progress, cancel
                  strategy='GuSAC-based regional RANSAC planes and bounded-neighbourhood normal agreement; every selected original point classified',
                  reference='Wang et al. (2025), Applied Sciences 15, 2926, doi:10.3390/app15062926',
                  seconds=round(time.monotonic()-started, 3))
-    return dict(kept=kept, clusters=rows, statistics=stats, warnings=[
+    workload = {path: dict(points_per_call=details['points_per_call'], seconds=round(details['seconds'], 3))
+                for path, details in model['regional_plane_workload'].items()}
+    return dict(kept=kept, clusters=rows, statistics=stats, regional_plane_workload=workload, warnings=[
         'This GuSAC-based implementation corrects the paper\'s inconsistent normal equations and adds measured-reference and uncertainty safeguards. It is not an author-exact reproduction or a reproduction of the paper\'s reported accuracy.',
         'Every selected original point receives a label. Plane fitting and surface-normal neighbourhoods use a bounded, spatially balanced model sample; sparse or ambiguous lining is retained. Coordinates, RGB and intensity are unchanged.',
         'Inspect Inward objects / services before applying. Joints, recesses, uncertain regions and near-wall normal disagreements are retained separately. Geometry alone cannot reliably distinguish a service touching the wall from real lining detail.',

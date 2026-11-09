@@ -751,8 +751,13 @@ def apply(s, body):
 
 
 def report(s, fmt):
-    r = public_result(s,result(s)); kept = set(r['kept'])
-    if fmt == 'json': return r,'application/json','surface_extraction.json'
+    saved = result(s)
+    r = public_result(s,saved); kept = set(r['kept'])
+    if fmt == 'json':
+        # Detailed per-call measurements belong in the export, off the review response.
+        if 'regional_plane_workload' in saved:
+            r['statistics']['regional_plane_workload'] = copy.deepcopy(saved['regional_plane_workload'])
+        return r,'application/json','surface_extraction.json'
     if fmt == 'csv' and r['settings'].get('method') in ('gusac','tmatch'):
         out=io.StringIO();w=csv.writer(out)
         w.writerow(['cluster_id','name','cleaning_class','ring_id','points','kept','automatic_keep','centre_e_m','centre_n_m','centre_h_m'])
