@@ -1,0 +1,17 @@
+Tunnel Studio 0.22.8
+9 November 2026
+
+Clean Tunnel
+Noise classification now queries the KD-tree once per point block and
+reuses the same neighbour indices and validity flags for MAD rejection.
+The support-window budget includes the cached neighbours.
+
+Analysis and point edits
+Use for analysis and ring-joint suggestions can reuse a verified full-density
+alignment projection and retained-point total. Ordered point IDs can bypass
+the sort during reversible deletion and restoration.
+
+Interface
+Background progress requests send only job progress until completion.
+Cross-section progress updates also use lightweight responses.
+

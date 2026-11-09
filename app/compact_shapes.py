@@ -12,8 +12,9 @@ These are geometric candidates, not semantic identities or survey accuracy.
 Connected seams and ambiguous/oversized components need manual review; no ring
 layout, missing measurements or hidden wall is inferred.
 """
+import hashlib
 import math
-from pathlib import Path
+from io import BytesIO
 import numpy as np
 from scipy.ndimage import binary_closing, distance_transform_edt, find_objects, label
 from scipy.spatial import cKDTree
@@ -72,7 +73,8 @@ def agreement(example, candidate, cfg):
     return float(np.clip(best, 0, 1))
 
 
-def match(evidence, template, cfg, columns, progress, cancel, emit, bank=None, folder=None):
+def match(evidence, template, cfg, columns, progress, cancel, emit, bank=None, folder=None,
+          *, review=False, reviewed=(), skipped=None):
     """Assign complete accepted components using deterministic tile ownership."""
     db = evidence.db
     if bank:
@@ -86,9 +88,8 @@ def match(evidence, template, cfg, columns, progress, cancel, emit, bank=None, f
         taught = descriptor(template['mask'], template['depth'])
         dimensions=[np.asarray(template['mask'].shape)];sizes=[taught['count']]
     example_sizes=sizes
-    db.execute('CREATE TABLE IF NOT EXISTS group_examples(id INTEGER PRIMARY KEY,class_id TEXT,example_id TEXT,path TEXT NOT NULL)')
-    descriptor_folder=Path(folder) / 'descriptors' if folder is not None else evidence.path.parent/'descriptors'
-    descriptor_folder.mkdir(exist_ok=True)
+    group_table = 'review.group_examples' if review else 'group_examples'
+    db.execute(f'CREATE TABLE IF NOT EXISTS {group_table}(id INTEGER PRIMARY KEY, descriptor BLOB NOT NULL, signature TEXT NOT NULL)')
     # Every potentially accepted rotated footprint fits in this halo. Large
     # continuing components touching it are rejected rather than truncated.
     reach = max(4, int(math.ceil(max(np.linalg.norm(a) for a in dimensions)*1.65))+3)
@@ -167,13 +168,21 @@ def match(evidence, template, cfg, columns, progress, cancel, emit, bank=None, f
                 old = assigned[ar,ac]
                 if (old > 0).any():
                     continue
+                # Canonical measured cell order also works across the angular seam.
+                keys = np.sort((ar.astype(np.int64)+start)*columns+ac).astype('<i8',copy=False)
+                identity = hashlib.sha256(np.asarray([side,columns],'<i8').tobytes()+keys.tobytes()).hexdigest()
+                if identity in reviewed:
+                    if skipped is not None:
+                        skipped.add(identity)
+                    continue
                 gid = next_id; next_id += 1
                 db.execute('INSERT INTO matches(id,station,angle,score,side) VALUES(?,?,?,?,?)',
                            (gid,(start+centre_r)*cfg['grid_mm']/1000,
                             ((centre_c-reach)%columns)*2*np.pi/columns,score,side))
-                dest=descriptor_folder/(str(gid)+'.npz')
-                np.savez_compressed(dest,mask=footprint,depth=np.where(footprint,values,0),grid_mm=cfg['grid_mm'],side=side)
-                db.execute('INSERT INTO group_examples VALUES(?,?,?,?)',(gid,winner['class_id'] if winner else None,winner['id'] if winner else None,str(dest)))
+                with BytesIO() as descriptor_file:
+                    np.savez_compressed(descriptor_file,mask=footprint,depth=np.where(footprint,values,0),
+                                        grid_mm=cfg['grid_mm'],side=side)
+                    db.execute(f'INSERT INTO {group_table} VALUES(?,?,?)',(gid,descriptor_file.getvalue(),identity))
                 db.executemany('UPDATE cells SET gid=? WHERE r=? AND c=? AND side=? AND gid=0',
                                ((gid,int(a+start),int(b),side) for a,b in zip(ar,ac)))
                 assigned[ar,ac] = gid

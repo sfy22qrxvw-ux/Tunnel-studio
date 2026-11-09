@@ -1,0 +1,14 @@
+Tunnel Studio 0.22.7
+9 November 2026
+
+Pocket search and review
+Compact-pocket search now stores its temporary candidate descriptors in a
+single review database. Saving reviewed examples shares scan reads for
+overlapping wall crops. The original measured points and wall samples
+are preserved.
+
+Rerunning the same search on the same scan and lining settings skips exact
+matches confirmed or rejected since this update. Unreviewed matches are
+still offered for review. Use Show previously reviewed matches to include
+eligible older matches. Review records follow project save and Undo.
+

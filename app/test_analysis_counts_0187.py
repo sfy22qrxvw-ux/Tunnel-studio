@@ -5,9 +5,12 @@ from pathlib import Path
 import tempfile
 from types import SimpleNamespace
 import unittest
+from unittest.mock import patch
+import uuid
 
 import numpy as np
 from core import Alignment,project_cloud
+import job_api
 import projects
 import scan_edits
 
@@ -67,6 +70,38 @@ class AnalysisCounts0187Tests(unittest.TestCase):
             os.utime(path,ns=(before.st_atime_ns,before.st_mtime_ns+1_000_000))
         with self.assertRaisesRegex(ValueError,'changed'):
             project_cloud(self.meta,self.axis,self.root/'changed.analysis64',mutate)
+
+    def test_repeated_use_for_analysis_skips_projection_and_new_disk_allocation(self):
+        derived,count=project_cloud(self.meta,self.axis,self.root/(uuid.uuid4().hex+'.analysis64'))
+        scan_edits.record_projection(self.meta,derived,count)
+        item=dict(id='scan',name='Scan',kind='scan',meta=self.meta)
+        s=SimpleNamespace(WORK=self.root,STATE=dict(axis=self.axis,job_items=[item]),
+            JOB={'busy':False},SELECTION=None,progress=lambda _:None,save=lambda:None,
+            start_job=lambda fn,*args,**kwargs:fn())
+        request=dict(action='analyse',id='scan',position_confirmed=True)
+        with patch.object(job_api,'project_cloud',side_effect=AssertionError('reprojected')), \
+             patch.object(job_api.jobdata,'room',side_effect=AssertionError('reserved new disk space')):
+            self.assertTrue(job_api.post(s,SimpleNamespace(send=lambda _:None),'/api/job-action',request))
+        self.assertEqual((s.STATE['derived'],s.STATE['valid_points']),(derived,count))
+
+    def test_projection_reuse_validates_alignment_pose_file_and_edited_count(self):
+        derived,count=project_cloud(self.meta,self.axis,self.root/(uuid.uuid4().hex+'.analysis64'))
+        scan_edits.record_projection(self.meta,derived,count)
+        self.assertEqual(scan_edits.reusable_projection(self.meta,self.axis,self.root),(derived,2))
+        changed=Alignment([dict(chainage=0.,e=0.,n=0.,h=0.,radius=2.),
+                           dict(chainage=5.,e=5.,n=0.,h=0.,radius=2.)])
+        self.assertIsNone(scan_edits.reusable_projection(self.meta,changed,self.root))
+        moved={**self.meta,'registration_translation':[1.,0.,0.]}
+        self.assertIsNone(scan_edits.reusable_projection(moved,self.axis,self.root))
+
+        old_mask=self.meta['mask_file']
+        after,changed_count=scan_edits.update_mask(self.meta,[np.array([4])],self.root,1,lambda _:None,[],derived,count)
+        self.meta['mask_file']=after
+        self.assertEqual(changed_count,1)
+        self.assertNotEqual(after,old_mask)
+        self.assertEqual(scan_edits.reusable_projection(self.meta,self.axis,self.root),(derived,1))
+        path=Path(derived);data=path.read_bytes();path.write_bytes(data)
+        self.assertIsNone(scan_edits.reusable_projection(self.meta,self.axis,self.root))
 
 
 if __name__=='__main__':unittest.main()

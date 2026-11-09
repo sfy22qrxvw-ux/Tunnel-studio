@@ -6,7 +6,7 @@ from types import SimpleNamespace
 import copy, csv, io, json, os, shutil, time, uuid, hashlib, workspace_tools
 import numpy as np
 import registration_workspace, leica_project, setup_view, setup_photos, setup_camera, scan_export, ring_creep
-import projects, registration, pointio, exchange, surface_api, job_api, jobdata, target_ops, session_start, workspace_history
+import projects, registration, pointio, exchange, surface_api, job_api, jobdata, scan_edits, target_ops, session_start, workspace_history
 from core import Alignment, project_cloud
 
 
@@ -169,13 +169,13 @@ class _Recovery:
         m.setdefault('name',str(name))
         return m
 
-    def history(self,values,n,name):
+    def history(self,values,n,name,compact=False):
         if not isinstance(values,list):
             self.hold('history',name,values,'Invalid edit history. Current point edits are retained.');return []
         out=[]
         for value in values:
             try:
-                v=self.paths(value)
+                v=self.paths(scan_edits.compact_history_entry(value) if compact else value)
                 def masks(x,current=n):
                     if isinstance(x,dict):
                         if x.get('kind') in ('scan','mesh') and isinstance(x.get('meta'),dict):
@@ -187,6 +187,7 @@ class _Recovery:
                         for key,y in x.items():
                             if key in ('before_mask','after_mask') and y:self.cache(y,current,1)
                             else:masks(y,current)
+                        if 'group_change' in x:scan_edits.group_change(x)
                     elif isinstance(x,list):
                         for y in x:masks(y,current)
                 masks(v)
@@ -240,7 +241,8 @@ def prepare_data(s,data):
             seen.add(x['id']);x.setdefault('name',name);x.setdefault('visible',True)
             x.setdefault('source_bytes',0);x.setdefault('hidden_boxes',[]);x.setdefault('isolate_box',None)
             for key in ('edit_history','redo_history','deleted_groups'):
-                if key in x:x[key]=r.history(x[key],x['meta'].get('count',x['meta'].get('triangles')),name+' · '+key)
+                if key in x:x[key]=r.history(x[key],x['meta'].get('count',x['meta'].get('triangles')),name+' · '+key,
+                                              compact=key!='deleted_groups' and isinstance(x.get('deleted_groups'),list))
             if x.get('setup_photo'):
                 try:x['setup_photo']=r.paths(x['setup_photo'])
                 except (OSError,ValueError) as exc:r.hold('setup_photo',name+' · setup photo',x.pop('setup_photo'),exc);x['photo_notice']='The saved setup photo is unavailable; scan geometry remains available.'
@@ -260,8 +262,11 @@ def prepare_data(s,data):
             try:d[key]=r.meta(d[key],name=key)
             except (OSError,ValueError,KeyError,TypeError) as exc:r.hold('scan',key,d[key],exc);d[key]=None
     if d.get('cloud'):
-        d['edits']=r.history(d.get('edits',[]),d['cloud']['count'],'Survey edits')
-        d['redo']=r.history(d.get('redo',[]),d['cloud']['count'],'Survey redo')
+        active=next((x for x in entries if x['id']==d.get('active_job_scan') and x['kind']=='scan'
+                     and all(x['meta'].get(key)==d['cloud'].get(key) for key in ('file','mask_file'))),None)
+        compact=active is not None and isinstance(active.get('deleted_groups'),list)
+        d['edits']=r.history(d.get('edits',[]),d['cloud']['count'],'Survey edits',compact=compact)
+        d['redo']=r.history(d.get('redo',[]),d['cloud']['count'],'Survey redo',compact=compact)
         try:
             if d['axis'] is None:raise ValueError('No usable alignment is available.')
             d['derived']=r.cache(d.get('derived'),d['cloud']['count'],32)

@@ -89,7 +89,7 @@ def coordinates(points, model):
                 supported=supported, radial_unit=radial_unit)
 
 
-def _point_normals(local, tree, sample_local, radius, progress=None, cancel=None):
+def _point_normals(local, tree, sample_local, radius, progress=None, cancel=None, *, worker_count=1):
     """Local PCA on bounded original-coordinate model neighbours, in chunks.
 
     A radius bound prevents distant isolated points acquiring arbitrary normals.
@@ -100,10 +100,6 @@ def _point_normals(local, tree, sample_local, radius, progress=None, cancel=None
     k = min(16, len(sample_local))
     if k < 6:
         return normals, reliable
-    # These PCA blocks contain at most 8,192 queries. Thread-team overhead
-    # exceeded the query savings on the benchmark; larger noise/ICP batches
-    # use the separate resource-aware parallel path.
-    worker_count = 1
     for start in range(0, n, 8192):
         if cancel is not None:
             _emit(progress or (lambda _: None), cancel, 'Checking local surface normals')
@@ -247,7 +243,11 @@ def fit_batches(batches, settings, progress=lambda _: None, cancel=lambda: False
     model.update(s0=s0, nstation=ns)
     local = sample-seed['reference']; tree = cKDTree(local)
     normal_radius = max(.06, min(.40, window*.45, seed['radius']*step*1.2))
-    normals, normal_ok = _point_normals(local, tree, local, normal_radius, progress, cancel)
+    # Fitting owns the job's worker budget. Classification is already
+    # parallel across input blocks and uses one KD-tree worker per block.
+    workers = compute_runtime.workers(maximum=4) if len(local) >= 8192 else 1
+    normals, normal_ok = _point_normals(local, tree, local, normal_radius, progress, cancel,
+                                       worker_count=workers)
     model.update(tree=tree, sample_local=local, normal_radius=normal_radius)
     station = np.clip(np.floor((s-s0)/window).astype(np.int64), 0, ns-1)
     angular = np.minimum(na-1, np.floor(angle/step).astype(np.int64))
@@ -257,6 +257,19 @@ def fit_batches(batches, settings, progress=lambda _: None, cancel=lambda: False
     ends = np.r_[starts[1:], len(order)]
     groups = {int(k): order[lo:hi] for k, lo, hi in zip(unique, starts, ends)}
     patches = {}
+    regional_plane_seconds = 0.
+    regional_plane_calls = 0
+
+    def fit_patch(indices, key):
+        nonlocal regional_plane_seconds, regional_plane_calls
+        arguments = (local[indices], chart['deviation'][indices], chart['radial_unit'][indices],
+                     normals[indices], normal_ok[indices], params, int(key))
+        started = time.perf_counter()
+        patch = _regional_plane(*arguments)
+        regional_plane_seconds += time.perf_counter() - started
+        regional_plane_calls += 1
+        return patch
+
     for number, key in enumerate(unique):
         if number % 25 == 0:
             _emit(progress, cancel, f'GuSAC · regional RANSAC planes {number+1:,}/{len(unique):,}')
@@ -268,8 +281,7 @@ def fit_batches(batches, settings, progress=lambda _: None, cancel=lambda: False
         centre_s = s0+(si+.5)*window; centre_a = (ai+.5)*step
         delta_a = np.abs(np.arctan2(np.sin(angle[ix]-centre_a), np.cos(angle[ix]-centre_a)))
         ix = ix[(abs(s[ix]-centre_s) <= window*.85) & (delta_a <= step*.85)]
-        patch = _regional_plane(local[ix], chart['deviation'][ix], chart['radial_unit'][ix],
-                                normals[ix], normal_ok[ix], params, int(key))
+        patch = fit_patch(ix, key)
         if patch is None:
             # Sparse wall glimpses behind a service may not supply twenty
             # points in one metre. Extend only the longitudinal fitting halo,
@@ -281,8 +293,7 @@ def fit_batches(batches, settings, progress=lambda _: None, cancel=lambda: False
             extra = np.concatenate(neighbours)
             delta_a = np.abs(np.arctan2(np.sin(angle[extra]-centre_a), np.cos(angle[extra]-centre_a)))
             extra = extra[(abs(s[extra]-centre_s) <= window*4.0) & (delta_a <= step*.85)]
-            patch = _regional_plane(local[extra], chart['deviation'][extra], chart['radial_unit'][extra],
-                                    normals[extra], normal_ok[extra], params, int(key))
+            patch = fit_patch(extra, key)
             if patch is not None:
                 patch['extended_support'] = True
         if patch is not None:
@@ -291,6 +302,8 @@ def fit_batches(batches, settings, progress=lambda _: None, cancel=lambda: False
         raise ValueError('GuSAC could not verify any lining patches. Include more wall and crown, increase the window or reduce minimum support. No source points were changed.')
     model['patches'] = patches
     model['attempted_patches'] = len(unique)
+    model['regional_plane_seconds'] = regional_plane_seconds
+    model['regional_plane_calls'] = regional_plane_calls
     return model
 
 
@@ -360,6 +373,7 @@ def run_batches(batches, work, ids_path, labels_path, settings, progress, cancel
     started = time.monotonic()
     work = Path(work); work.mkdir(parents=True, exist_ok=True)
     model = fit_batches(batches, settings, progress, cancel)
+    fit_seconds = time.monotonic()-started
     if model['input_points'] != selected_total:
         raise ValueError('The selected cloud changed while learning the GuSAC model. Run again.')
     counts = np.zeros(5, np.int64); sums = np.zeros((5, 3), np.float64)
@@ -414,6 +428,9 @@ def run_batches(batches, work, ids_path, labels_path, settings, progress, cancel
                  calibration_points=model['sample_points'], model_sample_cap=400000,
                  model_sample_spacing_m=.015, plane_supported_points=plane_supported,
                  regional_planes=len(model['patches']), attempted_regions=model['attempted_patches'],
+                 fit_seconds=round(fit_seconds, 3),
+                 regional_plane_seconds=round(model['regional_plane_seconds'], 3),
+                 regional_plane_calls=model['regional_plane_calls'],
                  sparse_support_extended_regions=sum(bool(p.get('extended_support')) for p in model['patches'].values()),
                  normal_checked_points=normal_queries, normal_neighbourhood_radius_m=model['normal_radius'],
                  fitted_sections=len(model['seed']['nodes']), reference_radius_m=model['radius'],

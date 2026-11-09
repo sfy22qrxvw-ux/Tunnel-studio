@@ -124,6 +124,19 @@ def _derived_count(meta,cached,derived):
     return value
 
 
+def reusable_projection(meta,axis,work):
+    """Return a verified cache and exact retained total without reading point rows."""
+    summary=cached_summary(meta)
+    if not summary:return None
+    path=summary.get('derived')
+    count=_derived_count(meta,summary,path)
+    if count is None:return None
+    import storage_cleanup
+    if storage_cleanup.projection_matches(work,meta,axis,path):
+        return path,count
+    return None
+
+
 def _summary(meta,count,derived=None,valid_points=None,derived_signature=None):
     out=dict(revision=meta.get('mask_file') or '',source_signature=_properties_signature(meta),count=int(count))
     if derived and type(valid_points) is int and 0<=valid_points<=count:
@@ -428,6 +441,68 @@ def records(item):
     return item['deleted_groups']
 
 
+def compact_history_entry(entry):
+    """Upgrade legacy snapshots only when they describe one known group edit."""
+    if not isinstance(entry, dict) or 'group_change' in entry:
+        return entry
+    before, after = entry.get('before_groups'), entry.get('after_groups')
+    ident, count = entry.get('group_id'), entry.get('count')
+    if not (isinstance(before, list) and isinstance(after, list) and after
+            and isinstance(ident, str) and ident and type(count) is int):
+        return entry
+    if count > 0 and len(after) == len(before) + 1 and after[:-1] == before:
+        index, old = len(before), None
+    elif count < 0 and len(after) == len(before):
+        index = next((i for i, group in enumerate(before)
+                      if isinstance(group, dict) and group.get('id') == ident), None)
+        if index is None or before[:index] != after[:index] or before[index+1:] != after[index+1:]:
+            return entry
+        old = before[index]
+        if old.get('archive') or old.get('kind') != 'delete':
+            return entry
+    else:
+        return entry
+    new = after[index]
+    if (not isinstance(new, dict) or new.get('id') != ident or new.get('archive')
+            or new.get('kind') not in ('delete', 'move')
+            or sum(isinstance(group, dict) and group.get('id') == ident for group in after) != 1):
+        return entry
+    return {**{key: value for key, value in entry.items() if key not in ('before_groups', 'after_groups')},
+            'group_change': dict(version=1, index=index, before=old, after=new)}
+
+
+def group_change(entry):
+    """Validate a compact journal record before recovery or replay."""
+    if 'group_change' not in entry:
+        return None
+    change = entry['group_change']
+    ident = entry.get('group_id')
+    if (not isinstance(change, dict) or type(change.get('version')) is not int or change['version'] != 1
+            or type(change.get('index')) is not int or change['index'] < 0
+            or not isinstance(ident, str) or not ident or 'before' not in change):
+        raise ValueError('Invalid point edit group history.')
+    before, after = change['before'], change.get('after')
+    if not isinstance(after, dict) or after.get('id') != ident or (
+            before is not None and (not isinstance(before, dict) or before.get('id') != ident)):
+        raise ValueError('Invalid point edit group history.')
+    return change
+
+
+def _replay_group_change(groups, entry, change, undo):
+    # Match by identity because a cleaning archive can be added independently.
+    index = next((i for i, group in enumerate(groups) if group['id'] == entry['group_id']), None)
+    expected = change['after' if undo else 'before']
+    restored = change['before' if undo else 'after']
+    if (groups[index] if index is not None else None) != expected:
+        raise ValueError('The deleted group has changed since this edit. Undo its newer changes first.')
+    if restored is None:
+        groups.pop(index)
+    elif index is None:
+        groups.insert(change['index'], copy.deepcopy(restored))
+    else:
+        groups[index] = copy.deepcopy(restored)
+
+
 def group_ids(meta, group):
     if group.get('remaining') is not None:
         yield from __import__('deleted_points').id_batches(group['remaining'])
@@ -481,7 +556,9 @@ def update_mask(meta, ids_batches, work, value, progress, created, derived=None,
     property_budget=pointio.CHUNK
     try:
         for ids in ids_batches:
-            ids=np.unique(np.asarray(ids,dtype=np.int64))
+            ids=np.asarray(ids,dtype=np.int64).ravel()
+            if len(ids)>1 and not np.all(ids[1:]>ids[:-1]):
+                ids=np.unique(ids)
             if len(ids) and (ids[0]<0 or ids[-1]>=original_count):raise ValueError('The point selection is no longer valid.')
             current=out if out is not None else old
             if current is not None:ids=ids[(current[ids]!=0) != bool(value)]
@@ -633,16 +710,20 @@ def apply(s, item, action, selection=None, group_id=None, reason='Selected point
                 cached=entry.get(('before_' if undo else 'after_')+suffix)
                 if cached:meta[key]=copy.deepcopy(cached)
                 else:meta.pop(key,None)
+            change = group_change(entry)
             saved_groups = entry.get('before_groups' if undo else 'after_groups')
-            if saved_groups is not None: item['deleted_groups'] = copy.deepcopy(saved_groups)
+            if change is not None: _replay_group_change(groups, entry, change, undo)
+            elif saved_groups is not None: item['deleted_groups'] = copy.deepcopy(saved_groups)
             else:
                 for group in groups:
                     if group['id'] == entry.get('group_id'): group['active'] = not undo
             src.pop(); dst.append(entry)
         else:
-            before_groups = copy.deepcopy(groups); before = meta.get('mask_file');before_properties=_cheap_properties(meta)
+            before = meta.get('mask_file');before_properties=_cheap_properties(meta)
             if action == 'restore_deleted':
                 group = record(item, group_id)
+                group_index = groups.index(group)
+                before_group = copy.deepcopy(group)
                 batches=(__import__('deleted_points').id_batches({'ids_file':selected_file['file'],'count':selected_file['count']})
                          if selected_file else group_ids(meta,group))
                 after, count = update_mask(meta,batches,s.WORK,0,progress,created,derived,valid_points,derived_revision)
@@ -674,6 +755,7 @@ def apply(s, item, action, selection=None, group_id=None, reason='Selected point
                     created.extend(Path(newmeta[k]) for k in ('file','attributes_file','preview_file') if newmeta.get(k))
                 after, count = update_mask(meta, batches, s.WORK, 1, progress, created,derived,valid_points,derived_revision); signed_count = count
                 group = dict(id=uuid.uuid4().hex, kind='move' if newmeta else 'delete', name=reason, count=count, before_mask=before, after_mask=after, active=True, created=time.time())
+                group_index, before_group = len(groups), None
                 groups.append(group)
             before_summary=_summary({**meta,'mask_file':before},meta['retained_summary']['count']+signed_count,derived,valid_points,derived_revision)
             if before_properties is not None and before_properties['count']!=before_summary['count']:
@@ -686,7 +768,8 @@ def apply(s, item, action, selection=None, group_id=None, reason='Selected point
                 for name in ('derived','valid_points','derived_signature'):
                     if name not in before_summary:before_properties.pop(name,None)
             entry = dict(time=time.time(), before_mask=before, after_mask=after, count=signed_count, reason=reason, group_id=group['id'], before_properties=before_properties,after_properties=copy.deepcopy(meta.get('retained_properties')),
-                         before_summary=before_summary,after_summary=copy.deepcopy(meta['retained_summary']),before_groups=before_groups, after_groups=copy.deepcopy(groups))
+                         before_summary=before_summary,after_summary=copy.deepcopy(meta['retained_summary']),
+                         group_change=dict(version=1,index=group_index,before=before_group,after=copy.deepcopy(group)))
             if newmeta:
                 child = dict(id=uuid.uuid4().hex, kind='scan', name=newmeta['name'], meta=newmeta, visible=True, source_bytes=0, position_status=item.get('position_status','')+' · separated selection', hidden_boxes=[], isolate_box=None, edit_history=[], redo_history=[], deleted_groups=[])
                 entry['separated_item'] = copy.deepcopy(child); s.STATE['job_items'].append(child)

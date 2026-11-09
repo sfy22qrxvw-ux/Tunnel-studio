@@ -209,9 +209,9 @@ def ready(require_cloud=False):
     if STATE['axis'] is None: raise ValueError('Load an alignment first.')
     if require_cloud and STATE['cloud'] is None: raise ValueError('Load a scan first.')
 
-def status():
+def status(job=None):
     a=STATE['axis']; c=STATE['cloud']
-    return {'history':workspace_history.status(sys.modules[__name__]),'job_item_count':len(STATE.get('job_items',[])),'project_id':STATE.get('project_id'),'project_title':STATE.get('project_title','Untitled project'),'saved_at':STATE.get('saved_at'),'ui':STATE.get('ui',{}),'registration_ready':bool(STATE.get('registration',{}).get('cloud')),'export_ready':{k:v for k,v in (STATE.get('export_ready') or {}).items() if k!='file'},'job':JOB.copy(),'demo':STATE['demo'],'axis':None if a is None else {'name':a.name,'start':float(a.a[0,0]),'end':float(a.a[-1,0]),'nodes':len(a.a),'estimated':STATE.get('axis_provenance',{}).get('kind')=='scan_estimate'},
+    return {'history':workspace_history.status(sys.modules[__name__]),'job_item_count':len(STATE.get('job_items',[])),'project_id':STATE.get('project_id'),'project_title':STATE.get('project_title','Untitled project'),'saved_at':STATE.get('saved_at'),'ui':STATE.get('ui',{}),'registration_ready':bool(STATE.get('registration',{}).get('cloud')),'export_ready':{k:v for k,v in (STATE.get('export_ready') or {}).items() if k!='file'},'job':JOB.copy() if job is None else job,'demo':STATE['demo'],'axis':None if a is None else {'name':a.name,'start':float(a.a[0,0]),'end':float(a.a[-1,0]),'nodes':len(a.a),'estimated':STATE.get('axis_provenance',{}).get('kind')=='scan_estimate'},
         'cloud':None if c is None else {k:v for k,v in c.items() if k not in ('file','mask_file','attributes_file')},'valid_points':STATE['valid_points'],'rings':STATE['rings'],'joints':STATE.get('joints'),
         'last_backup':STATE.get('last_backup'),'structures':STATE.get('structures',[]),'selection_count':SELECTION['count'] if SELECTION else 0,'edit_count':len(STATE.get('edits',[])),'redo_count':len(STATE.get('redo',[])),'removed_points':sum(e['count'] for e in STATE.get('edits',[])), 'report_ready':STATE.get('report_ready',False),'clean_ready':STATE.get('clean_ready',False),'report_settings':STATE.get('report_settings',{}),'copyright':COPYRIGHT,'version':VERSION,'formats':['E57','LAS','LAZ','PLY','PTS','XYZ','TXT','CSV'],'mesh_capabilities':meshing.capabilities(),'analysis_tool_result':STATE.get('analysis_tool_result')}
 
@@ -253,6 +253,11 @@ class Handler(BaseHTTPRequestHandler):
         if not self.allowed_host(): return self.send({'error':'Invalid local host'},code=403)
         parsed=urlparse(self.path); path=parsed.path; args=parse_qs(parsed.query)
         try:
+            if path=='/api/status':
+                job=JOB.copy()
+                if args.get('job_only')==['1'] or (job['busy'] and args.get('during_job')==['1']):
+                    return self.send({'job':job})
+                return self.send(status(job))
             if path=='/':
                 from appearance_palettes import controls_markup, style_markup
                 html=(ROOT/'web/index.html').read_text(encoding='utf8').replace('__TOKEN__',TOKEN).replace('__VERSION__',VERSION).replace('__COPYRIGHT__',COPYRIGHT)
@@ -295,7 +300,6 @@ class Handler(BaseHTTPRequestHandler):
             if inspection_api.get(sys.modules[__name__],self,path,args):return
             if design_api.get(sys.modules[__name__],self,path,args):return
             if workflows.get(sys.modules[__name__],self,path,args): return
-            if path=='/api/status': return self.send(status())
             if path=='/api/overview': return self.send(overview())
             import section_api
             if section_api.get(sys.modules[__name__],self,path,args):return

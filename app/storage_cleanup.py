@@ -70,7 +70,7 @@ def _shape(rel,kind):
     return False
 
 
-def record_product(work,path,kind,state=None,recipe=None):
+def record_product(work,path,kind,state=None,recipe=None,*,geometry_recipe=None):
     """A failed provenance write leaves an otherwise successful product protected."""
     root=Path(work).resolve();path=Path(path).absolute()
     try:
@@ -79,18 +79,20 @@ def record_product(work,path,kind,state=None,recipe=None):
         target=root/RECEIPTS
         si.normal_folder(target);target.mkdir(exist_ok=True)
         receipt=target/(_relative_digest(rel)+'.json')
-        projects.atomic_json(receipt,dict(relative=rel.as_posix(),category=kind,
-            stamp=si.deletion_stamp(path.lstat()),owner=str((state or {}).get('project_title') or '')[:180],recipe=recipe))
+        entry=dict(relative=rel.as_posix(),category=kind,
+            stamp=si.deletion_stamp(path.lstat()),owner=str((state or {}).get('project_title') or '')[:180],recipe=recipe)
+        if geometry_recipe:entry['geometry_recipe']=geometry_recipe
+        projects.atomic_json(receipt,entry)
     except (OSError,ValueError,TypeError):return
 
 
-def _recipe(meta,axis):
+def _recipe(meta,axis,*,include_mask=True):
     if not isinstance(meta,dict) or not meta.get('file') or axis is None:return None
     try:
         rows=axis.get('rows') if isinstance(axis,dict) else getattr(axis,'a',None)
         if hasattr(rows,'tolist'):rows=rows.tolist()
         if not isinstance(rows,list) or not rows:return None
-        paths=[Path(meta[k]) for k in ('file','mask_file') if meta.get(k)]
+        paths=[Path(meta[k]) for k in ('file','mask_file') if meta.get(k) and (k=='file' or include_mask)]
         data=[[(str(p),si.deletion_stamp(p.stat())) for p in paths],
               meta.get('registration_rotation'),meta.get('registration_translation'),rows]
         return hashlib.sha256(json.dumps(data,allow_nan=False,separators=(',',':')).encode()).hexdigest()
@@ -101,7 +103,32 @@ def record_projection(meta,axis,path):
     p=Path(path).absolute();root=p.parent
     if root.name=='Analysis' and (root.parent/'.tunnelstudio-workspace.json').is_file():root=root.parent
     recipe=_recipe(meta,axis)
-    if recipe:record_product(root,p,'analysis',recipe=recipe)
+    if recipe:record_product(root,p,'analysis',recipe=recipe,geometry_recipe=_recipe(meta,axis,include_mask=False))
+
+
+def projection_matches(work,meta,axis,path):
+    """Verify an existing projection's source, pose, alignment and file revision."""
+    root=Path(work).resolve()
+    path=Path(path).absolute()
+    try:
+        rel=path.relative_to(root)
+        receipt=root/RECEIPTS/(_relative_digest(rel)+'.json')
+        if not _shape(rel,'analysis') or not si.safe_path(path,root) or not si.safe_path(receipt,root):
+            return False
+        if receipt.lstat().st_size>10000:return False
+        entry=projects.read_json(receipt)
+        if (entry.get('relative')!=rel.as_posix() or entry.get('category')!='analysis'
+                or entry.get('stamp')!=list(si.deletion_stamp(path.lstat()))):
+            return False
+        # Projection rows cover every original point. A changed mask only
+        # changes the separate retained total, which the caller verifies.
+        geometry=entry.get('geometry_recipe')
+        if geometry:
+            return geometry==_recipe(meta,axis,include_mask=False)
+        recipe=entry.get('recipe')
+        return bool(recipe and recipe==_recipe(meta,axis))
+    except (OSError,ValueError,TypeError,AttributeError):
+        return False
 
 
 def _products(root):

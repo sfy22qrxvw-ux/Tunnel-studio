@@ -2,10 +2,9 @@
 """Full-density tunnel noise screening with bounded spatial working sets.
 
 Original coordinates are spooled in 100,000-record blocks. Each processing
-window obtains its complete 2R support from neighbouring tile files. A single
-bounded KD-tree query pass computes per-point statistics and retains neighbour
-indices/validity for the MAD rule. No sampling or coordinate changes are used
-to reduce the input point count.
+window obtains its complete 2R support from neighbouring tile files. Bounded
+KD-tree queries cache neighbour identities for the local distance/MAD rule.
+No sampling or coordinate changes are used to reduce the input point count.
 
 The admission ceiling is two billion selected points, not two billion points
 in RAM. An unusually dense support region or excessive tile index is refused
@@ -76,8 +75,9 @@ def classify(points, radius=.10, neighbours=12, minimum=3, multiplier=3.0,
              worker_count=None, cancel=None):
     """Classify unique points from one bounded support region.
 
-    The caller supplies the complete 2R halo. Neighbour arrays are limited to
-    QUERY_CHUNK rows; the tree and per-point statistics belong to this region.
+    The caller supplies the complete 2R halo. Queries are limited to
+    QUERY_CHUNK rows. Cached indices and validity flags add 5 * n * k bytes
+    to the caller's support-region budget.
     """
     q = np.asarray(points, dtype=np.float64)
     if q.ndim != 2 or q.shape[1] != 3 or not np.isfinite(q).all():
@@ -91,6 +91,8 @@ def classify(points, radius=.10, neighbours=12, minimum=3, multiplier=3.0,
     n = len(q)
     if not n:
         return np.empty(0, np.int32)
+    if n > np.iinfo(np.int32).max:
+        raise ValueError('The noise support region exceeds the neighbour index range.')
     workers = compute_runtime.workers() if worker_count is None else _integer(worker_count, 'Worker count')
     if workers == 0 or workers < -1:
         raise ValueError('Worker count must be positive or -1.')
@@ -101,32 +103,29 @@ def classify(points, radius=.10, neighbours=12, minimum=3, multiplier=3.0,
     means = np.full(n, np.nan, np.float64)
     labels = np.zeros(n, np.int32)
     bound = radius * (1 + 1e-12)
-
-    # Single query pass: compute per-point statistics and retain neighbour
-    # indices/validity for the MAD pass. The KD-tree is queried once instead
-    # of twice; the stored indices and validity mask are exactly what a
-    # second tree.query() would return, so the output is identical.
     all_indices = np.empty((n, k), dtype=np.int32)
     all_valid = np.empty((n, k), dtype=bool)
+
+    # Pass one: every unique location gets its own supported mean distance.
     for start in range(0, n, QUERY_CHUNK):
         _cancel(cancel)
         end = min(n, start + QUERY_CHUNK)
         distance, indices = tree.query(q[start:end], k=k + 1,
                                       distance_upper_bound=bound, workers=workers)
         distance = distance[:, 1:]
-        indices = indices[:, 1:]
         valid = np.isfinite(distance)
+        all_indices[start:end] = indices[:, 1:]
+        all_valid[start:end] = valid
         number = valid.sum(axis=1)
         support[start:end] = number
         means[start:end] = np.divide(
             np.where(valid, distance, 0).sum(axis=1), number,
             out=np.full(end - start, np.nan), where=number > 0)
-        all_indices[start:end] = indices
-        all_valid[start:end] = valid
-        del distance, number
+        del distance, indices, valid, number
+    del tree
     labels[support < minimum] = 1
 
-    # MAD rejection pass: read back stored indices/valid, no tree query.
+    # Pass two: use the same neighbours with the completed mean distances.
     for start in range(0, n, QUERY_CHUNK):
         _cancel(cancel)
         end = min(n, start + QUERY_CHUNK)
@@ -274,12 +273,13 @@ def run_batches(batches, work, ids_path, labels_path, settings, progress, cancel
                 neighbours = sum(tile_counts.get(tuple(key[i] + d[i] for i in range(3)), 0)
                                  for d in deltas)
                 largest_halo = max(largest_halo, neighbours)
-            estimate = largest_halo * BYTES_PER_SUPPORT_RECORD + QUERY_RESERVE
+            bytes_per_record = BYTES_PER_SUPPORT_RECORD + 5 * k
+            estimate = largest_halo * bytes_per_record + QUERY_RESERVE
             per_worker = min(working_budget, max(128 * MIB, estimate))
             workers = min(len(keys), compute_runtime.workers(memory_per_worker=per_worker),
                           max(1, working_budget // per_worker))
             allowance = working_budget // workers
-            halo_limit = (allowance - QUERY_RESERVE) // BYTES_PER_SUPPORT_RECORD
+            halo_limit = (allowance - QUERY_RESERVE) // bytes_per_record
             if halo_limit < 4:
                 raise ValueError('Not enough working memory for a noise support region.')
             window = min(CHUNK, max(1, halo_limit // 4))
