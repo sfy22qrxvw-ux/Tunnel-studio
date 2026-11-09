@@ -3,6 +3,7 @@ from project_data_layout import folder as asset_folder
 from pathlib import Path
 import copy,hashlib,json,uuid
 import job_api,jobdata,scene_objects,design_compare,ring_suggestions
+import scan_edits
 
 
 def source(s,ident=None):
@@ -25,12 +26,17 @@ def run(s,body):
     try:
         m=x['meta'];axis=s.STATE['axis'];stamp=hashlib.sha256(json.dumps([axis.a.tolist(),design_compare.fingerprint(m)]).encode()).hexdigest()
         derived=s.STATE.get('derived');count=s.STATE.get('valid_points',0)
-        if not derived or not Path(derived).is_file() or Path(derived).stat().st_size!=int(m['count'])*32 or s.STATE.get('joint_projection_stamp')!=stamp:
+        cached=scan_edits.reusable_projection(m,axis,s.WORK)
+        if cached:
+            derived,count=cached
+            s.progress('Reusing the verified alignment projection')
+        elif not derived or not Path(derived).is_file() or Path(derived).stat().st_size!=int(m['count'])*32 or s.STATE.get('joint_projection_stamp')!=stamp:
             jobdata.room(s.WORK,m['count']*32);dest=asset_folder(s.WORK,'analysis')/(uuid.uuid4().hex+'.analysis64');created.append(dest)
             s.progress('Preparing '+x['name']+' for ring joint suggestions…')
             derived,count=project_cloud(m,axis,dest,s.progress)
             if not count:raise ValueError('No points fall within the alignment. Check that the scan and alignment share coordinates and metres.')
-            __import__('scan_edits').record_projection(m,derived,count)
+            scan_edits.record_projection(m,derived,count)
+        if count==0:raise ValueError('No points fall within the alignment. Check that the scan and alignment share coordinates and metres.')
         result=ring_suggestions.detect(m,derived,axis,body,s.progress,clip=x.get('limit_box') if x.get('limit_hide_outside',True) else None)
         result.update(source_id=x['id'],source_name=x['name'],source_revision=scene_objects.source_revision(x))
         s.STATE.update(cloud=copy.deepcopy(m),derived=derived,valid_points=count,active_job_scan=x['id'],edits=copy.deepcopy(x.get('edit_history',[])),redo=copy.deepcopy(x.get('redo_history',[])),joints=result,joint_projection_stamp=stamp,report_ready=False,clean_ready=False,export_ready=None)

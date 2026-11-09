@@ -124,6 +124,19 @@ def _derived_count(meta,cached,derived):
     return value
 
 
+def reusable_projection(meta,axis,work):
+    """Return a verified cache and exact retained total without reading point rows."""
+    summary=cached_summary(meta)
+    if not summary:return None
+    path=summary.get('derived')
+    count=_derived_count(meta,summary,path)
+    if count is None:return None
+    import storage_cleanup
+    if storage_cleanup.projection_matches(work,meta,axis,path):
+        return path,count
+    return None
+
+
 def _summary(meta,count,derived=None,valid_points=None,derived_signature=None):
     out=dict(revision=meta.get('mask_file') or '',source_signature=_properties_signature(meta),count=int(count))
     if derived and type(valid_points) is int and 0<=valid_points<=count:
@@ -481,7 +494,9 @@ def update_mask(meta, ids_batches, work, value, progress, created, derived=None,
     property_budget=pointio.CHUNK
     try:
         for ids in ids_batches:
-            ids=np.unique(np.asarray(ids,dtype=np.int64))
+            ids=np.asarray(ids,dtype=np.int64).ravel()
+            if len(ids)>1 and not np.all(ids[1:]>ids[:-1]):
+                ids=np.unique(ids)
             if len(ids) and (ids[0]<0 or ids[-1]>=original_count):raise ValueError('The point selection is no longer valid.')
             current=out if out is not None else old
             if current is not None:ids=ids[(current[ids]!=0) != bool(value)]
