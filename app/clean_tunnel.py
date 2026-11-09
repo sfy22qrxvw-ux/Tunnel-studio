@@ -2,9 +2,10 @@
 """Full-density tunnel noise screening with bounded spatial working sets.
 
 Original coordinates are spooled in 100,000-record blocks. Each processing
-window obtains its complete 2R support from neighbouring tile files. Two
-bounded KD-tree query passes preserve the local neighbour-distance/MAD rule.
-No sampling or coordinate changes are used to reduce the input point count.
+window obtains its complete 2R support from neighbouring tile files. A single
+bounded KD-tree query pass computes per-point statistics and retains neighbour
+indices/validity for the MAD rule. No sampling or coordinate changes are used
+to reduce the input point count.
 
 The admission ceiling is two billion selected points, not two billion points
 in RAM. An unusually dense support region or excessive tile index is refused
@@ -101,30 +102,36 @@ def classify(points, radius=.10, neighbours=12, minimum=3, multiplier=3.0,
     labels = np.zeros(n, np.int32)
     bound = radius * (1 + 1e-12)
 
-    # Pass one: every unique location gets its own supported mean distance.
+    # Single query pass: compute per-point statistics and retain neighbour
+    # indices/validity for the MAD pass. The KD-tree is queried once instead
+    # of twice; the stored indices and validity mask are exactly what a
+    # second tree.query() would return, so the output is identical.
+    all_indices = np.empty((n, k), dtype=np.int32)
+    all_valid = np.empty((n, k), dtype=bool)
     for start in range(0, n, QUERY_CHUNK):
         _cancel(cancel)
         end = min(n, start + QUERY_CHUNK)
         distance, indices = tree.query(q[start:end], k=k + 1,
                                       distance_upper_bound=bound, workers=workers)
         distance = distance[:, 1:]
+        indices = indices[:, 1:]
         valid = np.isfinite(distance)
         number = valid.sum(axis=1)
         support[start:end] = number
         means[start:end] = np.divide(
             np.where(valid, distance, 0).sum(axis=1), number,
             out=np.full(end - start, np.nan), where=number > 0)
-        del distance, indices, valid, number
+        all_indices[start:end] = indices
+        all_valid[start:end] = valid
+        del distance, number
     labels[support < minimum] = 1
 
-    # Pass two: the same neighbour rule, without retaining an N-by-k matrix.
+    # MAD rejection pass: read back stored indices/valid, no tree query.
     for start in range(0, n, QUERY_CHUNK):
         _cancel(cancel)
         end = min(n, start + QUERY_CHUNK)
-        distance, indices = tree.query(q[start:end], k=k + 1,
-                                      distance_upper_bound=bound, workers=workers)
-        distance, indices = distance[:, 1:], indices[:, 1:]
-        valid = np.isfinite(distance)
+        indices = all_indices[start:end]
+        valid = all_valid[start:end]
         safe = np.minimum(indices, n - 1)
         reference = means[safe]
         usable = valid & (support[safe] >= minimum) & np.isfinite(reference)
@@ -138,7 +145,7 @@ def classify(points, radius=.10, neighbours=12, minimum=3, multiplier=3.0,
             rejected = means[start:end][eligible] > threshold + 1e-12
             labels[start + np.flatnonzero(eligible)[rejected]] = 2
             del local, median, mad, threshold, rejected
-        del distance, indices, valid, safe, reference, usable, eligible
+        del indices, valid, safe, reference, usable, eligible
     _cancel(cancel)
     return labels
 
