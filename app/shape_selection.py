@@ -8,7 +8,8 @@ only after revision and cancellation checks. Reviewed removal/separation uses
 the existing atomic scan-edit and workspace Undo path. Geometric matches are
 not a trained semantic classifier, survey control or reconstructed lining.
 """
-from contextlib import ExitStack
+from bisect import bisect_left
+from contextlib import ExitStack, closing
 from pathlib import Path
 import copy
 import hashlib
@@ -68,22 +69,46 @@ def source(s, ident):
     return item
 
 
+def search_limit(item, cfg):
+    scope=cfg.get('search_scope')
+    box=item.get('limit_box') if item.get('limit_hide_outside',True) else None
+    # Other consumers without a shape scope keep their existing view-filter policy.
+    if box and (scope=='auto' or scope is None and cfg['respect_view']):
+        return jobdata.selection_spec({'mode':'box',**box})
+    return None
+
+
 def batches(item, cfg, progress, cancel=lambda:False):
-    """All retained records. Visibility filters are explicitly optional."""
-    meta=item['meta']; n=int(meta['count']); checked=0
+    """Stream exact retained rows from the chosen area in original ID order."""
+    meta=item['meta']; n=int(meta['count'])
+    limit=search_limit(item,cfg)
+    isolate=item.get('isolate_box') if cfg['respect_view'] else None
+    isolate=jobdata.selection_spec(isolate) if isolate is not None else None
+    area=limit or isolate
+    if area and n:
+        import preview_index
+        def indexing(message):
+            shape_matching.emit(progress,cancel,message.replace('Preparing spatial index','Preparing spatial index for the restricted search'))
+        ranges=list(preview_index.indexed_selection_blocks(meta,area,indexing))
+        read_total=sum(end-start for start,end in ranges)
+    else:
+        ranges=((start,min(n,start+shape_matching.BLOCK)) for start in range(0,n,shape_matching.BLOCK))
+        read_total=n
+    label='active limit box' if limit else 'current view filters' if cfg['respect_view'] else 'whole retained cloud'
+    read=checked=0
     with ExitStack() as stack:
         xyz=stack.enter_context(RowFile(meta['file'],'<f8',n,3))
         mask=stack.enter_context(RowFile(meta['mask_file'],'u1',n)) if meta.get('mask_file') else None
-        for start in range(0,n,shape_matching.BLOCK):
-            shape_matching.emit(progress,cancel,f'Reading whole registered cloud · {min(n,start+shape_matching.BLOCK):,}/{n:,} original points')
-            count=min(shape_matching.BLOCK,n-start); p=registration_pose.points(meta,xyz.read(start,count))
+        for start,end in ranges:
+            shape_matching.emit(progress,cancel,f'Reading {label} · {read:,}/{read_total:,} source rows read · {checked:,} in search area')
+            count=end-start; p=registration_pose.points(meta,xyz.read(start,count))
             keep=np.isfinite(p).all(1)
             if mask is not None:keep&=mask.read(start,count)==0
+            if limit:keep&=jobdata._selection_mask_validated(p,limit)
+            if isolate:keep&=jobdata._selection_mask_validated(p,isolate)
             if cfg['respect_view']:
                 for box in item.get('hidden_boxes',[]):keep&=~jobdata.selection_mask(p,box)
-                if item.get('isolate_box'):keep&=jobdata.selection_mask(p,item['isolate_box'])
-                if item.get('limit_box') and item.get('limit_hide_outside',True):keep&=jobdata.selection_mask(p,{'mode':'box',**item['limit_box']})
-            ids=np.flatnonzero(keep).astype('<i8')+start; checked+=len(ids)
+            ids=np.flatnonzero(keep).astype('<i8')+start; checked+=len(ids);read+=count
             if len(ids):yield ids,p[keep],{'mode':'full'}
 
 
@@ -103,9 +128,13 @@ def current(s, body=None):
 
 def review_scope(item,cfg):
     """Only suppress repeat footprints from the same source and lining search."""
-    source_signature=(feature_selection.fingerprint(item) if cfg['respect_view']
+    limit=search_limit(item,cfg)
+    source_signature=(feature_selection.fingerprint(item) if cfg['respect_view'] or limit
                       else __import__('scan_export').signature(item))
     settings=[cfg[k] for k in ('grid_mm','min_offset_mm','max_offset_mm','lining_reference','respect_view')]
+    if limit and not cfg['respect_view']:settings.append('active limit box')
+    if cfg.get('search_scope')=='whole' and cfg['respect_view'] and item.get('limit_box') and item.get('limit_hide_outside',True):
+        settings.append('ignore active limit box')
     return hashlib.sha256(json.dumps([item['id'],source_signature,settings]).encode()).hexdigest()
 
 
@@ -140,10 +169,11 @@ def preview(s, body):
                                       bank=bank,reviewed=reviewed)
         if feature_selection.fingerprint(source(s,item['id']))!=before:
             raise ValueError('The source changed during shape matching. The previous preview is unchanged.')
-        shape_matching.emit(s.progress,cancelled,'Whole-cloud local-circle candidates ready for review' if mode=='circle' else 'Whole-cloud shape candidates ready for review')
+        area='limit_box' if search_limit(item,cfg) else 'view' if cfg['respect_view'] else 'whole'
+        shape_matching.emit(s.progress,cancelled,'Local-circle candidates ready for review' if mode=='circle' else 'Shape candidates ready for review')
         row={**result,'id':uuid.uuid4().hex,'revision':uuid.uuid4().hex,'source_id':item['id'],'source_name':item['name'],
              'source_fingerprint':before,'settings':cfg,'example':example,'folder':str(folder),'mode':mode,
-             'class_id':body.get('class_id'),'review_scope':scope}
+             'class_id':body.get('class_id'),'review_scope':scope,'search_area':area}
         old=getattr(s,'SHAPE_SELECTION',None);s.SHAPE_SELECTION=row;discard(old)
         return row
     except BaseException:
@@ -171,6 +201,7 @@ def public(s, page=0, region=None, sort='id', *, include_points=True):
     out={k:copy.deepcopy(row[k]) for k in ('id','revision','source_id','source_name','mode','settings','statistics','warnings','method','research_dois')}
     out.update(groups=groups,group_count=visible,total_group_count=total,page=page,region=region,sort=sort,stale=stale,last_edit=copy.deepcopy(row.get('last_edit')))
     out.update(class_id=row.get('class_id'),library_names=copy.deepcopy(row.get('library_names',{})))
+    out['search_area']=row.get('search_area','view' if row['settings'].get('respect_view') else 'whole')
     out.update(coverage=copy.deepcopy(row.get('coverage',[])),lining_reference=copy.deepcopy(row.get('lining_reference')),
                reviewed_skipped=row.get('reviewed_skipped',0))
     for group in out['groups']:
@@ -218,8 +249,11 @@ def choose(s, body):
     db=sqlite3.connect(row['review_file'])
     try:
         if action=='select' and mode in ('toggle','invert'):
-            found=dict(db.execute('SELECT id,selected_points FROM matches WHERE id IN ('+','.join('?' for _ in ids)+')',ids))
-            if found.keys()!=set(ids):raise ValueError('A shape match no longer exists.')
+            ids=list(dict.fromkeys(ids));found={}
+            for start in range(0,len(ids),500):
+                batch=ids[start:start+500]
+                found.update(db.execute('SELECT id,selected_points FROM matches WHERE id IN ('+','.join('?' for _ in batch)+')',batch))
+            if len(found)!=len(ids):raise ValueError('A shape match no longer exists.')
             if mode=='invert':selected=not found[ids[0]]
         item=source(s,row['source_id']);meta=item['meta'];n=row['count']
         with ExitStack() as stack, dest.open('wb') as out:
@@ -280,11 +314,75 @@ def edit(s, body):
 
 def get(s,h,path,args):
     if path!='/api/shape-selection':return False
+    if 'detail_view' in args:
+        if s.JOB.get('busy'):raise ValueError('Wait for the current operation to finish.')
+        import detail_preview, display_buffers
+        view=json.loads(args['detail_view'][0])
+        review={key:args.get(key,[None])[0] for key in ('preview_id','revision')}
+        region,_=review_view_args(args)
+        try:
+            preview=view_detail(s,review,view,region,lambda:detail_preview.request_cancelled(h))
+            h.send(display_buffers.encode(preview),'application/octet-stream')
+        except InterruptedError:
+            h.close_connection=True
+        return True
     try:page=int(args.get('page',[0])[0])
     except (TypeError,ValueError):raise ValueError('Enter a valid shape-review page.')
     region,sort=review_view_args(args)
     h.send({'defaults':shape_matching.DEFAULTS,'circle_defaults':__import__('section_circle').DEFAULTS,'axis_available':s.STATE.get('axis') is not None,
             'result':public(s,page,region,sort,include_points=args.get('points',['1'])[0]!='0')});return True
+
+
+def view_detail(s, review, view, region=None, cancel=None):
+    """Use indexed viewport detail and colour sampled matches by original ID."""
+    import detail_preview
+    row=current(s,review)
+    if row.get('mode')!='shape':raise ValueError('Open Find similar shapes to load this detail.')
+    origin=detail_preview.validate_view(view)[0]
+    item=source(s,row['source_id'])
+    meta=item['meta']
+    low,high=registration_pose.world_bounds(meta)
+    offsets=[]; group_ids=[]
+    groups=None
+    if region is not None:
+        review_view(row,region,'id')
+        with closing(sqlite3.connect(row['review_file'])) as db:
+            groups=np.fromiter((x[0] for x in db.execute('SELECT match_id FROM match_regions WHERE region=?',(region,))),dtype='<i4')
+
+    def colour_matches(ids, packed):
+        # Both streams are in original source order. Seek to the next relevant
+        # block so a small viewport does not read every point in the review.
+        n=row['count']; start=cursor=0
+        with (RowFile(row['point_ids_file'],'<i8',n) as original,
+              RowFile(row['labels_file'],'<i4',n) as labels,
+              RowFile(row['selected_file'],'u1',n) as flags):
+            while cursor<len(ids) and start<n:
+                detail_preview._check_cancel(cancel)
+                start=bisect_left(original,ids[cursor],start)
+                if start==n:break
+                block=original.read(start,min(original.block,n-start))
+                end=np.searchsorted(ids,block[-1],side='right')
+                idx=np.searchsorted(block,ids[cursor:end])
+                hits=np.flatnonzero(block[idx]==ids[cursor:end])
+                rows=start+idx[hits]
+                hits+=cursor
+                ids_here=labels.take(rows)
+                if groups is not None:
+                    keep=np.isin(ids_here,groups)
+                    rows,hits,ids_here=rows[keep],hits[keep],ids_here[keep]
+                packed[hits,3:]=np.where(flags.take(rows)[:,None]!=0,[1.,.55,.12],[.1,.8,.85])
+                offsets.extend(hits.tolist());group_ids.extend(ids_here.tolist())
+                cursor=end;start+=len(block)
+
+    # Keep per-viewport GPU data and binary match metadata bounded. Use
+    # measured intensity for the nearby wall and the normal review colours
+    # for candidates. The full-scene overview stays resident in the browser.
+    packed=detail_preview.sample({**item,'display_mode':'global'},50_000,origin,[.42,.53,.62],
+                                 'intensity-gray',(float(low[2]),float(high[2])),view,
+                                 cancel=cancel,decorate=colour_matches)
+    current(s,review)
+    return dict(packed=packed,origin=origin.tolist(),review_id=row['id'],revision=row['revision'],
+                match_offsets=offsets,match_ids=group_ids,sampled=True)
 
 
 def post(s,h,path,body):

@@ -230,6 +230,12 @@ def selection_blocks(meta,spec,progress=None,boxes=None):
     for b in np.flatnonzero(valid):yield int(b)*BLOCK,min(meta['count'],(int(b)+1)*BLOCK)
 
 
+def indexed_selection_blocks(meta,spec,progress=None):
+    """Find possible world-space hits using the original-coordinate index."""
+    if not selection_possible(meta,spec):return
+    yield from selection_blocks(meta,spec,boxes=world_boxes(meta,bounds(meta,progress)))
+
+
 def selection_box_mask(boxes,spec):
     """Conservative rejection for any set of original-coordinate AABBs."""
     valid=np.isfinite(boxes).all(axis=(1,2))

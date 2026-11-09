@@ -35,7 +35,7 @@ DISPLAY = 30000
 DEFAULTS = dict(min_offset_mm=5., max_offset_mm=2000., depth_tolerance_mm=15.,
                 grid_mm=10., similarity_percent=75., side='either',
                 continuation='auto', rotations=True, respect_view=False,lining_reference='local',
-                include_reviewed=False)
+                include_reviewed=False, search_scope='auto')
 MATCH_SCHEMA = '''CREATE TABLE matches (
     id INTEGER PRIMARY KEY, station REAL NOT NULL, angle REAL NOT NULL,
     score REAL NOT NULL, side INTEGER NOT NULL, points INTEGER NOT NULL DEFAULT 0,
@@ -66,6 +66,8 @@ def settings(raw=None):
         raise ValueError('Choose a compact object or a continuing service.')
     if out['lining_reference'] not in ('local','longitudinal'):
         raise ValueError('Choose a local or longitudinal measured lining reference.')
+    if out['search_scope'] not in ('auto','whole'):
+        raise ValueError('Choose whether to use the active limit box or ignore it.')
     if any(type(out[k]) is not bool for k in ('rotations','respect_view','include_reviewed')):
         raise ValueError('Rotation, view-filter and reviewed-pocket options must be true or false.')
     return out
@@ -212,7 +214,7 @@ def _match_fft(evidence, t, cfg, columns, progress, cancel):
     low, high = db.execute('SELECT min(r),max(r) FROM cells').fetchone()
     threshold = cfg['similarity_percent']/100; next_id = int(db.execute('SELECT coalesce(max(id),0)+1 FROM matches').fetchone()[0]); windows = 0
     for first in range(low, high+1, core):
-        emit(progress, cancel, f'Matching example across whole cloud · section {first*cfg["grid_mm"]/1000:.2f} m · {windows} windows checked')
+        emit(progress, cancel, f'Matching example in search area · section {first*cfg["grid_mm"]/1000:.2f} m · {windows} windows checked')
         start = first-halo; stop = first+core+halo
         for side in (-1, 1):
             occupied = np.zeros((stop-start, columns), np.float32); depth = np.zeros_like(occupied); assigned = np.zeros_like(occupied, dtype=np.int32)
@@ -322,7 +324,7 @@ def run(batches, example, folder, cfg, progress=lambda _:None, cancel=lambda:Fal
     cfg=settings(cfg); example=None if bank else jobdata.selection_spec(example); folder=Path(folder)
     if bank and cfg['continuation']=='long':raise ValueError('Saved shape types describe compact objects. Use a drawn service example for a continuing pipe or duct.')
     started=time.monotonic(); source=lambda:pieces(batches)
-    emit(progress,cancel,'Learning lining for whole-cloud shape matching')
+    emit(progress,cancel,'Learning lining in the shape search area')
     sample,total=sample_originals(source,.015,160000,progress,cancel)
     if not total: raise ValueError('The retained source is empty.')
     if model is None:
@@ -341,7 +343,7 @@ def run(batches, example, folder, cfg, progress=lambda _:None, cancel=lambda:Fal
         review_path=folder/'review.sqlite'
         evidence.db.execute('ATTACH DATABASE ? AS review',(str(review_path),))
         for ids,p,_ in source():
-            emit(progress,cancel,f'Building whole-cloud shape evidence · {written+len(ids):,}/{total:,} original points')
+            emit(progress,cancel,f'Building shape evidence in the search area · {written+len(ids):,}/{total:,} original points')
             d,use,supported,angle=candidates(p,model,cfg,with_angle=True); unsupported+=int((~supported).sum());sector=sectors(angle)
             coverage[:,0]+=np.bincount(sector,minlength=8);coverage[:,1]+=np.bincount(sector[supported],minlength=8);coverage[:,2]+=np.bincount(sector[use],minlength=8)
             ex=np.zeros(len(p),bool) if bank else jobdata.selection_mask(p,example); example_total+=int(ex.sum())
@@ -352,7 +354,7 @@ def run(batches, example, folder, cfg, progress=lambda _:None, cancel=lambda:Fal
             positive=[e for e in bank['entries'] if e['label']=='positive']
             t=dict(components=1,long=False,example_points=0,footprint_cells=sum(e['footprint_cells'] for e in positive),size_m=[])
         else:t=template(evidence,cfg,columns)
-        emit(progress,cancel,'Example learned. Searching the complete retained cloud for matching footprints and offsets')
+        emit(progress,cancel,'Example learned. Searching the chosen area for matching footprints and offsets')
         skipped=set()
         options=dict(review=True,reviewed=() if cfg['include_reviewed'] else reviewed,skipped=skipped)
         if bank:
@@ -403,7 +405,7 @@ def run(batches, example, folder, cfg, progress=lambda _:None, cancel=lambda:Fal
         np.savez(folder/'preview.npz',context=context,points=np.asarray(preview,float).reshape(-1,3),labels=np.asarray(preview_labels,'<i4'),
                  indices=np.asarray(preview_indices,'<i8'),regions=np.asarray(preview_regions,'u1'))
         warnings=['Matches describe similar geometric footprints and lining offsets. They do not prove that an object is a bolt, pipe or ventilation duct. Review before removing or separating.',
-                  'The drawn area teaches one example; the search streams the whole retained cloud. View filters apply only when Restrict to current view filters is checked.',
+                  'The drawn area teaches one example. The search checks the retained observations in the chosen search area.',
                   'No trained neural classifier or published accuracy claim is included. Source points are never moved and missing lining is not reconstructed.']
         if t['components']>1: warnings.append('The example contains several disconnected departures. The largest connected footprint was used; draw a tighter example to choose another shape.')
         if unsupported: warnings.append(f'{unsupported:,} points lack supported lining reference and remain unselected.')

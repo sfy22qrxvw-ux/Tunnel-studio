@@ -136,7 +136,8 @@ def _quick_sample(item, budget, origin, fallback, mode, z_range, view, cancel=No
     return shown
 
 
-def sample(item, budget, origin, fallback, mode, z_range, view, quick=False, cancel=None):
+def sample(item, budget, origin, fallback, mode, z_range, view, quick=False, cancel=None, *, decorate=None):
+    """Sample a viewport. A review can colour its rows using the original IDs."""
     fallback,mode=__import__('scan_appearance').resolve(item,fallback,mode)
     import jobdata, preview_index, preview_store, registration_pose
     frame = validate_view(view)
@@ -145,16 +146,19 @@ def sample(item, budget, origin, fallback, mode, z_range, view, quick=False, can
         return np.empty((0, 6), dtype='<f4')
     _check_cancel(cancel)
     cache = None
-    try:
-        cache = preview_store.cache_path(item, budget, origin, fallback, mode, z_range, quick, view=view)
-        saved = preview_store.read(cache)
-        if saved is not None:
-            _check_cancel(cancel)
-            return saved
-    except InterruptedError:
-        raise
-    except (OSError, TypeError, ValueError):
-        cache = None
+    if decorate is not None and quick:
+        raise ValueError('Review detail requires original point IDs.')
+    if decorate is None:
+        try:
+            cache = preview_store.cache_path(item, budget, origin, fallback, mode, z_range, quick, view=view)
+            saved = preview_store.read(cache)
+            if saved is not None:
+                _check_cancel(cancel)
+                return saved
+        except InterruptedError:
+            raise
+        except (OSError, TypeError, ValueError):
+            cache = None
     if quick:
         packed = _quick_sample(item, budget, origin, fallback, mode, z_range, view,cancel=cancel)
     else:
@@ -207,6 +211,8 @@ def sample(item, budget, origin, fallback, mode, z_range, view, quick=False, can
         _check_cancel(cancel)
         colours = jobdata._colour_from_attributes(m, selected, fallback, mode, q, z_range,cancel=cancel)
         packed = np.empty((len(q), 6), dtype='<f4'); packed[:, :3] = q-origin; packed[:, 3:] = colours
+        if decorate is not None:
+            decorate(selected, packed)
     _check_cancel(cancel)
     if cache is not None:
         # Never publish a reusable result under a revision read before an edit.

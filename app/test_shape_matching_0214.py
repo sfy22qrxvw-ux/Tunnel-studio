@@ -143,10 +143,42 @@ class ShapeReviewTests(unittest.TestCase):
         self.assertEqual(ss.feature_selection.fingerprint(self.s.STATE['job_items'][0]),before)
         self.assertEqual(self.row['statistics']['selected_points'],4)
 
-    def test_whole_batches_ignore_view_limits_until_explicitly_requested(self):
+    def test_active_limit_box_is_default_and_can_be_ignored(self):
         self.item['limit_box']={'minimum':[-1,-1,-1],'maximum':[1,1,1]}
-        all_rows=list(ss.batches(self.item,sm.settings(),lambda _:None));self.assertEqual(sum(len(ids) for ids,_,_ in all_rows),len(self.p))
-        filtered=list(ss.batches(self.item,sm.settings({'respect_view':True}),lambda _:None));self.assertEqual(filtered,[])
+        self.assertEqual(list(ss.batches(self.item,sm.settings(),lambda _:None)),[])
+        all_rows=list(ss.batches(self.item,sm.settings({'search_scope':'whole'}),lambda _:None))
+        self.assertEqual(sum(len(ids) for ids,_,_ in all_rows),len(self.p))
+        self.item['limit_hide_outside']=False
+        all_rows=list(ss.batches(self.item,sm.settings(),lambda _:None))
+        self.assertEqual(sum(len(ids) for ids,_,_ in all_rows),len(self.p))
+
+    def test_box_reads_only_intersecting_original_blocks_for_both_pocket_tools(self):
+        import preview_index, surface_streaming
+        step=preview_index.BLOCK
+        item,p=self.fx.scan('index',n=3*step,shift=1000)
+        item['limit_box']=dict(minimum=[1000+step+3,-1,-1],maximum=[1000+step+6,1,1])
+        meta=item['meta'];original=Path(meta['file']).read_bytes()
+        mask=self.fx.root/'index.mask';excluded=np.zeros(len(p),'u1');excluded[step+4]=1
+        excluded.tofile(mask);meta['mask_file']=str(mask)
+        preview_index.bounds(meta)
+        with mock.patch.object(preview_index,'indexed_selection_blocks',wraps=preview_index.indexed_selection_blocks) as indexed:
+            for rows in (ss.batches(item,sm.settings(),lambda _:None),
+                         surface_streaming.batches(self.s,meta,'separate',{'mode':'box',**item['limit_box']},100000)):
+                result=list(rows)
+                self.assertEqual(len(result),1)
+                ids,points,_=result[0]
+                np.testing.assert_array_equal(ids,[step+3,step+5,step+6])
+                np.testing.assert_array_equal(points,p[ids]+[1000,0,0])
+            self.assertEqual(indexed.call_count,2)
+        reads=[]
+        read=ss.RowFile.read
+        def observe(reader,start,count):
+            if reader.path==Path(meta['file']):reads.append((start,count))
+            return read(reader,start,count)
+        with mock.patch.object(ss.RowFile,'read',observe):
+            list(ss.batches(item,sm.settings(),lambda _:None))
+        self.assertEqual(reads,[(step,step)])
+        self.assertEqual(Path(meta['file']).read_bytes(),original)
 
     def test_active_shape_caches_are_protected_and_abandoned_generated_caches_are_recognised(self):
         import storage_inventory,projects

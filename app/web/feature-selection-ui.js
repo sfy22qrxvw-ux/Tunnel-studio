@@ -63,9 +63,13 @@
   el('scope').value=mode==='bolts'?'whole':'local';el('kind').value=which==='departures'?'departures':'recess';if(which==='departures')el('height').value=5;scopeInfo();
   el('radius').value=mode==='bolts'?.6:1;el('flip').checked=false;el('use-area').checked=false;
   if(mode!=='bolts')el('seed').textContent='Pick a point on the surface you want to select.';
-  window.JobUI.clearFeaturePreview?.();window.TunnelRibbon.view('feature-selection');status(scans.length?(wholeScope()?'Choose the feature shape and preview the whole retained source.':'Pick the seed in the main 3D view.'):'Import a scan before using this tool.',!scans.length);render();
+  window.JobUI.clearFeaturePreview?.();window.TunnelRibbon.view('feature-selection');status(scans.length?(wholeScope()?'Choose the feature shape and preview the selected processing area.':'Pick the seed in the main 3D view.'):'Import a scan before using this tool.',!scans.length);render();
  }
  function wholeScope(){return mode==='bolts'&&el('scope').value==='whole';}
+ function activeLimitBox(){
+  const scan=window.JobUI.scanItems().find(item=>item.id===el('source').value);
+  return !!scan?.limit_box&&scan.limit_hide_outside!==false;
+ }
  function scopeInfo(){
   const whole=wholeScope(),bolt=mode==='bolts',recess=el('kind').value==='recess';
   el('scope-row').hidden=!bolt;el('kind-row').hidden=!bolt;
@@ -81,7 +85,7 @@
   el('height').min=whole?2:.5;el('height').max=whole?100:300;
   el('diameter').min=whole?50:5;el('diameter').max=whole?800:2000;
   if(whole)el('flip').checked=false;
-  el('preview').textContent=whole?'Preview whole cloud':'Preview local selection';
+  el('preview').textContent=whole?(activeLimitBox()?'Preview inside limit box':'Preview whole cloud'):'Preview local selection';
   el('seed').textContent=recess?'From inside the tunnel, face the wall and click inside or beside the bolt pocket. Include surrounding wall.':'From inside the tunnel, face the wall and click a raised fitting. Include surrounding wall.';
   if(el('kind').value==='departures'&&bolt){
    for(const id of ['diameter','max-height','min-points','flip','connection'])el(id).closest('label').hidden=true;
@@ -136,7 +140,7 @@
   window.JobUI.pickFeatureSeed(receiveSeed,{source_id:el('source').value,prompt:mode==='bolts'?(el('kind').value==='departures'?'Pick surrounding wall beside the feature, with lining visible around it.':el('kind').value==='recess'?'Face the wall from inside the tunnel, then click inside or beside the bolt pocket. Include surrounding wall.':'Face the wall from inside the tunnel, then click a raised fitting. Include surrounding wall.'):'Pick the connected surface to grow.'});
  };
  el('preview').onclick=()=>run('preview');
- el('source').onchange=()=>{seed=null;el('seed').textContent='Pick a seed on this scan.';changed();};
+ el('source').onchange=()=>{seed=null;el('seed').textContent='Pick a seed on this scan.';scopeInfo();changed();};
  for(const id of ['scope','kind'])el(id).addEventListener('change',()=>{scopeInfo();changed();});
  for(const id of controlIds.filter(x=>!['source','pick','preview'].includes(x)))el(id).addEventListener('input',changed);
  el('groups').addEventListener('change',event=>{if(!event.target.dataset.featureGroup)return;const groups=new Set(result.groups.filter(g=>g.selected).map(g=>g.id)),id=+event.target.dataset.featureGroup;event.target.checked?groups.add(id):groups.delete(id);run('select',{group_ids:[...groups]});});

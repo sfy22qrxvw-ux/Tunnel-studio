@@ -1,0 +1,173 @@
+Tunnel Studio 0.23.4
+9 November 2026
+
+Installer progress and footer
+Setup shows the number of program files verified and reports startup,
+activation and older-release cleanup as separate steps. The installation
+report records how long each step took. The footer uses a single native
+Windows label with a solid background.
+
+Earlier release notes
+
+Tunnel Studio 0.23.3
+9 November 2026
+
+Limit-box pocket searches
+Find similar shapes uses the source scan's active limit box by default and
+shows Find inside limit box. The search area can explicitly ignore the
+box. Find similar shapes and Bolts & pockets use the spatial index to skip
+disjoint coordinate blocks and test retained points against exact bounds.
+A scan without an index can need a one-time index build.
+
+Earlier release notes
+
+Tunnel Studio 0.23.2
+9 November 2026
+
+Close-up scan detail
+The normal 3D viewer refreshes measured detail when the camera zooms
+substantially beyond the last detail sample. Shape match review loads
+measured intensity and candidate points for the current close-up view
+in the background. The overview stays visible. Close-up match points
+can be picked or boxed using their original match identities.
+
+Earlier release notes
+
+Tunnel Studio 0.23.1
+9 November 2026
+
+Shape match review
+Queue boxes around displayed candidates in 3D and unselect their complete
+matches in one action. Orbit between boxes and use Undo last box to remove
+an unwanted box from the queue. The action changes review selection only.
+
+Earlier release notes
+
+Tunnel Studio 0.23.0
+9 November 2026
+
+GuSAC benchmark report
+Method & results JSON shows the number of regions and the number of fitter
+calls separately. It records the input point count for every first fit and
+extended retry, with cumulative fitter times for each path. Failed retries
+are included. The interactive review response carries the summary totals.
+
+Reversible point edits
+Opening a legacy project keeps its existing point-edit journal format in
+the named project and in the working autosave. Save or Save As compacts
+compatible history. A portable save compacts history in the saved copy.
+
+Earlier release notes
+
+Tunnel Studio 0.22.9
+9 November 2026
+
+Reversible point edits
+Each edit saves only the deleted group it changes. This reduces project
+metadata and save work after many deletions or partial restores. Existing
+single-group history entries are compacted when a project is opened. Use
+this version for Undo and Redo in projects saved with the compact history.
+
+GuSAC cleaning
+Model fitting can use up to four KD-tree workers. Classification still uses
+one KD-tree worker per processing block. The Method & results JSON report
+includes separate timings for the whole GuSAC fit and its regional planes.
+
+Earlier release notes
+
+Tunnel Studio 0.22.8
+9 November 2026
+
+Clean Tunnel
+Noise classification now queries the KD-tree once per point block and
+reuses the same neighbour indices and validity flags for MAD rejection.
+The support-window budget includes the cached neighbours.
+
+Analysis and point edits
+Use for analysis and ring-joint suggestions can reuse a verified full-density
+alignment projection and retained-point total. Ordered point IDs can bypass
+the sort during reversible deletion and restoration.
+
+Interface
+Background progress requests send only job progress until completion.
+Cross-section progress updates also use lightweight responses.
+
+Earlier release notes
+
+Tunnel Studio 0.22.7
+9 November 2026
+
+Pocket search and review
+Compact-pocket search now stores its temporary candidate descriptors in a
+single review database. Saving reviewed examples shares scan reads for
+overlapping wall crops. The original measured points and wall samples
+are preserved.
+
+Rerunning the same search on the same scan and lining settings skips exact
+matches confirmed or rejected since this update. Unreviewed matches are
+still offered for review. Use Show previously reviewed matches to include
+eligible older matches. Review records follow project save and Undo.
+
+Earlier release features
+REGISTER 360 project preview
+Open the project browser, browse to the complete REGISTER 360 project
+folder and select its saved database. The preview samples measured points
+from supported individual HSPCA setup files and places them using the saved
+setup poses. Orbit the sample or switch to Top or Front. Previewing uses
+the original scan observations and native intensity. Use Import setups
+to bring full-density data into the workspace.
+
+A preview includes up to 12,000 display points from up to 24 setups.
+The status shows how many setups were sampled. When the scan files are
+missing or the selected snapshot is unsupported, the viewer labels the
+saved scanner layout and explains the condition.
+
+Appearance and processing
+In Settings > Appearance, choose Navy & teal, Graphite & red, Midnight
+& blue, or Slate & violet. The palette previews live in the workspace.
+Light, Dark and Follow Windows are independent of the colour palette.
+The processing window uses the chosen accent and Windows 11 caption
+colours. It shows the current activity, progress and time estimates.
+
+Find similar shapes
+Click a region in Search coverage to filter the candidates and their 3D
+highlights. Sort by geometric match, point count or position along the
+scan axis. A candidate that spans regions is listed in each with its
+regional point count. Clicking a candidate opens its complete detail.
+Previous and Next follow the chosen filter and sort order.
+
+Choose Pick matches in 3D during review. Click a highlighted group to
+include or exclude it. The 3D preview and checkboxes reflect the same
+review selection. Drag to orbit or zoom to separate nearby matches.
+
+Geotechnical monitoring
+Open Analyse > Monitoring, then Geotechnical section diagrams and trends.
+Import the survey epochs from CSV and select the baseline and section.
+Use the section heading clockwise from grid north for the transverse and
+longitudinal components. Review measured prism vectors in front, side and
+plan, plus separate settlement, transverse and longitudinal trend charts.
+
+Add named trigger levels in millimetres and choose a colour for each
+component. Bands apply to the absolute magnitude in either direction.
+Trigger levels are saved with the project. Set the approved levels for
+the section being monitored.
+
+Use the checkbox beside an epoch reading to exclude or restore that
+observation. Coordinates and identifiers are retained in the project.
+Exclusions create gaps in charts and calculations. An excluded baseline
+reading removes comparisons for that prism. If a chord uses an excluded
+endpoint, its result is unavailable for the affected epoch.
+
+The section report exports as printable HTML. The existing results CSV
+also records observation inclusion and the reason when a value is
+unavailable.
+
+Windows setup
+The installer uses a layered scan icon and native Segoe UI text. The
+welcome page describes scan processing, modelling and monitoring over
+the measured bolt-pocket backdrop and blue-to-cyan version badge.
+
+The source and checks archive records application, browser and package
+validation. The scan preview was exercised with generated HSPCA fixtures.
+Live Windows setup and the 13-setup project shown in the report require
+verification on the user's computer.

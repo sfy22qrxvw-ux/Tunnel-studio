@@ -5,9 +5,9 @@
  const escape=s=>String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
  const panel=document.createElement('section');panel.id='tab-shape-selection';panel.className='tab feature-panel';
  const field=(id,title,value,min,max,help)=>`<label><span>${title}</span><input id="shape-${id}" type="number" value="${value}" min="${min}" max="${max}" step="any" title="${help}"><small>${help}</small></label>`;
- panel.innerHTML=`<header class="feature-heading"><span class="feature-eyebrow">WHOLE-CLOUD SELECTION</span><h2>Find similar shapes</h2><p class="feature-hint">Draw one bolt pocket, fitting or short section of a pipe or duct. Find similar measured shapes across the whole registered cloud, then review and remove or separate them.</p></header>
+ panel.innerHTML=`<header class="feature-heading"><span class="feature-eyebrow">WHOLE-CLOUD SELECTION</span><h2>Find similar shapes</h2><p class="feature-hint">Draw one bolt pocket, fitting or short section of a pipe or duct. Find similar measured shapes in a limit box or across the registered cloud, then review and remove or separate them.</p></header>
  <section class="feature-step"><h3><span>1</span> Build your shape library</h3><label>Saved shape type<select id="shape-library"><option value="">Drawn example only · unsaved</option></select></label><div class="feature-actions"><input id="shape-type-name" maxlength="80" placeholder="e.g. Pocket 1" aria-label="Shape type name"><button id="shape-create">Create type</button><button id="shape-rename">Rename type</button></div><p id="shape-library-counts" class="feature-hint">Save several confirmed examples of the same object type. Different types belong in different library entries.</p><label class="feature-check"><input id="shape-use-library" type="checkbox" checked>Search with all confirmed examples of the selected type</label><details><summary>Saved examples and management</summary><p class="feature-hint">Orange object points and green wall context are stored independently. Examples remain after source deletion and are available in other projects on this computer. Manage an incorrect teaching example below; workspace Undo also reverses recent teaching.</p><div id="shape-examples"></div><div class="feature-actions"><button id="shape-refresh-library">Refresh library</button><button id="shape-archive">Archive type</button><button id="shape-restore">Restore archived type</button></div><p id="shape-library-folder" class="feature-hint"></p></details>
- <label>Source registered cloud · also used for wall context<select id="shape-source"></select></label><details><summary>Use pockets already separated into a scan</summary><label>Separated pocket scan<select id="shape-separated-source"></select></label><p class="feature-hint">Choose the main tunnel above for nearby lining context. Choose your existing pocket scan here, including hidden scans. Each disconnected compact group is fitted separately. Only use this when you have checked that the scan contains the selected object type.</p><button id="shape-add-separated">Confirm pockets from separated scan</button><p id="shape-import-summary" class="feature-hint"></p></details><div class="feature-actions"><button id="shape-box">Draw box</button><button id="shape-lasso">Draw lasso</button><button id="shape-polygon">Draw polygon</button></div><button id="shape-use">Use current drawn area</button><button id="shape-save-example">Confirm drawn object and save example</button><p id="shape-example" class="feature-hint">Draw the complete pocket with a little nearby wall. The object is separated from the fitted wall context when saved. A small teaching crop describes one object; searching checks the entire source.</p><p class="feature-hint"><b>Search: whole retained cloud. No point-count cap.</b> Original point IDs are processed in blocks.</p></section>
+ <label>Source registered cloud · also used for wall context<select id="shape-source"></select></label><details><summary>Use pockets already separated into a scan</summary><label>Separated pocket scan<select id="shape-separated-source"></select></label><p class="feature-hint">Choose the main tunnel above for nearby lining context. Choose your existing pocket scan here, including hidden scans. Each disconnected compact group is fitted separately. Only use this when you have checked that the scan contains the selected object type.</p><button id="shape-add-separated">Confirm pockets from separated scan</button><p id="shape-import-summary" class="feature-hint"></p></details><div class="feature-actions"><button id="shape-box">Draw box</button><button id="shape-lasso">Draw lasso</button><button id="shape-polygon">Draw polygon</button></div><button id="shape-use">Use current drawn area</button><button id="shape-save-example">Confirm drawn object and save example</button><p id="shape-example" class="feature-hint">Draw the complete pocket with a little nearby wall. The object is separated from the fitted wall context when saved. The teaching crop describes one object. Choose the search area below.</p><p class="feature-hint"><b>No point-count cap.</b> Original point IDs are processed in blocks within the chosen search area.</p></section>
  <section class="feature-step"><h3><span>2</span> Set its lining offset</h3><label>Side of the lining<select id="shape-side"><option value="either">Either side · bumps and recesses</option><option value="recess">Recessed · below the wall</option><option value="raised">Raised · into the tunnel</option></select></label>
  ${field('minimum','Minimum distance from lining · mm',5,.5,5000,'Points closer to the fitted wall remain unselected. Use a value above the wall roughness.')}
  ${field('maximum','Maximum distance from lining · mm',2000,1,10000,'Only points in this lining-offset range can be matched and selected.')}
@@ -17,10 +17,13 @@
  ${field('similarity','Minimum geometric match · %',75,20,99.9,'Higher values require closer shape and depth agreement. This is a similarity score, not a confidence percentage.')}
  ${field('depth','Depth variation between matches · mm',15,.5,1000,'Allows this variation in the depth pattern relative to the fitted lining.')}
  ${field('grid','Shape grid size · mm',10,2,100,'Working resolution for the shape map, not a point limit. Final selection tests all original observations.')}
- <label class="feature-check"><input id="shape-rotations" type="checkbox" checked>Allow different orientations on the lining</label><label class="feature-check"><input id="shape-view-filters" type="checkbox">Restrict search to current view filters</label><p class="feature-hint">Compact objects use their principal directions, including oblique rotations. Continuing services use quarter turns. Leave view filters off to search all retained source points, including areas beyond the limit box or isolated view.</p></details>
+ <label class="feature-check"><input id="shape-rotations" type="checkbox" checked>Allow different orientations on the lining</label><label class="feature-check"><input id="shape-view-filters" type="checkbox">Also use hidden and isolated areas</label><p class="feature-hint">Compact objects use their principal directions, including oblique rotations. Continuing services use quarter turns. This option applies hidden areas and isolation in addition to the search area below.</p></details>
  <label class="feature-check"><input id="shape-include-reviewed" type="checkbox">Show previously reviewed matches<small>Current match settings and incorrect-example filters still apply.</small></label>
+ <label>Search area<select id="shape-search-scope"><option value="auto">Use the active limit box</option><option value="whole">Ignore limit box</option></select></label>
+ <p id="shape-scope-note" class="feature-hint"></p>
  <div class="feature-actions"><button id="shape-run" class="primary">Find across whole cloud</button><button id="shape-stop" hidden>Stop</button></div><p id="shape-status" role="status" aria-live="polite"></p></section>
- <section id="shape-review" class="feature-step" hidden><h3><span>3</span> Review matching points</h3><p id="shape-summary"></p><p class="feature-hint"><b>Orange:</b> selected. <b>Cyan:</b> unselected match. <b>Grey:</b> surrounding scan. These are geometric candidates, not confirmed object identities.</p><div id="shape-warnings" class="feature-warnings"></div><div class="feature-actions"><button type="button" id="shape-pick-3d" aria-pressed="false">Pick matches in 3D</button><button id="shape-all">Select all matches</button><button id="shape-none">Clear selection</button></div><p class="feature-hint">Click a match name to zoom in and load its original points. Checkboxes control removal selection independently.</p><p id="shape-pick-status" class="feature-hint" role="status" aria-live="polite" hidden></p><section id="shape-inspect-panel" class="feature-step" hidden><h4 id="shape-inspect-title">Inspect pocket</h4><p id="shape-inspect-status" role="status" aria-live="polite"></p><div class="feature-actions"><button id="shape-inspect-previous">Previous pocket</button><button id="shape-inspect-next">Next pocket</button><button id="shape-inspect-back">Back to matches</button><button id="shape-inspect-stop" hidden>Stop loading detail</button></div><label class="feature-check"><input type="checkbox" id="shape-inspect-highlight" checked>Highlight pocket · turn off for measured intensity</label><p class="feature-hint">Inspecting does not change the checkboxes or teach the library. Removal and teaching still apply to all selected groups. Nearby lining is a context sample.</p></section><details id="shape-coverage" class="shape-coverage" hidden><summary>Search coverage · crown, walls and invert</summary><p id="shape-coverage-note" class="feature-hint"></p><div id="shape-coverage-grid" class="shape-coverage-grid"></div></details><section class="shape-candidates" aria-labelledby="shape-candidate-title">
+ <section id="shape-review" class="feature-step" hidden><h3><span>3</span> Review matching points</h3><p id="shape-summary"></p><p class="feature-hint"><b>Orange:</b> selected. <b>Cyan:</b> unselected match. <b>Grey:</b> surrounding scan. These are geometric candidates, not confirmed object identities.</p><div id="shape-warnings" class="feature-warnings"></div><div class="feature-actions"><button type="button" id="shape-pick-3d" aria-pressed="false">Pick matches in 3D</button><button id="shape-all">Select all matches</button><button id="shape-none">Clear selection</button></div>
+ <div class="feature-actions"><button id="shape-add-review-box">Add box to unselect</button><button id="shape-apply-review-boxes">Unselect boxed matches</button><button id="shape-undo-review-box">Undo last box</button></div><p id="shape-review-box-status" class="feature-hint" role="status" aria-live="polite">Draw boxes around displayed match points. Each box queues whole matches. Orbit between boxes to check overlapping lining.</p><p class="feature-hint">Click a match name to zoom in and load its original points. Checkboxes control removal selection independently.</p><p id="shape-pick-status" class="feature-hint" role="status" aria-live="polite" hidden></p><section id="shape-inspect-panel" class="feature-step" hidden><h4 id="shape-inspect-title">Inspect pocket</h4><p id="shape-inspect-status" role="status" aria-live="polite"></p><div class="feature-actions"><button id="shape-inspect-previous">Previous pocket</button><button id="shape-inspect-next">Next pocket</button><button id="shape-inspect-back">Back to matches</button><button id="shape-inspect-stop" hidden>Stop loading detail</button></div><label class="feature-check"><input type="checkbox" id="shape-inspect-highlight" checked>Highlight pocket · turn off for measured intensity</label><p class="feature-hint">Inspecting does not change the checkboxes or teach the library. Removal and teaching still apply to all selected groups. Nearby lining is a context sample.</p></section><details id="shape-coverage" class="shape-coverage" hidden><summary>Search coverage · crown, walls and invert</summary><p id="shape-coverage-note" class="feature-hint"></p><div id="shape-coverage-grid" class="shape-coverage-grid"></div></details><section class="shape-candidates" aria-labelledby="shape-candidate-title">
   <div class="shape-candidate-heading"><div><span class="feature-eyebrow">MATCH CANDIDATES</span><h4 id="shape-candidate-title" tabindex="-1">All regions</h4></div><button type="button" id="shape-all-regions" hidden>Show all regions</button></div>
   <label for="shape-sort">Sort candidates<select id="shape-sort"><option value="best">Geometric match · highest first</option><option value="worst">Geometric match · lowest first</option><option value="most">Point count · highest first</option><option value="fewest">Point count · lowest first</option><option value="station">Position along scan axis</option></select></label>
   <p id="shape-page" class="feature-hint" role="status"></p><div id="shape-groups" class="feature-group-list"></div>
@@ -31,22 +34,35 @@
  document.querySelector('.view-shell').append(panel);
  let example=null,result=null,running=false,dirty=true,picking=false,library={classes:[]};
  let displayed=null,browsing=false,browseEpoch=0;
+ let reviewDetail=null,detailRequest=null;
+ const reviewBoxes=[],reviewBoxIds=new Set(),maxReviewBoxes=32;
  let inspection=null,inspectionLoading=false,inspectionPhase='',inspectionEpoch=0,inspectionBusyEpoch=null,inspectionAbort=null,overviewView=null,inspectionHighlight=true;
  const regionName=()=>result?.region==null?'All regions':result.coverage[result.region].region;
  const selectedType=()=>library.classes.find(x=>x.id===el('library').value);
  const librarySearch=()=>!!(el('use-library').checked&&selectedType()?.active&&selectedType()?.positive);
+ const scopeNames={limit_box:'active limit box',view:'current view filters',whole:'whole retained cloud'};
+ function searchArea(){
+  const source=window.JobUI.scanItems().find(scan=>scan.id===el('source').value);
+  if(el('search-scope').value!=='whole'&&source?.limit_box&&source.limit_hide_outside!==false)return 'limit_box';
+  return el('view-filters').checked?'view':'whole';
+ }
  const status=(message,error=false)=>{el('status').textContent=message;el('status').style.color=error?'var(--danger,#b64c45)':'';};
  function controls(){
   const lock=running||!!busy||browsing,editingLocked=lock||inspectionLoading;
-  for(const id of ['source','box','lasso','polygon','use','side','minimum','maximum','continuation','similarity','depth','grid','rotations','view-filters','reference','include-reviewed'])el(id).disabled=editingLocked;
+  for(const id of ['source','box','lasso','polygon','use','side','minimum','maximum','continuation','similarity','depth','grid','rotations','view-filters','reference','include-reviewed','search-scope'])el(id).disabled=editingLocked;
   for(const id of ['library','type-name','create','refresh-library','use-library'])el(id).disabled=editingLocked;
   for(const id of ['rename','archive','restore'])el(id).disabled=editingLocked||!selectedType();
   el('archive').hidden=!selectedType()?.active;el('restore').hidden=!selectedType()||selectedType().active;
   el('save-example').disabled=editingLocked||!example||!selectedType()?.active||!el('source').value;
   el('separated-source').disabled=editingLocked;el('add-separated').disabled=editingLocked||!selectedType()?.active||!el('separated-source').value||el('source').value===el('separated-source').value;
+  const area=searchArea();
+  el('run').textContent=area==='limit_box'?'Find inside limit box':area==='view'?'Find with view filters':'Find across whole cloud';
+  el('scope-note').textContent=area==='limit_box'
+   ?'Only retained points inside the source scan’s active limit box will be searched. Include both walls and the crown so the lining can be fitted.'
+   :`Search area: ${scopeNames[area]}.`;
   el('run').disabled=editingLocked||(!example&&!librarySearch())||!el('source').value;el('stop').hidden=!running;
   for(const id of ['all','none','keep','exclude'])el(id).disabled=lock||inspectionLoading||!result||dirty||result.stale;
-  el('remove').disabled=el('separate').disabled=lock||inspectionLoading||dirty||!result||result.stale||!result.statistics.selected_points;
+  el('remove').disabled=el('separate').disabled=lock||reviewBoxes.length>0||inspectionLoading||dirty||!result||result.stale||!result.statistics.selected_points;
   el('teach').disabled=el('reject').disabled=el('remove').disabled||!selectedType()?.active||result?.statistics.continuing_service;
   el('teach-removal').disabled=lock||!selectedType()?.active||result?.statistics.continuing_service;
   el('remove').textContent=selectedType()?.active&&el('teach-removal').checked?'Remove and teach selected':'Remove selected points';
@@ -65,20 +81,26 @@
   el('inspect-highlight').disabled=lock||inspectionLoading||!inspection;
   el('inspect-back').disabled=running||(!inspection&&!inspectionLoading);
   el('inspect-stop').hidden=!inspectionLoading;
-  const pick=el('pick-3d'),available=!!displayed?.match_ids?.length&&!dirty&&!result?.stale&&!inspection&&!inspectionLoading&&window.JobUI.previewOwner()==='shape';
+  const pick=el('pick-3d'),available=hasDisplayedMatches()&&!dirty&&!result?.stale&&!inspection&&!inspectionLoading&&window.JobUI.previewOwner()==='shape';
   if(!available&&!inspection&&!inspectionLoading&&!running)picking=false;
   pick.disabled=lock||!available;
+  el('add-review-box').disabled=lock||!available||reviewBoxes.length>=maxReviewBoxes;
+  el('apply-review-boxes').disabled=lock||!available||!reviewBoxes.length;
+  el('undo-review-box').disabled=lock||!reviewBoxes.length;
+  el('review-box-status').textContent=reviewBoxes.length
+   ? `${count(reviewBoxes.length)} ${reviewBoxes.length===1?'box':'boxes'} · ${count(reviewBoxIds.size)} matches queued. Apply the boxes before removing or teaching.`
+   : 'Draw boxes around displayed match points. Each box queues whole matches. Orbit between boxes to check overlapping lining.';
   pick.setAttribute('aria-pressed',String(picking&&available));
   pick.classList.toggle('chosen',picking&&available);
   el('pick-status').hidden=!picking||!available;
   $('job-canvas').classList.toggle('shape-match-picking',picking&&available);
 
  }
- function changed(){dirty=true;controls();if(result)status('Settings changed. Find shapes again before applying an edit.');}
+ function changed(){stopReviewDetail();resetReviewBoxes();dirty=true;controls();if(result)status('Settings changed. Find shapes again before applying an edit.');}
  function render(){
   el('review').hidden=!result;if(!result){controls();return;}
   const s=result.statistics;
-  el('summary').textContent=`${count(s.input_points)} original points checked · ${count(result.total_group_count)} geometric groups · ${count(s.selected_points)} selected points across all regions. ${s.library_positive?`${count(s.library_positive)} confirmed examples · ${count(s.library_negative)} incorrect examples.`:`Example: ${count(s.example_candidate_points)} off-lining points.`} ${s.continuing_service?'Continuing-service matching.':'Complete compact-shape matching.'} ${result.reviewed_skipped?`${count(result.reviewed_skipped)} previously reviewed pockets skipped.`:''}`;
+  el('summary').textContent=`${count(s.input_points)} original points checked · ${scopeNames[result.search_area]||'search area'} · ${count(result.total_group_count)} geometric groups · ${count(s.selected_points)} selected points across all regions. ${s.library_positive?`${count(s.library_positive)} confirmed examples · ${count(s.library_negative)} incorrect examples.`:`Example: ${count(s.example_candidate_points)} off-lining points.`} ${s.continuing_service?'Continuing-service matching.':'Complete compact-shape matching.'} ${result.reviewed_skipped?`${count(result.reviewed_skipped)} previously reviewed pockets skipped.`:''}`;
   el('warnings').innerHTML=[...(result.stale?['Source changed. Find shapes again before editing.']:[]),...result.warnings].map(x=>`<p>${escape(x)}</p>`).join('');
   el('candidate-title').textContent=regionName();
   el('all-regions').hidden=result.region==null;
@@ -105,7 +127,7 @@
  }
  function renderCoverage(){
   const rows=result?.coverage||[];el('coverage').hidden=!rows.length;if(!rows.length)return;
-  el('coverage-note').textContent='Choose a region to show its candidates. '+(result.settings.respect_view?'Current view filters were applied. ':'The complete retained source was searched. ')+(result.lining_reference?.method||'Measured wall reference')+'. Counts describe the detection pass, not a probability or a verified object count.';
+  el('coverage-note').textContent='Choose a region to show its candidates. '+('Search area: '+(scopeNames[result.search_area]||'retained source')+'. ')+(result.lining_reference?.method||'Measured wall reference')+'. Counts describe the detection pass, not a probability or a verified object count.';
   el('coverage-grid').innerHTML=rows.map((row,index)=>{
    const state=!row.processed?'empty':!row.supported?'missing':row.matched?'matched':'unmatched';
    const reason=!row.processed?'No source observations in this region':!row.supported?'Measured wall reference unavailable':!row.offset_candidates?'No measured points outside the chosen wall band':!row.matched?'Offset candidates did not match the saved shapes':'Matched original observations';
@@ -117,14 +139,15 @@
    </button>`;
   }).join('');
  }
- function receive(spec){example=JSON.parse(JSON.stringify(spec));el('example').textContent='Example captured. The complete retained source will be searched for similar shapes.';changed();status('Example ready. Set the lining offset, then Find across whole cloud.');}
+ function receive(spec){example=JSON.parse(JSON.stringify(spec));el('example').textContent='Example captured. Similar shapes will be found in the chosen search area.';changed();status('Example ready. Set the lining offset, then start the search.');}
  function settings(){
   for(const id of ['minimum','maximum','similarity','depth','grid'])if(!el(id).checkValidity())throw Error('Check '+el(id).closest('label').querySelector('span').textContent+'.');
   if(+el('minimum').value>=+el('maximum').value)throw Error('Maximum lining offset must exceed the minimum.');
-  return {min_offset_mm:+el('minimum').value,max_offset_mm:+el('maximum').value,depth_tolerance_mm:+el('depth').value,grid_mm:+el('grid').value,similarity_percent:+el('similarity').value,side:el('side').value,continuation:el('continuation').value,rotations:el('rotations').checked,respect_view:el('view-filters').checked,lining_reference:el('reference').value,include_reviewed:el('include-reviewed').checked};
+  return {min_offset_mm:+el('minimum').value,max_offset_mm:+el('maximum').value,depth_tolerance_mm:+el('depth').value,grid_mm:+el('grid').value,similarity_percent:+el('similarity').value,side:el('side').value,continuation:el('continuation').value,rotations:el('rotations').checked,respect_view:el('view-filters').checked,search_scope:el('search-scope').value||'auto',lining_reference:el('reference').value,include_reviewed:el('include-reviewed').checked};
  }
  function show(){
   if(!result?.preview||result.stale)return;
+  stopReviewDetail();
   const full=result.preview;
   displayed=full;
   if(result.region!=null){
@@ -136,25 +159,93 @@
    displayed={...full,points,match_ids:ids};
   }
   window.JobUI.analysisPreview({...displayed,result_id:result.id,sample_count:displayed.points.length,used:result.statistics.input_points},'shape');
+  $('job-preview-info').textContent=overviewInfo();
+  window.JobUI.scheduleDetail?.();
+ }
+ function overviewInfo(){
   const detail=result.region!=null&&result.group_count>0&&!displayed.match_ids.length?' Open a candidate to load its original points.':'';
-  $('job-preview-info').textContent=`SHAPE REVIEW · ${regionName()} · ${count(result.group_count)} candidates · orange selected / cyan match / grey context.`+detail;
+  return `SHAPE REVIEW · ${regionName()} · ${count(result.group_count)} candidates · orange selected / cyan match / grey context.`+detail;
+ }
+ function stopReviewDetail(){
+  if((reviewDetail||detailRequest)&&displayed&&result&&window.JobUI.previewOwner()==='shape')$('job-preview-info').textContent=overviewInfo();
+  detailRequest?.controller.abort();detailRequest=null;
+  if(reviewDetail){reviewDetail=null;const scene=window.JobUI.cadScene();scene.clearPointPages();scene.draw();}
+ }
+ async function loadViewDetail(view,covered,force){
+  if(!displayed||!result||dirty||result.stale||running||busy||browsing||inspection||inspectionLoading)return;
+  if(!force&&view.scale>2){stopReviewDetail();return;}
+  if(!force&&reviewDetail&&view.scale>=reviewDetail.view.scale*.6&&covered(reviewDetail.view))return;
+  if(!force&&detailRequest&&view.scale>=detailRequest.view.scale*.6&&covered(detailRequest.view))return;
+  detailRequest?.controller.abort();
+  const request={view,controller:new AbortController()},id=result.id,revision=result.revision,region=result.region;
+  detailRequest=request;
+  const params=new URLSearchParams({preview_id:id,revision,detail_view:JSON.stringify(view),...(region==null?{}:{region})});
+  const info=$('job-preview-info');
+  const loading='SHAPE REVIEW · Loading measured close-up detail…';
+  info.textContent=loading;
+  try{
+   const page=await window.TunnelDisplayBuffers.load('/api/shape-selection?'+params,{signal:request.controller.signal});
+   if(detailRequest!==request||result?.id!==id||result?.revision!==revision||result?.region!==region||!covered(view)||!window.JobUI.canLoadReviewDetail())return;
+   if(page.review_id!==id||page.revision!==revision||page.match_ids.length!==page.match_offsets.length||
+      page.match_offsets.some(i=>!Number.isInteger(i)||i<0||i>=page.sample_count))throw Error('Invalid shape detail.');
+   const delta=page.origin.map((value,i)=>value-displayed.origin[i]),packed=page.packed;
+   for(let i=0;i<packed.length;i+=6)for(let axis=0;axis<3;axis++)packed[i+axis]+=delta[axis];
+   const scene=window.JobUI.cadScene();scene.clearPointPages();
+   reviewDetail=null;
+   if(page.sample_count){scene.addPointPage(packed);reviewDetail={view,page};}
+   info.textContent=`SHAPE REVIEW · ${count(page.sample_count)} measured close-up points · orange selected / cyan match / grey intensity.`;
+   controls();
+  }catch(error){
+   if(detailRequest===request&&error.name!=='AbortError')info.textContent='SHAPE REVIEW · Overview available · close-up detail could not load.';
+  }finally{
+   if(detailRequest===request){detailRequest=null;if(info.textContent===loading)info.textContent=overviewInfo();}
+  }
+ }
+ function hasDisplayedMatches(){return !!(displayed?.match_ids?.length||reviewDetail?.page.match_ids.length);}
+ function forEachDisplayedMatch(visit){
+  const {points,match_ids:ids}=displayed,start=points.length-ids.length;
+  ids.forEach((id,i)=>{const p=points[start+i];visit(id,p[0],p[1],p[2]);});
+  const page=reviewDetail?.page;
+  if(page)page.match_offsets.forEach((index,i)=>{const j=index*6,p=page.packed;visit(page.match_ids[i],p[j],p[j+1],p[j+2]);});
+ }
+ function resetReviewBoxes(){
+  window.JobUI.cancelAreaSelection(receiveReviewBox);
+  if(!reviewBoxes.length)return;
+  reviewBoxes.length=0;updateReviewBoxes();
+ }
+ function updateReviewBoxes(){
+  reviewBoxIds.clear();
+  for(const box of reviewBoxes)for(const id of box.ids)reviewBoxIds.add(id);
+  window.JobUI.setReviewBoxes(reviewBoxes.map(box=>box.spec));
+ }
+ function receiveReviewBox(spec){
+  window.JobUI.clearSelection();
+  if(!hasDisplayedMatches()||dirty||result?.stale||window.JobUI.previewOwner()!=='shape')return;
+  const {origin}=displayed,hit=new Set();
+  forEachDisplayedMatch((id,x,y,z)=>{
+   if(hit.has(id))return;
+   const world=[x+origin[0],y+origin[1],z+origin[2]];
+   if(window.JobUI.selectionContains(world,spec))hit.add(id);
+  });
+  if(!hit.size){status('This box contains no displayed match points.',true);return;}
+  reviewBoxes.push({spec,ids:hit});updateReviewBoxes();
+  controls();status('Box added. Orbit or add another box, then unselect the boxed matches.');
  }
  function pickMatch(pixel){
   if(!picking||el('pick-3d').disabled)return false;
-  const scene=window.JobUI.cadScene(),preview=displayed,ids=preview.match_ids;
+  const scene=window.JobUI.cadScene();
   const width=scene.c.clientWidth,height=scene.c.clientHeight,basis=scene.basis();
-  const first=preview.points.length-ids.length;
   let hit=null;
-  for(let i=0;i<ids.length;i++){
-   const projected=scene.projectLocal(preview.points[first+i].slice(0,3),basis);
-   if(!projected||Math.abs(projected[0])>1||Math.abs(projected[1])>1)continue;
+  forEachDisplayedMatch((id,x,y,z)=>{
+   const projected=scene.projectLocal([x,y,z],basis);
+   if(!projected||Math.abs(projected[0])>1||Math.abs(projected[1])>1)return;
    const dx=(1+projected[0])*width/2-pixel[0],dy=(1-projected[1])*height/2-pixel[1];
    const distance=Math.hypot(dx,dy),depth=projected[2];
-   if(distance>9)continue;
+   if(distance>9)return;
    if(!hit||distance<hit.distance-1||Math.abs(distance-hit.distance)<=1&&depth>hit.depth){
-    hit={id:ids[i],distance,depth};
+    hit={id,distance,depth};
    }
-  }
+  });
   if(!hit){el('pick-status').textContent='Click orange or cyan points. Zoom in to separate nearby matches.';return true;}
   el('pick-status').textContent='Updating match '+hit.id+'…';
   run('select',{operation:'invert',group_ids:[hit.id]});
@@ -188,7 +279,7 @@
   scene.scale=extent*1.6;const x=(left+right)/rect.width-1,y=1-(top+bottom)/rect.height;
   scene.target=scene.target.map((v,i)=>v-basis.right[i]*x*scene.scale-basis.up[i]*y*scene.scale/aspect);scene.draw();
  }
- function abandonInspection(){inspectionEpoch++;inspectionAbort?.abort();inspectionAbort=null;inspection=null;inspectionLoading=false;inspectionPhase='';window.JobUI.cadScene()?.clearPointPages();}
+ function abandonInspection(){stopReviewDetail();inspectionEpoch++;inspectionAbort?.abort();inspectionAbort=null;inspection=null;inspectionLoading=false;inspectionPhase='';window.JobUI.cadScene()?.clearPointPages();}
  async function backToMatches(){
   const preparing=inspectionPhase==='prepare',view=overviewView;abandonInspection();overviewView=null;
   if(preparing){try{await post('/api/cancel-operation',{});await window.JobUI.waitReady();}catch{}finally{setBusy(false);}}
@@ -196,6 +287,7 @@
  }
  async function inspectPocket(ident){
   if(running||busy||browsing||!result||dirty||result.stale)return;
+  stopReviewDetail();
   const epoch=++inspectionEpoch;inspectionAbort?.abort();const controller=new AbortController();inspectionAbort=controller;
   const review=result.id,revision=result.revision;let prepared=false;
   if(!overviewView)overviewView=cameraView();inspectionLoading=true;inspectionPhase='prepare';if(inspection)inspection={...inspection,complete:false};
@@ -310,6 +402,7 @@
  }
  async function run(action,extra={}){
   if(running||busy||browsing||inspectionLoading)return;
+  if(action==='preview')resetReviewBoxes();
   const focused=inspection?.group_id,view=overviewView;let succeeded=false;
   abandonInspection();
   if(['preview','delete','separate'].includes(action)){overviewView=null;picking=false;}
@@ -317,7 +410,7 @@
   try{
    let body;if(action==='preview'){if(!example&&!librarySearch())throw Error('Draw an example or select a saved shape type first.');body={action,source_id:el('source').value,example,settings:settings(),...(librarySearch()?{class_id:el('library').value}:{})};}
    else{if(!result||dirty||result.stale)throw Error('Find shapes with the current source and settings again.');body={action,preview_id:result.id,revision:result.revision,...extra};}
-   running=true;setBusy(true);controls();status(action==='preview'?'Searching the whole retained registered cloud in blocks…':'Updating full-density original points…');
+   running=true;setBusy(true);controls();status(action==='preview'?`Searching ${scopeNames[searchArea()]} in blocks…`:'Updating full-density original points…');
    await post('/api/shape-selection',body);
    const picked=extra.operation==='invert';
    const job=await window.JobUI.waitReady(value=>status(value.message||'Working…'),picked?{pollMs:120,skipSync:true}:undefined);
@@ -333,28 +426,49 @@
     }
    }
   }catch(error){status(error.message,true);}finally{running=false;setBusy(false);render();if(succeeded&&focused&&['select','refine'].includes(action))queueMicrotask(()=>inspectPocket(focused));}
+  return succeeded;
  }
  async function open(){
   if(running||busy)return;const scans=window.JobUI.scanItems(),selected=window.JobUI.selectedItem();
-  abandonInspection();overviewView=null;
+  resetReviewBoxes();abandonInspection();overviewView=null;
   el('source').innerHTML=scans.map(x=>`<option value="${escape(x.id)}">${escape(x.name)}</option>`).join('');
   el('separated-source').innerHTML='<option value="">Choose an existing separated scan</option>'+window.JobUI.scanItems().map(x=>`<option value="${escape(x.id)}">${escape(x.name)}</option>`).join('');
   if(selected?.kind==='scan'&&scans.some(x=>x.id===selected.id))el('source').value=selected.id;
-  example=null;result=null;displayed=null;dirty=true;window.JobUI.clearCleaningPreview();window.TunnelRibbon.view('shape-selection');
+  el('search-scope').value='auto';example=null;result=null;displayed=null;dirty=true;window.JobUI.clearCleaningPreview();window.TunnelRibbon.view('shape-selection');
   el('example').textContent='Draw one object or a short service section. The example does not limit the search.';
   status(scans.length?'Choose a saved type, or draw and save several examples as Pocket 1.':'Import or show a registered scan to search; saved examples can still be reviewed.',!scans.length);render();
   try{await refreshLibrary();}catch(e){status(e.message,true);}
  }
- for(const mode of ['box','lasso','polygon'])el(mode).onclick=()=>{if(running||busy)return;window.JobUI.clearCleaningPreview();window.JobUI.selectScan(el('source').value);window.JobUI.armAreaSelection(receive,mode);status('Draw around one example in the main 3D view. Polygon: Enter to finish.');};
+ for(const mode of ['box','lasso','polygon'])el(mode).onclick=()=>{if(running||busy)return;resetReviewBoxes();window.JobUI.clearCleaningPreview();window.JobUI.selectScan(el('source').value);window.JobUI.armAreaSelection(receive,mode);status('Draw around one example in the main 3D view. Polygon: Enter to finish.');};
  el('use').onclick=()=>{const spec=window.JobUI.currentSelection();if(spec)receive(spec);else status('Draw an area in the main 3D view first.',true);};
- el('run').onclick=()=>run('preview');el('stop').onclick=async()=>{status('Stopping at the next whole-cloud block or matching-window checkpoint…');try{await post('/api/cancel-operation',{});}catch(e){status(e.message,true);}};
+ el('run').onclick=()=>run('preview');el('stop').onclick=async()=>{status('Stopping at the next source block or matching window…');try{await post('/api/cancel-operation',{});}catch(e){status(e.message,true);}};
  el('pick-3d').onclick=()=>{
+  window.JobUI.cancelAreaSelection(receiveReviewBox);
   picking=!picking;
   if(picking){
    window.JobUI.setMode('orbit');
    el('pick-status').textContent='Click an orange match to exclude it. Click a cyan match to include it. Drag to orbit.';
   }
   controls();
+ };
+ el('add-review-box').onclick=()=>{
+  if(el('add-review-box').disabled)return;
+  picking=false;
+  if(window.JobUI.armAreaSelection(receiveReviewBox,'box','shape'))status('Drag a box around the unwanted displayed matches.');
+  controls();
+ };
+ el('undo-review-box').onclick=()=>{
+  window.JobUI.cancelAreaSelection(receiveReviewBox);reviewBoxes.pop();
+  updateReviewBoxes();controls();status('Last queued box removed.');
+ };
+ el('apply-review-boxes').onclick=async()=>{
+  controls();
+  if(el('apply-review-boxes').disabled)return;
+  window.JobUI.cancelAreaSelection(receiveReviewBox);
+  const ids=[...reviewBoxIds];
+  if(await run('select',{operation:'toggle',group_ids:ids,selected:false})){
+   resetReviewBoxes();controls();status(`${count(ids.length)} boxed matches left unselected. Review the remaining orange points.`);
+  }
  };
  for(const operation of ['all','none'])el(operation).onclick=()=>run('select',{operation});
  el('groups').onchange=e=>{if(e.target.dataset.shapeGroup)run('select',{operation:'toggle',group_ids:[+e.target.dataset.shapeGroup],selected:e.target.checked});};
@@ -367,9 +481,9 @@
  const teaching=()=>({teach:!!(selectedType()?.active&&el('teach-removal').checked&&!result?.statistics.continuing_service),class_id:el('library').value});
  el('remove').onclick=()=>{if(el('remove').disabled)return;const t=teaching();showTunnelMessage('Remove reviewed shape matches',`Remove ${count(result.statistics.selected_points)} selected original points across all regions from ${result.source_name}? ${inspection?'You are inspecting one pocket; this action applies to ALL checked groups in the review. ':''}${t.teach?'Confirm these complete objects as '+selectedType().name+' examples. They will be saved independently before removal. One Undo reverses both.':'Review the geometric matches first. Undo remains available.'}`,true,t.teach?'Remove and teach':'Remove selected points',()=>run('delete',{confirmed:true,...t}));};
  el('separate').onclick=()=>{if(!el('separate').disabled)run('separate',{confirmed:true,...teaching()});};
- el('normal').onclick=()=>{const view=overviewView;abandonInspection();overviewView=null;window.JobUI.clearCleaningPreview();restoreCamera(view);controls();};
- el('source').onchange=()=>{abandonInspection();overviewView=null;example=null;result=null;dirty=true;el('example').textContent='Draw an example on this source scan.';render();};
- for(const id of ['side','minimum','maximum','continuation','similarity','depth','grid','rotations','view-filters','reference','include-reviewed'])el(id).addEventListener('input',changed);
+ el('normal').onclick=()=>{resetReviewBoxes();const view=overviewView;abandonInspection();overviewView=null;window.JobUI.clearCleaningPreview();restoreCamera(view);controls();};
+ el('source').onchange=()=>{resetReviewBoxes();abandonInspection();overviewView=null;example=null;result=null;dirty=true;el('example').textContent='Draw an example on this source scan.';render();};
+ for(const id of ['side','minimum','maximum','continuation','similarity','depth','grid','rotations','view-filters','reference','include-reviewed','search-scope'])el(id).addEventListener('input',changed);
  el('library').onchange=async()=>{changed();try{await refreshLibrary();}catch(e){status(e.message,true);}};
  el('use-library').onchange=changed;el('teach-removal').onchange=controls;
  el('refresh-library').onclick=async()=>{try{await refreshLibrary();}catch(e){status(e.message,true);}};
@@ -399,5 +513,5 @@
  el('all-regions').onclick=()=>browse(0,{region:null});
  el('sort').onchange=()=>browse(0,{sort:el('sort').value});
  for(const [id,delta] of [['previous',-1],['next',1]])el(id).onclick=()=>{if(result)browse(result.page+delta);};
- window.ShapeSelectionUI={open,pickMatch,refreshLibrary,busy:controls,inspect:inspectPocket,inspection:()=>inspection,backToMatches,removeSelected:()=>el('remove').click(),removableCount:()=>!dirty&&!result?.stale?result?.statistics.selected_points||0:0,result:()=>result,onToolClose:()=>{const view=overviewView;browseEpoch++;browsing=false;abandonInspection();overviewView=null;displayed=null;if(!running){window.JobUI.clearCleaningPreview('shape');restoreCamera(view);controls();}}};
+ window.ShapeSelectionUI={open,pickMatch,loadViewDetail,refreshLibrary,busy:controls,inspect:inspectPocket,inspection:()=>inspection,backToMatches,removeSelected:()=>el('remove').click(),removableCount:()=>!dirty&&!result?.stale?result?.statistics.selected_points||0:0,result:()=>result,onToolClose:()=>{resetReviewBoxes();const view=overviewView;browseEpoch++;browsing=false;abandonInspection();overviewView=null;displayed=null;if(!running){window.JobUI.clearCleaningPreview('shape');restoreCamera(view);controls();}}};
 })();
