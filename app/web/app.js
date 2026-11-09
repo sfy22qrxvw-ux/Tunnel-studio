@@ -17,6 +17,12 @@ $('message-close').onclick=()=>{$('message-dialog').close();setTimeout(()=>{last
 $('operation-cancel').onclick=async()=>{const b=$('operation-cancel');if(!state?.job?.busy)return;b.disabled=true;b.textContent='Stopping…';try{await post('/api/cancel-operation',{});$('operation-progress-text').textContent='Stopping safely…';}catch(e){b.disabled=false;b.textContent='Stop';notice(e.message,true);}};
 async function api(url,options={}){const r=await fetch(url,options);const d=await r.json();if(!r.ok)throw Error(d.error||'Request failed');return d;}
 const post=(path,data)=>api(path,{method:'POST',headers:{'Content-Type':'application/json','X-Tunnel-Token':window.TUNNEL_TOKEN},body:JSON.stringify(data)});
+function jobStatusURL(){return state?'/api/status?during_job=1':'/api/status';}
+function updateJobSnapshot(snapshot){
+ if(state&&Object.keys(snapshot).length===1)state.job=snapshot.job;
+ else state=snapshot;
+ return snapshot.job;
+}
 function params(){return new URLSearchParams({station:$('station').value,width:$('width').value,band:$('band').value,tolerance:$('tolerance').value}).toString();}
 function reportParams(){return new URLSearchParams({station:result.chainage,width:result.width,band:result.band,tolerance:result.tolerance_mm}).toString();}
 function setBusy(v,fromPoll=false){if(v&&!fromPoll){pollGeneration++;clearTimeout(pollTimer);}busy=v;window.MeshResultsUI?.sync();refreshTools();window.TunnelRibbon?.sync();window.TargetUI?.busy(v);window.SurfaceUI?.busy(v);window.JobUI?.busy(v);window.HistoryUI?.sync();window.InspectionUI?.busy();window.FeatureSelectionUI?.busy?.();window.ShapeSelectionUI?.busy?.();window.ScanAppearanceUI?.busy?.();window.CircleCleanUI?.busy?.();window.HeatUI?.sync();window.RingCreepUI?.sync();for(const id of ['demo','path-import','analyse','apply','detect-joints','build-report','build-unwrapped-heat','export-clean','confirm-delete','clip-apply','mode-select','mode-pick','mode-distance','object-save','build-mesh','transform-mesh','reset-mesh-transform','backup-project'])$(id).disabled=v;document.querySelectorAll('.file-card input').forEach(x=>x.disabled=v);}
@@ -33,7 +39,7 @@ function updateOperationProgress(job){
 }
 async function poll(){
  const generation=++pollGeneration;clearTimeout(pollTimer);const current=()=>generation===pollGeneration;
- try{const snapshot=await api('/api/status');if(!current())return;state=snapshot;meshEngineUI();setBusy(state.job.busy,true);updateOperationProgress(state.job);$('status-line').textContent=state.job.message;
+ try{const snapshot=await api(jobStatusURL());if(!current())return;updateJobSnapshot(snapshot);if(snapshot.version)meshEngineUI();setBusy(state.job.busy,true);updateOperationProgress(state.job);$('status-line').textContent=state.job.message;
   if(state.job.busy){notice(state.job.message);pollTimer=setTimeout(()=>{if(current())poll();},700);return;}
   refreshState();refreshTools();renderObjects();window.TunnelRibbon?.sync();
   // The main viewport becomes usable before optional tool panels refresh.
@@ -65,10 +71,17 @@ function refreshState(){
 }
 function clearResults(){for(const k of ['station','offset','ovality','count'])$('metric-'+k).textContent='—';$('profile-svg').innerHTML='';$('section-values').innerHTML='<p>Load a scan and choose a chainage.</p>';$('view-count').textContent='';$('cloud-empty').style.display='';}
 async function analyse(){
- if(busy||!state?.cloud)return;const id=++queryId;$('analyse').disabled=true;window.WorkStatus?.show('Calculating cross-section…','Checking all retained slice points. Dense sections are processed in chunks.',true);const progressTimer=setInterval(async()=>{try{const s=await api('/api/status');if(id===queryId&&/^Large section:|^Balancing section fit:/.test(s.job?.message||''))window.WorkStatus?.show('Calculating cross-section…',s.job.message,true);}catch(_e){}},800);
+ if(busy||!state?.cloud)return;const id=++queryId;$('analyse').disabled=true;window.WorkStatus?.show('Calculating cross-section…','Checking all retained slice points. Dense sections are processed in chunks.',true);
+ let progressPending=false,progressActive=true;
+ const progressTimer=setInterval(async()=>{
+  if(progressPending||id!==queryId)return;
+  progressPending=true;
+  try{const {job}=await api('/api/status?job_only=1');if(progressActive&&id===queryId&&/^Large section:|^Balancing section fit:/.test(job?.message||''))window.WorkStatus?.show('Calculating cross-section…',job.message,true);}
+  catch(_e){}finally{progressPending=false;}
+ },800);
  try{const r=await api('/api/section?'+params());if(id!==queryId)return;result=r;renderResults();scene.section(r);window.WorkStatus?.show('Cross-section ready',`${fmt(r.kept_points,0)} retained points analysed · ${r.large_section?'processed in chunks':'full-density statistics'}.`);$('canvas-station').textContent='Chainage '+fmt(r.chainage,3)+' m';}
  catch(e){if(id===queryId){result=null;clearResults();window.WorkStatus?.show('Cross-section could not be calculated',e.message,false,true);notice(e.message,true);}}
- finally{clearInterval(progressTimer);if(id===queryId)$('analyse').disabled=false;}
+ finally{progressActive=false;clearInterval(progressTimer);if(id===queryId)$('analyse').disabled=false;}
 }
 function renderResults(){const r=result;if(!r)return;
  $('metric-station').textContent=fmt(r.chainage,3);$('metric-offset').textContent=r.fit_valid?`${fmt(r.circle_centre[0]*1000,1)} / ${fmt(r.circle_centre[1]*1000,1)}`:'Fit withheld';
