@@ -26,6 +26,21 @@ def same_geometry(a, b):
                 and registration_pose.revision(a)==registration_pose.revision(b))
 
 
+def result_source_changed(s, r):
+    saved = r['source_meta']
+    item_id = r.get('source_item_id')
+    if item_id:
+        item = next((x for x in s.STATE.get('job_items', [])
+                     if x['id'] == item_id and x['kind'] == 'scan'), None)
+        if item:
+            return not same_geometry(item['meta'], saved)
+    current = source(s, r['source_kind'])
+    # Older results and standalone sources have no persistent item ID.
+    # Switching to another scan does not invalidate a saved result.
+    return bool(current and current.get('file') == saved.get('file')
+                and not same_geometry(current, saved))
+
+
 def patch_fingerprint(item):
     meta=item['meta'];files=[]
     for key in ('file','mask_file'):
@@ -100,6 +115,7 @@ def public_result(s, r):
     out['source_count'] = r['source_meta']['count']
     out['source_item_id'] = r.get('source_item_id')
     out['reviewed_kept_points'] = kept_count(r)
+    out['source_changed'] = result_source_changed(s, r)
     out['can_apply'] = r['source_kind'] == 'survey' and same_geometry(source(s, 'survey'), r['source_meta'])
     out['can_delete_patches'] = patch_source(s,r) is not None
     out['evaluation'] = metrics(r)
@@ -154,8 +170,16 @@ def _area_count(s,meta,key,selection,cancelled=lambda:False,max_selected=None):
     to 100k records; the operating system's file cache is not process mappings.
     """
     from contextlib import ExitStack
+    import surface_streaming
     spec,lo,hi,start,end=_selection_spec(s,meta,key,selection)
     total=int(meta['count']);read_points=max(1,min(int(pointio.CHUNK),100000))
+    if surface_streaming.index_box(spec):
+        selected = 0
+        for ids, _, _ in surface_streaming.batches(s,meta,key,spec,read_points,cancelled):
+            selected += len(ids)
+            if max_selected is not None and selected > max_selected:
+                _smrg_guard(selected,partial=True)
+        return selected,spec
     selected=0;seen=0
     with ExitStack() as files:
         source_file=files.enter_context(open(meta['file'],'rb'))
@@ -191,10 +215,14 @@ def _area_batches(s,meta,key,selection,block_points,cancelled=lambda:False):
     already yielded to a caller are never overwritten by subsequent reads.
     """
     from contextlib import ExitStack
+    import surface_streaming
     spec,lo,hi,start,end=_selection_spec(s,meta,key,selection)
     block_points=int(block_points)
     if block_points<1:raise ValueError('Selection batch size must be positive.')
     block_points=min(block_points,500000)
+    if surface_streaming.index_box(spec):
+        yield from surface_streaming.batches(s,meta,key,spec,block_points,cancelled)
+        return
     total=int(meta['count']);read_points=max(1,min(int(pointio.CHUNK),100000))
     selected=0;seen=0;filled=0
     ids_buffer=np.empty(block_points,dtype='<i8');points_buffer=np.empty((block_points,3),dtype='<f8')
@@ -327,6 +355,7 @@ def _run(s, body, cached=None):
     key=body.get('source','survey');meta=source(s,key)
     if not meta:raise ValueError('Import or choose a source scan first.')
     meta=copy.deepcopy(meta);settings=asdict(Settings.read(body.get('settings')));block=max(50000,min(int(settings.get('max_points',300000)),500000))
+    source_item_id=s.STATE.get('surface_source_item') if key=='separate' else s.STATE.get('active_job_scan') if key=='survey' else None
     selection=body.get('selection',{'mode':'full'})
     area_batches=__import__('surface_streaming').batches if settings['method']=='lining_features' else _area_batches
     if cached:selected_total,count_spec=cached[2:]
@@ -362,7 +391,6 @@ def _run(s, body, cached=None):
         import clean_tunnel
         try:
             progress=lambda message:s.progress(f'{"Whole retained scan" if count_spec["mode"]=="full" else "Selected area only"} · {selected_total:,} points · {message}')
-            source_item_id=s.STATE.get('surface_source_item') if key=='separate' else s.STATE.get('active_job_scan') if key=='survey' else None
             source_item=next((x for x in s.STATE.get('job_items',[]) if x['id']==source_item_id),None)
             fingerprint=patch_fingerprint(source_item) if source_item and settings['method'] in ('irregular','lining_features') else None
             if settings['method'] in ('gusac','tmatch'):
@@ -447,7 +475,7 @@ def _run(s, body, cached=None):
            'method':('Tunnel Studio tunnel-envelope extraction; block-processed and merged for tunnel lining review.' if settings.get('method')=='tunnel_envelope' else 'SMRG research implementation, Song et al. 2026; independent interpretation, automatically block-processed for large selections.'),'doi':('' if settings.get('method')=='tunnel_envelope' else '10.1038/s41598-026-73755-6')}
         r.update(id=ident,revision=uuid.uuid4().hex,created_at=time.time(),source_kind=key,source_meta=meta,point_ids_file=str(idpath),labels_file=str(labelpath),selection=spec or {'mode':'full'},review_log=[],outputs={})
         if CANCEL.is_set():raise ValueError('Surface extraction cancelled. The previous result is unchanged.')
-        r['source_item_id']=s.STATE.get('surface_source_item') if key=='separate' else None
+        r['source_item_id']=source_item_id
         commit_result(s,r)
     except Exception:
         idpath.unlink(missing_ok=True);labelpath.unlink(missing_ok=True);raise
@@ -687,6 +715,8 @@ def delete_patches(s,body):
 
 def filtered_cloud(s, included=True):
     r = result(s); key = 'surface' if included else 'other'; cached = r.get('outputs',{}).get(key)
+    if result_source_changed(s, r):
+        raise ValueError('The source scan changed after cleaning. Run cleaning again before creating or exporting a cleaned scan.')
     output_name=('Tunnel · ' if included else 'Noise_removed · ')+r['source_meta']['name']
     if cached and Path(cached['file']).is_file():
         return {**cached,'name':output_name}
@@ -715,7 +745,7 @@ def filtered_cloud(s, included=True):
 
 def apply(s, body):
     r = result(s)
-    if body.get('revision') != r['revision'] or not body.get('reviewed'): raise ValueError('Review the current result before applying it.')
+    if body.get('revision') != r['revision'] or body.get('reviewed') is not True: raise ValueError('Review the current result before applying it.')
     if r['source_kind'] != 'survey' or not same_geometry(source(s,'survey'),r['source_meta']):
         raise ValueError('The active survey differs from this result. Run extraction on the current survey before applying; the saved result can still be exported.')
     rejected_count=r['statistics']['input_points']-kept_count(r)

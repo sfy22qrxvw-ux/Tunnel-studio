@@ -1,19 +1,24 @@
 # Copyright (c) 2026 Damian Gulczynski.
 """Bounded original-point reads in the registered frame for lining analysis."""
 from contextlib import ExitStack
+import os
 import numpy as np
 import pointio,jobdata,preview_index,registration_pose
+
+def index_box(spec):
+    return spec.get('clip_box') or (spec if spec['mode'] in ('box','oriented_box') and not spec.get('invert') else None)
 
 def batches(s,meta,key,selection,block,cancelled=lambda:False):
     from surface_api import _selection_spec
     spec,_,_,start,end=_selection_spec(s,meta,key,selection)
     total=meta['count'];pending_ids=[];pending_points=[];pending_count=selected=0
-    area=spec.get('clip_box') or (spec if spec['mode'] in ('box','oriented_box') else None)
+    area=index_box(spec)
 
     def checkpoint(message=None):
         if cancelled():raise ValueError('Surface extraction cancelled. The previous result is unchanged.')
         if message:s.progress(message)
 
+    checkpoint()
     if area and total:
         ranges=list(preview_index.indexed_selection_blocks(meta,area,checkpoint))
         read_total=sum(stop-i for i,stop in ranges)
@@ -25,6 +30,10 @@ def batches(s,meta,key,selection,block,cancelled=lambda:False):
         points=stack.enter_context(open(meta['file'],'rb'))
         mask=stack.enter_context(open(meta['mask_file'],'rb')) if meta.get('mask_file') else None
         derived=stack.enter_context(open(s.STATE['derived'],'rb')) if spec['mode']=='chainage' else None
+        if area:
+            for stream,width,label in ((points,24,'point cache'),(mask,1,'point mask'),(derived,32,'analysis cache')):
+                if stream is not None and os.fstat(stream.fileno()).st_size < total*width:
+                    raise ValueError(f'Incomplete {label}.')
         for i,stop in ranges:
             checkpoint()
             if area:points.seek(i*24)

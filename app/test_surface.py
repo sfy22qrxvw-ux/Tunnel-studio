@@ -132,6 +132,52 @@ class SurfaceWorkflowTests(unittest.TestCase):
         self.assertEqual(int(editing.mask_for(self.s.STATE['cloud']).sum()),1)
         self.assertTrue(surface_api.public_result(self.s,r)['can_apply'])
 
+    def test_apply_rejects_non_boolean_review_confirmation(self):
+        r=self.crafted_result()
+        for reviewed in ('false', 1, False, None):
+            with self.subTest(reviewed=reviewed), self.assertRaisesRegex(ValueError,'Review the current result'):
+                surface_api.apply(self.s,{'revision':r['revision'],'reviewed':reviewed})
+        self.assertEqual(self.s.STATE['cloud']['mask_file'],r['source_meta']['mask_file'])
+        self.assertFalse(self.s.STATE['edits'])
+
+    def test_point_undo_blocks_stale_cleaning_output_even_if_cached(self):
+        import scan_edits, workspace_history
+        r=self.crafted_result('separate')
+        item=dict(id='source',kind='scan',name=self.meta['name'],meta=copy.deepcopy(r['source_meta']))
+        self.s.STATE.update(job_items=[item],surface_source_item=item['id'],surface_source=copy.deepcopy(item['meta']))
+        r.update(source_item_id=item['id'],source_fingerprint=surface_api.patch_fingerprint(item),
+                 settings={'method':'irregular'},kept=[0,1])
+        r['clusters'][1]['irregular_candidate']=True
+        with workspace_history.request(self.s,'/api/surface-action'):
+            workspace_history.configure('/api/surface-action',{'action':'delete_patches'})
+            workspace_history.background(self.s,lambda:surface_api.delete_patches(
+                self.s,{'revision':r['revision'],'clusters':[1]}))()
+        after=self.s.STATE['surface_result']
+        self.assertEqual(surface_api.filtered_cloud(self.s)['count'],40)
+        scan_edits.apply(self.s,item,'undo_edit')
+        self.assertTrue(surface_api.public_result(self.s,after)['source_changed'])
+        with self.assertRaisesRegex(ValueError,'source scan changed'):
+            surface_api.add_clean_scan(self.s,{'revision':after['revision'],'reviewed':True})
+        with self.assertRaisesRegex(ValueError,'source scan changed'):
+            surface_api.filtered_cloud(self.s,False)
+        self.assertEqual(len(self.s.STATE['job_items']),1)
+        scan_edits.apply(self.s,item,'redo_edit')
+        self.assertFalse(surface_api.public_result(self.s,after)['source_changed'])
+        workspace_history.apply(self.s)
+        self.assertEqual(surface_api.filtered_cloud(self.s)['count'],90)
+
+    def test_result_belongs_to_original_item_when_active_scan_changes(self):
+        r=self.crafted_result()
+        self.s.STATE['job_items']=[dict(id='source',kind='scan',meta=copy.deepcopy(r['source_meta']))]
+        r['source_item_id']='source'
+        self.s.STATE['cloud']={**r['source_meta'],'file':str(self.root/'another.xyz64')}
+        self.assertFalse(surface_api.public_result(self.s,r)['source_changed'])
+        self.assertEqual(surface_api.filtered_cloud(self.s)['count'],40)
+        self.s.STATE['job_items'][0]['meta']['mask_file']=None
+        self.assertTrue(surface_api.public_result(self.s,r)['source_changed'])
+        with self.assertRaisesRegex(ValueError,'source scan changed'):
+            surface_api.filtered_cloud(self.s)
+
     def test_review_export_keeps_coordinate_and_attribute_identity(self):
         r=self.crafted_result();surface_api.review(self.s,{'revision':'initial','kept':[1,-1]})
         with self.assertRaisesRegex(ValueError,'changed'):surface_api.review(self.s,{'revision':'initial','kept':[0]})

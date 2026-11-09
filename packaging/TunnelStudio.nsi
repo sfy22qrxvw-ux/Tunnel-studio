@@ -3,12 +3,12 @@ Unicode true
 !include "x64.nsh"
 !include "LogicLib.nsh"
 !include "WinVer.nsh"
-!define VERSION "0.23.4"
+!define VERSION "0.23.5"
 !define PAYLOAD "payload"
 !define BOOTSTRAP "bootstrap"
 !define SETUP_ART "${PAYLOAD}/build_support/installer-art"
 !ifndef SETUP_OUTFILE
-  !define SETUP_OUTFILE "TunnelStudio_Setup_0.23.4_x64.exe"
+  !define SETUP_OUTFILE "TunnelStudio_Setup_0.23.5_x64.exe"
 !endif
 Name "Tunnel Studio ${VERSION}"
 Caption "Tunnel Studio Setup"
@@ -22,10 +22,10 @@ ShowInstDetails show
 ShowUninstDetails show
 !define SETUP_BRANDING "Tunnel Studio · Damian Gulczynski"
 BrandingText "${SETUP_BRANDING}"
-VIProductVersion "0.23.4.0"
+VIProductVersion "0.23.5.0"
 VIAddVersionKey /LANG=1033 "ProductName" "Tunnel Studio"
-VIAddVersionKey /LANG=1033 "ProductVersion" "0.23.4"
-VIAddVersionKey /LANG=1033 "FileVersion" "0.23.4.0"
+VIAddVersionKey /LANG=1033 "ProductVersion" "0.23.5"
+VIAddVersionKey /LANG=1033 "FileVersion" "0.23.5.0"
 VIAddVersionKey /LANG=1033 "FileDescription" "Tunnel Studio Windows x64 Installer"
 VIAddVersionKey /LANG=1033 "CompanyName" "Damian Gulczynski"
 VIAddVersionKey /LANG=1033 "LegalCopyright" "Copyright (c) 2026 Damian Gulczynski"

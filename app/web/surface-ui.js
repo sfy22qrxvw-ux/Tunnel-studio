@@ -41,11 +41,16 @@
    return true;
   }catch(error){notice(error.message,true);return false;}
  }
+ function deletePatches(r,ids){
+  const chosen=new Set(ids),count=r.clusters.reduce((total,c)=>total+(chosen.has(c.id)?c.points:0),0);
+  if(!count||!confirm(`Delete ${fmt(count,0)} points from ${r.source_name}?\n\nUndo restores the deleted points.`))return false;
+  return action({action:'delete_patches',revision:r.revision,clusters:ids});
+ }
  function deleteSelectedGroups(){
   const r=data.result,ids=selectedRecesses();
   if(r?.settings?.method==='lining_features'&&ids.length===selectedClusters.size&&ids.length){
    if($('surf-delete-patches').disabled){notice(reviewError||'Load and review the selected bolt-feature points before deleting them.',true);return false;}
-   return action({action:'delete_patches',revision:r.revision,clusters:ids});
+   return deletePatches(r,ids);
   }
   return markClusters(false);
  }
@@ -275,7 +280,7 @@
  }
  function quality(){const r=data.result,stats=r?.statistics;$('surf-total').textContent=stats?fmt(stats.input_points,0):'—';$('surf-kept').textContent=r?fmt(r.reviewed_kept_points,0):'—';$('surf-clusters').textContent=stats?fmt(stats.clusters,0):'—';$('surf-time').textContent=stats?fmt(stats.seconds,1)+' s':'—';
   $('surf-keep-noise').checked=kept().has(-1);$('surf-warnings').textContent=r?[`Result source: ${r.source_name} · area: ${r.selection.mode}.`,...r.warnings,...(r.settings?.method==='smrg'?['Boundary overlap is a geometric merging test, not a confidence score.']:[])].join('\n'):'Select a tunnel area in the main 3D view, then run extraction. Review the suggested lining before applying.';
-  $('surf-apply-info').textContent=r?.can_apply?'Ready to apply to the unchanged active survey. Points outside the processed area are preserved.':r?'Create a cleaned scene scan or export the kept points. To apply exclusions directly, extract from the current active survey without changing its points afterwards.':'Applying becomes available after extracting from the active survey.';
+  $('surf-apply-info').textContent=r?.source_changed?'The source scan changed after cleaning. Run cleaning again before creating or exporting a cleaned scan.':r?.can_apply?'Ready to apply to the unchanged active survey. Points outside the processed area are preserved.':r?'Create a cleaned scene scan or export the kept points. To apply exclusions directly, extract from the current active survey without changing its points afterwards.':'Applying becomes available after extracting from the active survey.';
   $('surf-evaluation').hidden=!r?.evaluation;if(r?.evaluation){const e=r.evaluation;$('surf-evaluation-values').textContent=`Current review: intersection over union ${fmt(e.iou*100,2)}%; precision ${(e.precision===null?'—':fmt(e.precision*100,2))}%; recall ${(e.recall===null?'—':fmt(e.recall*100,2))}%. TP ${fmt(e.tp,0)}, FP ${fmt(e.fp,0)}, FN ${fmt(e.fn,0)}.`;}
   table();setBusySurface(busy);
  }
@@ -307,7 +312,7 @@
    if(reviewChanged&&r){const valid=new Set(clusters().map(c=>c.id));selectedClusters=new Set([...selectedClusters].filter(id=>valid.has(id)));hiddenClusters=new Set([...hiddenClusters].filter(id=>valid.has(id)));if(inspected!==null&&!valid.has(inspected)){inspected=null;$('surf-isolate').checked=false;}if(isolatedClusters){isolatedClusters=new Set([...isolatedClusters].filter(id=>valid.has(id)));if(!isolatedClusters.size)isolatedClusters=null;}}
    if(r&&(document.body.classList.contains('surface-active')||window.DetachedUI?.active?.('tab-surface'))&&previewId!==r.id+':'+r.revision){preview=await api('/api/surface-preview');sourcePreview=null;previewMode='result';visualSelection=null;sourceOrigin=preview.origin||[0,0,0];previewId=r.id+':'+r.revision;sceneSurface.setCloud(preview);$('surf-empty').style.display='none';$('surf-preview-info').textContent=`Displaying ${fmt(preview.sample_count,0)} of ${fmt(preview.source_count,0)} processed points. Every processed point is used for cluster review and export.`;document.querySelector('.surface-legend').style.opacity='1';}
    else if(!r&&!sourcePreview){preview=null;previewId='';previewMode='result';sceneSurface.clear();$('surf-empty').style.display='flex';}
-   showReview();if(reviewChanged){$('surf-reviewed').checked=false;sceneSurface.recolour();}quality();
+   showReview();if(reviewChanged||before?.source_changed!==r?.source_changed){$('surf-reviewed').checked=false;sceneSurface.recolour();}quality();
    if(r&&changed){window.TunnelRibbon?.surfaceDrawerMode?.('review');}if(r&&changed&&r.id!==lastWarningResult&&r.warnings?.length){lastWarningResult=r.id;const important=r.warnings.filter(w=>!/memory-safe batches|review required/i.test(w)).slice(0,3);if(important.length){const hasInterior=r.settings?.method==='smrg'&&important.some(w=>/interior.*(?:reference|point)|pick.*interior/i.test(w));showTunnelMessage('Surface extraction needs review',important.join('\n\n'),false,hasInterior?'Pick interior point':null,hasInterior?pickInterior:null);}}
    if(!state?.job?.error){const deletion=r?.review_log?.at(-1);$('surf-progress').textContent=deletion?.action==='delete_patches'?`Deleted ${fmt(deletion.points,0)} points from the scan. Undo or Deleted restores them.`:['lining_features','tmatch'].includes(r?.settings?.method)?analysisSummary(r):r?.settings?.method==='irregular'?`Detection ready · ${r.statistics.irregular_patches} candidate patches. Select a patch to inspect, hide or delete.`:r?`Extraction saved · ${r.source_name}. Inspect the result, then export or apply.`:'Choose a source, then extract. The source stays unchanged.';}
    else $('surf-progress').textContent=state.job.error;
@@ -334,8 +339,8 @@
   updateRunControls(v);
   $('surf-cancel').disabled=!(state?.job?.busy&&state?.job?.kind==='surface');
   const r=data.result;for(const id of ['surf-export','surf-export-other','surf-report','surf-json','surf-csv','surf-original','surf-keep-noise','surf-keep-selected','surf-remove-selected'])$(id).disabled=v||!r;
-  $('surf-export').disabled=v||!r||!r.reviewed_kept_points;$('surf-export-other').disabled=v||!r||r.reviewed_kept_points===r.statistics.input_points;
-  $('surf-add-clean').disabled=v||!r?.reviewed_kept_points||!$('surf-reviewed').checked;
+  $('surf-export').disabled=v||!r||r.source_changed||!r.reviewed_kept_points;$('surf-export-other').disabled=v||!r||r.source_changed||r.reviewed_kept_points===r.statistics.input_points;
+  $('surf-add-clean').disabled=v||r?.source_changed||!r?.reviewed_kept_points||!$('surf-reviewed').checked;
   $('surf-apply').disabled=v||!r?.can_apply||!$('surf-reviewed').checked||!r?.reviewed_kept_points||r.reviewed_kept_points===r.statistics.input_points;
   for(const c of $('surf-table').querySelectorAll('input'))c.disabled=v;
   updateReviewControls();
@@ -397,7 +402,7 @@
  $('surf-select-bolts').onclick=()=>{const ids=(data.result?.clusters||[]).filter(c=>['bolt_hole','bolt_fitting','lining_departure'].includes(c.feature_kind)).map(c=>c.id);reveal(ids);isolatedClusters=null;$('surf-isolate').checked=false;selectClusters(ids);};
  $('surf-separate-patches').onclick=()=>{const r=data.result;if($('surf-separate-patches').disabled||!r)return;return action({action:'separate_patches',revision:r.revision,clusters:[...selectedClusters]});};
  $('surf-lining-task').addEventListener('change',methodInfo);
- $('surf-delete-patches').onclick=()=>{const r=data.result;if($('surf-delete-patches').disabled||!r)return;return action({action:'delete_patches',revision:r.revision,clusters:[...selectedClusters]});};
+ $('surf-delete-patches').onclick=()=>{const r=data.result;if($('surf-delete-patches').disabled||!r)return;return deletePatches(r,[...selectedClusters]);};
  $('surf-keep-clusters').onclick=()=>markClusters(true);$('surf-remove-clusters').onclick=()=>markClusters(false);
  for(const [id,mode] of [['surf-hide-clusters','hide'],['surf-show-clusters','show'],['surf-isolate-clusters','isolate'],['surf-show-all-clusters','all']])$(id).onclick=()=>clusterView(mode);
  $('surf-continue').onclick=continueToOutput;

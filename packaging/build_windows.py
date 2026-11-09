@@ -18,8 +18,8 @@ import shutil
 import subprocess
 import sys
 
-VERSION = '0.23.4'
-BASELINE_VERSION = '0.23.3'
+VERSION = '0.23.5'
+BASELINE_VERSION = '0.23.4'
 SOURCE = Path(__file__).resolve().parents[1]
 # Historical screenshots are retained in the working tree, but are not product
 # assets and must not enter the application installer or release source archive.

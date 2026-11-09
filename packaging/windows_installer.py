@@ -5,7 +5,7 @@ from contextlib import contextmanager
 from datetime import datetime
 import argparse, hashlib, json, os, re, shutil, stat, subprocess, sys, tempfile, time, traceback, uuid
 
-VERSION = '0.23.4'
+VERSION = '0.23.5'
 
 
 def digest(path):

@@ -2,6 +2,7 @@
 import copy
 import tempfile
 import unittest
+from unittest import mock
 from pathlib import Path
 from types import SimpleNamespace
 
@@ -62,6 +63,36 @@ class RegisteredProcessingTests(unittest.TestCase):
         clipped={'mode':'full','clip_box':{k:v for k,v in selection.items() if k!='mode'}}
         count,_=surface_api._area_count(self.s,self.meta,'separate',clipped)
         self.assertEqual(count,len(expected))
+
+    def test_cleaning_box_count_and_batches_skip_disjoint_source_blocks(self):
+        step=preview_index.BLOCK
+        original=np.c_[np.arange(3*step),np.zeros((3*step,2))].astype('<f8')
+        path=self.root/'indexed.xyz64';original.tofile(path)
+        mask_path=self.root/'indexed.mask'
+        mask=np.zeros(len(original),'u1');mask[step+4]=1;mask.tofile(mask_path)
+        meta=dict(file=str(path),mask_file=str(mask_path),count=len(original),
+                  minimum=original[0].tolist(),maximum=original[-1].tolist())
+        translation=np.array([250000.,120000.,-12.])
+        registration_pose.set_pose(meta,np.eye(3),translation)
+        clip={'minimum':(original[step+3]+translation-0.1).tolist(),
+              'maximum':(original[step+6]+translation+0.1).tolist()}
+        expected=[step+3,step+5,step+6]
+        preview_index.bounds(meta)
+        fromfile=np.fromfile
+        for selection in ({'mode':'box',**clip},{'mode':'full','clip_box':clip}):
+            xyz_rows=[]
+            def track(file,*args,**kwargs):
+                data=fromfile(file,*args,**kwargs)
+                if Path(file.name)==path:
+                    xyz_rows.append(data.size//3)
+                return data
+            with self.subTest(selection=selection),mock.patch.object(np,'fromfile',side_effect=track):
+                count,_=surface_api._area_count(self.s,meta,'separate',selection)
+                batches=list(surface_api._area_batches(self.s,meta,'separate',selection,2))
+                self.assertEqual(count,3)
+                self.assertEqual(xyz_rows,[step,step])
+                np.testing.assert_array_equal(np.concatenate([row[0] for row in batches]),expected)
+                np.testing.assert_array_equal(np.concatenate([row[1] for row in batches]),original[expected]+translation)
 
     def test_cleaning_preview_manual_review_and_filtered_export_retain_pose_once(self):
         r,ids=self.crafted();preview=surface_api.preview(self.s)

@@ -1,3 +1,19 @@
+Tunnel Studio 0.23.5
+9 November 2026
+
+Cleaning review and box reads
+Cleaning results are marked out of date when their source scan changes.
+Creating or exporting a cleaned cloud requires a result that matches the
+source. Apply requires a Boolean review confirmation. Deleting selected
+patches shows the number of original points before committing the edit.
+
+Box and limit-box cleaning use the original-coordinate spatial index to
+skip disjoint blocks. The reader checks the exact registered selection
+and current deletion mask for each candidate point. A scan without an
+index may need a first-use index build.
+
+Earlier release notes
+
 Tunnel Studio 0.23.4
 9 November 2026
 

@@ -1,8 +1,8 @@
 #include <windows.h>
 1 ICON "payload/app/web/tunnel.ico"
 1 VERSIONINFO
- FILEVERSION 0,23,4,0
- PRODUCTVERSION 0,23,4,0
+ FILEVERSION 0,23,5,0
+ PRODUCTVERSION 0,23,5,0
  FILEFLAGSMASK 0x3fL
  FILEFLAGS 0x2L
  FILEOS VOS_NT_WINDOWS32
@@ -14,9 +14,9 @@ BEGIN
   BEGIN
    VALUE "CompanyName", "Damian Gulczynski\0"
    VALUE "FileDescription", "Tunnel Studio Windows application\0"
-   VALUE "FileVersion", "0.23.4.0\0"
+   VALUE "FileVersion", "0.23.5.0\0"
    VALUE "ProductName", "Tunnel Studio\0"
-   VALUE "ProductVersion", "0.23.4\0"
+   VALUE "ProductVersion", "0.23.5\0"
    VALUE "LegalCopyright", "Copyright (c) 2026 Damian Gulczynski\0"
   END
  END
