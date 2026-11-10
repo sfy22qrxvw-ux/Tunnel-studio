@@ -75,9 +75,11 @@ def configure(path,body):
     group=body.get('history_group');ctx['group']=str(group)[:100] if group else None
     if path in ('/api/project-browser','/api/project-folder-copy','/api/open-data-folder','/api/storage-cleanup','/api/workspace-folders','/api/measure-plane','/api/surface-preview','/api/explorer-delete-review','/api/geometry-preview','/api/geometry-discard','/api/measure-preview','/api/measure-export','/api/tunnel-design-preview','/api/cad-preview','/api/cad-export','/api/cad-pick','/api/history','/api/cancel-operation','/api/export','/api/backup-project','/api/project-action','/api/select') or action=='cancel' or path=='/api/job-action' and action in ('surface','register') or path=='/api/scan-registration' and action=='release_merge':
         ctx['label']=None
-    elif path=='/api/scan-registration' and action in ('visual_preview','cloud_refine','cloud_status','vis_inspect','vis_preview','bundle_inspect','bundle_preview','bundle_status'):ctx['label']=None
+    elif path=='/api/scan-registration' and action in ('activate_setup','visual_preview','cloud_refine','cloud_status','vis_inspect','vis_preview','bundle_inspect','bundle_preview','bundle_status','bundle_control_status','bundle_control_solve'):ctx['label']=None
+    elif path in ('/api/setup-camera','/api/setup-photos') and action=='open':ctx['label']=None
     elif path=='/api/tunnel-monitoring':ctx['label']=None if action=='export' else 'Update monitoring epochs and references'
     elif path=='/api/scan-registration' and action=='build_selection_merge':ctx['label']='Merge selected registered scans'
+    elif path=='/api/scan-registration' and action=='bundle_control_apply':ctx['label']='Register bundle to survey control'
     elif path=='/api/scan-registration' and action=='bundle_apply':ctx['label']='Global bundle adjustment and loop closure'
     elif path=='/api/scan-registration' and action=='visual_apply':ctx['label']='Cloud-to-cloud registration' if body.get('refinement_id') else 'Manual visual registration'
     elif path=='/api/scan-registration' and action=='vis_apply':ctx['label']='RTC360 initial positions'

@@ -176,8 +176,9 @@ def get(s,h,path,args):
         view=json.loads(args['view'][0]) if args.get('view') else None
         import detail_preview
         if view is not None:detail_preview.validate_view(view)
+        quick=args.get('quick',['0'])[0]=='1'
         try:
-            blob,_=jobdata.preview_binary(preview_items,args.get('detail',[25])[0],args.get('mode',['rgb'])[0],view,owners=args.get('owners',['0'])[0]=='1',quick=args.get('quick',['0'])[0]=='1',cancel=lambda:detail_preview.request_cancelled(h))
+            blob,_=jobdata.preview_binary(preview_items,args.get('detail',[25])[0],args.get('mode',['rgb'])[0],view,owners=args.get('owners',['0'])[0]=='1',quick=quick,cancel=lambda:detail_preview.request_cancelled(h),setup=bool(args.get('setup_id')))
         except InterruptedError:
             h.close_connection=True
             return True

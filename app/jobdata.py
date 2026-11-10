@@ -667,7 +667,7 @@ def _item_sample_uncached(item,per,origin,colour,mode='rgb',z_range=None,quick=F
     return packed
 
 
-def preview_binary(items,detail=25,mode='rgb',view=None,owners=False,quick=False,cancel=None):
+def preview_binary(items,detail=25,mode='rgb',view=None,owners=False,quick=False,cancel=None,*,setup=False):
     """Binary WebGL preview. 1–100 is a user-facing display-detail percentage.
 
     100% means the viewer's safe maximum detail, not 100% of a multi-gigabyte scan.
@@ -684,8 +684,9 @@ def preview_binary(items,detail=25,mode='rgb',view=None,owners=False,quick=False
     low=np.min([b[0] for b in bounds],axis=0);high=np.max([b[1] for b in bounds],axis=0);origin=(low+high)/2
     # Non-linear slider: useful control at the low end, up to 1,000,000 displayed points.
     display_properties={x['id']:__import__('scan_edits').display_properties(x['meta']) for x in visible if x['kind']=='scan'}
-    budget=int(20000+(detail/100.0)**1.65*980000);source_points=sum(p['count'] for p in display_properties.values());source_vertices=sum(x['meta'].get('vertices',0) for x in visible if x['kind']=='mesh')
-    budget=min(budget,max(1,source_points+source_vertices));per=max(1,budget//len(visible));colours=[[.22,.73,.81],[.49,.76,.39],[.66,.48,.86],[.89,.52,.43],[.38,.55,.90],[.84,.68,.28]]
+    display_budget=int(20000+(detail/100.0)**1.65*980000)
+    source_points=sum(p['count'] for p in display_properties.values());source_vertices=sum(x['meta'].get('vertices',0) for x in visible if x['kind']=='mesh')
+    budget=min(display_budget,max(1,source_points+source_vertices));per=max(1,budget//len(visible));colours=[[.22,.73,.81],[.49,.76,.39],[.66,.48,.86],[.89,.52,.43],[.38,.55,.90],[.84,.68,.28]]
     chunks=[];rgb=False;ranges=[];offset=0
     for i,item in enumerate(visible):
         if cancel is not None and cancel():raise InterruptedError('The previous viewport request was cancelled.')
@@ -695,6 +696,18 @@ def preview_binary(items,detail=25,mode='rgb',view=None,owners=False,quick=False
         else:fallback=[.92,.70,.29]
         if item['kind']=='scan' and display_properties[item['id']]['count_exact'] and not display_properties[item['id']]['count']:
             chunks.append(np.empty((0,6),dtype='<f4'))
+        elif setup and item['kind']=='scan' and (quick or view is not None):
+            # Both requests use the same bounded setup overview. A cold detail
+            # request can refine the viewport without rebuilding a whole-scan cache.
+            base=min(80000,max(1,display_budget//(5*len(visible))))
+            height_range=(float(low[2]),float(high[2]))
+            overview=_item_sample(item,base,origin,fallback,mode,height_range,quick=True,cancel=cancel)
+            if len(overview)>per:
+                overview=overview[np.linspace(0,len(overview)-1,per,dtype=np.int64)]
+            chunks.append(overview)
+            if not quick and len(overview)<per:
+                from detail_preview import sample
+                chunks.append(sample(item,per-len(overview),origin,fallback,mode,height_range,view,cancel=cancel))
         elif view is not None and item['kind']=='scan':
             from detail_preview import sample
             base=max(1,per//5)

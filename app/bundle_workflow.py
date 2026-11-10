@@ -6,8 +6,10 @@ project until Apply, which uses the existing virtual-pose transaction and Undo.
 Cloud overlap and low residuals do not establish survey accuracy or correct
 physical correspondence in repetitive tunnel geometry.
 """
+from collections import OrderedDict
 import copy
 import uuid
+from zlib import crc32
 from pathlib import Path
 
 import numpy as np
@@ -17,6 +19,7 @@ import bundle_adjustment as bundle
 import cloud_registration as icp
 import cloud_registration_workflow as cloud
 import job_api
+import pointio
 import registration_network as network
 import registration_pose as pose
 import registration_workspace as rw
@@ -155,6 +158,9 @@ def _pairwise_fallback(nodes, edges, landmarks, observations, layout, options,
     non-tree links are checks, not an implicit claim of joint loop closure.
     """
     tolerance = options['tolerance_mm']
+    def link_name(edge):
+        a,b=(nodes[edge[k]].get('name',edge[k]) for k in ('a','b'))
+        return f"{a} ↔ {b} ({edge['id']})"
     ordered = sorted(edges, key=lambda e: (str(e['id']), e['a'], e['b']))
     solved, fit_kinds = {}, {}
     for index, edge in enumerate(ordered, 1):
@@ -177,12 +183,12 @@ def _pairwise_fallback(nodes, edges, landmarks, observations, layout, options,
             a, b = nodes[edge['a']], nodes[edge['b']]
             if not edge.get('use_cloud') or a.get('tree') is None or b.get('tree') is None:
                 detail = str(target_error) if target_error is not None else 'too few independent target observations or surface points'
-                raise ValueError('Pairwise fallback failed on link ' + edge['id'] + ': ' + detail)
+                raise ValueError('Pairwise fallback failed on link ' + link_name(edge) + ': ' + detail)
             fit = icp._run_icp(b['points'], a['points'], a['normals'], a['tree'],
                                50, tolerance / 1000, np.random.default_rng(0), progress, cancel)
             if (not fit.get('converged') or fit.get('inlier_count', 0) < bundle.MIN_OVERLAP
                     or fit.get('normal_matrix_rank', 0) < 6):
-                raise ValueError('Pairwise fallback failed on link ' + edge['id'] + ': '
+                raise ValueError('Pairwise fallback failed on link ' + link_name(edge) + ': '
                                  + fit.get('reason', 'insufficient independently constrained overlap'))
             fit_kinds[edge['id']] = 'point-to-plane ICP'
         R, t = np.asarray(fit['rotation'], float), np.asarray(fit['translation'], float)
@@ -242,7 +248,7 @@ def _pairwise_fallback(nodes, edges, landmarks, observations, layout, options,
             target_errors.append(float(np.linalg.norm(q - p)))
         target_stats = bundle.statistics(target_errors)
         if target_errors and target_stats['rms_mm'] > tolerance:
-            raise ValueError('Pairwise fallback conflicts with target observations on link ' + edge['id'] + '. Review this link or loop.')
+            raise ValueError('Pairwise fallback conflicts with target observations on link ' + link_name(edge) + '. Review this link or loop.')
         if not edge.get('use_cloud'):
             continue
         match = bundle.cloud_matches(edge, nodes, centred, layout.centres,
@@ -250,15 +256,15 @@ def _pairwise_fallback(nodes, edges, landmarks, observations, layout, options,
         if match is None:
             if fit_kinds[edge['id']] == 'targets':
                 continue
-            raise ValueError('Pairwise fallback has insufficient distinct overlap on link ' + edge['id'] + '.')
+            raise ValueError('Pairwise fallback has insufficient distinct overlap on link ' + link_name(edge) + '.')
         values = bundle.plane_residual(match, centred, layout.centres)
         use = np.abs(values) <= 3 * tolerance / 1000
         retained = int(np.count_nonzero(use))
         if retained < bundle.MIN_OVERLAP:
-            raise ValueError('Pairwise fallback has insufficient consistent overlap on link ' + edge['id'] + '.')
+            raise ValueError('Pairwise fallback has insufficient consistent overlap on link ' + link_name(edge) + '.')
         after = bundle.statistics(values[use])
         if after['rms_mm'] > tolerance:
-            raise ValueError('Pairwise fallback conflicts with surface observations on link ' + edge['id'] + '. Review this link or loop.')
+            raise ValueError('Pairwise fallback conflicts with surface observations on link ' + link_name(edge) + '. Review this link or loop.')
         old = bundle.plane_residual(match, identity, layout.centres)[use]
         before_values.append(old);after_values.append(values[use])
         reports[edge['id']] = dict(before=bundle.statistics(old), after=after,
@@ -287,11 +293,37 @@ def _pairwise_fallback(nodes, edges, landmarks, observations, layout, options,
                 cloud_before=bundle.statistics(np.concatenate(before_values) if before_values else []))
 
 
+def _sample_scan(cache, asset_stamp, item, cap, origin, progress, cancel):
+    """Cache the bounded sample in scan coordinates so pose edits can reuse it."""
+    key=(tuple(asset_stamp),cap)
+    if key in cache:
+        sample,info=cache[key]
+        cache.move_to_end(key)
+        info={**info,'cache_reused':True}
+        progress(f"Reusing sampled cloud: {item['name']}")
+    else:
+        meta={**item['meta'],'attributes_file':None}
+        rng=np.random.default_rng(crc32(item['id'].encode()))
+        sample,info=icp._sample_chunks(pointio.chunks(meta),cap,rng,progress,cancel,item['name'])
+        bundle.check(cancel)
+        cache[key]=(sample,info)
+        while len(cache)>96 or sum(points.nbytes for points,_ in cache.values())>72*1024*1024:
+            cache.popitem(last=False)
+        info={**info,'cache_reused':False}
+    R,t=pose.get(item['meta'])
+    return sample@R.T+(t-origin),info
+
+
 def build(s, body, progress=lambda message: None, cancel=lambda: False, proposed=None, references=None):
     options = _options(body)
+    floating = body.get('floating') is True and references is None
     rw.persist(s)
-    anchor = body.get('anchor');rw.scan(s, anchor)
-    ids = rw.component(s, anchor)
+    if 'bundle_id' in body:
+        group,anchor=rw.linked_bundle(s,body['bundle_id'])
+        ids=set(group['scan_ids'])
+    else:
+        anchor = body.get('anchor');rw.scan(s, anchor)
+        ids = rw.component(s, anchor)
     if proposed:
         ids |= rw.component(s, proposed['a']) | rw.component(s, proposed['b'])
     if len(ids) < 2:
@@ -304,6 +336,7 @@ def build(s, body, progress=lambda message: None, cancel=lambda: False, proposed
     if proposed:edges = [e for e in edges if e['id'] != proposed['id']] + [copy.deepcopy(proposed)]
     loops = body.get('loops', [])
     if not isinstance(loops, list):raise ValueError('Loop pairs must be a list.')
+    if 'bundle_id' in body and loops:raise ValueError('Optimise bundle uses its saved links. Add a new link separately.')
     pairs = {frozenset((e['a'], e['b'])) for e in edges}
     if len(pairs) != len(edges):raise ValueError('Remove duplicate links before adjusting this bundle.')
     for pair in loops:
@@ -319,10 +352,35 @@ def build(s, body, progress=lambda message: None, cancel=lambda: False, proposed
     origin = np.mean(pose.world_bounds(rw.scan(s, anchor)['meta']), axis=0)
     observations, landmarks = _target_data(s, edges, origin)
     use_cloud = body.get('use_cloud', True)
-    if not isinstance(use_cloud, bool):raise ValueError('Choose whether to refine cloud surfaces.')
+    targets_only = body.get('targets_only', False)
+    if not isinstance(use_cloud, bool) or not isinstance(targets_only, bool):
+        raise ValueError('Choose whether to refine cloud surfaces.')
+    if targets_only:
+        if loops:raise ValueError('Targets-only adjustment uses saved target pairs. Validate new cloud loops separately.')
+        connected={anchor}
+        while True:
+            before=len(connected)
+            for edge in edges:
+                pair={edge['a'],edge['b']}
+                if edge['has_targets'] and connected&pair:connected.update(pair)
+            if len(connected)==before:break
+        if connected!=ids:
+            names=[rw.scan(s,e['a'])['name']+' ↔ '+rw.scan(s,e['b'])['name']
+                   for e in edges if (e['a'] in connected)!=(e['b'] in connected)]
+            raise ValueError('Saved Fit targets do not connect all setups. Check these links: '+', '.join(names)+'.')
     for edge in edges:
         edge['mode'] = network.edge_mode(edge)
-        edge['use_cloud'] = use_cloud or not edge['has_targets']
+        edge['use_cloud'] = not targets_only
+        if targets_only or use_cloud or edge.get('proposed_loop') or not edge['has_targets']:continue
+        rows = [{**row, 'source':row['source'].tolist(),'control':row['control'].tolist()}
+                for row in observations if row['edge_id']==edge['id']]
+        try:
+            target_fit = network._edge_solution(edge, rows, options['tolerance_mm'])
+        except ValueError:
+            continue
+        # A few fit observations can help ICP without fully defining the link.
+        # Keep the surface constraint unless the target geometry can replace it.
+        edge['use_cloud'] = target_fit['fit']['rms_mm'] > options['tolerance_mm']
     cloud_ids = {i for e in edges if e['use_cloud'] for i in (e['a'], e['b'])}
     before_assets = cloud.assets(s, sorted(cloud_ids))
     files = [str(Path(rw.scan(s, i)['meta']['file']).resolve()) for i in cloud_ids]
@@ -331,7 +389,12 @@ def build(s, body, progress=lambda message: None, cancel=lambda: False, proposed
     cap = min(per_scan, total_cap // max(1, len(cloud_ids)))
     if cloud_ids and cap < 1000:
         raise ValueError('The selected sampling budget cannot give this many setups useful surface support. Choose a higher quality or a smaller group.')
-    rng = np.random.default_rng(0)
+    cache_context,cache=getattr(s,'_bundle_sample_cache',(None,None))
+    if cache_context!=context:
+        cache=OrderedDict()
+        s._bundle_sample_cache=(context,cache)
+    asset_stamps={}
+    for row in before_assets:asset_stamps.setdefault(row[0],[]).append(row)
     nodes, sampling = {}, {}
     for at, ident in enumerate(sorted(ids)):
         bundle.check(cancel)
@@ -340,11 +403,11 @@ def build(s, body, progress=lambda message: None, cancel=lambda: False, proposed
         points = np.empty((0, 3))
         normals, tree = None, None
         if ident in cloud_ids:
-            points, info = icp._sample_chunks(cloud._chunks(s, [ident], origin, cancel), cap, rng, progress, cancel, item['name'])
+            points, info = _sample_scan(cache, asset_stamps[ident], item, cap, origin, progress, cancel)
             sampling[ident] = info
             if len(points) >= bundle.MIN_OVERLAP:
                 normals, tree = icp._normals(points, 12, progress, cancel)
-        nodes[ident] = dict(points=points, normals=normals, tree=tree)
+        nodes[ident] = dict(points=points, normals=normals, tree=tree, name=item['name'])
     centres = {}
     for ident in ids:
         points = [p for group in landmarks for i, p in group if i == ident]
@@ -382,7 +445,12 @@ def build(s, body, progress=lambda message: None, cancel=lambda: False, proposed
     bundle.check(cancel)
     if context != id(s.STATE) or full_stamp != visual.fingerprint(s, ids) or before_assets != cloud.assets(s, sorted(cloud_ids)):
         raise ValueError('Scans, links or source files changed while adjusting. Run the bundle again.')
-    transformed = out['transforms'];reports, after, before = {}, [], []
+    transformed = out['transforms']
+    moving, fixed = layout.moving, layout.fixed
+    if floating:
+        transformed = rw.float_poses(transformed, centres)
+        moving, fixed = sorted(ids), []
+    reports, after, before = {}, [], []
     for row in observations:
         a, b = row['a'], row['b'];p, q = row['control'], row['source']
         newp = bundle.transformed(p[None], a, transformed, centres)[0]
@@ -398,6 +466,11 @@ def build(s, body, progress=lambda message: None, cancel=lambda: False, proposed
         if ref['movement_mm'] > 1e-4:raise ValueError('A held coordinate moved. The bundle was refused.')
     target_fit, target_before = network.stats(after), network.stats(before)
     warnings = out['warnings']
+    if targets_only:
+        warnings.append('Targets-only adjustment used saved Fit pairs. No cloud RMS was calculated.')
+    elif not use_cloud:
+        target_only_count=sum(not e['use_cloud'] for e in edges)
+        warnings.append(f'Targets-first adjustment used measured targets without cloud refinement on {target_only_count} of {len(edges)} links. Cloud RMS covers only links with measured surface residuals.')
     if not network.stats(after, 'check')['count']:warnings.append('No independent check targets are present.')
     if any(not r['within_limit'] for r in after):warnings.append('Some target residuals exceed the review tolerance.')
     if any(e['mode'] == 'vertical' for e in edges):warnings.append('Earlier keep-vertical links retain their recorded up-direction constraint.')
@@ -421,7 +494,9 @@ def build(s, body, progress=lambda message: None, cancel=lambda: False, proposed
                    before=target_before if target_fit['count'] else out['cloud_before'],
                    target_fit=target_fit, cloud_fit=out['cloud_fit'], cloud_before=out['cloud_before'],
                    check=network.stats(after, 'check'), residuals=after, warnings=warnings,
-                   anchor=anchor if references is None else None, anchor_name=rw.scan(s, anchor)['name'] if references is None else None,
+                   anchor=anchor if references is None and not floating else None,
+                   anchor_name=rw.scan(s, anchor)['name'] if references is None and not floating else None,
+                   datum='floating' if floating else 'coordinates' if references is not None else 'fixed',
                    coordinate_references=kept, tolerance_mm=options['tolerance_mm'], scale=1.,
                    converged=out['converged'], full_bundle_converged=out.get('full_bundle_converged', out['converged']),
                    fallback_used=out.get('fallback_used', False), fallback_reason=out.get('fallback_reason'),
@@ -429,18 +504,20 @@ def build(s, body, progress=lambda message: None, cancel=lambda: False, proposed
                    scan_count=len(ids), link_count=len(edges), cycle_count=max(0, len(edges)-len(ids)+1),
                    common_targets=out['common_targets'], target_observations=out['target_observations'],
                    iterations=out['iterations'], evaluations=out['evaluations'], condition_estimate=out['condition_estimate'],
-                   mode=body.get('mode', 'rigid'), constraint='Fixed reference with preserved existing vertical-link constraints',
+                   mode=body.get('mode', 'rigid'), constraint=('Floating adjustment' if floating else 'Held coordinates' if references is not None else 'Fixed reference')
+                   + ' with preserved existing vertical-link constraints',
                    quality=options['quality'], sampling=sampling,
+                   measured_cloud_links=len(out['cloud_reports']), targets_only=targets_only,
                    edge_reports=[dict(id=e['id'], a=rw.scan(s, e['a'])['name'], b=rw.scan(s, e['b'])['name'],
                                       before_mm=reports[e['id']]['before']['rms_mm'], after_mm=reports[e['id']]['fit']['rms_mm'],
                                       cloud=reports[e['id']]['cloud'], target_fit=reports[e['id']]['target_fit'],
                                       loop_closure=bool(e.get('loop_closure'))) for e in edges])
     transforms = {i: dict(rotation=R.tolist(), translation=(origin+centres[i]+t-R@(origin+centres[i])).tolist())
-                  for i, (R, t) in transformed.items() if i in layout.moving}
+                  for i, (R, t) in transformed.items() if i in moving}
     for value in transforms.values():cloud.rigid(value['rotation'], value['translation'])
     a, b = (proposed['a'], proposed['b']) if proposed else (anchor, next(i for i in sorted(ids) if i != anchor))
     draft = dict(id=uuid.uuid4().hex, a=a, b=b, solution=summary, mode=body.get('mode', 'rigid'),
-                 moving=layout.moving, fixed=layout.fixed, stamp=before_stamp, network=True, bundle=True,
+                 moving=moving, fixed=fixed, stamp=before_stamp, network=True, bundle=True,
                  kind='bundle_adjustment', network_topology=topology, network_edges=edges,
                  network_reports=reports, transforms=transforms, coordinate_references=kept,
                  bundle_stamp=full_stamp, bundle_assets=before_assets, bundle_cloud_ids=sorted(cloud_ids),
@@ -452,7 +529,7 @@ def build(s, body, progress=lambda message: None, cancel=lambda: False, proposed
         if not len(points):points = np.asarray([p for group in landmarks for i, p in group if i == ident]).reshape(-1, 3)
         if len(points) > per_scan:points = points[np.linspace(0, len(points)-1, per_scan, dtype=int)]
         R, t = transformed[ident]
-        preview.append(dict(id=ident, name=rw.scan(s, ident)['name'], fixed=ident in layout.fixed,
+        preview.append(dict(id=ident, name=rw.scan(s, ident)['name'], fixed=ident in fixed,
                             before=points.tolist(), after=bundle.transformed(points, ident, transformed, centres).tolist(),
                             shift_mm=float(np.linalg.norm(t)*1000), rotation_deg=float(np.linalg.norm(Rotation.from_matrix(R).as_rotvec())*180/np.pi)))
     return draft, preview
@@ -543,7 +620,7 @@ def apply(s, body):
 
 
 def solve_link(s, a, b, matches, tolerance=5, mode='rigid', anchor=None,
-               progress=lambda message: None, references=None):
+               progress=lambda message: None, references=None, *, floating=False):
     """Compatibility entry: adding a target loop uses the same bundle engine."""
     rw.persist(s)
     ids = rw.component(s, a) | rw.component(s, b)
@@ -556,7 +633,7 @@ def solve_link(s, a, b, matches, tolerance=5, mode='rigid', anchor=None,
                     matches=resolved, kind='target_match', mode=mode,
                     loop_closure=not direct and b in rw.component(s, a))
     if mode == 'vertical':proposed['vertical_axis'] = direct[0].get('vertical_axis', [0., 0., 1.]) if direct else [0., 0., 1.]
-    draft, _ = build(s, dict(anchor=anchor, mode=mode, tolerance_mm=tolerance), progress,
+    draft, _ = build(s, dict(anchor=anchor, mode=mode, tolerance_mm=tolerance, floating=floating), progress,
                      lambda: _cancel(s), proposed=proposed, references=references)
     draft['replaces_link'] = direct[0]['id'] if direct else None
     s.STATE['scan_link_draft'] = draft

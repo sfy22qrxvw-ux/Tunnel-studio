@@ -1,4 +1,5 @@
 """Finite-budget fallback, datum preservation and atomic acceptance checks."""
+from collections import OrderedDict
 import copy
 import tempfile
 import unittest
@@ -17,6 +18,34 @@ import registration_workspace as rw
 import registration_pose as pose
 import registered_cloud
 from test_registration_transaction_0186 import Server, add, P
+
+
+class BundleSampleTests(unittest.TestCase):
+    def test_sample_reuses_source_after_pose_change_but_not_after_mask_change(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            path=Path(tmp)/'points.xyz64'
+            xyz=np.arange(90,dtype='<f8').reshape(-1,3)
+            xyz.tofile(path)
+            meta=dict(file=str(path),count=len(xyz))
+            item=dict(id='sample',name='Setup sample',meta=meta)
+            cache=OrderedDict()
+            stamp=[('sample','file',str(path))]
+            origin=np.zeros(3)
+            points,info=workflow._sample_scan(cache,stamp,item,20,origin,lambda _:None,lambda:False)
+            self.assertFalse(info['cache_reused'])
+            move=np.array([10.,20.,30.])
+            pose.set_pose(meta,np.eye(3),move)
+            with mock.patch.object(workflow.pointio,'chunks',side_effect=AssertionError('read on cache hit')):
+                after,info=workflow._sample_scan(cache,stamp,item,20,origin,lambda _:None,lambda:False)
+            np.testing.assert_allclose(after,points+move)
+            self.assertTrue(info['cache_reused'])
+            mask=Path(tmp)/'mask'
+            np.r_[np.zeros(3,np.uint8),np.ones(len(xyz)-3,np.uint8)].tofile(mask)
+            meta['mask_file']=str(mask)
+            masked,info=workflow._sample_scan(cache,stamp+[('sample','mask_file',str(mask))],
+                                              item,20,origin,lambda _:None,lambda:False)
+            np.testing.assert_allclose(masked,xyz[:3]+move)
+            self.assertFalse(info['cache_reused'])
 
 
 class BundleBudgetTests(unittest.TestCase):
@@ -125,10 +154,12 @@ class PairwiseFallbackTests(unittest.TestCase):
         self.observations = []
         for node in self.nodes.values():
             node.update(tree=object(), normals=np.zeros((len(P), 3)))
+        self.nodes['a']['name'] = 'Setup 12'
+        self.nodes['b']['name'] = 'Setup 17'
         failure = dict(converged=False, inlier_count=700, normal_matrix_rank=6,
                        reason='maximum iterations reached; best-effort earlier iterate retained')
         with mock.patch.object(workflow.icp, '_run_icp', return_value=failure):
-            with self.assertRaisesRegex(ValueError, 'maximum iterations reached'):
+            with self.assertRaisesRegex(ValueError, 'Setup 12 ↔ Setup 17 .*maximum iterations reached'):
                 self.run_fallback()
 
     def test_real_cloud_pair_uses_converged_current_coordinate_fit(self):

@@ -2,7 +2,7 @@
 import uuid
 import numpy as np
 import registration_workspace as rw
-import jobdata,setup_photos,registration_pose
+import jobdata,preview_index,setup_photos,registration_pose
 
 source_key=setup_photos.source_key
 
@@ -44,20 +44,21 @@ def measured_pick(s,body,progress=lambda message:None):
     # from the float64 source within a bound for that display round trip.
     span=np.max(np.asarray(m['maximum'])-np.asarray(m['minimum']))
     tolerance=max(.0001,float(span)*np.finfo(np.float32).eps*2)
-    bounds=setup_photos.blocks(s,x,progress)
-    delta=np.maximum(np.maximum(bounds[:,0]-seed,seed-bounds[:,1]),0)
-    chosen=np.flatnonzero(np.linalg.norm(delta,axis=1)<=tolerance)
+    box={'mode':'box','minimum':seed-tolerance,'maximum':seed+tolerance}
+    chosen=preview_index.selection_blocks(m,box,progress)
     points=np.memmap(m['file'],'<f8','r',shape=(m['count'],3))
     mask=np.memmap(m['mask_file'],'u1','r',shape=(m['count'],)) if m.get('mask_file') else None
     best=None
     try:
-        for block in chosen:
-            start=int(block)*setup_photos.BLOCK;q=np.asarray(points[start:start+setup_photos.BLOCK]);valid=np.isfinite(q).all(1)
-            if mask is not None:valid &= mask[start:start+len(q)]==0
-            if x.get('limit_box') and x.get('limit_hide_outside',True):valid &= jobdata.selection_mask(q,{'mode':'box',**x['limit_box']})
-            if x.get('isolate_box') is not None:valid &= jobdata.selection_mask(q,x['isolate_box'])
-            for hidden in x.get('hidden_boxes',[]):valid &= ~jobdata.selection_mask(q,hidden)
-            distance=np.linalg.norm(q-seed,axis=1);ids=np.flatnonzero(valid&(distance<=tolerance))
+        for start,stop in chosen:
+            q=np.asarray(points[start:stop]);distance=np.linalg.norm(q-seed,axis=1)
+            valid=np.isfinite(distance)&(distance<=tolerance)
+            if mask is not None:valid &= mask[start:stop]==0
+            ids=np.flatnonzero(valid);world=registration_pose.points(m,q[ids]);visible=np.ones(len(ids),bool)
+            if x.get('limit_box') and x.get('limit_hide_outside',True):visible &= jobdata.selection_mask(world,{'mode':'box',**x['limit_box']})
+            if x.get('isolate_box') is not None:visible &= jobdata.selection_mask(world,x['isolate_box'])
+            for hidden in x.get('hidden_boxes',[]):visible &= ~jobdata.selection_mask(world,hidden)
+            ids=ids[visible]
             if len(ids):
                 i=ids[np.argmin(distance[ids])];rank=(float(distance[i]),int(start+i))
                 if best is None or rank<best[0]:best=(rank,q[i].tolist())

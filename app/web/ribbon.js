@@ -50,7 +50,7 @@
     surfaceDrawerMode($('tab-surface')?.dataset.drawerMode||'setup');
   }else if(id==='registration'){
     const nav=document.createElement('div');nav.className='tool-mode-tabs';for(const [key,label] of [['search','Targets'],['match','Match / QA'],['apply','Apply']]){const b=document.createElement('button');b.textContent=label;b.dataset.registrationMode=key;b.onclick=()=>registrationDrawerMode(key);nav.appendChild(b);}bar.appendChild(nav);
-    add('Pick & fit target',true,()=>{registrationDrawerMode('search');$('reg-pick')?.click();});add('Survey targets',false,()=>{registrationDrawerMode('search');$('reg-detect')?.click();});
+    add('Pick & fit target',true,()=>{registrationDrawerMode('search');$('reg-pick')?.click();});add('Survey targets',false,()=>{registrationDrawerMode('search');$('reg-detect')?.click();});add('Apply bundle control',false,()=>window.TargetUI?.openBundle());
     registrationDrawerMode($('tab-registration')?.dataset.drawerMode||'search');
   }else if(id==='structures'){
     add('Create mesh',true,()=>$('build-mesh')?.click());
@@ -100,7 +100,7 @@
   try{
    if(kind==='scan'||kind==='model'){const paths=await window.pywebview.api.choose_large_file(kind==='model'?'job_mesh':'job_scan',true);choosing=false;if(paths?.length)await window.JobUI?.importPaths(paths,destination);return;}
    if(kind==='axis'||kind==='rings'){const paths=await window.pywebview.api.choose_large_file(kind,false);choosing=false;if(!paths?.length)return;setBusy(true);await post('/api/load',{kind,path:paths[0]});poll();return;}
-   if(kind==='control'){viewTab('registration');$('reg-control-file').click();return;}
+   if(kind==='control'){window.TargetUI?.importControl();return;}
    if(kind==='project'){projectDialog('open');setTimeout(()=>$('project-import-file').click(),100);return;}
   }catch(e){
    setBusy(false);
@@ -126,7 +126,11 @@
   }catch(e){setBusy(false);notice(e.message,true);}
  };
  $('import-dialog-close').onclick=()=>$('import-dialog').close();$('import-dialog').querySelectorAll('[data-import-kind]').forEach(b=>b.onclick=()=>importChoice(b.dataset.importKind));
- async function runRegistration(target){try{if(target==='reg-pick'&&window.JobUI?.setupCamera?.()){window.SetupCameraUI?.pickTarget();return;}const ok=await window.JobUI?.ensureRegistrationSource?.();if(ok===false)return;viewTab('registration');await window.TargetUI?.sync?.();setTimeout(()=>$(target)?.click(),80);}catch(e){notice(e.message||String(e),true);}}
+ async function runRegistration(target){try{
+  if(target==='reg-control-import'){
+   window.TargetUI?.importControl();return;
+  }
+ if(target==='reg-pick'&&window.JobUI?.setupCamera?.()){window.SetupCameraUI?.pickTarget();return;}const ok=await window.JobUI?.ensureRegistrationSource?.();if(ok===false)return;viewTab('registration');await window.TargetUI?.sync?.();setTimeout(()=>$(target)?.click(),80);}catch(e){notice(e.message||String(e),true);}}
  const groups=window.RibbonLayout.build({command,proxy,dropdown,viewTab,projectNew,closeProject,projectDialog,saveProject,openImport,runRegistration,registrationDrawerMode});
  const ribbon=$('ribbon');ribbon.innerHTML='<div class="ribbon-tabs" role="tablist" aria-label="Tool groups"></div><div class="ribbon-panel" id="ribbon-panel" role="tabpanel"></div><div class="ribbon-hint"><span id="ribbon-hint">Choose a command. Hover for guidance.</span><span>Ctrl+S Save · Ctrl+Shift+S Save As</span></div>';
  const tabs=ribbon.querySelector('.ribbon-tabs');let current='Home';
@@ -216,7 +220,30 @@
  let dialogMode='save',lastProjectId=null,projectTransition=false;
  function uiValues(){const values={};for(const id of ['station','width','band','tolerance','creep-limit','point-size','report-project','report-reference','report-surveyor','report-date','report-notes','report-start','report-end','report-step'])values[id]=$(id).value;return values;}
  async function storePending(){if(window.TargetUI)await window.TargetUI.saveIfDirty();}
- async function saveProject(asNew=false){if(busy||projectTransition)return;projectTransition=true;try{await storePending();if(!state?.project_id&&!asNew){await projectDialog('save');return;}setBusy(true);const saved=await post('/api/project-action',{action:asNew?'save_as':'save',name:$('project-dialog').open?$('project-name').value:state.project_title,ui:uiValues()});if($('project-dialog').open)$('project-dialog').close();state=await api('/api/status');sync();notice('Project saved: '+state.project_title+(saved.project_file?' · '+saved.project_file:''));}catch(e){$('project-dialog-message').textContent=e.message;notice(e.message,true);}finally{projectTransition=false;setBusy(false);}}
+ async function saveProject(action='save',name){
+  if(busy||projectTransition)return;
+  if(name===undefined&&!state?.project_id){await projectDialog('save');return;}
+  const dialog=$('project-dialog'),submit=$('project-dialog-action');
+  projectTransition=true;
+  submit.disabled=$('project-dialog-close').disabled=$('project-copy-in').disabled=$('project-copy-manual').disabled=true;
+  $('project-dialog-message').textContent='';
+  try{
+   await storePending();
+   setBusy(true);
+   const saved=await post('/api/project-action',{action,name:name??state.project_title,ui:uiValues()});
+   if(dialog.open)dialog.close();
+   state=await api('/api/status');sync();
+   notice('Project saved: '+state.project_title+(saved.project_file?' · '+saved.project_file:''));
+  }catch(e){
+   if(dialog.open)$('project-dialog-message').textContent=e.message;
+   else notice(e.message,true);
+  }
+  finally{
+   projectTransition=false;
+   submit.disabled=$('project-dialog-close').disabled=$('project-copy-in').disabled=$('project-copy-manual').disabled=false;
+   setBusy(false);
+  }
+ }
  async function projectReady(showRecovery=true){
   if($('project-dialog').open)$('project-dialog').close();setBusy(false);resetEditingView();formAxis=null;scene.initialised=false;lastProjectId=Symbol('opened project');
   await window.JobUI?.projectOpened();await poll();viewTab('three');
@@ -225,8 +252,9 @@
    showTunnelMessage('Project recovery',text,false,'Download recovery report',()=>{const url=URL.createObjectURL(new Blob([JSON.stringify(report,null,2)],{type:'application/json'}));const a=document.createElement('a');a.href=url;a.download='Tunnel_Studio_project_recovery.json';a.click();setTimeout(()=>URL.revokeObjectURL(url),1000);});
   }}
  }
+ function hasProjectWork(){return Boolean(state?.project_id||state?.job_item_count||state?.axis||state?.cloud||state?.structures?.length);}
  async function allowProjectClose(){
-  if(!(state?.project_id||state?.job_item_count||state?.axis||state?.cloud||state?.structures?.length))return true;
+  if(!hasProjectWork())return true;
   const choice=await window.StorageCleanup.open({mode:'close'});
   return choice==='skipped'||choice==='cleaned';
  }
@@ -239,9 +267,23 @@
    await projectReady(false);
   }catch(e){notice(e.message,true);}finally{projectTransition=false;setBusy(false);}
  }
- async function projectNew(){if(busy||projectTransition)return;return window.WorkspaceFolders.open({newProject:legacyNewProject});}
- async function legacyNewProject(){if(busy||projectTransition)return;showTunnelMessage('New project','Save a recovery copy of the current workspace and create an empty project?',false,'Save & create project',async()=>{if(busy||projectTransition)return;projectTransition=true;try{if(!await allowProjectClose())return;await storePending();setBusy(true);await post('/api/project-action',{action:'new',ui:uiValues()});await projectReady(false);}catch(e){notice(e.message,true);}finally{projectTransition=false;setBusy(false);}});}
- async function openNamedProject(id){if(busy||projectTransition)return false;projectTransition=true;try{if(id!==state?.project_id&&!await allowProjectClose())return false;await storePending();setBusy(true);const response=await post('/api/project-action',{action:'open',id,ui:uiValues()});if(response.started){const job=await window.JobUI.waitReady(job=>{$('project-dialog-message').textContent=job.message||'Checking saved project…';},{skipSync:true});if(job?.cancelled)throw Error('Project opening was cancelled. The previous workspace remains active.');}await projectReady();return true;}catch(e){$('project-dialog-message').textContent=e.message;notice(e.message,true);return false;}finally{projectTransition=false;setBusy(false);}}
+ async function projectNew(){
+  if(busy||projectTransition)return;
+  async function start(){
+   if(busy||projectTransition)return;
+   projectTransition=true;
+   try{
+    await storePending();setBusy(true);
+    await post('/api/project-action',{action:'new',ui:uiValues()});
+    await projectReady(false);
+   }catch(e){notice(e.message,true);}
+   finally{projectTransition=false;setBusy(false);}
+  }
+  if(hasProjectWork()){
+   showTunnelMessage('Start a new project?','Tunnel Studio will keep a recovery copy of the current workspace. To update the named project, use Save before starting a new one.',false,'Start new project',start);
+  }else await start();
+ }
+ async function openNamedProject(id){if(busy||projectTransition)return false;projectTransition=true;try{await storePending();setBusy(true);const response=await post('/api/project-action',{action:'open',id,ui:uiValues()});if(response.started){const job=await window.JobUI.waitReady(job=>{$('project-dialog-message').textContent=job.message||'Checking saved project…';},{skipSync:true});if(job?.cancelled)throw Error('Project opening was cancelled. The previous workspace remains active.');}await projectReady();return true;}catch(e){$('project-dialog-message').textContent=e.message;notice(e.message,true);return false;}finally{projectTransition=false;setBusy(false);}}
  const storageSize=window.StorageInventory.bytes;
  let storageReviewVersion=0;
  const selectedProjectIds=new Set();
@@ -358,19 +400,57 @@
   try { await window.ProjectLocation.saveCopy(storePending, uiValues); }
   finally { projectTransition = false; }
  });
- async function projectDialog(mode,source){dialogMode=mode;$('project-dialog').classList.toggle('project-browsing',mode==='open');window.ProjectLocation?.show(mode);$('project-dialog-title').textContent=({save:'Save project',save_as:'Save As',open:'Open project',storage:'Storage manager',export:'Save As / Export'})[mode];$('project-dialog-intro').textContent=mode==='export'?'Choose the file format and the scan to deliver.':mode==='open'?'Open or permanently delete a saved project on this laptop.':mode==='storage'?'Review project and imported-data storage across every supported import format. Delete projects in bulk or clean unreferenced internal caches.':'Save a named project on this laptop. Save As makes a separate editable copy; existing scan caches are shared safely.';$('project-save-fields').hidden=!['save','save_as'].includes(mode);$('project-open-fields').hidden=!['open','storage'].includes(mode);$('project-export-fields').hidden=mode!=='export';$('project-dialog-action').hidden=['open','storage'].includes(mode);$('project-dialog-action').textContent=mode==='export'?'Save as…':mode==='save_as'?'Save project copy':'Save';$('project-go-export').hidden=!['save','save_as'].includes(mode);$('project-dialog-message').textContent='';$('export-download').hidden=true;$('project-name').value=(state?.project_title&&state.project_title!=='Untitled project'?state.project_title:'New project')+(mode==='save_as'?' — copy':'');if(source){$('export-source').value=source;$('export-format').value='e57';}if(mode==='export'){window.ExportUI?.open(source);formatHelp();}if(!$('project-dialog').open)$('project-dialog').showModal();if(['open','storage'].includes(mode))await refreshProjectList();}
+ async function projectDialog(mode,source){
+  const dialog=$('project-dialog'),name=$('project-name');
+  const saving=['save','save_as'].includes(mode),browsing=['open','storage'].includes(mode);
+  dialogMode=mode;
+  dialog.classList.toggle('project-browsing',mode==='open');
+  window.ProjectLocation?.show(mode);
+  $('project-dialog-title').textContent=({save:'Save project',save_as:'Save As',open:'Open project',storage:'Storage manager',export:'Export'})[mode];
+  const intro=$('project-dialog-intro');
+  intro.textContent=({
+   save:'',save_as:'Save a separately named project in the current data folder.',
+   open:'Choose a saved project to open.',storage:'See where project data is stored and manage disk space.',
+   export:'Choose the file format and the scan to deliver.'
+  })[mode];
+  intro.hidden=!intro.textContent;
+  $('project-save-fields').hidden=!saving;
+  $('project-open-fields').hidden=!browsing;
+  $('project-export-fields').hidden=mode!=='export';
+  $('project-dialog-action').hidden=browsing;
+  $('project-dialog-action').textContent=mode==='export'?'Save as…':mode==='save_as'?'Save project copy':'Save';
+  $('project-dialog-message').textContent='';
+  $('export-download').hidden=true;
+  name.value=(state?.project_title&&state.project_title!=='Untitled project'?state.project_title:'New project')+(mode==='save_as'?' — copy':'');
+  if(source){$('export-source').value=source;$('export-format').value='e57';}
+  if(mode==='export'){window.ExportUI?.open(source);formatHelp();}
+  if(!dialog.open)dialog.showModal();
+  if(saving){name.focus();name.select();}
+  if(browsing)await refreshProjectList();
+ }
  const help={json:'Selected geometry and metadata, including coordinates and measurements, as structured JSON.',tstudio:'Complete editable Tunnel Studio project, including cached scans, target pairs, registration, geometry and point-edit history. Open in Tunnel Studio. Large scans produce large files.',e57:'Recommended neutral exchange for Leica 3DR and recent Register 360 versions that support unstructured E57. Double-precision XYZ, complete intensity and 8-bit RGB. No scanner setups, panoramas or row/column grids. Register 360 Auto Cloud / Auto Target are unavailable for unstructured imports.',las:'LAS 1.2 points for 3DR and supported Register 360 editions. XYZ quantised to 0.1 mm; intensity scaled to 16-bit; RGB 16-bit. No native Leica project data.',laz:'Compressed LAS for 3DR and other compatible readers. Same precision and attributes as LAS. For Register 360 prefer E57 or LAS; check your version.',pts:'ASCII point cloud for Leica exchange. XYZ in metres, optional intensity scaled to -2048…2047 and 8-bit RGB. Large text files. No scanner setup grid.',xyz:'Plain X Y Z coordinates, metres. No intensity or colour. Use custom ASCII import where supported.',csv:'CSV with E,N,H and complete intensity/RGB channels. Use 3DR/custom ASCII column mapping. Target control is a separate file.',ply:'ASCII PLY with double XYZ and available intensity/8-bit RGB. Useful for 3DR and other point-cloud/mesh tools. Use E57 for Register 360.',obj:'Polygon meshes/reference structures for 3DR and modelling software. No scan points, materials or tunnel calculation results.'};
  function formatHelp(){window.ExportUI?.changed();$('format-help').textContent=help[$('export-format').value];$('export-source-label').hidden=['obj','tstudio'].includes($('export-format').value);$('export-result').textContent='';$('export-download').hidden=true;}
- $('export-format').onchange=formatHelp;$('export-source').onchange=formatHelp;$('project-dialog-close').onclick=()=>$('project-dialog').close();$('project-clean-orphans').onclick=reviewOrphanCleanup;$('project-go-export').onclick=()=>projectDialog('export');$('project-dialog-action').onclick=async()=>{if(dialogMode==='export'){await window.ExportUI?.start(storePending);}else if(dialogMode==='save')saveProject(true);else saveProject(true);};
+ $('export-format').onchange=formatHelp;$('export-source').onchange=formatHelp;$('project-dialog-close').onclick=()=>$('project-dialog').close();$('project-clean-orphans').onclick=reviewOrphanCleanup;
+ $('project-dialog').addEventListener('cancel',e=>{if(projectTransition)e.preventDefault();});
+ $('project-name').addEventListener('keydown',e=>{
+  if(e.key==='Enter'&&!e.isComposing){e.preventDefault();$('project-dialog-action').click();}
+ });
+ $('project-dialog-action').onclick=async()=>{
+  if(dialogMode==='export'){await window.ExportUI?.start(storePending);return;}
+  if(dialogMode!=='save'&&dialogMode!=='save_as')return;
+  const field=$('project-name'),name=field.value.trim();
+  if(!name){$('project-dialog-message').textContent='Enter a project name.';field.focus();return;}
+  await saveProject(dialogMode,name);
+ };
  $('export-download').onclick=()=>window.ExportUI?.saveAgain();
- async function openPortable(start){if(busy||projectTransition)return false;projectTransition=true;try{if(!await allowProjectClose())return false;await storePending();setBusy(true);$('project-dialog-message').textContent='Checking and opening project…';await start();const job=await window.JobUI.waitReady(job=>{$('project-dialog-message').textContent=job.message||'Opening project…';},{skipSync:true});if(job?.cancelled)throw Error('Project opening was cancelled. The previous workspace remains active.');await projectReady();return true;}catch(error){$('project-dialog-message').textContent=error.message;notice(error.message,true);return false;}finally{projectTransition=false;setBusy(false);}}
+ async function openPortable(start){if(busy||projectTransition)return false;projectTransition=true;try{await storePending();setBusy(true);$('project-dialog-message').textContent='Checking and opening project…';await start();const job=await window.JobUI.waitReady(job=>{$('project-dialog-message').textContent=job.message||'Opening project…';},{skipSync:true});if(job?.cancelled)throw Error('Project opening was cancelled. The previous workspace remains active.');await projectReady();return true;}catch(error){$('project-dialog-message').textContent=error.message;notice(error.message,true);return false;}finally{projectTransition=false;setBusy(false);}}
  const openProjectPath=path=>openPortable(()=>post('/api/load',{kind:'project',path}));
  const openProjectFile=file=>openPortable(()=>api('/api/upload?'+new URLSearchParams({kind:'project',name:file.name}),{method:'POST',headers:{'X-Tunnel-Token':window.TUNNEL_TOKEN},body:file}));
  $('project-file').accept='.tstudio,.zip,.json';
  $('project-import-file').onclick=async()=>{if(busy||projectTransition)return;if(!window.pywebview?.api?.choose_large_file){$('project-file').click();return;}try{const paths=await window.pywebview.api.choose_large_file('project',false);if(paths?.length)await openProjectPath(paths[0]);}catch(error){notice(error.message,true);}};
  $('project-file').onchange=async e=>{const f=e.target.files[0];if(!f)return;try{await openProjectFile(f);}finally{e.target.value='';}};
  function sync(){for(const [, ...commands] of groups[current])for(const c of commands){const b=$('ribbon-panel').querySelector(`[data-command="${c.id}"]`);if(!b)continue;const reason=availability(c);b.setAttribute('aria-disabled',!!reason);b.title=c.label+' — '+(reason||c.description);b.classList.toggle('selected-tool',!!c.target&&$(c.target)?.classList.contains('chosen'));}let label=$('ribbon-project-title');if(!label){label=document.createElement('span');label.id='ribbon-project-title';document.querySelector('header').append(label);}label.textContent=state?.project_title||'Untitled project';if(state?.project_id!==lastProjectId){lastProjectId=state?.project_id;for(const [id,value] of Object.entries(state?.ui||{}))if($(id))$(id).value=value;}
- $('project-dialog-action').disabled=busy;$('project-import-file').disabled=busy;if(dialogMode==='export')window.ExportUI?.sync();}
+ $('project-dialog-action').disabled=busy||projectTransition;$('project-import-file').disabled=busy;if(dialogMode==='export')window.ExportUI?.sync();}
 
  document.addEventListener('keydown',e=>{if(e.ctrlKey&&e.key.toLowerCase()==='s'){e.preventDefault();if(!busy&&!document.querySelector('dialog[open]'))e.shiftKey?projectDialog('save_as'):saveProject();}if(e.ctrlKey&&e.key==='F1'){e.preventDefault();collapse.click();}if(e.ctrlKey&&!['INPUT','TEXTAREA','SELECT'].includes(e.target.tagName)&&!document.querySelector('dialog[open]')){if(e.key.toLowerCase()==='z'){e.preventDefault();$(e.shiftKey?'redo-edit':'undo-edit').click();}if(e.key.toLowerCase()==='y'){e.preventDefault();$('redo-edit').click();}}});
  // Main editing controls now live only in the top ribbon; no secondary workspace strip.

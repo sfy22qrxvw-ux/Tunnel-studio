@@ -60,13 +60,35 @@ async function main(){
   assert.equal(requests.some(u=>u.includes('/api/reg-preview')),false,'Hidden registration preview must not download');
   report.scenarios.push('No hidden overview, section or registration preview requests');
 
+  await page.route('**/api/setup-camera',async route=>{
+   if(route.request().postDataJSON()?.action!=='open')return route.continue();
+   const response=await route.fetch(),frame=await response.json();
+   await route.fulfill({response,json:{...frame,has_setup_photos:true}});
+  });
+  const beforeSetup=requests.length,project=path.join(work,'project.json'),beforeOpen=fs.readFileSync(project);
   holdSetup='A';
+  let activationRoute;
+  await page.route('**/api/scan-registration',async route=>{
+   if(route.request().method()==='POST'&&route.request().postDataJSON()?.action==='activate_setup'){activationRoute=route;return;}
+   await route.continue();
+  });
   await page.evaluate(()=>{window.setupOpened=false;window.setupOpening=window.SetupCameraUI.open('A').then(value=>{window.setupOpened=value;});});
+  await until(()=>activationRoute,'delayed target panel activation');
+  await page.waitForFunction(()=>window.JobUI.setupCamera()?.id==='A'&&window.JobUI.cadScene().pointCount===2);
+  assert.equal(await page.evaluate(()=>window.setupOpened),false,'The view can draw before target activation finishes');
+  await activationRoute.continue();
+  await page.unroute('**/api/scan-registration');
   await page.waitForFunction(()=>window.setupOpened===true,null,{timeout:10000});
   await until(()=>pending.some(x=>x.id==='A'),'fine setup request after coarse frame');
   assert(pending.some(x=>x.id==='A'),'Fine setup response must still be held');
   assert.equal(await page.evaluate(()=>window.JobUI.cadScene().pointCount),2);
   assert.equal(await page.locator('#setup-camera-pick').isEnabled(),true);
+  assert.equal(await page.locator('#setup-camera-display').inputValue(),'points');
+  assert.equal(await page.locator('#setup-camera-display option[value=photo]').isDisabled(),false);
+  assert(!requests.slice(beforeSetup).some(u=>/\/api\/(job$|setup-photos|setup-photo-face)/.test(u)),
+   'Opening point setup should reuse inventory and defer photographs');
+  assert.deepEqual(fs.readFileSync(project),beforeOpen,'Opening a setup must not save project data');
+  await page.unroute('**/api/setup-camera');
   const coarse=await page.evaluate(()=>Array.from(window.JobUI.cadScene().pointValues));
   assert.deepEqual(coarse,coords.slice(0,2).flatMap((q,i)=>[...q,...colours[i]]));
   const redPixel=await page.evaluate(world=>window.pixelNearPoint(world),coords[0]);assert(redPixel[0]>200&&redPixel[1]<80&&redPixel[2]<80,'Coarse target points must actually render their RGB colour');
@@ -95,30 +117,30 @@ async function main(){
   const beforePan=requests.filter(u=>u.includes('/api/job-preview-bin')&&u.includes('setup_id=A')).length;
   const box=await page.locator('#job-canvas').boundingBox();
   await page.mouse.move(box.x+box.width*.5,box.y+box.height*.5);await page.mouse.down();await page.mouse.move(box.x+box.width*.65,box.y+box.height*.5,{steps:8});await page.mouse.up();
-  await until(()=>requests.filter(u=>u.includes('/api/job-preview-bin')&&u.includes('setup_id=A')).length>=beforePan+2,'automatic detail pair after drag');
+  await until(()=>requests.filter(u=>u.includes('/api/job-preview-bin')&&u.includes('setup_id=A')).length>=beforePan+1,'automatic detail after drag');
   await page.waitForFunction(()=>document.getElementById('job-canvas').getAttribute('aria-busy')==='false');
   await page.waitForTimeout(100);
   const afterPan=requests.filter(u=>u.includes('/api/job-preview-bin')&&u.includes('setup_id=A')).length;
-  assert.equal(afterPan-beforePan,2,'A drag must coalesce into one quick/fine detail pair');
-  report.scenarios.push('Drag automatically requests one coalesced quick/fine detail pair');
+  assert.equal(afterPan-beforePan,1,'A drag must reuse displayed overview points and request fine detail once');
+  report.scenarios.push('Drag reuses displayed context and automatically requests fine detail once');
 
   const beforeWheel=requests.filter(u=>u.includes('/api/job-preview-bin')&&u.includes('setup_id=A')).length;
   for(let i=0;i<5;i++)await page.mouse.wheel(0,-60);
   await page.waitForTimeout(500);
   const afterWheel=requests.filter(u=>u.includes('/api/job-preview-bin')&&u.includes('setup_id=A')).length;
   // Zooming in can reuse a covering loaded frustum; zooming out must fetch.
-  assert(afterWheel-beforeWheel<=2,'Wheel events must be coalesced or reuse existing detail');
+  assert(afterWheel-beforeWheel<=1,'Wheel events must be coalesced or reuse existing detail');
   const beforeOut=afterWheel;await page.mouse.wheel(0,1000);
-  await until(()=>requests.filter(u=>u.includes('/api/job-preview-bin')&&u.includes('setup_id=A')).length>=beforeOut+2,'automatic detail pair after wider zoom');
+  await until(()=>requests.filter(u=>u.includes('/api/job-preview-bin')&&u.includes('setup_id=A')).length>=beforeOut+1,'automatic detail after wider zoom');
   await page.waitForFunction(()=>document.getElementById('job-canvas').getAttribute('aria-busy')==='false');
-  assert.equal(requests.filter(u=>u.includes('/api/job-preview-bin')&&u.includes('setup_id=A')).length-beforeOut,2);
+  assert.equal(requests.filter(u=>u.includes('/api/job-preview-bin')&&u.includes('setup_id=A')).length-beforeOut,1);
   report.scenarios.push('Wheel reuses covering detail and automatically loads a wider view');
 
   const beforeResize=requests.filter(u=>u.includes('/api/job-preview-bin')&&u.includes('setup_id=A')).length;
   await page.setViewportSize({width:1750,height:1000});
-  await until(()=>requests.filter(u=>u.includes('/api/job-preview-bin')&&u.includes('setup_id=A')).length>=beforeResize+2,'automatic detail pair after wider viewport');
+  await until(()=>requests.filter(u=>u.includes('/api/job-preview-bin')&&u.includes('setup_id=A')).length>=beforeResize+1,'automatic detail after wider viewport');
   await page.waitForFunction(()=>document.getElementById('job-canvas').getAttribute('aria-busy')==='false');
-  assert.equal(requests.filter(u=>u.includes('/api/job-preview-bin')&&u.includes('setup_id=A')).length-beforeResize,2,'Wider canvas needs a new horizontal frustum');
+  assert.equal(requests.filter(u=>u.includes('/api/job-preview-bin')&&u.includes('setup_id=A')).length-beforeResize,1,'Wider canvas needs a new horizontal frustum');
   report.scenarios.push('Wider viewport automatically refreshes horizontal perspective detail');
 
   // A late A response cannot replace B after switching setups.

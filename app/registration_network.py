@@ -158,7 +158,7 @@ def stats(rows,role='fit'):
     errors=[r['error_mm'] for r in rows if r['role']==role]
     return dict(count=len(errors),rms_mm=float(np.sqrt(np.mean(np.square(errors)))) if errors else None,max_mm=max(errors) if errors else None)
 
-def solve(s,a,b,matches,tolerance=5,mode='rigid',anchor=None,progress=lambda m:None,references=None):
+def solve(s,a,b,matches,tolerance=5,mode='rigid',anchor=None,progress=lambda m:None,references=None,*,floating=False):
     """Adjust the full connected bundle, including available surface links."""
     from bundle_workflow import solve_link
-    return solve_link(s,a,b,matches,tolerance,mode,anchor,progress,references)
+    return solve_link(s,a,b,matches,tolerance,mode,anchor,progress,references,floating=floating)

@@ -233,29 +233,41 @@ def fit_sphere_target(points,seed,diameter):
     if not .03<=d<=2: raise ValueError('Sphere diameter must be between 0.03 and 2 m.')
     p=p[np.isfinite(p).all(1)]
     if len(p)<40: raise ValueError('Not enough finite measured points near this sphere.')
-    dist=np.linalg.norm(p-seed,axis=1);near=p[dist<=max(d*.42,.035)]
+    # Fit in a small coordinate frame even for survey eastings/northings.
+    p=p-seed
+    dist=np.linalg.norm(p,axis=1);near_mask=dist<=d*.42
+    near=p[near_mask]
+    scale=max(.0015,d*.012)
+    # A measured surface pick can identify the intended sphere among dense
+    # neighbours. A typed approximate centre can sit inside the sphere.
+    surface_pick=float(dist.min())<=scale
     starts=[]
     if len(near)>=20:
         local=near-np.mean(near,axis=0)
         _,_,vt=np.linalg.svd(local,full_matrices=False);normal=vt[-1]
-        starts.extend([seed+r*normal,seed-r*normal])
-    try:
-        c0,r0=_free_sphere_fit(p)
-        if np.isfinite(c0).all():starts.insert(0,c0)
-    except ValueError:r0=float('nan')
-    starts.extend([seed+[r,0,0],seed+[-r,0,0],seed+[0,r,0],seed+[0,-r,0],seed+[0,0,r],seed+[0,0,-r]])
+        starts.extend([(r*normal,near),(-r*normal,near)])
+    for patch in (near,p):
+        try:c0,_=_free_sphere_fit(patch)
+        except ValueError:continue
+        if np.isfinite(c0).all():starts.append((c0,patch))
+    axes=r*np.eye(3)
+    starts.extend((c0,p) for c0 in np.concatenate((axes,-axes)))
     best=None
-    scale=max(.0015,d*.012)
-    for c0 in starts:
+    for c0,patch in starts:
         try:
-            res=least_squares(lambda c:np.linalg.norm(p-c,axis=1)-r,np.asarray(c0,float),loss='soft_l1',f_scale=scale,max_nfev=100)
+            res=least_squares(lambda c:np.linalg.norm(patch-c,axis=1)-r,c0,loss='soft_l1',f_scale=scale,max_nfev=100)
         except Exception:continue
+        if surface_pick and abs(np.linalg.norm(res.x)-r)>d*.06:continue
         residual=np.abs(np.linalg.norm(p-res.x,axis=1)-r)
-        med=float(np.median(residual));mad=float(np.median(np.abs(residual-med)))
+        local_residual=residual[near_mask] if surface_pick and len(near)>=30 else residual
+        med=float(np.median(local_residual));mad=float(np.median(np.abs(local_residual-med)))
         threshold=min(max(.0015,d*.012,med+3.5*1.4826*mad),d*.06)
         inliers=residual<=threshold
         if inliers.sum()<30:continue
-        score=(int(inliers.sum()),-float(np.median(residual[inliers])))
+        # Tight local support comes first. A dense wall or second sphere
+        # elsewhere in the search ball must not win by raw point count.
+        local_support=int(np.count_nonzero(residual[near_mask]<=scale)) if surface_pick else 0
+        score=(local_support,int(inliers.sum()),-float(np.median(residual[inliers])))
         if best is None or score>best[0]:best=(score,res.x,inliers,threshold)
     if best is None:raise ValueError('The picked neighbourhood does not support a sphere of the entered diameter. Pick closer to the sphere surface or check the diameter.')
     _,centre,inliers,threshold=best
@@ -264,6 +276,8 @@ def fit_sphere_target(points,seed,diameter):
     res=least_squares(lambda c:np.linalg.norm(q-c,axis=1)-r,centre,loss='soft_l1',f_scale=max(.001,d*.008),max_nfev=100)
     if not res.success or not np.isfinite(res.x).all():
         raise ValueError('The sphere centre fit did not converge to finite coordinates. Adjust the pick or sphere diameter.')
+    if surface_pick and abs(np.linalg.norm(res.x)-r)>d*.06:
+        raise ValueError('The fitted sphere does not pass close to the picked surface. Pick a measured point on the sphere or check its diameter.')
     centre=res.x;radial=np.linalg.norm(q-centre,axis=1);residual=radial-r
     rms=float(np.sqrt(np.mean(residual**2)));median=float(np.median(np.abs(residual)))
     try:free_c,free_r=_free_sphere_fit(q)
@@ -285,7 +299,7 @@ def fit_sphere_target(points,seed,diameter):
         quality_warnings.append(f'Free-radius curvature suggests a {free_r*2000:.1f} mm diameter; the centre was fitted using your entered {d*1000:.1f} mm diameter.')
     if octant_count<3 or plane_rms<max(rms*1.25,.0015):raise ValueError('The selected points look too flat or too narrowly observed for a reliable sphere centre.')
     support=float(len(q)/len(p));shape=max(0,min(1,plane_rms/max(plane_rms+rms,1e-12)));score=float(max(0,min(1,support*.55+shape*.30+min(octant_count/6,1)*.15)))
-    return {'source':centre.tolist(),'target_type':'sphere','diameter_m':d,'nominal_radius_m':r,'fitted_radius_m':float(free_r) if np.isfinite(free_r) else None,
+    return {'source':(seed+centre).tolist(),'target_type':'sphere','diameter_m':d,'nominal_radius_m':r,'fitted_radius_m':float(free_r) if np.isfinite(free_r) else None,
             'radius_error_mm':float(radius_error*1000) if np.isfinite(radius_error) else None,'sphere_rms_mm':rms*1000,'sphere_median_mm':median*1000,
             'plane_rms_mm':plane_rms*1000,'support_points':int(len(q)),'neighbourhood_points':int(len(p)),'direction_octants':octant_count,'direction_coverage':coverage,
             'score':score,'status':'accepted','usable':True,'quality':'warning' if quality_warnings else 'ok',

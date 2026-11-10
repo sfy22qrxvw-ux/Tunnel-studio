@@ -12,20 +12,26 @@
   async function show(mode) {
     const current = ++generation;
     const saves = mode === 'save' || mode === 'save_as';
-    const visible = saves || mode === 'storage' || mode === 'open';
+    const visible = mode === 'storage';
     field('project-location-fields').hidden = !visible;
     field('project-portable-fields').hidden = !saves;
+    field('project-portable-fields').open = false;
     field('project-copy-path-field').hidden = true;
     field('project-copy-path').value = '';
     workFolder = '';
     field('project-data-copy').disabled = true;
-    if (!visible) return;
+    if (!visible && !saves) return;
+    if (saves) field('project-save-location').textContent = 'Checking save location…';
     field('project-data-location').textContent = 'Checking location…';
     field('project-record-location').textContent = '';
     field('project-data-capacity').textContent = '';
     try {
       const location = await api('/api/project-location');
       if (generation !== current) return;
+      if (saves) {
+        field('project-save-location').textContent = 'Save in ' + location.project_folder;
+        return;
+      }
       workFolder = location.work_folder;
       field('project-data-location').textContent = workFolder;
       field('project-data-copy').disabled = !workFolder;
@@ -34,7 +40,10 @@
         field('project-data-capacity').textContent = `${(location.free_bytes / 1e9).toLocaleString(undefined, {maximumFractionDigits: 1})} GB free on the working drive`;
       }
     } catch (error) {
-      if (generation === current) field('project-data-location').textContent = error.message;
+      if (generation === current) {
+        field(saves ? 'project-save-location' : 'project-data-location').textContent =
+          saves ? 'The save location could not be displayed.' : error.message;
+      }
     }
   }
 
@@ -70,6 +79,7 @@
     choosing = true;
     field('project-copy-in').disabled = true;
     field('project-copy-manual').disabled = true;
+    field('project-dialog-action').disabled = true;
     field('project-dialog-close').disabled = true;
     try {
       const name = field('project-name').value.trim();
@@ -104,6 +114,7 @@
       field('project-copy-stop').hidden = true;
       field('project-copy-in').disabled = false;
       field('project-copy-manual').disabled = false;
+      field('project-dialog-action').disabled = false;
       field('project-dialog-close').disabled = false;
     }
   }

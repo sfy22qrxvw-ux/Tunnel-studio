@@ -164,13 +164,14 @@ class CloudScene{
     canvas.style.cursor='grabbing';
     const {right,up}=this.basis(),k=this.scale*2/canvas.clientWidth;
     this.target=this.target.map((v,i)=>v-dx*k*right[i]+dy*k*up[i]);
-   }else{const fine=e.ctrlKey?.1:1,k=this.setupCamera?this.setupCamera.fov*Math.PI/180/Math.max(1,canvas.clientHeight):.007;this.yaw-=dx*k*fine;this.pitch=Math.max(-1.55,Math.min(1.55,this.pitch+dy*(this.setupCamera?k:.006)*fine));}
+   }else{const fine=e.ctrlKey?.1:1,k=this.setupCamera?this.setupCamera.fov*Math.PI/180/Math.max(1,canvas.clientHeight):.007;this.yaw+=this.orbitHorizontal(dx)*k*fine;this.pitch=Math.max(-1.55,Math.min(1.55,this.pitch+dy*(this.setupCamera?k:.006)*fine));}
    this.navigationDraw();
   });
   canvas.addEventListener('contextmenu',e=>e.preventDefault());
   canvas.addEventListener('wheel',e=>{e.preventDefault();if(this.setupCamera)this.setupCamera.fov=Math.max(8,Math.min(105,this.setupCamera.fov*Math.exp(e.deltaY*.001)));else this.scale=Math.max(.02,Math.min(100000,this.scale*Math.exp(e.deltaY*.001)));this.navigationDraw();},{passive:false});new ResizeObserver(()=>{this.draw();this.onViewportResize?.();}).observe(canvas);
  }
  navigationDraw(){this.onNavigate?.();this.navigationUntil=performance.now()+180;clearTimeout(this.navigationTimer);this.navigationTimer=setTimeout(()=>{this.navigationUntil=0;this.draw();},200);if(this.navigationFrame)return;this.navigationFrame=requestAnimationFrame(()=>{this.navigationFrame=null;this.draw();});}
+ orbitHorizontal(dx){return -dx;}
  basis(){const f=[Math.sin(this.yaw)*Math.cos(this.pitch),Math.cos(this.yaw)*Math.cos(this.pitch),Math.sin(this.pitch)],right=[Math.cos(this.yaw),-Math.sin(this.yaw),0],up=[-Math.sin(this.yaw)*Math.sin(this.pitch),-Math.cos(this.yaw)*Math.sin(this.pitch),Math.cos(this.pitch)];const frame={forward:f,right,up};if(this.setupCamera){const R=this.setupCamera.orientation;for(const key of Object.keys(frame))frame[key]=R.map(row=>row.reduce((sum,v,i)=>sum+v*frame[key][i],0));}return frame;}
  depthRange(){const t=this.cadTarget||this.target;return Math.max(1,Math.hypot(...t)+(this.geometryRadius||0)+Math.hypot(...this.target)+(this.cadRadius||0)+100);}
  projectLocal(point,b=this.basis()){

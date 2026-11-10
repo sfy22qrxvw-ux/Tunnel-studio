@@ -401,6 +401,14 @@ def load(s,kind,path,display_name=None):
     return False
 
 
+def survey_registration_unavailable(s,r):
+    if s.STATE['axis'] is None:
+        return 'Import an alignment to use the positioned scan for survey analysis.'
+    if s.STATE.get('demo') and not r.get('demo'):
+        return 'Import your real alignment to use this scan for survey analysis.'
+    return ''
+
+
 def reg(s,cloud=True):
     r=s.STATE.setdefault('registration',{})
     if cloud and not r.get('cloud'): raise ValueError('Import a source scan in Registration first.')
@@ -450,7 +458,11 @@ def get(s,h,path,args):
         r=reg(s,False); result={k:v for k,v in r.items() if k not in ('cloud','transformed','target_undo')}
         result['cloud']={k:v for k,v in r['cloud'].items() if k not in ('file','attributes_file','mask_file')} if r.get('cloud') else None
         result['source_id']=Path(r['cloud']['file']).stem if r.get('cloud') else None
-        result['source_item_id']=s.STATE.get('active_job_registration');result['can_undo_targets']=bool(r.get('target_undo')); result['transformed']=bool(r.get('transformed')); h.send(result); return True
+        ident=s.STATE.get('active_job_registration')
+        if ident and r.get('cloud') and s.STATE.get('survey_controls'):
+            _,result['control_matches'],_=registration_workspace.control_group(s,ident)
+        result['survey_analysis_unavailable']=survey_registration_unavailable(s,r)
+        result['source_item_id']=ident;result['can_undo_targets']=bool(r.get('target_undo')); result['transformed']=bool(r.get('transformed')); h.send(result); return True
     if path=='/api/reg-preview':
         if s.JOB['busy']: raise ValueError('Wait until the current operation finishes.')
         r=reg(s); h.send(registration.preview(r['cloud'],r.get('solution') if args.get('positioned',['0'])[0]=='1' else None,args.get('channel',['intensity'])[0])); return True
@@ -644,14 +656,27 @@ def post(s,h,path,body):
             r['detection']={k:v for k,v in result.items() if k!='candidates'}; r['revision']=uuid.uuid4().hex; s.save()
         s.start_job(detect)
     elif action=='rename_target':
+        if body.get('scan_id') is not None and body['scan_id']!=s.STATE.get('active_job_registration'):
+            raise ValueError('The active scan changed. Choose its target again.')
         c=next((c for c in r.get('candidates',[]) if c['id']==body.get('id')),None)
+        row_id=body.get('row_id')
         name=str(body.get('name','')).strip()
-        if c is None or not name or len(name)>60:raise ValueError('Choose a target and enter its name.')
+        if not name or len(name)>60:raise ValueError('Choose a target and enter its name.')
         if any(v is not c and v.get('name',v['id'])==name for v in r.get('candidates',[])):raise ValueError('A target already has that name in this scan.')
-        rows=__import__('copy').deepcopy(r.get('rows',[]))
-        for row in rows:
-            if row.get('candidate_id')==c['id']:row['id']=name
-        registration_workspace.save_rows(s,rows);c['name']=name;r['revision']=uuid.uuid4().hex;s.save()
+        rows=copy.deepcopy(r.get('rows',[]))
+        row=next((row for row in rows if (row.get('candidate_id')==c['id'] if c else
+                  row['id']==row_id and not row.get('candidate_id'))),None)
+        if c is None and row is None:raise ValueError('This target is no longer in the scan.')
+        if any(other is not row and other['id']==name for other in rows):
+            raise ValueError('A target already has that name in this scan.')
+        if row is not None:row['id']=name
+        previous=copy.deepcopy(s.STATE)
+        try:
+            if c is not None:c['name']=name
+            registration_workspace.save_rows(s,rows)
+            s.save()
+        except BaseException:
+            s.STATE.clear();s.STATE.update(previous);raise
     elif action=='review':
         c=next((c for c in r.get('candidates',[]) if c['id']==body['id']),None)
         if not c or body.get('status') not in ('accepted','rejected','unreviewed'): raise ValueError('Invalid target review.')
@@ -668,6 +693,17 @@ def post(s,h,path,body):
             ids=([str(body.get('id',''))] if action=='remove_candidate' else [c['id'] for c in r.get('candidates',[])] if action=='clear_candidates' else body.get('ids',[]))
             target_ops.remove_targets(r,ids,body.get('row_ids',[]))
         s.STATE['export_ready']=None;s.save()
+    elif action=='solve_group_control':
+        ident=s.STATE.get('active_job_registration')
+        if not ident or body.get('scan_id')!=ident:
+            raise ValueError('Select an original setup in the linked group first.')
+        solution=registration_workspace.solve_control(s,ident,body.get('tolerance_mm',5))
+        previous=copy.deepcopy(s.STATE)
+        try:
+            r.update(solution=solution,revision=uuid.uuid4().hex)
+            registration_workspace.persist(s);s.save()
+        except BaseException:
+            s.STATE.clear();s.STATE.update(previous);raise
     elif action in ('rows','solve'):
         rows=body['rows']
         if not isinstance(rows,list) or len(rows)>200: raise ValueError('Maximum 200 target rows.')
@@ -681,9 +717,20 @@ def post(s,h,path,body):
         def apply():
             old=copy.deepcopy(s.STATE);created=[];selection=getattr(s,'SELECTION',None)
             try:
+                group=solution.get('control_group')
+                if group:
+                    if body.get('reviewed') is not True:
+                        raise ValueError('Review the survey-control fit before applying it.')
+                    active=s.STATE.get('active_job_registration')
+                    if active!=group['anchor']:
+                        raise ValueError('The active setup changed. Calculate the survey-control fit again.')
+                    if r.get('applied_solution_id')!=solution['id']:
+                        _,_,fingerprint=registration_workspace.control_group(s,active)
+                        if fingerprint!=group['input_stamp']:
+                            raise ValueError('Control, targets or linked setup poses changed. Calculate the fit again.')
                 if body.get('to_survey'):
-                    if s.STATE['axis'] is None:raise ValueError('Import an alignment before choosing Use for survey analysis, or apply registration without that option.')
-                    if s.STATE.get('demo') and not r.get('demo'):raise ValueError('Import your real alignment before using a real scan for tunnel analysis.')
+                    reason=survey_registration_unavailable(s,r)
+                    if reason:raise ValueError(reason)
                 active=s.STATE.get('active_job_registration')
                 if active:
                     meta=registration_workspace.apply_control_solution(s,r,solution)

@@ -148,7 +148,217 @@ def component(s,ident):
             if link['a'] in ids or link['b'] in ids:ids.update([link['a'],link['b']])
         if len(ids)==before:return ids
 
-def solve_pair(s,a,b,matches=None,tolerance=5,mode="rigid",anchor=None):
+def linked_bundle(s,bundle_id):
+    from workspace_tools import inventory
+    group=next((b for b in inventory(s) if b['id']==bundle_id),None)
+    if group is None:
+        raise ValueError('Select an existing linked bundle in the Project Explorer.')
+    anchor=group['scan_ids'][0]
+    if component(s,anchor)!=set(group['scan_ids']):
+        raise ValueError('A setup in this bundle is unavailable. Review its saved links.')
+    return group,anchor
+
+
+def control_import_anchor(s,controls,source_id,bundle_id=None):
+    """Resolve one group before saving the imported control list."""
+    if bundle_id is not None:
+        from workspace_tools import inventory
+        group=next((b for b in inventory(s) if b['id']==bundle_id),None)
+        if group is None:raise ValueError('The selected bundle changed. Select it again and import control.')
+        members=group['scan_ids']
+        selected_merge_ids(s,members)
+        return members[0]
+    if source_id is not None:
+        selected=next((x for x in s.STATE.get('job_items',[]) if x['id']==source_id and x['kind']=='scan'),None)
+        if selected is None:raise ValueError('The selected scan changed. Select it again and import control.')
+        if not selected.get('registered_merge'):return selected['id']
+        members=selected.get('merge_source_ids')
+        try:
+            selected_merge_ids(s,members)
+        except ValueError as error:
+            raise ValueError('The selected merged cloud needs its original linked setups to match control targets.') from error
+        return members[0]
+    remaining={x['id']:x for x in scans(s)}
+    groups=[];matched=[]
+    while remaining:
+        anchor=next(iter(remaining))
+        members=component(s,anchor)&remaining.keys()
+        if any(controls.keys()&targets(remaining[ident]).keys() for ident in members):
+            matched.append(anchor)
+        groups.append(anchor)
+        for ident in members:remaining.pop(ident)
+    if len(matched)>1:
+        raise ValueError('The CSV names match more than one disconnected group. Select the intended scan or merged cloud and import again.')
+    if matched:return matched[0]
+    if len(groups)>1:
+        raise ValueError('No CSV names match measured targets. Check the target names or select the intended scan and import again.')
+    return groups[0] if groups else None
+
+def assign_imported_controls(s,controls):
+    """Fill named control coordinates throughout the active linked group."""
+    anchor=s.STATE.get('active_job_registration')
+    active=s.STATE.get('registration') or {}
+    ids=component(s,anchor) if anchor else set()
+    # The legacy link fingerprint includes control coordinates. Preserve links
+    # which were current before this coordinate-only edit.
+    links=[link for link in s.STATE.get('scan_links',[]) if link.get('target_stamp')
+           and {link['a'],link['b']}<=ids and link['target_stamp']==stamp(s,[link['a'],link['b']])]
+    for ident in sorted(ids) if ids else [None]:
+        r=active if ident==anchor else state_for(scan(s,ident))
+        rows=r.get('rows',[])
+        updated=[{**row,'control':list(controls[row['id']])} if row['id'] in controls else row
+                 for row in rows]
+        if updated!=rows:
+            r.update(rows=updated,solution=None,transformed=None,revision=uuid.uuid4().hex)
+    active.pop('solution',None)
+    if anchor:scan(s,anchor)['registration_state']=copy.deepcopy(active)
+    for link in links:link['target_stamp']=stamp(s,[link['a'],link['b']])
+
+def control_group(s,ident):
+    """Match one observation per control ID in the linked group's current pose."""
+    anchor=scan(s,ident)
+    ids=sorted(component(s,ident))
+    shared=s.STATE.get('survey_controls',{})
+    scope=s.STATE.get('survey_control_import_ids',shared)
+    controls={name:shared[name] for name in scope if name in shared}
+    observations={};frames=[];names={}
+    contributors=set()
+    for scan_id in ids:
+        item=scan(s,scan_id)
+        names[scan_id]=item['name']
+        frames.append((scan_id,registration_pose.revision(item['meta'])))
+        for name,target in targets(item).items():
+            if name not in controls:continue
+            observations.setdefault(name,[]).append((scan_id,target.get('role','fit'),target['source']))
+            contributors.add(scan_id)
+    rows=[];max_spread=0.
+    for name,entries in sorted(observations.items()):
+        points=np.asarray([p for _,_,p in entries],float)
+        centre=points.mean(axis=0)
+        max_spread=max(max_spread,float(np.linalg.norm(points-centre,axis=1).max())*1000)
+        # A point explicitly marked as a check anywhere remains independent.
+        role='check' if any(role=='check' for _,role,_ in entries) else 'fit'
+        rows.append(dict(id=name,role=role,source=registration_pose.inverse_point(anchor['meta'],centre).tolist(),
+                         control=list(controls[name])))
+    matches=[dict(id=r['id'],role=r['role'],
+                  setups=[names[scan_id] for scan_id,_,_ in observations[r['id']]]) for r in rows]
+    summary=dict(anchor=ident,anchor_name=anchor['name'],setups=len(ids),contributing_setups=len(contributors),
+                 matches=matches,
+                 fit=sum(r['role']=='fit' for r in rows),check=sum(r['role']=='check' for r in rows),
+                 unmatched=sorted(controls.keys()-observations.keys()),controls=len(controls),
+                 max_observation_spread_mm=max_spread)
+    # Reject edits to any linked pose between reviewing and applying the fit.
+    fingerprint=hashlib.sha256(json.dumps([frames,controls,observations],
+                                           sort_keys=True,allow_nan=False).encode()).hexdigest()
+    return rows,summary,fingerprint
+
+def solve_control(s,ident,tolerance):
+    pairs,scope,fingerprint=control_group(s,ident)
+    if scope['fit']<3:
+        raise ValueError(f"Matched {scope['fit']} Fit target(s) across {scope['setups']} setup(s). "
+                         "Use at least three non-collinear control IDs that match measured target names.")
+    solution=registration.solve(pairs,tolerance)
+    solution['control_group']={**scope,'input_stamp':fingerprint}
+    if scope['max_observation_spread_mm']>solution['tolerance_mm']:
+        solution['warnings'].append(
+            f"Repeated observations differ from their mean by up to {scope['max_observation_spread_mm']:.1f} mm. "
+            "Check target centres and setup alignment before applying.")
+    return solution
+
+
+def adjustment_metrics(solution):
+    return {k:solution.get(k) for k in ('target_fit','before','fit','cloud_before','cloud_fit',
+                                      'fallback_used','warnings','link_count','measured_cloud_links','targets_only')}
+
+
+def bundle_control(s,body):
+    action=body['action']
+    group,anchor=linked_bundle(s,body.get('bundle_id'))
+    if action=='bundle_control_status':
+        _,summary,fingerprint=control_group(s,anchor)
+        ids=set(group['scan_ids']);names={i:scan(s,i)['name'] for i in ids}
+        links=[]
+        for edge in s.STATE.get('scan_links',[]):
+            if {edge['a'],edge['b']}<=ids:
+                solution=edge.get('solution') or {}
+                cloud=solution.get('cloud') or {}
+                links.append(dict(a=names[edge['a']],b=names[edge['b']],
+                                  status=edge.get('status'),loop=bool(edge.get('loop_closure')),
+                                  target_rms=(solution.get('target_fit') or solution.get('fit') or {}).get('rms_mm') if not solution.get('cloud_to_cloud') else None,
+                                  plane_before=(cloud.get('before') or {}).get('rms_mm'),
+                                  plane_after=(cloud.get('after') or {}).get('rms_mm',solution.get('rms_mm') if solution.get('cloud_to_cloud') else None)))
+        relative=s.STATE.get('bundle_adjustment_reports',{}).get(group['id'])
+        if relative:
+            link_ids=sorted(edge['id'] for edge in s.STATE.get('scan_links',[]) if {edge['a'],edge['b']}<=ids)
+            relative={**relative,'stale':relative['link_ids']!=link_ids or
+                      any('changed' in (edge['status'] or '') for edge in links)}
+        else:
+            result=s.STATE.get('last_registration_result') or {}
+            if result.get('network') and set(result.get('moving',[])+result.get('fixed',[]))==ids:
+                relative=adjustment_metrics(result['solution'])
+        report=s.STATE.get('bundle_control_reports',{}).get(group['id'])
+        if report is None:
+            for ident in group['scan_ids']:
+                legacy=state_for(scan(s,ident))
+                solution=legacy.get('solution') or {}
+                if solution.get('control_group') and legacy.get('applied_solution_id')==solution.get('id'):
+                    report=dict(solution=solution,applied_at=legacy.get('applied_at'))
+                    break
+        if report:
+            report={**report,'stale':bool(report.get('stamp') and report['stamp']!=fingerprint)}
+        return dict(bundle=group,summary=summary,links=links,adjustment=relative,control_report=report)
+    if action=='bundle_control_solve':
+        s._bundle_control_draft=None
+        solution=solve_control(s,anchor,body.get('tolerance_mm',5))
+        s._bundle_control_draft=(id(s.STATE),group['id'],solution)
+        return {'solution':solution}
+    draft=getattr(s,'_bundle_control_draft',None)
+    if (not draft or draft[:2]!=(id(s.STATE),group['id']) or
+            body.get('solution_id')!=draft[2]['id'] or body.get('reviewed') is not True):
+        raise ValueError('Calculate and review the current bundle fit before registering.')
+    solution=draft[2]
+    def apply():
+        current,ident=linked_bundle(s,group['id'])
+        _,_,fingerprint=control_group(s,ident)
+        if (id(s.STATE)!=draft[0] or current['scan_ids']!=group['scan_ids'] or
+                ident!=solution['control_group']['anchor'] or
+                fingerprint!=solution['control_group']['input_stamp']):
+            raise ValueError('Control, targets or linked setup poses changed. Calculate the fit again.')
+        previous=copy.deepcopy(s.STATE)
+        try:
+            r=copy.deepcopy(state_for(scan(s,ident)))
+            apply_control_solution(s,r,solution,ident=ident)
+            _,_,registered_stamp=control_group(s,ident)
+            s.STATE.setdefault('bundle_control_reports',{})[group['id']]=dict(
+                solution=solution,applied_at=r['applied_at'],stamp=registered_stamp)
+            s.STATE['export_ready']=None
+            s.save()
+        except BaseException:
+            s.STATE.clear();s.STATE.update(previous);raise
+        s._bundle_control_draft=None
+    s.start_job(apply,kind='job',native_progress=True)
+    return {'started':True}
+
+
+def float_poses(transforms, centres):
+    """Remove the common rigid motion from a relative registration.
+
+    Use equal setup weights for the mean rotation and centre of the group.
+    Composing every pose with the same rigid map preserves all relative fits.
+    Translations are expressed as displacements of the respective centres.
+    """
+    ids=sorted(transforms)
+    left,_,right=np.linalg.svd(np.mean([transforms[i][0] for i in ids],axis=0))
+    left[:,-1]*=np.linalg.det(left@right)
+    rotation=(left@right).T
+    centre=np.mean([centres[i] for i in ids],axis=0)
+    adjusted=np.mean([centres[i]+transforms[i][1] for i in ids],axis=0)
+    return {i:(rotation@transforms[i][0],
+               centre+rotation@(centres[i]+transforms[i][1]-adjusted)-centres[i])
+            for i in ids}
+
+
+def solve_pair(s,a,b,matches=None,tolerance=5,mode="rigid",anchor=None,*,floating=False):
     persist(s)
     if a==b:raise ValueError('Choose two different scans.')
     aa,bb=scan(s,a),scan(s,b);matches=matched_targets(aa,bb,matches)
@@ -167,6 +377,28 @@ def solve_pair(s,a,b,matches=None,tolerance=5,mode="rigid",anchor=None):
     solution.update(anchor=anchor,anchor_name=scan(s,anchor)['name'])
     moving=right;fixed=left
     draft=dict(id=uuid.uuid4().hex,a=a,b=b,matches=matches,solution=solution,mode=mode,moving=sorted(moving),fixed=sorted(fixed),stamp=stamp(s,moving|fixed))
+    if floating:
+        R,t=np.asarray(solution['rotation']),np.asarray(solution['translation'])
+        centres={}
+        for ident in left|right:
+            item=scan(s,ident)
+            centre=item.get('scan_origin')
+            if centre is None:centre=np.mean(registration_pose.world_bounds(item['meta']),axis=0)
+            centres[ident]=np.asarray(centre)
+        motions={i:(R,(R-np.eye(3))@c+t) if i in right else (np.eye(3),np.zeros(3))
+                 for i,c in centres.items()}
+        balanced=float_poses(motions,centres)
+        transforms={i:dict(rotation=rot.tolist(),translation=(d+(np.eye(3)-rot)@centres[i]).tolist())
+                    for i,(rot,d) in balanced.items()}
+        common_rotation,common_translation=map(np.asarray,(transforms[a]['rotation'],transforms[a]['translation']))
+        for row in solution['residuals']:
+            for key in ('control','transformed'):
+                row[key]=(common_rotation@row[key]+common_translation).tolist()
+            row['residual_mm']=(common_rotation@row['residual_mm']).tolist()
+        solution.update(anchor=None,anchor_name=None,datum='floating',
+                        constraint='Floating registration across all connected setups')
+        draft.update(moving=sorted(left|right),fixed=[],pair_components=[sorted(left),sorted(right)],
+                     transforms=transforms)
     if mode=='vertical':draft['vertical_axis']=[0.,0.,1.]
     s.STATE['scan_link_draft']=draft;return draft
 
@@ -196,7 +428,7 @@ def move_targets(r,R,t):
     r.update(solution=None,transformed=None,revision=uuid.uuid4().hex)
 
 
-def apply_control_solution(s,r,solution):
+def apply_control_solution(s,r,solution,*,ident=None):
     """Position the existing connected component, retaining its source caches.
 
     Control solutions map stored target coordinates to the control frame. The
@@ -204,7 +436,7 @@ def apply_control_solution(s,r,solution):
     repeated Apply therefore cannot add a second transform or duplicate scan.
     The caller owns the transaction/save so analysis can be prepared atomically.
     """
-    ident=s.STATE.get('active_job_registration');anchor=scan(s,ident)
+    active=s.STATE.get('active_job_registration');ident=ident or active;anchor=scan(s,ident)
     if anchor['meta']['file']!=r.get('cloud',{}).get('file'):
         raise ValueError('The active registration scan changed. Solve it again.')
     if r.get('applied_solution_id')==solution['id'] and r.get('transformed'):
@@ -238,7 +470,8 @@ def apply_control_solution(s,r,solution):
     r.update(cloud=copy.deepcopy(meta),transformed=copy.deepcopy(meta),solution=solution,
              applied_solution_id=solution['id'],applied_at=time.time(),revision=uuid.uuid4().hex)
     anchor['registration_state']=copy.deepcopy(r)
-    s.STATE['registration']=r
+    if active==ident:s.STATE['registration']=r
+    elif active in ids:s.STATE['registration']=copy.deepcopy(state_for(scan(s,active)))
     return meta
 
 def selected_merge_ids(s, selected):
@@ -395,7 +628,9 @@ def accept(s,ident,reviewed=True,merge=False):
     if d.get('network'):
         from registration_network import topology
         changed=topology(s,ids)!=d['network_topology'] or (component(s,d['a'])|component(s,d['b']))!=ids
-    else:changed=component(s,d['a'])!=set(d['fixed']) or component(s,d['b'])!=set(d['moving'])
+    else:
+        left,right=d.get('pair_components',(d['fixed'],d['moving']))
+        changed=component(s,d['a'])!=set(left) or component(s,d['b'])!=set(right)
     if stamp(s,ids)!=d['stamp'] or changed:raise ValueError('Scans, targets or links changed. Solve the geometry again.')
     old=copy.deepcopy(s.STATE);created=[]
     if not d.get('network'):R=np.asarray(d['solution']['rotation']);t=np.asarray(d['solution']['translation'])
@@ -407,7 +642,7 @@ def accept(s,ident,reviewed=True,merge=False):
         # disk growth per accepted link, regardless of scan point count.
         replacements=[]
         for ident in d['moving']:
-            if d.get('network'):R=np.asarray(d['transforms'][ident]['rotation']);t=np.asarray(d['transforms'][ident]['translation'])
+            if 'transforms' in d:R=np.asarray(d['transforms'][ident]['rotation']);t=np.asarray(d['transforms'][ident]['translation'])
             x=scan(s,ident);oldmeta=copy.deepcopy(x['meta']);registration_pose.compose(x['meta'],R,t);replacements.append((x,oldmeta,R.copy(),t.copy()))
         for x,oldmeta,R,t in replacements:
             origin=x.get('scan_origin',np.mean(registration_pose.world_bounds(oldmeta),axis=0))
@@ -445,7 +680,11 @@ def accept(s,ident,reviewed=True,merge=False):
                     edge['vertical_axis']=(R@np.asarray(edge.get('vertical_axis',[0.,0.,1.]),float)).tolist()
             s.STATE['scan_links']=[l for l in s.STATE.get('scan_links',[]) if not (l['a'] in ids and l['b'] in ids)]+edges
             s.STATE['last_network_adjustment']=dict(id=d['id'],anchor=d['solution'].get('anchor_name'),coordinate_references=copy.deepcopy(d['solution'].get('coordinate_references',[])),scan_count=len(ids),link_count=len(edges),before=d['solution']['before'],after=d['solution']['fit'])
-        else:s.STATE.setdefault('scan_links',[]).append({**copy.deepcopy(d),'status':'manually aligned' if d.get('kind')=='manual_visual' else 'accepted','kind':d.get('kind','target_match')})
+        else:
+            link={k:copy.deepcopy(v) for k,v in d.items() if k not in ('transforms','pair_components')}
+            link.update(status='manually aligned' if d.get('kind')=='manual_visual' else 'accepted',
+                        kind=d.get('kind','target_match'))
+            s.STATE.setdefault('scan_links',[]).append(link)
         for link in s.STATE['scan_links']:
             if link['a'] in ids and link['b'] in ids:link['target_stamp']=stamp(s,[link['a'],link['b']])
         s.STATE.pop('scan_link_draft',None)
@@ -464,6 +703,12 @@ def accept(s,ident,reviewed=True,merge=False):
         if d.get('bundle'):
             from bundle_workflow import record_applied
             record_applied(s,d)
+            from workspace_tools import inventory
+            group=next((g for g in inventory(s) if set(g['scan_ids'])==ids),None)
+            if group:
+                s.STATE.setdefault('bundle_adjustment_reports',{})[group['id']]={
+                    **adjustment_metrics(d['solution']),
+                    'link_ids':sorted(edge['id'] for edge in d['network_edges'])}
         s.save()
     except BaseException:
         s.STATE.clear();s.STATE.update(old)
@@ -494,9 +739,11 @@ def scan_summary(s,x):
         if c.get('status')=='rejected':continue
         row=next((r for r in rows if r.get('candidate_id')==c['id']),None)
         name=row['id'] if row else c.get('name',c['id']);used.add(name)
-        markers.append(dict(id=name,key='candidate:'+c['id'],source=c.get('source'),status=c.get('status','unreviewed')))
+        markers.append(dict(id=name,key='candidate:'+c['id'],source=c.get('source'),
+                            status=c.get('status','unreviewed'),role=row.get('role','fit') if row else None))
     for row in rows:
-        if row['id'] not in used:markers.append(dict(id=row['id'],key='row:'+row['id'],source=row.get('source'),status='accepted'))
+        if row['id'] not in used:markers.append(dict(id=row['id'],key='row:'+row['id'],source=row.get('source'),
+                                                    status='accepted',role=row.get('role','fit')))
     for marker in markers:
         p=marker.get('source')
         if p is not None and len(p)==3 and all(v is not None for v in p):
@@ -516,6 +763,8 @@ def api(s,h,path,body=None):
         h.send(bundle_workflow.status(s,body));return True
     if s.JOB['busy']:raise ValueError('Wait for the current operation.')
     action=body.get('action')
+    if action in ('bundle_control_status','bundle_control_solve','bundle_control_apply'):
+        h.send(bundle_control(s,body));return True
     if action in ('bundle_inspect','bundle_preview','bundle_apply'):
         import bundle_workflow
         handler={'bundle_inspect':bundle_workflow.inspect,'bundle_preview':bundle_workflow.start,'bundle_apply':bundle_workflow.apply}[action]
@@ -533,7 +782,12 @@ def api(s,h,path,body=None):
     if action in ('visual_preview','visual_apply'):
         import visual_registration
         h.send(visual_registration.preview(s,body) if action=='visual_preview' else visual_registration.apply(s,body));return True
-    if action=='activate':activate(s,body['id'],body.get('isolate',True));s.save()
+    if action=='activate_setup':
+        if s.STATE.get('active_job_registration')!=body['id']:
+            activate(s,body['id'])
+        else:
+            scan(s,body['id'])
+    elif action=='activate':activate(s,body['id'],body.get('isolate',True));s.save()
     elif action=='review_matches':
         from registration_review import start
         ident=start(s,body);h.send({'started':True,'saved':True,'review_id':ident});return True
@@ -552,16 +806,18 @@ def api(s,h,path,body=None):
             selection=copy.deepcopy(getattr(s,'SELECTION',None))
             try:
                 a,b=request['a'],request['b'];mode=request.get('mode','rigid');anchor=request.get('anchor') or a
+                floating=request.get('floating') is True
                 progress=lambda message:job_api.progress(s,message)
                 s.STATE.pop('scan_link_draft',None)
                 if component(s,a)&component(s,b):
                     from registration_network import solve as solve_network
-                    draft=solve_network(s,a,b,request.get('matches'),request.get('tolerance',5),mode,anchor,progress)
+                    draft=solve_network(s,a,b,request.get('matches'),request.get('tolerance',5),mode,anchor,progress,floating=floating)
                 else:
-                    draft=solve_pair(s,a,b,request.get('matches'),request.get('tolerance',5),mode,anchor)
+                    draft=solve_pair(s,a,b,request.get('matches'),request.get('tolerance',5),mode,anchor,floating=floating)
                 draft['id']=request_id
                 draft['request']={k:request.get(k) for k in ('a','b','mode','anchor')}
-                draft['request'].update(mode=mode,anchor=anchor)
+                draft['request'].update(mode=mode,anchor=None if floating else anchor)
+                if floating:draft['request']['floating']=True
                 progress('Applying registration to the existing setups…')
                 accept(s,request_id,merge=False)
             except BaseException:
@@ -626,8 +882,25 @@ def api(s,h,path,body=None):
         if not isinstance(controls,dict) or len(controls)>2000:raise ValueError('Invalid control list.')
         clean={}
         for name,xyz in controls.items():
-            if not name.strip() or len(name)>60 or not isinstance(xyz,list) or len(xyz)!=3 or any(v is None for v in xyz) or not np.isfinite(xyz).all():raise ValueError('Control needs a name and finite E, N, H.')
-            clean[name.strip()]=xyz
-        s.STATE.setdefault('survey_controls',{}).update(clean);s.save()
+            name=name.strip()
+            if (not name or len(name)>60 or not isinstance(xyz,list) or len(xyz)!=3 or
+                    any(isinstance(v,bool) or not isinstance(v,(int,float)) or not np.isfinite(v) for v in xyz)):
+                raise ValueError('Control needs a name and finite E, N, H.')
+            if name in clean:raise ValueError('Control IDs must be unique.')
+            clean[name]=xyz
+        previous=copy.deepcopy(s.STATE)
+        try:
+            s.STATE.setdefault('survey_controls',{}).update(clean)
+            if body.get('use_for_fit') is True:
+                s.STATE['survey_control_import_ids']=sorted(clean)
+                if body.get('project_wide') is not True:
+                    if 'source_item_id' in body:
+                        anchor=control_import_anchor(s,clean,body['source_item_id'],body.get('bundle_id'))
+                        if anchor is not None and anchor!=s.STATE.get('active_job_registration'):
+                            activate(s,anchor)
+                    assign_imported_controls(s,clean)
+            s.save()
+        except BaseException:
+            s.STATE.clear();s.STATE.update(previous);raise
     else:raise ValueError('Unknown scan registration operation.')
     h.send({'started':s.JOB['busy'],'saved':True});return True
