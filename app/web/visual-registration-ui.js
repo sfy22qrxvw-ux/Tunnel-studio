@@ -4,6 +4,8 @@
  const el=id=>document.getElementById('va-'+id),copy=x=>JSON.parse(JSON.stringify(x));
  const I=()=>[[1,0,0],[0,1,0],[0,0,1]],mv=(R,p)=>R.map(row=>row.reduce((n,v,i)=>n+v*p[i],0)),add=(a,b)=>a.map((v,i)=>v+b[i]),sub=(a,b)=>a.map((v,i)=>v-b[i]),mul=(a,k)=>a.map(v=>v*k),dot=(a,b)=>a.reduce((n,v,i)=>n+v*b[i],0),mm=(A,B)=>A.map(row=>[0,1,2].map(j=>row.reduce((n,v,k)=>n+v*B[k][j],0)));
  const frames={top:{right:[1,0,0],up:[0,1,0],forward:[0,0,1]},side:{right:[1,0,0],up:[0,0,1],forward:[0,-1,0]},front:{right:[0,1,0],up:[0,0,1],forward:[1,0,0]}};
+ let refinementDiagnostic=null;
+ function endRefinementDiagnostic(outcome){window.RegistrationDiagnostics?.finish(refinementDiagnostic,outcome);refinementDiagnostic=null;}
  let session=null,scans=[],R=I(),t=[0,0,0],pivot=[0,0,0],view='top',tool='move',undo=[],redo=[],loading=false,applying=false,refining=false,refinement=null,epoch=0,drag=null,frame=null,packed=null;
  const dialog=document.createElement('dialog');dialog.id='visual-registration-dialog';dialog.setAttribute('aria-labelledby','va-title');
  dialog.innerHTML=`<header><div><h2 id="va-title">Visual alignment</h2><p>Align the orange group to the blue reference. Original scan coordinates are preserved.</p></div><button id="va-close" aria-label="Close visual alignment">×</button></header>
@@ -64,8 +66,8 @@
  }
  const snapshot=()=>({R:copy(R),t:t.slice(),pivot:pivot.slice(),refinement:copy(refinement)});
  function qualityReport(){const q=refinement?.result;el('quality-result').textContent=q?'Sampled plane residuals\nRMS '+q.rms_mm.toFixed(3)+' mm · median '+q.median_mm.toFixed(3)+' mm · max '+q.max_mm.toFixed(3)+' mm\n'+q.inlier_count.toLocaleString()+' inliers · '+q.iterations+' iterations\n'+q.warnings.join('\n'):'No current cloud refinement. Manual edits require a new refinement.';}
- function restore(value){R=copy(value.R);t=value.t.slice();pivot=value.pivot.slice();refinement=copy(value.refinement||null);qualityReport();render();}
- function remember(value=snapshot()){refinement=null;qualityReport();undo.push(value);if(undo.length>100)undo.shift();redo=[];}
+ function restore(value){endRefinementDiagnostic('abandoned');R=copy(value.R);t=value.t.slice();pivot=value.pivot.slice();refinement=copy(value.refinement||null);qualityReport();render();}
+ function remember(value=snapshot()){endRefinementDiagnostic('abandoned');refinement=null;qualityReport();undo.push(value);if(undo.length>100)undo.shift();redo=[];}
  function translate(delta){t=add(t,delta);pivot=add(pivot,delta);}
  function rotate(angle,axis){
   const c=Math.cos(angle),sn=Math.sin(angle),[x,y,z]=axis,Q=[[c+x*x*(1-c),x*y*(1-c)-z*sn,x*z*(1-c)+y*sn],[y*x*(1-c)+z*sn,c+y*y*(1-c),y*z*(1-c)-x*sn],[z*x*(1-c)-y*sn,z*y*(1-c)+x*sn,c+z*z*(1-c)]];
@@ -100,7 +102,7 @@
   if(!d.panning){if(event.type==='pointercancel')restore(d.before);else if(d.changed)remember(d.before);}
   if(canvas.hasPointerCapture(event.pointerId))canvas.releasePointerCapture(event.pointerId);render();
  }
- function changedPair(){epoch++;session=null;refinement=null;qualityReport();undo=[];redo=[];packed=null;scene.clear();controls();status('Pair changed. Load the pair before aligning.');}
+ function changedPair(){endRefinementDiagnostic('abandoned');epoch++;session=null;refinement=null;qualityReport();undo=[];redo=[];packed=null;scene.clear();controls();status('Pair changed. Load the pair before aligning.');}
  async function loadPair(){
   if(loading||applying||refining||busy)return;if(dirty()&&!confirm('Discard the unapplied alignment and reload this pair?'))return;
   const generation=++epoch;loading=true;session=null;scene.clear();controls();status('Loading bounded scan previews…');
@@ -112,14 +114,14 @@
   }catch(error){if(generation===epoch)status(error.message,true);}finally{loading=false;controls();}
  }
  async function open(options={}){
-  if(busy||applying||refining)return;if(window.TunnelRibbon?.prepareTool?.('measure')===false)return;await window.TargetUI?.saveIfDirty();
+  if(busy||applying||refining)return;if(window.TunnelRibbon?.prepareTool?.('registration')===false)return;await window.TargetUI?.saveIfDirty();
   const network=await api('/api/scan-registration');scans=network.scans||[];
   const selected=window.JobUI.selectedItems().filter(id=>scans.some(s=>s.id===id));
   changedPair();for(const key of ['fixed','moving'])el(key).innerHTML='<option value="">Choose setup</option>'+scans.map(s=>`<option value="${esc(s.id)}">${esc(s.name)}</option>`).join('');
-  el('fixed').value=options.fixed||selected[0]||'';el('moving').value=options.moving||selected[1]||'';view='top';tool='move';el('tilt').checked=false;el('height-only').checked=true;
+  el('fixed').value=options.fixed||selected[0]||'';el('moving').value=options.moving||selected[1]||'';view='top';tool='move';el('tilt').checked=!!options.cloud;el('height-only').checked=true;
   el('cloud-panel').open=!!options.cloud;dialog.showModal();controls();if(el('fixed').value&&el('moving').value)await loadPair();else status('Choose the fixed reference and moving setup, then Load pair.');
  }
- function close(){if(applying||refining)return;if(dirty()&&!confirm('Discard this unapplied visual alignment?'))return;epoch++;dialog.close();session=null;drag=null;scene.clear();}
+ function close(){if(applying||refining)return;if(dirty()&&!confirm('Discard this unapplied visual alignment?'))return;endRefinementDiagnostic('abandoned');epoch++;dialog.close();session=null;drag=null;scene.clear();}
  el('close').onclick=close;el('cancel').onclick=close;dialog.addEventListener('cancel',e=>{e.preventDefault();close();});
  el('fixed').onchange=changedPair;el('moving').onchange=changedPair;el('swap').onclick=()=>{if(dirty()&&!confirm('Discard the unapplied alignment and swap the two groups?'))return;const a=el('fixed').value;el('fixed').value=el('moving').value;el('moving').value=a;changedPair();};
  el('load').onclick=loadPair;el('fit').onclick=fit;
@@ -133,23 +135,26 @@
  el('reset').onclick=()=>{if(!session)return;remember();R=I();t=[0,0,0];pivot=session.movingCentre.slice();render();};
  el('apply').onclick=async()=>{
   if(!session||loading||applying||refining||busy)return;applying=true;controls();status(refinement?'Saving reviewed cloud registration…':'Saving manual registration…');
-  try{await post('/api/scan-registration',{action:'visual_apply',token:session.token,rotation:R,translation:t,correct_tilt:el('tilt').checked,refinement_id:refinement?.id});session=null;dialog.close();await window.JobUI.sync();await poll();await window.JobUI.loadPreview();notice((refinement?'Cloud-to-cloud refinement':'Manual alignment')+' saved. The blue reference stayed fixed; Workspace Undo restores the previous positions.');}
+  try{await post('/api/scan-registration',{action:'visual_apply',token:session.token,rotation:R,translation:t,correct_tilt:el('tilt').checked,refinement_id:refinement?.id});endRefinementDiagnostic('applied');session=null;dialog.close();await window.JobUI.sync();await poll();await window.JobUI.loadPreview();notice((refinement?'Cloud-to-cloud refinement':'Manual alignment')+' saved. The blue reference stayed fixed; Workspace Undo restores the previous positions.');}
   catch(e){status(e.message,true);}finally{applying=false;controls();}
  };
  el('refine').onclick=async()=>{
   if(!session||loading||applying||refining||busy)return;
   el('cloud-panel').open=true;if(!el('tilt').checked){status('Enable Correct tilt: cloud-to-cloud refinement adjusts rotation in all axes.',true);return;}
   const tolerance=Number(el('tolerance').value);if(!Number.isFinite(tolerance)||tolerance<=0){status('Enter a positive plane RMS limit in millimetres.',true);return;}
+  endRefinementDiagnostic('abandoned');
+  const run=window.RegistrationDiagnostics?.begin('cloud_pair','cloud');
   const before=snapshot(),generation=epoch;refining=true;controls();status('Sampling retained points for cloud-to-cloud refinement…');
   try{
-   const started=await post('/api/scan-registration',{action:'cloud_refine',token:session.token,rotation:R,translation:t,correct_tilt:true,quality:el('quality').value,tolerance_mm:tolerance});
-   await window.JobUI.waitReady(p=>{if(p.busy)status(p.message||'Refining clouds…');},{skipSync:true});
-   if(generation!==epoch||!session)return;
+   const started=await post('/api/scan-registration',{action:'cloud_refine',token:session.token,rotation:R,translation:t,correct_tilt:true,quality:el('quality').value,tolerance_mm:tolerance,...(run?{diagnostics:true}:{})});
+   const job=await window.JobUI.waitReady(p=>{if(p.busy)status(p.message||'Refining clouds…');},{skipSync:true});
+   if(job?.cancelled||generation!==epoch||!session){window.RegistrationDiagnostics?.finish(run,'abandoned');return;}
+   const ready=performance.now();
    const out=await post('/api/scan-registration',{action:'cloud_status',token:session.token,refinement_id:started.refinement_id});
-   if(out.state!=='ready'){status(out.reason||out.result?.reason||'Refinement did not converge; the manual draft is unchanged.',true);el('quality-result').textContent=(out.result?.warnings||[]).join('\n');return;}
-   remember(before);pivot=add(mv(mm(out.rotation,[0,1,2].map(i=>R.map(row=>row[i]))),sub(pivot,t)),out.translation);R=out.rotation;t=out.translation;refinement=out;qualityReport();render();el('quality-result').scrollIntoView({block:'nearest'});
+   if(out.state!=='ready'){window.RegistrationDiagnostics?.finish(run,'failed');status(out.reason||out.result?.reason||'Refinement did not converge; the manual draft is unchanged.',true);el('quality-result').textContent=(out.result?.warnings||[]).join('\n');return;}
+   remember(before);pivot=add(mv(mm(out.rotation,[0,1,2].map(i=>R.map(row=>row[i]))),sub(pivot,t)),out.translation);R=out.rotation;t=out.translation;refinement=out;refinementDiagnostic=run;qualityReport();render();window.RegistrationDiagnostics?.report(run,out.timings,ready);el('quality-result').scrollIntoView({block:'nearest'});
    status('Refinement ready. Review plan, elevation and the residuals, then Join and lock. No positions saved yet.');
-  }catch(e){status(e.message,true);}finally{refining=false;controls();}
+  }catch(e){window.RegistrationDiagnostics?.finish(run,'failed');status(e.message,true);}finally{refining=false;controls();}
  };
  el('stop').onclick=async()=>{el('stop').disabled=true;status('Stopping refinement…');try{await post('/api/cancel-operation',{});}catch(e){status(e.message,true);el('stop').disabled=false;}};
  window.addEventListener('blur',()=>{if(drag){const d=drag;drag=null;if(!d.panning)restore(d.before);}});

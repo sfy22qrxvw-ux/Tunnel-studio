@@ -309,9 +309,13 @@ def bundle_control(s,body):
         return dict(bundle=group,summary=summary,links=links,adjustment=relative,control_report=report)
     if action=='bundle_control_solve':
         s._bundle_control_draft=None
+        started=time.perf_counter()
         solution=solve_control(s,anchor,body.get('tolerance_mm',5))
         s._bundle_control_draft=(id(s.STATE),group['id'],solution)
-        return {'solution':solution}
+        result={'solution':solution}
+        if body.get('diagnostics') is True:
+            result['timings']={'cloud_read_ms':0.,'solve_ms':(time.perf_counter()-started)*1000}
+        return result
     draft=getattr(s,'_bundle_control_draft',None)
     if (not draft or draft[:2]!=(id(s.STATE),group['id']) or
             body.get('solution_id')!=draft[2]['id'] or body.get('reviewed') is not True):
@@ -754,6 +758,9 @@ def api(s,h,path,body=None):
     if path!='/api/scan-registration':return False
     if body is None:
         value=public(s);value['last_vis_pose_result']=s.STATE.get('last_vis_pose_result')
+        timing=getattr(s,'_registration_pair_timings',None)
+        if timing and timing[:2]==(id(s.STATE),(value['last_registration_result'] or {}).get('id')):
+            value['last_pair_timings']=timing[2]
         h.send(value);return True
     if body.get('action')=='cloud_status':
         import cloud_registration_workflow
@@ -809,17 +816,22 @@ def api(s,h,path,body=None):
                 floating=request.get('floating') is True
                 progress=lambda message:job_api.progress(s,message)
                 s.STATE.pop('scan_link_draft',None)
+                timings={} if request.get('diagnostics') is True else None
                 if component(s,a)&component(s,b):
-                    from registration_network import solve as solve_network
-                    draft=solve_network(s,a,b,request.get('matches'),request.get('tolerance',5),mode,anchor,progress,floating=floating)
+                    from bundle_workflow import solve_link
+                    draft=solve_link(s,a,b,request.get('matches'),request.get('tolerance',5),mode,anchor,progress,
+                                     floating=floating,targets_only=request.get('targets_only') is True,timings=timings)
                 else:
+                    solve_started=time.perf_counter()
                     draft=solve_pair(s,a,b,request.get('matches'),request.get('tolerance',5),mode,anchor,floating=floating)
+                    if timings is not None:timings.update(cloud_read_ms=0.,solve_ms=(time.perf_counter()-solve_started)*1000)
                 draft['id']=request_id
                 draft['request']={k:request.get(k) for k in ('a','b','mode','anchor')}
                 draft['request'].update(mode=mode,anchor=None if floating else anchor)
                 if floating:draft['request']['floating']=True
                 progress('Applying registration to the existing setups…')
                 accept(s,request_id,merge=False)
+                if timings is not None:s._registration_pair_timings=(id(s.STATE),request_id,timings)
             except BaseException:
                 s.STATE.clear();s.STATE.update(previous);s.SELECTION=selection
                 raise

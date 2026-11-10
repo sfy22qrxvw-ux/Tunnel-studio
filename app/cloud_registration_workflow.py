@@ -6,6 +6,7 @@ linked-group membership and the fixed anchor are checked again on acceptance.
 This is local mathematical alignment, not survey control or global matching.
 """
 import copy
+import time
 from pathlib import Path
 import uuid
 
@@ -112,8 +113,10 @@ def start(s, body):
             origin = np.asarray(current['origin'], float)
             moving_cap, fixed_cap = icp.QUALITY[quality]
             progress('Reading retained points for cloud-to-cloud registration…')
+            read_started=time.perf_counter()
             reference, ref_info = icp._sample_chunks(_chunks(s, current['fixed_ids'], origin, cancel), fixed_cap, rng, progress, cancel, 'fixed group')
             moving, moving_info = icp._sample_chunks(_chunks(s, current['moving_ids'], origin, cancel), moving_cap, rng, progress, cancel, 'moving group')
+            solve_started=time.perf_counter()
             if min(len(moving), len(reference)) < icp.MIN_OVERLAP:
                 result = icp._base_result('insufficient overlap')
             else:
@@ -121,6 +124,9 @@ def start(s, body):
                 progress('Estimating reference normals once…')
                 normals, tree = icp._normals(reference, 12, progress, cancel)
                 result = icp._run_icp(moving, reference, normals, tree, iterations, tolerance, rng, progress, cancel)
+            if body.get('diagnostics') is True:
+                candidate['timings']={'cloud_read_ms':(solve_started-read_started)*1000,
+                                      'solve_ms':(time.perf_counter()-solve_started)*1000}
             icp._check(cancel)
             session(s, current['token'])
             if before != assets(s, ids):

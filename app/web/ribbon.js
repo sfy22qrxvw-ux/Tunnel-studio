@@ -16,7 +16,7 @@
  ribbonMenu.onkeydown=e=>{const buttons=[...ribbonMenu.querySelectorAll('button')],i=buttons.indexOf(document.activeElement);let n;if(e.key==='ArrowDown')n=(i+1)%buttons.length;if(e.key==='ArrowUp')n=(i-1+buttons.length)%buttons.length;if(e.key==='Home')n=0;if(e.key==='End')n=buttons.length-1;if(n!==undefined){e.preventDefault();buttons[n]?.focus();}if(e.key==='Escape'){e.preventDefault();e.stopPropagation();closeRibbonMenu(true);}if(e.key==='Tab')closeRibbonMenu();};
  document.addEventListener('pointerdown',e=>{if(!ribbonMenu.contains(e.target)&&!menuTrigger?.contains(e.target))closeRibbonMenu();});window.addEventListener('resize',()=>closeRibbonMenu());
  function measureModelProperties(){if(!window.CadUI?.selectedIds?.().length){notice('Select an editable model in Model space to inspect its surface area and, for a closed solid, its volume.',true);return;}window.CadUI.properties();}
- const toolTitles={targets:'Targets · select and manage',registration:'Registration & targets',surface:'Clean Tunnel',section:'Cross-section analysis',joints:'Ring joint suggestions',creep:'Ring creep',heatmap:'Design deviation heatmap',structures:'Mesh & reconstruction','analysis-tools':'Point-cloud QA & comparison',inspection:'Compare / Inspect','circle-clean':'Local-circle cleaning','shape-selection':'Find similar shapes','feature-selection':'Local feature selection',reports:'Survey reports',settings:'Settings',methods:'Methods & help'};
+ const toolTitles={targets:'Targets · select and manage',registration:'Target setup and measurements','registration-flow':'Registration',surface:'Clean Tunnel',section:'Cross-section analysis',joints:'Ring joint suggestions',creep:'Ring creep',heatmap:'Design deviation heatmap',structures:'Mesh & reconstruction','analysis-tools':'Point-cloud QA & comparison',inspection:'Compare / Inspect','circle-clean':'Local-circle cleaning','shape-selection':'Find similar shapes','feature-selection':'Local feature selection',reports:'Survey reports',settings:'Settings',methods:'Methods & help'};
  let openTool=null,toolOrigin=null,toolNext=null;
  function closeTool(){window.JobUI?.clearCleaningPreview?.('review');if(openTool?.id==='tab-feature-selection')window.FeatureSelectionUI?.onToolClose?.();if(openTool?.id==='tab-shape-selection')window.ShapeSelectionUI?.onToolClose?.();if(openTool?.id==='tab-circle-clean')window.CircleCleanUI?.onToolClose?.();const drawer=$('tool-drawer');if(openTool){openTool.classList.remove('active','drawer-active');}if(openTool&&toolOrigin){if(toolNext&&toolNext.parentNode===toolOrigin)toolOrigin.insertBefore(openTool,toolNext);else toolOrigin.append(openTool);}openTool=null;toolOrigin=null;toolNext=null;if(drawer){drawer.hidden=true;$('tool-drawer-body').innerHTML='';}document.body.classList.remove('registration-active','surface-active');window.JobUI?.draw();}
  // Claim the tool area only when opening a tool, never when a picker temporarily
@@ -27,7 +27,7 @@
   const others=[['measure',window.MeasureTools],['geometry',window.GeometryToolsUI]].filter(([name])=>name!==owner);
   if(others.some(([,ui])=>ui?.canDeactivate?.()===false)){explainToolBlock('Finish or cancel the active point pick or calculation before opening another tool.');return false;}
   for(const [,ui] of others)ui?.closeInactive?.();
-  if(owner!=='drawer')closeTool();return true;
+  if(owner!=='drawer'&&!(owner==='registration'&&openTool?.id==='tab-registration-flow'))closeTool();return true;
  }
 
  function surfaceDrawerMode(mode){const section=$('tab-surface');if(!section)return;section.dataset.drawerMode=mode;const controls=section.querySelector('.surface-controls'),review=section.querySelector('.surface-review'),reviewCard=$('surf-review-card'),output=$('surf-output-card'),evaluation=$('surf-evaluation'),learn=$('surf-learn');if(controls)controls.hidden=mode!=='setup';if(review)review.hidden=mode==='setup';if(reviewCard)reviewCard.hidden=mode!=='review';if(output)output.hidden=mode!=='output';if(evaluation)evaluation.hidden=true;if(learn)learn.hidden=true;section.querySelectorAll('[data-surface-mode]').forEach(b=>b.classList.toggle('chosen',b.dataset.surfaceMode===mode));for(const id of ['surf-run-quick','surf-use-selection-quick'])if($(id))$(id).hidden=mode!=='setup';if($('surf-continue-quick'))$('surf-continue-quick').hidden=mode!=='review';window.SurfaceUI?.updateReviewControls?.();window.SurfaceUI?.showReview?.();}
@@ -49,6 +49,7 @@
     const run=add('Preview cleaning',true,()=>$('surf-run')?.click());run.id='surf-run-quick';window.SurfaceUI?.busy(busy);
     surfaceDrawerMode($('tab-surface')?.dataset.drawerMode||'setup');
   }else if(id==='registration'){
+    add('Back to Registration',false,()=>window.RegistrationPanel.open('targets'));
     const nav=document.createElement('div');nav.className='tool-mode-tabs';for(const [key,label] of [['search','Targets'],['match','Match / QA'],['apply','Apply']]){const b=document.createElement('button');b.textContent=label;b.dataset.registrationMode=key;b.onclick=()=>registrationDrawerMode(key);nav.appendChild(b);}bar.appendChild(nav);
     add('Pick & fit target',true,()=>{registrationDrawerMode('search');$('reg-pick')?.click();});add('Survey targets',false,()=>{registrationDrawerMode('search');$('reg-detect')?.click();});add('Apply bundle control',false,()=>window.TargetUI?.openBundle());
     registrationDrawerMode($('tab-registration')?.dataset.drawerMode||'search');
@@ -92,6 +93,7 @@
  async function importChoice(kind){
   if(busy)return;
   const destination=$('import-destination').value;window.JobUI?.setImportDestination(destination);$('import-dialog').close();
+  if(kind==='rtc360'){window.RTC360VisUI?.open();return;}
   if(kind==='cad'){window.CadUI?.importDialog('',destination);return;}
   const pickerIds={scan:'job-scan-files',model:'job-mesh-files',axis:'axis-file',rings:'rings-file'};
   // Keep the browser selector inside the original user click; no native bridge is required.
@@ -184,7 +186,7 @@
   tabs.querySelectorAll('[role=tab]').forEach(b=>{const active=b.textContent===name;b.setAttribute('aria-selected',active);b.tabIndex=active?0:-1;});
   const panel=$('ribbon-panel');panel.setAttribute('aria-labelledby','ribbon-tab-'+name);panel.replaceChildren();for(const [label,...commands] of groups[name])panel.append(createGroup(label,commands));
   if(name==='View')viewControls(panel);$('ribbon-hint').textContent=({Clean:'Select scan → choose area → preview → review → apply. GuSAC is the primary tunnel method.',Alignment:'Create or import the horizontal alignment, then set heights at chainages. Use Model to build the tunnel.',Model:'Create 3D model from alignment → theoretical profiles → chainage sections → preview and build. Or draw and fit geometry.',Meshing:'Create triangle surfaces, improve existing meshes, or review gap repairs.',Analyse:'Choose inspected data and reference, then review differences and export results.',Measure:'Pick points or geometry, calculate distances and angles, then save labelled measurements.'})[name]||'Choose a tool. Hover or focus for guidance.';
-  sync();layoutRibbon();
+  sync();layoutRibbon();if(name==='Registration')window.RegistrationPanel.open();
  }
  function openMesh(operation='create',engine=null){
   viewTab('structures');const section=$('tab-structures'),create=section.querySelector('.mesh-primary-card'),refine=$('mesh-refine-name').closest('details'),transform=$('mesh-tx').closest('details'),reference=$('object-name').closest('details');section.dataset.meshTask=operation;
@@ -449,7 +451,7 @@
  $('project-file').accept='.tstudio,.zip,.json';
  $('project-import-file').onclick=async()=>{if(busy||projectTransition)return;if(!window.pywebview?.api?.choose_large_file){$('project-file').click();return;}try{const paths=await window.pywebview.api.choose_large_file('project',false);if(paths?.length)await openProjectPath(paths[0]);}catch(error){notice(error.message,true);}};
  $('project-file').onchange=async e=>{const f=e.target.files[0];if(!f)return;try{await openProjectFile(f);}finally{e.target.value='';}};
- function sync(){for(const [, ...commands] of groups[current])for(const c of commands){const b=$('ribbon-panel').querySelector(`[data-command="${c.id}"]`);if(!b)continue;const reason=availability(c);b.setAttribute('aria-disabled',!!reason);b.title=c.label+' — '+(reason||c.description);b.classList.toggle('selected-tool',!!c.target&&$(c.target)?.classList.contains('chosen'));}let label=$('ribbon-project-title');if(!label){label=document.createElement('span');label.id='ribbon-project-title';document.querySelector('header').append(label);}label.textContent=state?.project_title||'Untitled project';if(state?.project_id!==lastProjectId){lastProjectId=state?.project_id;for(const [id,value] of Object.entries(state?.ui||{}))if($(id))$(id).value=value;}
+ function sync(){window.RegistrationPanel?.refresh();for(const [, ...commands] of groups[current])for(const c of commands){const b=$('ribbon-panel').querySelector(`[data-command="${c.id}"]`);if(!b)continue;const reason=availability(c);b.setAttribute('aria-disabled',!!reason);b.title=c.label+' — '+(reason||c.description);b.classList.toggle('selected-tool',!!c.target&&$(c.target)?.classList.contains('chosen'));}let label=$('ribbon-project-title');if(!label){label=document.createElement('span');label.id='ribbon-project-title';document.querySelector('header').append(label);}label.textContent=state?.project_title||'Untitled project';if(state?.project_id!==lastProjectId){lastProjectId=state?.project_id;for(const [id,value] of Object.entries(state?.ui||{}))if($(id))$(id).value=value;}
  $('project-dialog-action').disabled=busy||projectTransition;$('project-import-file').disabled=busy;if(dialogMode==='export')window.ExportUI?.sync();}
 
  document.addEventListener('keydown',e=>{if(e.ctrlKey&&e.key.toLowerCase()==='s'){e.preventDefault();if(!busy&&!document.querySelector('dialog[open]'))e.shiftKey?projectDialog('save_as'):saveProject();}if(e.ctrlKey&&e.key==='F1'){e.preventDefault();collapse.click();}if(e.ctrlKey&&!['INPUT','TEXTAREA','SELECT'].includes(e.target.tagName)&&!document.querySelector('dialog[open]')){if(e.key.toLowerCase()==='z'){e.preventDefault();$(e.shiftKey?'redo-edit':'undo-edit').click();}if(e.key.toLowerCase()==='y'){e.preventDefault();$('redo-edit').click();}}});
@@ -461,5 +463,148 @@
   const quick=$('tool-drawer-body').querySelector('#tool-quick-actions');if(quick){quick.id=section.id+'-quick-actions';host.append(quick);}host.append(section);openTool=null;toolOrigin=null;toolNext=null;$('tool-drawer').hidden=true;
   return {id:section.id,element:host,title:toolTitles[id]||'Tool',restore:()=>{if(next?.parentNode===origin)origin.insertBefore(section,next);else origin.append(section);quick?.remove();host.remove();section.classList.remove('active','drawer-active');viewTab(id,{refresh:false});}};
  }
+ const regFlow=document.createElement('section');
+ regFlow.id='tab-registration-flow';regFlow.className='tab';
+ regFlow.innerHTML=`<div class="reg-card">
+  <div class="tool-mode-tabs" role="group" aria-label="Registration mode">
+   <button type="button" data-reg-flow-mode="targets">Targets</button>
+   <button type="button" data-reg-flow-mode="cloud">Cloud-to-cloud</button>
+   <button type="button" data-reg-flow-mode="control">Control</button>
+  </div>
+  <h3 id="reg-flow-selection"></h3><p id="reg-flow-help"></p>
+  <button id="reg-flow-action" type="button" class="primary"></button>
+  <details id="reg-flow-more"><summary>More registration tools</summary><div class="reg-actions" id="reg-flow-secondary"></div></details>
+  <details><summary>Local diagnostics</summary>
+   <label><input type="checkbox" id="reg-flow-log"> Record registration timings and navigation on this device</label>
+   <p>Cloud reading and sampling, solving, and time from job completion notice to report display are recorded separately from navigation. Export only when needed.</p>
+   <button id="reg-flow-export" type="button">Export diagnostics JSON</button>
+  </details>
+ </div>`;
+ $('tab-registration').before(regFlow);
+ const logKey='tunnelstudio.registrationDiagnostics';
+ let regMode='targets',registrationSecondaryKey='',diagnosticRun=0;
+ function diagnostics(){
+  try{
+   const value=JSON.parse(localStorage.getItem(logKey)||'null');
+   if(value&&Array.isArray(value.timing)&&Array.isArray(value.navigation))return value;
+  }catch(_error){}
+  return {enabled:false,timing:[],navigation:[]};
+ }
+ function writeDiagnostics(value){
+  try{localStorage.setItem(logKey,JSON.stringify(value));}
+  catch(_error){return false;}
+  return true;
+ }
+ function recordDiagnostic(stream,row){
+  const value=diagnostics();if(!value.enabled)return;
+  value[stream].push({...row,at:new Date().toISOString()});
+  value[stream]=value[stream].slice(-250);
+  writeDiagnostics(value);
+ }
+ const diagnosticEnabled=()=>diagnostics().enabled===true;
+ window.RegistrationDiagnostics={
+  enabled:diagnosticEnabled,
+  begin(operation,mode=regMode){
+   if(!diagnosticEnabled())return null;
+   return {id:Date.now().toString(36)+'-'+(++diagnosticRun),operation,mode};
+  },
+  finish(run,outcome){if(run)recordDiagnostic('navigation',{...run,event:outcome});},
+  report(run,phases,ready){
+   if(!run)return;
+   requestAnimationFrame(()=>requestAnimationFrame(()=>recordDiagnostic('timing',
+    {...run,cloud_read_ms:phases?.cloud_read_ms??null,solve_ms:phases?.solve_ms??null,
+     review_display_ms:Math.max(0,performance.now()-ready)})));
+  }
+ };
+ $('reg-flow-log').checked=diagnosticEnabled();
+ $('reg-flow-log').onchange=()=>{
+  const value=diagnostics();value.enabled=$('reg-flow-log').checked;
+  if(!writeDiagnostics(value)){notice('Local diagnostics storage is unavailable.',true);$('reg-flow-log').checked=false;}
+ };
+ $('reg-flow-export').onclick=()=>{
+  const {timing,navigation}=diagnostics();
+  const url=URL.createObjectURL(new Blob([JSON.stringify({schema_version:1,timing,navigation},null,2)],{type:'application/json'}));
+  const link=document.createElement('a');link.href=url;link.download='Tunnel_Studio_Registration_Diagnostics.json';link.click();setTimeout(()=>URL.revokeObjectURL(url),1000);
+ };
+ function registrationScope(){
+  const job=window.JobUI,inventory=job?.inventory?.()||{};
+  const bundle=inventory.bundles?.find(b=>b.id===window.WorkspaceUI?.selectedBundleId?.());
+  if(bundle)return {state:'bundle',bundle};
+  const selected=job?.selectedItems?.()||[];
+  const scans=selected.map(id=>inventory.items?.find(x=>x.id===id)).filter(x=>x?.kind==='scan'&&!x.registered_merge);
+  return {state:['none','single','pair'][scans.length]||'multiple',scans};
+ }
+ function focusRegistrationSelection(){
+  $('job-list').querySelector('[data-bundle], [data-item], button, input')?.focus();
+  notice('Select the required setup or bundle in Project Explorer.');
+ }
+ function openTargetTools(){
+  registrationDrawerMode('search');
+  return runRegistration('reg-pick');
+ }
+ function registrationAction(scope,id){
+  if(id==='fit-targets')return openTargetTools();
+  if(id==='match-targets')return window.ScanRegistrationUI.solveSelected();
+  if(id==='optimise-targets')return window.BundleAdjustmentUI.optimise(scope.bundle.id);
+  if(id==='refine-bundle')return window.BundleAdjustmentUI.refine(scope.bundle.id);
+  if(id==='fit-control')return window.TargetUI.openBundle(scope.bundle.id);
+  if(id==='import-control')return window.TargetUI.importControl();
+  if(['choose-cloud-pair','choose-cloud-neighbour','refine-pair'].includes(id))return window.VisualRegistrationUI.open({cloud:true,fixed:scope.scans?.[0]?.id,moving:scope.scans?.[1]?.id});
+  return focusRegistrationSelection();
+ }
+ function renderRegistrationPanel(){
+  if(!regFlow.classList.contains('drawer-active'))return;
+  const scope=registrationScope(),[action]=window.RibbonLayout.registrationActions(scope.state,regMode);
+  const labels={none:'No setups selected',single:scope.scans?.[0]?.name,pair:scope.scans?.map(s=>s.name).join(' ↔ '),
+   bundle:scope.bundle?scope.bundle.name+' · '+scope.bundle.scan_ids.length+' setups':'',multiple:'Multiple setups selected'};
+  const help={targets:'Use measured target centres. Bundle optimisation uses saved Fit pairs.',
+   cloud:'Set the rough pose, refine the overlapping surfaces and review before applying.',
+   control:'Import and map control coordinates, then fit and review the selected bundle.'};
+  $('reg-flow-selection').textContent=labels[scope.state];
+  $('reg-flow-help').textContent=help[regMode];
+  const button=$('reg-flow-action');
+  button.dataset.registrationAction=action.id;button.textContent=action.label;button.disabled=busy;
+  button.onclick=async()=>{try{if(!busy)await registrationAction(scope,action.id);}catch(e){notice(e.message,true);}};
+  for(const b of regFlow.querySelectorAll('[data-reg-flow-mode]')){
+   const active=b.dataset.regFlowMode===regMode;b.classList.toggle('chosen',active);b.setAttribute('aria-pressed',String(active));
+  }
+  const secondaryKey=regMode+':'+scope.state;
+  if(secondaryKey===registrationSecondaryKey)return;
+  registrationSecondaryKey=secondaryKey;
+  const secondary=$('reg-flow-secondary');secondary.replaceChildren();
+  const add=(label,run)=>{
+   const b=document.createElement('button');b.type='button';b.textContent=label;
+   b.onclick=()=>{if(!busy)Promise.resolve(run()).catch(e=>notice(e.message,true));};
+   secondary.append(b);
+  };
+  if(regMode==='targets'){
+   if(scope.state==='single'){
+    add('Find survey targets',()=>runRegistration('reg-detect'));
+    add('Manage targets',()=>window.TargetUI.openManager());
+    add('Setup view',()=>$('job-setup-view').click());
+   }
+   add('Saved links and results',()=>window.ScanRegistrationUI.reviewPending());
+  }else if(regMode==='cloud'){
+   add('Visual alignment only',()=>window.VisualRegistrationUI.open());
+   add('Advanced loop closure',()=>window.BundleAdjustmentUI.open());
+  }else if(scope.state!=='none'){
+   add('Import control CSV',()=>window.TargetUI.importControl());
+   if(scope.state==='single')add('Single-scan control tools',async()=>{
+    if(await window.JobUI.ensureRegistrationSource()===false)return;
+    viewTab('registration',{skipPreview:true});registrationDrawerMode('match');
+   });
+  }
+  $('reg-flow-more').hidden=!secondary.childElementCount;
+ }
+ function setRegistrationMode(mode){
+  if(!mode||mode===regMode)return;
+  recordDiagnostic('navigation',{event:'mode_switch',from:regMode,to:mode,selection:registrationScope().state});
+  regMode=mode;renderRegistrationPanel();
+ }
+ for(const button of regFlow.querySelectorAll('[data-reg-flow-mode]'))button.onclick=()=>setRegistrationMode(button.dataset.regFlowMode);
+ window.RegistrationPanel={
+  open(mode){if(busy)return;setRegistrationMode(mode);if(openTool!==regFlow)viewTab('registration-flow');renderRegistrationPanel();},
+  refresh:renderRegistrationPanel
+ };
  window.TunnelRibbon={openMesh,registerMeasureGroup,exportProject:async()=>{await projectDialog('export');$('export-format').value='tstudio';$('export-format').dispatchEvent(new Event('change'));},openProjectPath,openProjectFile,releaseTool,sync,view:viewTab,activate:switchRibbon,export:(source)=>projectDialog('export',source),storage:()=>projectDialog('storage'),openImport,openLocalImport,closeTool,prepareTool,explainToolBlock,surfaceDrawerMode,registrationDrawerMode};switchRibbon('Home');document.body.classList.add('ribbon-ready','single-workspace','job-active','panel-hidden');closeTool();
 })();

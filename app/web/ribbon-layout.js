@@ -1,6 +1,15 @@
 /* Copyright (c) 2026 Damian Gulczynski. Task-based survey ribbon. */
 'use strict';
-window.RibbonLayout={build(ctx){
+const registrationMatrix={
+ none:{targets:['choose-target-scope','Choose a setup or bundle'],cloud:['choose-cloud-pair','Choose reference and moving groups'],control:['import-control','Import control CSV']},
+ single:{targets:['fit-targets','Pick & fit targets'],cloud:['choose-cloud-neighbour','Select a second group'],control:['choose-control-bundle','Choose a bundle for control']},
+ pair:{targets:['match-targets','Match setup targets'],cloud:['refine-pair','Align and refine'],control:['choose-control-instead','Select a bundle instead']},
+ bundle:{targets:['optimise-targets','Optimise saved targets'],cloud:['refine-bundle','Refine bundle links'],control:['fit-control','Review control fit']},
+ multiple:{targets:['narrow-target-selection','Choose one setup, a pair or a bundle'],cloud:['narrow-cloud-selection','Choose two groups or a bundle'],control:['narrow-control-selection','Choose one linked bundle']}
+};
+window.RibbonLayout={registrationActions(selection,mode){
+ const [id,label]=registrationMatrix[selection][mode];return [{id,label}];
+},build(ctx){
  const {command:c,proxy:p,dropdown:d,viewTab:view,projectNew,closeProject,projectDialog,saveProject,openImport,runRegistration,registrationDrawerMode}=ctx;
  const small=x=>({...x,compact:true});
  const wide=x=>({...x,wide:true});
@@ -27,10 +36,7 @@ window.RibbonLayout={build(ctx){
    ['History',p('job-undo-edit','Undo','undo','Undo the last workspace edit.'),small(p('job-redo-edit','Redo','redo','Redo the last undone workspace edit.'))]
   ],
   Registration:[
-   ['Cloud alignment',c('reg-bundle','Bundle adjustment','link','Jointly adjust target and cloud observations across the connected bundle, including loop closures.',()=>window.BundleAdjustmentUI.open()),c('reg-visual','Visual alignment','link','Move and rotate a setup or linked group against a fixed reference in plan and elevation.',()=>window.VisualRegistrationUI.open()),c('reg-cloud','Cloud to cloud','link','Roughly align two groups, then refine overlapping surfaces and review the plane residuals.',()=>window.VisualRegistrationUI.open({cloud:true})),c('reg-vis','RTC360 positions','scan','Inspect saved RTC360 setup positions and apply eligible initial poses.',()=>window.RTC360VisUI.open())],
-   ['Scan registration',c('reg-solve','Register setups','link','Register setups using shared targets and review the errors.',()=>window.ScanRegistrationUI.solveSelected()),c('reg-apply','Registration result','check','Show the latest registration result and target residuals.',()=>window.ScanRegistrationUI.reviewPending()),small(p('job-setup-view','Setup view','eye','View the selected scan from its original scanner position when setup data is present.')),small(p('job-register','Use selected scan','target','Set the selected scan as the registration source.')),c('bundle-control','Apply control','target','Fit the selected bundle to survey coordinates and review its errors.',()=>window.TargetUI.openBundle())],
-   ['Targets',c('targets-manager','Manage targets','target','Inspect target IDs and coordinates; select or remove several targets together.',()=>window.TargetUI.openManager()),small(c('reg-detect','Survey targets','target','Find or fit survey targets. Choose Sphere or B&W in the Registration panel.',()=>runRegistration('reg-detect'))),small(c('reg-pick','Pick & fit target','point','Pick near a sphere or B&W target and refine its centre from the full-density scan.',()=>runRegistration('reg-pick'))),small(c('reg-control-import','Import control','import','Import target IDs with survey E/N/H coordinates.',()=>runRegistration('reg-control-import')))],
-   ['Quality',c('reg-residuals','Residuals','chart','Read the remaining coordinate differences after registration.',()=>{view('registration');registrationDrawerMode('match');})]
+   ['Workflow',c('registration-workflow','Open registration','target','Choose Targets, Cloud-to-cloud or Control for the current selection.',()=>window.RegistrationPanel.open())]
   ],
   Clean:[
    ['Extract tunnel',c('clean-local-circles','Local circles','section','Fit overlapping circles along a curved centreline. Preview inward/outward departures using all retained original points.',()=>window.CircleCleanUI.open(),'scan'),cleaning('job-surface','Clean Tunnel','clean','Primary paper-based GuSAC method. Preview lining and unwanted-point decisions, then review before applying.','gusac'),d('clean-methods','Other methods','settings','Choose a cleaning method for the geometry in your selection.',[

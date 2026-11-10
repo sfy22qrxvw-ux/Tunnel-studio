@@ -3,7 +3,7 @@
 (()=>{
  const dialog=document.createElement('dialog');dialog.id='bundle-adjustment-dialog';dialog.className='ts-analysis-dialog';
  const el=id=>document.getElementById('ba-'+id),fmt=v=>Number.isFinite(v)?v.toFixed(3):'—';
- let graph=null,loops=[],token=null,result=null,working=false,inspecting=false,generation=0,frame='plan',after=true,zoom=1,pan=[0,0],drag=null,onApplied=null,selectedBundle=null,opening=false,running=false,showTargetsRetry=false,lastUsedCloud=true;
+ let graph=null,loops=[],token=null,result=null,working=false,inspecting=false,generation=0,frame='plan',after=true,zoom=1,pan=[0,0],drag=null,onApplied=null,selectedBundle=null,opening=false,running=false,showTargetsRetry=false,lastUsedCloud=true,diagnostic=null;
  dialog.innerHTML=`<header><div><h2 id="ba-title">Bundle adjustment & loop closure</h2><p id="ba-subtitle">Adjust all connected setups together. Every setup can move within the group’s existing local frame.</p></div><button id="ba-close" aria-label="Close bundle adjustment">×</button></header>
  <div class="ts-analysis-settings" id="ba-settings"><label>Connected group<select id="ba-anchor"></select></label><label>Sampling<select id="ba-quality"><option value="fast">Fast</option><option value="balanced" selected>Balanced</option><option value="high">High</option></select></label><label>Residual review level (mm)<input id="ba-tolerance" type="number" min=".01" max="1000" value="5" step=".1"></label><label>Cloud search distance (mm)<input id="ba-capture" type="number" min="1" max="10000" value="250"></label></div>
  <p id="ba-group"></p><div id="ba-layout" class="ts-analysis-split"><section id="ba-loop-tools">
@@ -19,11 +19,12 @@
  <button id="ba-run" class="primary">Adjust bundle</button></section>
  <section class="ts-analysis-preview"><nav aria-label="Bundle preview controls"><button data-ba-view="plan">Plan</button><button data-ba-view="side">Side elevation</button><button data-ba-view="front">Front elevation</button><button id="ba-before">Before</button><button id="ba-after" class="chosen">After</button><button id="ba-fit">Fit</button></nav><canvas id="ba-canvas" aria-label="Sampled bundle adjustment preview" tabindex="0"></canvas><p>Bounded display samples · Drag to pan, wheel to zoom</p></section></div>
  <section id="ba-review" hidden><div id="ba-summary"></div><div class="ts-analysis-table"><table><thead><tr><th>Link</th><th>Type</th><th>Target RMS (mm)</th><th>Plane RMS before → after (mm)</th><th>Distinct overlap</th></tr></thead><tbody id="ba-links"></tbody></table></div><details><summary>Setup movements</summary><div id="ba-movements"></div></details><div id="ba-warnings"></div></section>
- <footer><p id="ba-status" role="status" aria-live="polite">Select a connected bundle.</p><button id="ba-retry" hidden>Run optimisation again</button><button id="ba-full-cloud" hidden>Run full cloud refinement</button><button id="ba-target-retry" hidden>Retry with targets first</button><button id="ba-stop" hidden>Stop adjustment</button><button id="ba-apply" class="primary" disabled>Apply reviewed adjustment</button></footer>`;
+ <footer><p id="ba-status" role="status" aria-live="polite">Select a connected bundle.</p><button id="ba-retry" hidden>Run optimisation again</button><button id="ba-target-retry" hidden>Retry with targets first</button><button id="ba-stop" hidden>Stop adjustment</button><button id="ba-apply" class="primary" disabled>Apply reviewed adjustment</button></footer>`;
  document.body.append(dialog);
  const message=(text,error=false)=>{el('status').textContent=text;el('status').classList.toggle('error',error);};
- function controls(){const pending=working||inspecting;for(const x of dialog.querySelectorAll('input,select,#ba-run,#ba-add,[data-ba-suggest],[data-ba-remove]'))x.disabled=pending||(x.hasAttribute('data-ba-suggest')&&x.hasAttribute('data-ba-queued'));el('close').disabled=working;el('stop').hidden=!running;el('full-cloud').hidden=!selectedBundle||pending||lastUsedCloud;el('target-retry').hidden=pending||!showTargetsRetry||!!result;el('retry').hidden=!selectedBundle||pending||!!result;el('apply').disabled=pending||!result;el('run').disabled=pending||!graph||graph.scans.length<2;}
- function invalidate(){generation++;token=null;result=null;el('review').hidden=true;controls();draw();}
+ function controls(){const pending=working||inspecting;for(const x of dialog.querySelectorAll('input,select,#ba-run,#ba-add,[data-ba-suggest],[data-ba-remove]'))x.disabled=pending||(x.hasAttribute('data-ba-suggest')&&x.hasAttribute('data-ba-queued'));el('close').disabled=working;el('stop').hidden=!running;el('target-retry').hidden=pending||!showTargetsRetry||!!result;el('retry').hidden=!selectedBundle||pending||!!result;el('apply').disabled=pending||!result;el('run').disabled=pending||!graph||graph.scans.length<2;}
+ function endDiagnostic(outcome){window.RegistrationDiagnostics?.finish(diagnostic,outcome);diagnostic=null;}
+ function invalidate(){endDiagnostic('abandoned');generation++;token=null;result=null;el('review').hidden=true;controls();draw();}
  const name=id=>graph?.scans.find(s=>s.id===id)?.name||id;
  const samePair=(pair,a,b)=>pair.a===a&&pair.b===b||pair.a===b&&pair.b===a;
  function renderLoops(){
@@ -87,28 +88,29 @@
   const targetsOnly=!!selectedBundle&&!useCloud;
   showTargetsRetry=false;lastUsedCloud=useCloud;invalidate();working=running=true;controls();message(targetsOnly?'Adjusting from saved Fit targets…':!useCloud?'Adjusting from measured targets and any links that still need cloud refinement…':selectedBundle||!loops.length?'Reading retained points and optimising the saved links…':'Validating queued loop pairs and optimising the bundle…');
   const stamp=generation;
+  diagnostic=window.RegistrationDiagnostics?.begin('bundle',useCloud?'cloud':'targets');
   try{
    const options=selectedBundle?{bundle_id:selectedBundle.id,loops:[]}:{anchor:el('anchor').value,quality:el('quality').value,tolerance_mm:+el('tolerance').value,capture_mm:+el('capture').value,loops};
-   const started=await post('/api/scan-registration',{action:'bundle_preview',floating:true,...options,...(targetsOnly?{targets_only:true}:!useCloud?{use_cloud:false}:{})});
+   const started=await post('/api/scan-registration',{action:'bundle_preview',floating:true,...options,...(targetsOnly?{targets_only:true}:!useCloud?{use_cloud:false}:{}),...(diagnostic?{diagnostics:true}:{})});
    token=started.token;
    const job=await window.JobUI.waitReady(p=>{if(p.busy)message(p.message||'Optimising bundle…');},{skipSync:true});
    if(stamp!==generation)return;
-   if(job?.cancelled){message('Optimisation cancelled. You can run it again.');return;}
+   if(job?.cancelled){endDiagnostic('abandoned');message('Optimisation cancelled. You can run it again.');return;}
+   const ready=performance.now();
    const value=await post('/api/scan-registration',{action:'bundle_status',token});
    if(value.state!=='ready')throw Error(value.reason||'Bundle optimisation did not produce a reviewable result.');
-   review(value);
+   review(value);window.RegistrationDiagnostics?.report(diagnostic,value.timings,ready);
    message(value.solution.fallback_used?'The full adjustment did not converge. Review the pairwise fallback before applying.':'Review the RMS and setup movements. Apply saves all adjusted poses together.',!!value.solution.fallback_used);
   }catch(e){
-   result=null;showTargetsRetry=!selectedBundle&&useCloud&&e.message.includes('Pairwise fallback');
+   endDiagnostic('failed');result=null;showTargetsRetry=!selectedBundle&&useCloud&&e.message.includes('Pairwise fallback');
    message(e.message+(showTargetsRetry?' Try targets first to skip cloud refinement on links with a good measured target fit.':''),true);
   }finally{working=running=false;controls();}
  }
  el('run').onclick=()=>runAdjustment();
  el('retry').onclick=()=>runAdjustment(lastUsedCloud);
- el('full-cloud').onclick=()=>runAdjustment(true);
  el('target-retry').onclick=()=>runAdjustment(false);
  el('stop').onclick=async()=>{el('stop').disabled=true;try{await post('/api/cancel-operation',{});message('Stopping adjustment…');}catch(e){message(e.message,true);}finally{el('stop').disabled=false;}};
- el('apply').onclick=async()=>{if(working||!result)return;working=true;controls();try{const applied=await post('/api/scan-registration',{action:'bundle_apply',token});result=null;dialog.close();await window.JobUI.sync();await poll();await window.JobUI.loadPreview();window.WorkspaceUI?.refreshBundleQA?.();notice(applied.fallback_used?'Full bundle adjustment did not converge. A pairwise adjustment was applied instead. Review residuals before measurement use.':'Floating bundle adjustment saved. Workspace Undo restores the previous poses and links.');if(onApplied)await onApplied();}catch(e){result=null;message(e.message,true);}finally{working=false;controls();}};
+ el('apply').onclick=async()=>{if(working||!result)return;working=true;controls();try{const applied=await post('/api/scan-registration',{action:'bundle_apply',token,review_id:result.review_id});endDiagnostic('applied');result=null;dialog.close();await window.JobUI.sync();await poll();await window.JobUI.loadPreview();window.WorkspaceUI?.refreshBundleQA?.();notice(applied.fallback_used?'Full bundle adjustment did not converge. A pairwise adjustment was applied instead. Review residuals before measurement use.':'Floating bundle adjustment saved. Workspace Undo restores the previous poses and links.');if(onApplied)await onApplied();}catch(e){endDiagnostic('failed');result=null;message(e.message,true);}finally{working=false;controls();}};
  el('anchor').onchange=inspect;for(const id of ['quality','tolerance','capture'])el(id).onchange=()=>{invalidate();message('Settings changed. Adjust again before applying.');};el('add').onclick=()=>add(el('a').value,el('b').value);
  function close(){if(working){message('Stop the adjustment before closing.');return;}invalidate();inspecting=false;controls();dialog.close();}el('close').onclick=close;dialog.addEventListener('cancel',e=>{e.preventDefault();close();});
  const canvas=el('canvas');function draw(){const ctx=canvas.getContext('2d'),box=canvas.getBoundingClientRect();if(!box.width||!box.height)return;const ratio=window.devicePixelRatio||1;canvas.width=Math.round(box.width*ratio);canvas.height=Math.round(box.height*ratio);ctx.scale(ratio,ratio);ctx.fillStyle='#0b1b24';ctx.fillRect(0,0,box.width,box.height);const clouds=result?.preview||[];if(!clouds.length){ctx.fillStyle='#b5cbd6';ctx.font='14px system-ui';ctx.fillText('Run adjustment to review the bundle',20,35);return;}const axes=frame==='plan'?[0,1]:frame==='side'?[0,2]:[1,2];let lo=[Infinity,Infinity],hi=[-Infinity,-Infinity];for(const c of clouds)for(const p of c[after?'after':'before'])for(let a=0;a<2;a++){lo[a]=Math.min(lo[a],p[axes[a]]);hi[a]=Math.max(hi[a],p[axes[a]]);}const scale=Math.min((box.width-30)/Math.max(.01,hi[0]-lo[0]),(box.height-30)/Math.max(.01,hi[1]-lo[1]))*zoom,centre=lo.map((x,i)=>(x+hi[i])/2);for(const c of clouds){ctx.fillStyle=c.fixed?'#39b6ff':'#ffad5a';ctx.globalAlpha=.65;for(const p of c[after?'after':'before'])ctx.fillRect(box.width/2+(p[axes[0]]-centre[0])*scale+pan[0],box.height/2-(p[axes[1]]-centre[1])*scale+pan[1],1.5,1.5);}ctx.globalAlpha=1;}
@@ -132,11 +134,11 @@
   el('anchor').innerHTML=groups.map(g=>`<option value="${esc(g.id)}">${esc(g.name)} group · ${g.members.length} setups</option>`).join('');
   el('anchor').value=(groups.find(g=>picked.some(id=>g.members.includes(id)))||groups[0]).id;
  }
- async function openAdjustment(bundleId,returnToControl=null,immediate=false){
+ async function openAdjustment(bundleId,returnToControl=null,immediate=false,useCloud=false){
   if(busy||working||inspecting||opening||dialog.open)return;
   opening=true;
   try{
-   if(window.TunnelRibbon?.prepareTool?.('measure')===false)return;
+   if(window.TunnelRibbon?.prepareTool?.('registration')===false)return;
    await window.TargetUI?.saveIfDirty();
    selectedBundle=null;showTargetsRetry=false;
    if(immediate){
@@ -147,13 +149,13 @@
    el('settings').hidden=el('loop-tools').hidden=immediate;
    el('layout').classList.toggle('ts-analysis-split',!immediate);
    el('title').textContent=immediate?'Optimise '+selectedBundle.name:'Bundle adjustment & loop closure';
-   el('subtitle').textContent=immediate?'Adjust the bundle using saved Fit targets only. Cloud refinement is available separately.':'Adjust all connected setups together. Every setup can move within the group’s existing local frame.';
+   el('subtitle').textContent=immediate?(useCloud?'Refine the surfaces on the saved links and review the RMS.':'Adjust the bundle using saved Fit targets only. For surface refinement, use the Cloud-to-cloud mode.'):'Adjust all connected setups together. Every setup can move within the group’s existing local frame.';
    if(immediate)el('group').textContent=selectedBundle.scan_ids.length+' linked setups';
    dialog.showModal();
-   if(immediate)await runAdjustment(false);
+   if(immediate)await runAdjustment(useCloud);
    else await inspect();
   }catch(e){notice(e.message,true);}
   finally{opening=false;}
  }
- window.BundleAdjustmentUI={open:openAdjustment,optimise:(id,onApply)=>openAdjustment(id,onApply,true)};
+ window.BundleAdjustmentUI={open:openAdjustment,optimise:(id,onApply)=>openAdjustment(id,onApply,true),refine:id=>openAdjustment(id,null,true,true)};
 })();

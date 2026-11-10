@@ -196,6 +196,42 @@ class FallbackTransactionTests(unittest.TestCase):
         s.STATE['scan_link_draft'] = draft
         return s, draft
 
+    def test_apply_requires_rms_review_for_exact_current_draft(self):
+        with tempfile.TemporaryDirectory() as folder:
+            s,draft=self.prepare(folder)
+            s.JOB_CANCEL_FILE=Path(folder)/'cancel'
+            s._bundle_registration=dict(token='run',context=id(s.STATE),state='ready',
+                                        draft=draft,preview=[])
+            with self.assertRaisesRegex(ValueError,'Review the RMS report'):
+                workflow.apply(s,dict(token='run'))
+            old=workflow.status(s,dict(token='run'))['review_id']
+            self.assertEqual(workflow.status(s,dict(token='run'))['review_id'],old)
+            rebuilt=copy.deepcopy(draft)
+            rebuilt['id']='rebuilt'
+            rebuilt['solution']['tolerance_mm']=7
+            s._bundle_registration['draft']=rebuilt
+            with self.assertRaisesRegex(ValueError,'Review the RMS report'):
+                workflow.apply(s,dict(token='run',review_id=old))
+            latest=workflow.status(s,dict(token='run'))['review_id']
+            self.assertNotEqual(latest,old)
+            # A changed result is a new review even when the draft ID is reused.
+            rebuilt['solution']['datum']='floating'
+            with self.assertRaisesRegex(ValueError,'Review the RMS report'):
+                workflow.apply(s,dict(token='run',review_id=latest))
+            latest=workflow.status(s,dict(token='run'))['review_id']
+            link=s.STATE['scan_links'][0]
+            saved=link['matches'][0]['role']
+            link['matches'][0]['role']='check'
+            with self.assertRaisesRegex(ValueError,'changed after review'):
+                workflow.apply(s,dict(token='run',review_id=latest))
+            link['matches'][0]['role']=saved
+            with self.assertRaisesRegex(ValueError,'Review the RMS report'):
+                workflow.apply(s,dict(token='run',review_id=latest))
+            latest=workflow.status(s,dict(token='run'))['review_id']
+            with self.assertRaisesRegex(ValueError,'Review the RMS report'):
+                workflow.apply(s,dict(token='run',review_id=old))
+            self.assertTrue(workflow.apply(s,dict(token='run',review_id=latest))['applied'])
+
     def test_warning_is_saved_inside_accept_transaction(self):
         with tempfile.TemporaryDirectory() as folder:
             s, draft = self.prepare(folder)

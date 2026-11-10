@@ -8,6 +8,9 @@ physical correspondence in repetitive tunnel geometry.
 """
 from collections import OrderedDict
 import copy
+import hashlib
+import json
+import time
 import uuid
 from zlib import crc32
 from pathlib import Path
@@ -314,7 +317,7 @@ def _sample_scan(cache, asset_stamp, item, cap, origin, progress, cancel):
     return sample@R.T+(t-origin),info
 
 
-def build(s, body, progress=lambda message: None, cancel=lambda: False, proposed=None, references=None):
+def build(s, body, progress=lambda message: None, cancel=lambda: False, proposed=None, references=None, timings=None):
     options = _options(body)
     floating = body.get('floating') is True and references is None
     rw.persist(s)
@@ -396,6 +399,7 @@ def build(s, body, progress=lambda message: None, cancel=lambda: False, proposed
     asset_stamps={}
     for row in before_assets:asset_stamps.setdefault(row[0],[]).append(row)
     nodes, sampling = {}, {}
+    cloud_read_ms=0.
     for at, ident in enumerate(sorted(ids)):
         bundle.check(cancel)
         item = rw.scan(s, ident)
@@ -403,11 +407,14 @@ def build(s, body, progress=lambda message: None, cancel=lambda: False, proposed
         points = np.empty((0, 3))
         normals, tree = None, None
         if ident in cloud_ids:
+            sample_started=time.perf_counter()
             points, info = _sample_scan(cache, asset_stamps[ident], item, cap, origin, progress, cancel)
+            cloud_read_ms+=(time.perf_counter()-sample_started)*1000
             sampling[ident] = info
             if len(points) >= bundle.MIN_OVERLAP:
                 normals, tree = icp._normals(points, 12, progress, cancel)
         nodes[ident] = dict(points=points, normals=normals, tree=tree, name=item['name'])
+    if timings is not None:timings['cloud_read_ms']=cloud_read_ms
     centres = {}
     for ident in ids:
         points = [p for group in landmarks for i, p in group if i == ident]
@@ -432,6 +439,7 @@ def build(s, body, progress=lambda message: None, cancel=lambda: False, proposed
             raise ValueError('Loop validation failed: '+fit.get('reason', 'weak geometry')+'. Review the starting alignment.')
         edge['initial_guide'] = np.asarray(fit['rotation']), np.asarray(fit['translation'])
         edge['loop_validation'] = {k: fit[k] for k in ('method', 'rms_mm', 'median_mm', 'max_mm', 'inlier_count', 'converged', 'warnings')}
+    solve_started=time.perf_counter()
     try:
         out = bundle.optimise(nodes, edges, landmarks, layout, initial=initial,
                               tolerance_mm=options['tolerance_mm'], capture_mm=options['capture_mm'],
@@ -442,6 +450,7 @@ def build(s, body, progress=lambda message: None, cancel=lambda: False, proposed
         progress('Full bundle did not converge. Checking an independent pairwise fallback…')
         out = _pairwise_fallback(nodes, edges, landmarks, observations, layout,
                                  options, failure, cloud_rows, progress, cancel)
+    if timings is not None:timings['solve_ms']=(time.perf_counter()-solve_started)*1000
     bundle.check(cancel)
     if context != id(s.STATE) or full_stamp != visual.fingerprint(s, ids) or before_assets != cloud.assets(s, sorted(cloud_ids)):
         raise ValueError('Scans, links or source files changed while adjusting. Run the bundle again.')
@@ -575,8 +584,9 @@ def start(s, body):
     request = copy.deepcopy(body)
     def run():
         try:
-            draft, preview = build(s, request, lambda m: job_api.progress(s, m), lambda: _cancel(s))
-            current.update(state='ready', draft=draft, preview=preview)
+            timings={} if request.get('diagnostics') is True else None
+            draft, preview = build(s, request, lambda m: job_api.progress(s, m), lambda: _cancel(s),timings=timings)
+            current.update(state='ready', draft=draft, preview=preview, timings=timings)
             job_api.progress(s, 'Bundle ready for review. No scan positions have been saved.')
         except (bundle.Cancelled, icp._Cancelled):
             current.update(state='cancelled', reason='Cancelled; no positions were applied.')
@@ -590,28 +600,53 @@ def start(s, body):
 def _current(s, body):
     current = getattr(s, '_bundle_registration', None)
     if not current or current['token'] != body.get('token') or current['context'] != id(s.STATE):
-        raise ValueError('This bundle review is no longer current. Run it again.')
+        raise ValueError('This bundle review is no longer current. Run the adjustment and review the new RMS report.')
     return current
+
+
+def _review_revision(draft):
+    return hashlib.sha256(json.dumps(draft,sort_keys=True,allow_nan=False).encode()).hexdigest()
+
+
+def _verified_review_draft(s,current):
+    draft=current['draft']
+    try:
+        verify_draft(s,draft)
+    except ValueError:
+        current.pop('review',None)
+        raise
+    return draft
 
 
 def status(s, body):
     current = _current(s, body)
     out = {k: current[k] for k in ('token', 'state', 'reason') if k in current}
     if current['state'] == 'ready':
-        verify_draft(s, current['draft'])
-        out.update(solution=current['draft']['solution'], preview=current['preview'])
+        draft=_verified_review_draft(s,current)
+        revision=_review_revision(draft)
+        review=current.get('review')
+        if not review or review[1]!=revision:
+            review=current['review']=(uuid.uuid4().hex,revision)
+        out.update(solution=draft['solution'],preview=current['preview'],review_id=review[0])
+        if current.get('timings') is not None:out['timings']=current['timings']
     return out
 
 
 def apply(s, body):
     current = _current(s, body)
     if current['state'] != 'ready':raise ValueError('Run and review the bundle before applying it.')
-    verify_draft(s, current['draft'])
+    review=current.get('review')
+    if review and _review_revision(current['draft'])!=review[1]:
+        current.pop('review',None)
+        review=None
+    if not review or body.get('review_id')!=review[0]:
+        raise ValueError('Review the RMS report for the current bundle draft before applying.')
+    draft=_verified_review_draft(s,current)
     old = copy.deepcopy(s.STATE)
     try:
-        s.STATE['scan_link_draft'] = copy.deepcopy(current['draft'])
+        s.STATE['scan_link_draft'] = copy.deepcopy(draft)
         job_api.CANCEL.clear();s.JOB_CANCEL_FILE.unlink(missing_ok=True)
-        rw.accept(s, current['draft']['id'], merge=False)
+        rw.accept(s, draft['id'], merge=False)
     except BaseException:
         s.STATE.clear();s.STATE.update(old);raise
     current['state'] = 'applied'
@@ -620,7 +655,7 @@ def apply(s, body):
 
 
 def solve_link(s, a, b, matches, tolerance=5, mode='rigid', anchor=None,
-               progress=lambda message: None, references=None, *, floating=False):
+               progress=lambda message: None, references=None, *, floating=False, targets_only=False, timings=None):
     """Compatibility entry: adding a target loop uses the same bundle engine."""
     rw.persist(s)
     ids = rw.component(s, a) | rw.component(s, b)
@@ -633,8 +668,8 @@ def solve_link(s, a, b, matches, tolerance=5, mode='rigid', anchor=None,
                     matches=resolved, kind='target_match', mode=mode,
                     loop_closure=not direct and b in rw.component(s, a))
     if mode == 'vertical':proposed['vertical_axis'] = direct[0].get('vertical_axis', [0., 0., 1.]) if direct else [0., 0., 1.]
-    draft, _ = build(s, dict(anchor=anchor, mode=mode, tolerance_mm=tolerance, floating=floating), progress,
-                     lambda: _cancel(s), proposed=proposed, references=references)
+    draft, _ = build(s, dict(anchor=anchor,mode=mode,tolerance_mm=tolerance,floating=floating,targets_only=targets_only), progress,
+                     lambda: _cancel(s),proposed=proposed,references=references,timings=timings)
     draft['replaces_link'] = direct[0]['id'] if direct else None
     s.STATE['scan_link_draft'] = draft
     return draft

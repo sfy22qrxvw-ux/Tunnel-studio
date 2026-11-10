@@ -283,14 +283,15 @@
  bundleDialog.id='bundle-control-dialog';bundleDialog.className='ts-analysis-dialog';
  bundleDialog.innerHTML=`<header><div><h2>Bundle registration</h2><p id="bundle-control-name"></p></div><button id="bundle-control-close" aria-label="Close bundle registration">×</button></header>
  <div id="bundle-control-metrics" class="bundle-qa-metrics"></div>
- <div class="ts-analysis-settings"><button id="bundle-control-optimize">Optimise whole bundle…</button><button id="bundle-control-import">Import control CSV…</button><label>Review limit (mm)<input id="bundle-control-limit" type="number" min=".01" step=".1" value="5"></label><button id="bundle-control-solve">Calculate control fit</button></div>
+ <div class="ts-analysis-settings"><button id="bundle-control-import">Import control CSV…</button><label>Review limit (mm)<input id="bundle-control-limit" type="number" min=".01" step=".1" value="5"></label><button id="bundle-control-solve">Calculate control fit</button></div>
  <p>Optimise the linked setups first if needed. Applying control then moves the entire bundle together into E, N, H.</p>
  <div id="bundle-control-review"></div>
  <details id="bundle-control-matches"><summary>Matched control IDs</summary><div id="bundle-control-match-list"></div></details>
  <details id="bundle-control-links"><summary>Link and cloud-to-cloud errors</summary><div id="bundle-control-link-list"></div></details>
  <footer><p id="bundle-control-message" role="status"></p><button id="bundle-control-apply" class="primary" disabled>Apply control</button></footer>`;
  document.body.append(bundleDialog);
- let bundleId=null,bundleData=null,bundleDraft=null,bundleWorking=false,bundleRead=0;
+ let bundleId=null,bundleData=null,bundleDraft=null,bundleWorking=false,bundleRead=0,controlDiagnostic=null;
+ function endControlDiagnostic(outcome){window.RegistrationDiagnostics?.finish(controlDiagnostic,outcome);controlDiagnostic=null;}
  const bc=id=>$('bundle-control-'+id);
  const rms=v=>Number.isFinite(v)?fmt(v,2)+' mm':'—';
  const rmsChange=(a,b)=>Number.isFinite(a)?rms(a)+' → '+rms(b):rms(b);
@@ -319,8 +320,9 @@
  function renderBundle(){
   const value=bundleData,draft=bundleDraft;
   bc('solve').disabled=bundleWorking||!value||value.summary.fit<3;
-  bc('apply').disabled=bundleWorking||!draft;
-  for(const id of ['import','optimize','limit','close'])bc(id).disabled=bundleWorking;
+  bc('apply').disabled=bundleWorking||!draft;bc('apply').hidden=!draft;
+  bc('solve').classList.toggle('primary',!draft);
+  for(const id of ['import','limit','close'])bc(id).disabled=bundleWorking;
   if(!value)return;
   const {bundle,summary,links,adjustment,control_report}=value;
   bc('name').textContent=`${bundle.name} · ${bundle.scan_ids.length} setups · ${links.length} links`;
@@ -338,7 +340,7 @@
  }
  async function refreshBundle(){
   const read=++bundleRead,id=bundleId;
-  bundleData=bundleDraft=null;
+  endControlDiagnostic('abandoned');bundleData=bundleDraft=null;
   for(const key of ['metrics','review','match-list','link-list'])bc(key).replaceChildren();
   bc('matches').hidden=bc('links').hidden=true;bc('name').textContent='Reading selected bundle…';
   bc('message').textContent='';renderBundle();
@@ -360,26 +362,23 @@
   await refreshBundle();
  }
  bc('close').onclick=()=>bundleDialog.close();
+ bundleDialog.addEventListener('close',()=>endControlDiagnostic('abandoned'));
  bundleDialog.addEventListener('cancel',e=>{if(bundleWorking)e.preventDefault();});
  bc('import').onclick=()=>importControl();
- bc('optimize').onclick=async()=>{
-  if(!bundleData)return;
-  const id=bundleId;
-  bundleDialog.close();
-  await window.BundleAdjustmentUI.optimise(id,()=>openBundle(id));
- };
- bc('limit').oninput=()=>{bundleDraft=null;renderBundle();};
+ bc('limit').oninput=()=>{endControlDiagnostic('abandoned');bundleDraft=null;renderBundle();};
  bc('solve').onclick=async()=>{
   if(bundleWorking||!bundleData)return;
+  endControlDiagnostic('abandoned');controlDiagnostic=window.RegistrationDiagnostics?.begin('control_fit','control');
   bundleWorking=true;bundleDraft=null;renderBundle();
   try{
    const tolerance_mm=Number(bc('limit').value);
    if(!Number.isFinite(tolerance_mm)||tolerance_mm<=0)throw Error('Enter a positive review limit in millimetres.');
    await saveIfDirty();
-   const result=await post('/api/scan-registration',{action:'bundle_control_solve',bundle_id:bundleId,tolerance_mm});
-   bundleDraft=result.solution;
+   const result=await post('/api/scan-registration',{action:'bundle_control_solve',bundle_id:bundleId,tolerance_mm,...(controlDiagnostic?{diagnostics:true}:{})});
+   const ready=performance.now();bundleDraft=result.solution;
+   window.RegistrationDiagnostics?.report(controlDiagnostic,result.timings,ready);
    bc('message').textContent='Review the residuals, then click Apply control to position the bundle.';
-  }catch(e){bc('message').textContent=e.message;}
+  }catch(e){endControlDiagnostic('failed');bc('message').textContent=e.message;}
   finally{bundleWorking=false;renderBundle();}
  };
  bc('apply').onclick=async()=>{
@@ -388,14 +387,15 @@
   try{
    await post('/api/scan-registration',{action:'bundle_control_apply',bundle_id:bundleId,solution_id:bundleDraft.id,reviewed:true});
    const job=await window.JobUI.waitReady(null,{skipSync:true});
-   if(job?.cancelled)throw Error('Control was not applied.');
+   if(job?.cancelled){endControlDiagnostic('abandoned');throw Error('Control was not applied.');}
+   endControlDiagnostic('applied');
    await window.JobUI.sync({inventoryOnly:true});
    await sync({skipPreview:true});
    window.JobUI.loadPreview();
    await refreshBundle();
    window.WorkspaceUI?.refreshBundleQA?.();
    bc('message').textContent='Control applied to the entire bundle. Residuals saved with the project.';
-  }catch(e){bc('message').textContent=e.message;bundleDraft=null;}
+  }catch(e){endControlDiagnostic('failed');bc('message').textContent=e.message;bundleDraft=null;}
   finally{bundleWorking=false;renderBundle();}
  };
  function setBusyReg(v){if(targetSearching){if(v)window.WorkStatus?.show('Finding target centres…',state?.job?.message||'Reading original scan points',true);}$('targets-delete').disabled=v||!selectedTargets.size;$('targets-undo').disabled=v||!data.can_undo_targets;for(const id of ['reg-browse','reg-import','reg-demo','reg-detect','reg-pick','reg-intensity-view','reg-fit-seed','reg-add-row','reg-control-import','reg-save-pairs','reg-solve','reg-clear-candidates'])$(id).disabled=v;for(const input of $('reg-pairs').querySelectorAll('input,select,button'))input.disabled=v;quality();targetMethodUI();}
