@@ -56,16 +56,19 @@ async function poll(){
   }else{view=null;result=null;scene.clear();clearResults();}
  }catch(e){if(!current())return;setBusy(false,true);notice(e.message,true);}
 }
+function surveyRange(){return state?.analysis_range||state?.axis;}
 function refreshState(){
- const revision=JSON.stringify([state.axis?.name,state.cloud?.name,state.cloud?.count,state.removed_points,state.edit_count]);if(lastAnalysisRevision!==revision){heatData=null;$('heat-canvas').getContext('2d').clearRect(0,0,$('heat-canvas').width,$('heat-canvas').height);$('heat-info').textContent='Generate a new heatmap for the current scan / edits.';lastAnalysisRevision=revision;}
+ const revision=JSON.stringify([state.project_id,state.axis,state.active_job_scan,state.analysis_range,state.cloud?.name,state.cloud?.count,state.removed_points,state.edit_count]);if(lastAnalysisRevision!==revision){heatData=null;$('heat-canvas').getContext('2d').clearRect(0,0,$('heat-canvas').width,$('heat-canvas').height);$('heat-info').textContent='Generate a new heatmap for the current scan / edits.';lastAnalysisRevision=revision;}
  $('axis-name').textContent=state.axis?state.axis.name:'CSV or LandXML · design alignment';
  $('cloud-name').textContent=state.cloud?`${state.cloud.name} · ${fmt(state.cloud.count,0)} points`:'Leica HSPCA · E57 · LAS/LAZ · PLY · PTS · XYZ/CSV';
  $('ring-name').textContent=state.rings.length?`${state.rings.length} ring-face observations`:'CSV · design and measured chainage';
  $('project-tag').textContent=state.demo?'SYNTHETIC DEMO':(state.axis||state.job_item_count)?'PROJECT DATA':'NO PROJECT';
  const chain=document.querySelector('.chainage-bar');if(chain)chain.hidden=!state.axis||document.body.classList.contains('job-active')||document.body.classList.contains('surface-active')||document.body.classList.contains('registration-active');
- if(state.axis){const a=state.axis;for(const id of ['station','chainage-slider']){$(id).min=a.start;$(id).max=a.end;}
+ if(state.axis){const a=surveyRange();for(const id of ['station','chainage-slider']){$(id).min=a.start;$(id).max=a.end;}
   let s=+$('station').value;if(s<a.start||s>a.end)s=(a.start+a.end)/2;$('station').value=s;$('chainage-slider').value=s;
-  $('start-label').textContent=fmt(a.start,3)+' m';$('end-label').textContent=fmt(a.end,3)+' m';}
+  $('start-label').textContent=fmt(a.start,3)+' m';$('end-label').textContent=fmt(a.end,3)+' m';
+  const help=chain?.querySelector('.chainage-help');
+  if(help)help.textContent=state.analysis_range?`Scan coverage Ch. ${fmt(a.start,3)}–${fmt(a.end,3)} m`:'Choose where along the alignment to inspect a cross-section.';}
  $('provenance').textContent=state.cloud?`${fmt(state.cloud.count,0)} full-precision points. ${Number.isFinite(state.valid_points)?fmt(state.cloud.count-state.valid_points,0)+' outside alignment ends.':'Alignment-end count unavailable for the current edits.'} ${state.cloud.invalid_points_skipped} non-finite records excluded on import. Current project saved locally.`:state.axis?'Alignment loaded. Add your registered point cloud.':'No project loaded. Start with the sample tunnel or your design CSV.';
  renderRings();renderJoints();initReportForm();
 }
@@ -246,7 +249,13 @@ class CloudScene{
  }
 }
 const scene=new CloudScene($('cloud-canvas'),{adaptive:true});
-function setStation(value){if(state?.axis)value=Math.max(state.axis.start,Math.min(state.axis.end,value));$('station').value=value.toFixed(3);$('chainage-slider').value=value;}
+function setStation(value){
+ const range=surveyRange();
+ if(range)value=Math.max(range.start,Math.min(range.end,value));
+ const rounded=value.toFixed(3);
+ $('station').value=range&&(+rounded<range.start||+rounded>range.end)?value:rounded;
+ $('chainage-slider').value=value;
+}
 for(const tab of document.querySelectorAll('.tabs button'))tab.onclick=()=>{document.querySelectorAll('.tabs button,.tab').forEach(t=>t.classList.remove('active'));tab.classList.add('active');$('tab-'+tab.dataset.tab).classList.add('active');scene.draw();window.TargetUI?.draw();window.SurfaceUI?.draw();window.JobUI?.draw();};
 
 function initialiseDisplaySettings(){
@@ -324,15 +333,32 @@ $('cancel-delete').onclick=()=>$('delete-dialog').close();
 $('confirm-delete').onclick=async()=>{const reason=$('delete-reason').value.trim();if(!reason){$('delete-reason').focus();return;}try{$('delete-dialog').close();setBusy(true);await post('/api/delete-selection',{reason});selectSpec=null;poll();}catch(e){setBusy(false);notice(e.message,true);}};
 for(const [id,path]of [['undo-edit','undo-edit'],['redo-edit','redo-edit'],['export-clean','export-clean']])$(id).onclick=async()=>{try{setBusy(true);await post('/api/'+path,{});selectSpec=null;poll();}catch(e){setBusy(false);notice(e.message,true);}};
 $('download-clean').onclick=()=>location.href='/api/cleaned-cloud';
-let formAxis=null,lastAnalysisRevision=null;
-function initReportForm(){if(!state.axis||formAxis===state.axis.name)return;formAxis=state.axis.name;const v=state.report_settings||{};for(const [id,key,def]of [['report-project','project','Tunnel survey'],['report-reference','reference',''],['report-surveyor','surveyor',''],['report-date','survey_date',''],['report-notes','notes',''],['report-start','start',state.axis.start],['report-end','end',Math.min(state.axis.end,state.axis.start+18)],['report-step','step',1.8]])$(id).value=v[key]??def;$('clip-start').value=state.axis.start;$('clip-end').value=state.axis.end;$('heat-start').value=state.axis.start;$('heat-end').value=state.axis.end;$('mesh-start').value=state.axis.start;$('mesh-end').value=Math.min(state.axis.end,state.axis.start+10);}
+let formAxis=null,formRange=null,lastAnalysisRevision=null;
+function initReportForm(){
+ const a=state.axis,range=surveyRange();
+ if(!a){formAxis=null;formRange=null;return;}
+ const axisKey=JSON.stringify([state.project_id,a]),v=state.report_settings||{};
+ if(axisKey!==formAxis){
+  formAxis=axisKey;
+  for(const [id,key,def]of [['report-project','project','Tunnel survey'],['report-reference','reference',''],['report-surveyor','surveyor',''],['report-date','survey_date',''],['report-notes','notes',''],['report-step','step',1.8]])$(id).value=v[key]??def;
+  $('mesh-start').value=a.start;$('mesh-end').value=Math.min(a.end,a.start+10);
+ }
+ const rangeKey=JSON.stringify([axisKey,state.active_job_scan,state.cloud?.name,state.cloud?.count,range.start,range.end]);
+ if(rangeKey===formRange)return;
+ formRange=rangeKey;
+ const saved=Number.isFinite(v.start)&&Number.isFinite(v.end)&&range.start<=v.start&&v.start<=v.end&&v.end<=range.end;
+ $('report-start').value=saved?v.start:range.start;
+ $('report-end').value=saved?v.end:Math.min(range.end,range.start+18);
+ $('clip-start').value=range.start;$('clip-end').value=range.end;
+ $('heat-start').value=range.start;$('heat-end').value=range.end;
+}
 $('report-current').onclick=()=>{if(result){$('report-start').value=result.chainage;$('report-end').value=result.chainage;}};
 $('build-report').onclick=async()=>{if(!state?.cloud){notice('Load an alignment and scan first.',true);return;}const data={project:$('report-project').value,reference:$('report-reference').value,surveyor:$('report-surveyor').value,survey_date:$('report-date').value,notes:$('report-notes').value,start:+$('report-start').value,end:+$('report-end').value,step:+$('report-step').value,width:+$('width').value,band:+$('band').value,tolerance:+$('tolerance').value,creep:+$('creep-limit').value};try{setBusy(true);refreshTools();await post('/api/build-report',data);poll();}catch(e){setBusy(false);notice(e.message,true);}};
 $('open-report').onclick=async()=>{try{await post('/api/open-report',{});}catch(e){notice(e.message,true);}};
 $('download-report').onclick=()=>location.href='/api/download-report';
 
 let heatData=null,heatLimit=25;
-$('build-unwrapped-heat').onclick=async()=>{if(!state?.cloud)return;try{setBusy(true);notice('Calculating full-density heatmap…');heatLimit=+$('tolerance').value;if(!(heatLimit>0))throw Error('Radial limit must be positive.');if(!$('heat-start').value)$('heat-start').value=state.axis.start;if(!$('heat-end').value)$('heat-end').value=state.axis.end;heatData=await api('/api/heatmap?'+new URLSearchParams({start:$('heat-start').value,end:$('heat-end').value,step:$('heat-step').value,degrees:$('heat-degrees').value,band:$('band').value,mode:$('heat-mode').value}));drawHeat();notice('Heatmap ready. Click a cell to inspect that chainage.');}catch(e){heatData=null;notice(e.message,true);}finally{setBusy(false);}};
+$('build-unwrapped-heat').onclick=async()=>{if(!state?.cloud)return;try{setBusy(true);notice('Calculating full-density heatmap…');heatLimit=+$('tolerance').value;if(!(heatLimit>0))throw Error('Radial limit must be positive.');const range=surveyRange();if(!$('heat-start').value)$('heat-start').value=range.start;if(!$('heat-end').value)$('heat-end').value=range.end;heatData=await api('/api/heatmap?'+new URLSearchParams({start:$('heat-start').value,end:$('heat-end').value,step:$('heat-step').value,degrees:$('heat-degrees').value,band:$('band').value,mode:$('heat-mode').value}));drawHeat();notice('Heatmap ready. Click a cell to inspect that chainage.');}catch(e){heatData=null;notice(e.message,true);}finally{setBusy(false);}};
 function drawHeat(){const h=heatData,c=$('heat-canvas');c.width=h.nx;c.height=h.ny;const ctx=c.getContext('2d'),im=ctx.createImageData(h.nx,h.ny);for(let i=0;i<h.values.length;i++){const v=h.values[i],base=[235,245,240],end=v>=0?[213,86,44]:[42,103,196],t=Math.min(1,Math.abs(v)/heatLimit),rgb=v===null?[223,228,232]:base.map((a,j)=>Math.round(a+(end[j]-a)*t));im.data.set([...rgb,255],i*4);}ctx.putImageData(im,0,0);$('heat-from').textContent=fmt(h.start,3);$('heat-to').textContent=fmt(h.end,3);$('heat-negative').textContent='≤ −'+fmt(heatLimit,1)+' mm';$('heat-positive').textContent='≥ +'+fmt(heatLimit,1)+' mm';$('heat-info').textContent=fmt(h.points,0)+' retained points · '+h.nx+' × '+h.ny+' cells · '+h.mode+' statistic. Hover to inspect.'+(h.resolution_note?' '+h.resolution_note:'');}
 function heatCell(e){if(!heatData)return null;const r=$('heat-canvas').getBoundingClientRect(),h=heatData,x=Math.max(0,Math.min(h.nx-1,Math.floor((e.clientX-r.left)/r.width*h.nx))),y=Math.max(0,Math.min(h.ny-1,Math.floor((e.clientY-r.top)/r.height*h.ny)));return {x,y,i:y*h.nx+x,station:Math.min(h.end,h.start+(x+.5)*h.step)};}
 $('heat-canvas').onmousemove=e=>{const q=heatCell(e);if(!q)return;const h=heatData;$('heat-info').textContent='Ch. '+fmt(q.station,3)+' m · angle '+fmt((q.y+.5)*h.degrees,1)+'° · '+(h.values[q.i]===null?'No retained data':fmt(h.values[q.i],2)+' mm · '+fmt(h.counts[q.i],0)+' points')+' · '+h.mode+(h.resolution_note?' · '+h.resolution_note:'');};

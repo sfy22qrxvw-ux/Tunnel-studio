@@ -4,7 +4,7 @@
  const modes = {
   cloud_mesh: {label:'Cloud to mesh', source:'Point cloud', reference:'Reference mesh', help:'Measure the gap from each retained scan point to the nearest triangle on the reference mesh.'},
   cloud_cloud: {label:'Cloud to cloud', source:'Point cloud', reference:'Reference cloud', help:'Measure each retained scan point against the nearest point in another cloud. Point spacing affects this comparison.'},
-  cloud_cad: {label:'Cloud to CAD', source:'Point cloud', reference:'CAD model', help:'Compare retained scan points with the supported surfaces of an editable CAD model.'},
+  cloud_cad: {label:'Cloud to CAD', source:'Point cloud', reference:'CAD model', help:'Compare the source cloud’s retained points with the CAD model. The heatmap covers the scanned portion.'},
   cloud_geometry: {label:'Cloud to geometry', source:'Point cloud', reference:'Reference geometry', help:'Compare retained scan points with a supported reference shape. The reference description explains which surface is used.'},
   mesh_mesh: {label:'Mesh to mesh', source:'Mesh to inspect', reference:'Reference mesh', help:'Sample the inspected mesh surface and measure its distance to the reference mesh. Results describe those area-weighted samples.'},
   mesh_cad: {label:'Mesh to CAD', source:'Mesh to inspect', reference:'CAD model', help:'Compare samples from the inspected mesh surface with the supported CAD surface. Results describe the chosen sampling spacing.'}

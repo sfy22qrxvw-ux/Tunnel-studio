@@ -11,6 +11,38 @@ import tunnel_designer as designer
 
 
 class ProfileToolsTest(unittest.TestCase):
+    def test_circle_and_rectangle_remain_editable_after_combining(self):
+        design = designer.default()
+        design['detail'] = 'fine'
+        circle = dict(id='circle', kind='circle', radius=3.775, x=0, y=0)
+        rectangle = dict(id='rect', kind='rectangle', width=5, height=4, x=0, y=-2)
+        design['drawing_objects'] = [circle, rectangle]
+        design['profiles'][0].update(kind='composite', drawing_ids=['circle', 'rect'])
+        model, _ = designer.build(design)
+        self.assertTrue(model['solid'])
+        self.assertAlmostEqual(model['minimum'][2], -4)
+        self.assertAlmostEqual(model['maximum'][2], 3.775)
+        saved = model['definition']['design']
+        self.assertEqual(saved['drawing_objects'], [circle, rectangle])
+        self.assertNotIn('parts', saved['profiles'][0])
+        rectangle['height'] = 5
+        rebuilt, _ = designer.build(design)
+        self.assertAlmostEqual(rebuilt['minimum'][2], -4.5)
+        self.assertGreater(rebuilt['volume_m3'], model['volume_m3'])
+        rectangle['x'] = 20
+        with self.assertRaisesRegex(ValueError, 'overlapping shapes'):
+            designer.build(design)
+
+    def test_join_uses_snapped_endpoints_and_signed_radii(self):
+        parts = [dict(kind='polyline', nodes=[[-1,0,2], [1,0,0]]),
+                 dict(kind='polyline', nodes=[[0,2,0], [1,0,0]]),
+                 dict(kind='polyline', nodes=[[-1,0,0], [0,2,0]])]
+        joined = designer.join_drawing_curves(parts)
+        self.assertEqual(joined['nodes'], [[-1,0,2], [1,0,0], [0,2,0]])
+        self.assertGreater(len(designer.outline(joined)), 3)
+        with self.assertRaisesRegex(ValueError, 'one closed loop'):
+            designer.join_drawing_curves(parts[:2])
+
     def test_circle_offset_preserves_analytic_geometry_and_source(self):
         profile = dict(kind='circle', radius=4, x=.2, y=.3)
         result, faceted = designer.profile_copy(profile, 'offset', 'balanced', .35)

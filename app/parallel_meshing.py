@@ -55,9 +55,10 @@ def _stamp(path):
     return (info.st_dev, info.st_ino, info.st_size, info.st_mtime_ns, info.st_ctime_ns)
 
 
-def project_cloud_parallel(meta, axis, destination, progress=lambda _: None, cancel=None):
+def project_cloud_parallel(meta, axis, destination, progress=lambda _: None, cancel=None, *, coverage=None):
     """Project bounded owned reads; atomically install only a complete result."""
     import registration_pose
+    from core import extend_chainage_range, retained_chainage_bounds
     original = meta
     meta = copy.deepcopy(meta)
     count = int(meta['count'])
@@ -106,17 +107,22 @@ def project_cloud_parallel(meta, axis, destination, progress=lambda _: None, can
         if flags is not None:
             keep &= flags == 0
         _check(cancel)
-        return rows, int(keep.sum())
+        kept = int(keep.sum())
+        bounds = retained_chainage_bounds(rows[:, 0], keep, start) if coverage is not None and kept else None
+        return rows, kept, bounds
 
     results = compute_runtime.ordered_map(project_chunk, starts, workers,
                                           cancel or compute_runtime.cancelled)
     valid = 0
+    extent = {}
     try:
         with temporary.open('xb') as output:
-            for ordinal, (rows, kept) in enumerate(results, 1):
+            for ordinal, (rows, kept, bounds) in enumerate(results, 1):
                 _check(cancel)
                 rows.astype('<f8', copy=False).tofile(output)
                 valid += kept
+                if bounds is not None:
+                    extend_chainage_range(extent, bounds)
                 _report(progress, 'Calculating chainages', ordinal, len(starts))
         if any(_stamp(path) != before for path, before in revisions):
             raise ValueError('A projection source changed while calculating chainages.')
@@ -128,6 +134,9 @@ def project_cloud_parallel(meta, axis, destination, progress=lambda _: None, can
     finally:
         results.close()
         temporary.unlink(missing_ok=True)
+    if coverage is not None:
+        coverage.clear()
+        coverage.update(extent)
     return str(destination), valid
 
 

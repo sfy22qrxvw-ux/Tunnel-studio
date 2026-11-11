@@ -137,17 +137,67 @@ def reusable_projection(meta,axis,work):
     return None
 
 
-def _summary(meta,count,derived=None,valid_points=None,derived_signature=None):
+def _cached_analysis_range(meta,derived):
+    summary=cached_summary(meta) if meta and derived else None
+    if not summary or not _derived_count(meta,summary,derived):return None
+    extent=summary.get('analysis_range')
+    if not isinstance(extent,dict):return None
+    start,end=extent.get('start'),extent.get('end')
+    if all(type(value) in (float,int) and np.isfinite(value) for value in (start,end)) and start<=end:
+        return extent
+    return None
+
+
+def analysis_range(meta,derived):
+    """Return the observed chainage range for this projection and deletion mask."""
+    extent=_cached_analysis_range(meta,derived)
+    return dict(start=extent['start'],end=extent['end']) if extent else None
+
+
+def measure_projection_range(meta,derived,progress=lambda _:None):
+    """Read an older verified projection once to recover its retained range."""
+    from core import extend_chainage_range, retained_chainage_bounds
+    from compute_runtime import check_cancel
+
+    total=int(meta['count'])
+    source_revision=_properties_signature(meta)
+    derived_revision=_derived_signature(derived,total)
+    if derived_revision is None:raise ValueError('The analysis projection is incomplete.')
+    if not total:return 0,{}
+    rows=excluded=None
+    count=0;extent={}
+    try:
+        rows=np.memmap(derived,'<f8','r',shape=(total,4))
+        excluded=mask(meta)
+        for begin in range(0,total,pointio.CHUNK):
+            check_cancel()
+            stop=min(total,begin+pointio.CHUNK)
+            stations=rows[begin:stop,0]
+            keep=np.isfinite(stations)
+            if excluded is not None:keep&=excluded[begin:stop]==0
+            kept=int(keep.sum())
+            count+=kept
+            if kept:extend_chainage_range(extent,retained_chainage_bounds(stations,keep,begin))
+            progress(f'Measuring scan range: {stop:,} / {total:,} points')
+        if source_revision!=_properties_signature(meta) or derived_revision!=_derived_signature(derived,total):
+            raise ValueError('The scan or projection changed while measuring its chainage range.')
+    finally:
+        _close_arrays(rows,excluded)
+    return count,extent
+
+
+def _summary(meta,count,derived=None,valid_points=None,derived_signature=None,coverage=None):
     out=dict(revision=meta.get('mask_file') or '',source_signature=_properties_signature(meta),count=int(count))
     if derived and type(valid_points) is int and 0<=valid_points<=count:
         signature=_derived_signature(derived,meta['count'])
         if signature is not None and (derived_signature is None or signature==derived_signature):
             out.update(derived=derived,valid_points=valid_points,derived_signature=signature)
+            if valid_points and coverage:out['analysis_range']=dict(coverage)
     return out
 
 
-def record_projection(meta,derived,valid_points):
-    """Attach a freshly computed, retained-row projection total to its source.
+def record_projection(meta,derived,valid_points,coverage=None):
+    """Attach a freshly computed retained total and range to their source.
 
     Permanent analysis producers call this after validating their projection.
     Only a mask count can be needed here; no coordinate/channel statistics are
@@ -158,7 +208,7 @@ def record_projection(meta,derived,valid_points):
     count=retained_count(meta)
     if type(valid_points) is not int or not 0<=valid_points<=count or derived_signature is None:
         raise ValueError('The retained analysis point count or projection cache is invalid.')
-    summary=_summary(meta,count,derived,valid_points,derived_signature)
+    summary=_summary(meta,count,derived,valid_points,derived_signature,coverage)
     if summary['source_signature']!=source_signature or 'derived' not in summary:
         raise ValueError('The scan or projection changed while its analysis count was recorded.')
     props=cached_properties(meta)
@@ -423,7 +473,8 @@ def properties(meta, progress=lambda message: None):
         if value is not None:
             out.update(derived=summary['derived'],valid_points=value,derived_signature=summary['derived_signature'])
     meta['retained_properties'] = out
-    meta['retained_summary']=_summary(meta,out['count'],out.get('derived'),out.get('valid_points'),out.get('derived_signature'))
+    coverage=summary.get('analysis_range') if summary and out.get('derived') else None
+    meta['retained_summary']=_summary(meta,out['count'],out.get('derived'),out.get('valid_points'),out.get('derived_signature'),coverage)
     _record_exact_count(meta,out)
     return out
 
@@ -623,13 +674,20 @@ def update_mask(meta, ids_batches, work, value, progress, created, derived=None,
                 out[ids]=value;count+=len(ids)
             progress(f'{"Excluding" if value else "Restoring"} points: {count:,}')
         if not count:raise ValueError('No retained points in this selection.' if value else 'No points in this group need restoring.')
+        coverage=_cached_analysis_range(meta,derived) if derived_known else None
+        if coverage and valid_delta:
+            # Exact endpoint witnesses survive interior deletions without a
+            # full reread of the projected cloud.
+            ends=(coverage.get('start_row'),coverage.get('end_row'))
+            if not value or any(type(i) is not int or not 0<=i<original_count or out[i] for i in ends):
+                coverage=None
         out.flush();_close_arrays(out);out=None
         if signature!=_properties_signature(meta):raise ValueError('The scan changed while its point edit was calculated.')
         retained=prior_count+(-count if value else count)
         future={**meta,'mask_file':str(dest)}
         if derived_known and derived_signature!=_derived_signature(derived,original_count):derived_known=False
         valid_after=valid_points+(-valid_delta if value else valid_delta) if derived_known else None
-        summary=_summary(future,retained,derived if derived_known else None,valid_after,derived_signature)
+        summary=_summary(future,retained,derived if derived_known else None,valid_after,derived_signature,coverage)
         if retained==0:previous=dict(count=0,minimum=None,maximum=None,attribute_counts=[0]*4)
         elif retained==original_count:previous=_source_properties(meta)
         if previous is not None:
@@ -736,6 +794,7 @@ def apply(s, item, action, selection=None, group_id=None, reason='Selected point
             src.pop(); dst.append(entry)
         else:
             before = meta.get('mask_file');before_properties=_cheap_properties(meta)
+            before_range=_cached_analysis_range(meta,derived)
             if action == 'restore_deleted':
                 group = record(item, group_id)
                 group_index = groups.index(group)
@@ -773,7 +832,7 @@ def apply(s, item, action, selection=None, group_id=None, reason='Selected point
                 group = dict(id=uuid.uuid4().hex, kind='move' if newmeta else 'delete', name=reason, count=count, before_mask=before, after_mask=after, active=True, created=time.time())
                 group_index, before_group = len(groups), None
                 groups.append(group)
-            before_summary=_summary({**meta,'mask_file':before},meta['retained_summary']['count']+signed_count,derived,valid_points,derived_revision)
+            before_summary=_summary({**meta,'mask_file':before},meta['retained_summary']['count']+signed_count,derived,valid_points,derived_revision,before_range)
             if before_properties is not None and before_properties['count']!=before_summary['count']:
                 # Copying the mask provides authoritative count evidence. A
                 # conflicting legacy cache must not be re-signed with that new

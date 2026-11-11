@@ -118,7 +118,20 @@ def point_chunks(path,progress=lambda x:None):
 
 from pointio import import_cloud
 
-def project_cloud(meta,axis,destination,progress=lambda x:None,cancel=None):
+def retained_chainage_bounds(stations, keep, offset):
+    indices=np.flatnonzero(keep)
+    values=stations[indices]
+    first,last=values.argmin(),values.argmax()
+    return dict(start=float(values[first]),end=float(values[last]),
+                start_row=offset+int(indices[first]),end_row=offset+int(indices[last]))
+
+def extend_chainage_range(extent, bounds):
+    if bounds['start']<extent.get('start',np.inf):
+        extent.update(start=bounds['start'],start_row=bounds['start_row'])
+    if bounds['end']>extent.get('end',-np.inf):
+        extent.update(end=bounds['end'],end_row=bounds['end_row'])
+
+def project_cloud(meta,axis,destination,progress=lambda x:None,cancel=None,*,coverage=None):
     from contextlib import ExitStack
     import os
     import uuid
@@ -127,7 +140,7 @@ def project_cloud(meta,axis,destination,progress=lambda x:None,cancel=None):
     n=int(meta['count']);valid=0
     if compute_runtime.workers()>1 and len(range(0,n,CHUNK))>=4:
         from parallel_meshing import project_cloud_parallel
-        projected=project_cloud_parallel(meta,axis,destination,progress,cancel)
+        projected=project_cloud_parallel(meta,axis,destination,progress,cancel,coverage=coverage)
         __import__('storage_cleanup').record_projection(meta,axis,destination)
         return projected
     def stamp(info):return (info.st_dev,info.st_ino,info.st_size,info.st_mtime_ns,info.st_ctime_ns)
@@ -135,6 +148,7 @@ def project_cloud(meta,axis,destination,progress=lambda x:None,cancel=None):
     temporary=destination.with_name(destination.name+'.'+uuid.uuid4().hex+'.tmp')
     if any(destination.resolve()==Path(meta[key]).resolve() for key in ('file','mask_file') if meta.get(key)):
         raise ValueError('Projection output must not replace its source cache.')
+    extent={}
     try:
       with ExitStack() as files:
         source=files.enter_context(open(meta['file'],'rb'))
@@ -154,18 +168,18 @@ def project_cloud(meta,axis,destination,progress=lambda x:None,cancel=None):
             flags=np.fromfile(excluded,'u1',count=count) if excluded is not None else None
             if flags is not None and len(flags)!=count:raise ValueError('The projection source deletion mask is incomplete.')
             yield cloud.reshape(-1,3),flags
-        def project_chunk(chunk):
-            cloud,flags=chunk
+        for ordinal,(cloud,flags) in enumerate(chunks(),1):
             rows=axis.project(registration_pose.points(meta,cloud))
             use=np.isfinite(rows[:,0])
             if flags is not None:use&=flags==0
-            return rows,int(use.sum())
-        for ordinal,chunk in enumerate(chunks(),1):
-            rows,kept=project_chunk(chunk)
+            kept=int(use.sum())
+            if coverage is not None and kept:
+                bounds=retained_chainage_bounds(rows[:,0],use,(ordinal-1)*CHUNK)
+                extend_chainage_range(extent,bounds)
             compute_runtime.check_cancel(cancel)
             valid+=kept
             # Keep a projection for every original row so Undo/restoration can
-            # reuse it. Only the informational retained total uses the mask.
+            # reuse it. The retained total and range respect the mask.
             rows.astype('<f8').tofile(out)
             total=(n+CHUNK-1)//CHUNK
             progress(f'Calculating chainages: {int(100*ordinal/max(1,total))}% · {ordinal:,}/{total:,} chunks done')
@@ -176,6 +190,9 @@ def project_cloud(meta,axis,destination,progress=lambda x:None,cancel=None):
     finally:
       temporary.unlink(missing_ok=True)
     __import__('storage_cleanup').record_projection(meta,axis,destination)
+    if coverage is not None:
+        coverage.clear()
+        coverage.update(extent)
     return str(destination),valid
 
 

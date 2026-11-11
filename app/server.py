@@ -139,13 +139,14 @@ def load(kind,path,demo=False,display_name=None,alignment_radius=None):
             meta=jobdata.import_scan(path,WORK,index=None,expected=expected or None,progress=progress)
         else:
             meta=import_cloud(path,asset_folder(WORK,'imported')/(name+'.xyz64'),progress)
-        try: derived,count=project_cloud(meta,STATE['axis'],asset_folder(WORK,'analysis')/(name+'.analysis64'),progress)
+        coverage={}
+        try: derived,count=project_cloud(meta,STATE['axis'],asset_folder(WORK,'analysis')/(name+'.analysis64'),progress,coverage=coverage)
         except Exception:
             Path(meta['file']).unlink(missing_ok=True); (asset_folder(WORK,'analysis')/(name+'.analysis64')).unlink(missing_ok=True); raise
         if count==0:
             Path(meta['file']).unlink(missing_ok=True); Path(derived).unlink(missing_ok=True)
             raise ValueError('No scan points project inside the alignment. Check coordinate system, units and alignment extent.')
-        __import__('scan_edits').record_projection(meta,derived,count)
+        __import__('scan_edits').record_projection(meta,derived,count,coverage)
         STATE.update(cloud=meta,derived=derived,valid_points=count,joints=None)
     elif kind=='rings':
         import ring_creep
@@ -211,8 +212,9 @@ def ready(require_cloud=False):
 
 def status(job=None):
     a=STATE['axis']; c=STATE['cloud']
+    coverage=__import__('scan_edits').analysis_range(c,STATE['derived']) if a is not None else None
     return {'history':workspace_history.status(sys.modules[__name__]),'job_item_count':len(STATE.get('job_items',[])),'project_id':STATE.get('project_id'),'project_title':STATE.get('project_title','Untitled project'),'saved_at':STATE.get('saved_at'),'ui':STATE.get('ui',{}),'registration_ready':bool(STATE.get('registration',{}).get('cloud')),'export_ready':{k:v for k,v in (STATE.get('export_ready') or {}).items() if k!='file'},'job':JOB.copy() if job is None else job,'demo':STATE['demo'],'axis':None if a is None else {'name':a.name,'start':float(a.a[0,0]),'end':float(a.a[-1,0]),'nodes':len(a.a),'estimated':STATE.get('axis_provenance',{}).get('kind')=='scan_estimate'},
-        'cloud':None if c is None else {k:v for k,v in c.items() if k not in ('file','mask_file','attributes_file')},'valid_points':STATE['valid_points'],'rings':STATE['rings'],'joints':STATE.get('joints'),
+        'cloud':None if c is None else {k:v for k,v in c.items() if k not in ('file','mask_file','attributes_file')},'valid_points':STATE['valid_points'],'analysis_range':coverage,'active_job_scan':STATE.get('active_job_scan'),'rings':STATE['rings'],'joints':STATE.get('joints'),
         'last_backup':STATE.get('last_backup'),'structures':STATE.get('structures',[]),'selection_count':SELECTION['count'] if SELECTION else 0,'edit_count':len(STATE.get('edits',[])),'redo_count':len(STATE.get('redo',[])),'removed_points':sum(e['count'] for e in STATE.get('edits',[])), 'report_ready':STATE.get('report_ready',False),'clean_ready':STATE.get('clean_ready',False),'report_settings':STATE.get('report_settings',{}),'copyright':COPYRIGHT,'version':VERSION,'formats':['E57','LAS','LAZ','PLY','PTS','XYZ','TXT','CSV'],'mesh_capabilities':meshing.capabilities(),'analysis_tool_result':STATE.get('analysis_tool_result')}
 
 def overview():
@@ -229,7 +231,9 @@ def overview():
 def section(params):
     ready(True)
     def get(k,d): return float(params.get(k,[d])[0])
-    return large_sections.section(sys.modules[__name__],slice_analysis,get('station',STATE['axis'].a[0,0]),get('width',.30),get('band',.30),get('tolerance',25))
+    coverage=__import__('scan_edits').analysis_range(STATE['cloud'],STATE['derived'])
+    start=coverage['start'] if coverage else STATE['axis'].a[0,0]
+    return large_sections.section(sys.modules[__name__],slice_analysis,get('station',start),get('width',.30),get('band',.30),get('tolerance',25))
 
 class Handler(BaseHTTPRequestHandler):
     protocol_version='HTTP/1.1'
@@ -293,7 +297,11 @@ class Handler(BaseHTTPRequestHandler):
                 ready(); return self.send(structures.obj(STATE.get('structures',[]),STATE['axis']),'text/plain',filename='reference_structures.obj')
             if path=='/api/heatmap':
                 ready(True)
-                return self.send(heatmap.calculate(STATE['cloud'],STATE['derived'],STATE['axis'],*[float(args.get(k,[default])[0] or default) for k,default in [('start',STATE['axis'].a[0,0]),('end',STATE['axis'].a[-1,0]),('step',.25),('degrees',5),('band',.3)]],args.get('mode',['extreme'])[0]))
+                coverage=__import__('scan_edits').analysis_range(STATE['cloud'],STATE['derived'])
+                if coverage is None:coverage=dict(start=STATE['axis'].a[0,0],end=STATE['axis'].a[-1,0])
+                defaults={**coverage,'step':.25,'degrees':5,'band':.3}
+                values=[float(args.get(key,[default])[0] or default) for key,default in defaults.items()]
+                return self.send(heatmap.calculate(STATE['cloud'],STATE['derived'],STATE['axis'],*values,args.get('mode',['extreme'])[0]))
             if path=='/api/support-info':
                 import platform
                 return self.send({'application':'Tunnel Studio','version':VERSION,'copyright':COPYRIGHT,'os':platform.system(),'os_release':platform.release(),'architecture':platform.machine(),'python':platform.python_version(),'point_count':(STATE['cloud'] or {}).get('count',0),'last_error':JOB.get('error')})

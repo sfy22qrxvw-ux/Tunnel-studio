@@ -8,10 +8,10 @@ from editing import mask_for
 
 def calculate(meta,derived,axis,start,end,step=.25,degrees=5,band=.3,mode='extreme',power=2,selection=None,progress=lambda _:None):
     start,end,step,degrees,band=map(float,(start,end,step,degrees,band))
-    if not all(map(math.isfinite,(start,end,step,degrees,band))) or end<=start or step<=0 or not 1<=degrees<=90 or band<=0: raise ValueError('Heatmap needs an increasing range and positive cell sizes / wall band.')
+    if not all(map(math.isfinite,(start,end,step,degrees,band))) or end<start or step<=0 or not 1<=degrees<=90 or band<=0: raise ValueError('Heatmap needs an ordered range and positive cell sizes / wall band.')
     axis.at(start);axis.at(end)
     requested_step,requested_degrees=step,degrees
-    nx=int(math.ceil((end-start)/step)); ny=int(math.ceil(360/degrees)); degrees=360/ny
+    nx=max(1,int(math.ceil((end-start)/step))); ny=int(math.ceil(360/degrees)); degrees=360/ny
     requested_cells=nx*ny;resolution_adjusted=requested_cells>300000
     if resolution_adjusted:
         # Bound the output grid, not the source-point count or chainage range.

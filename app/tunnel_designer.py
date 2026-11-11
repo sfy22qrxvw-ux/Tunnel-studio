@@ -81,6 +81,61 @@ def alignment(design):
         return centre,right,up
     return stations,vertical,slopes,at
 
+
+def join_drawing_curves(parts):
+    """Join snapped endpoints while retaining the signed radius of each edge."""
+    remaining = []
+    for part in parts:
+        nodes = np.asarray(part.get('nodes'), dtype=float)
+        if nodes.ndim != 2 or nodes.shape[1] != 3 or not 2 <= len(nodes) <= 512 or not np.isfinite(nodes).all():
+            raise ValueError('Finish the selected lines and polylines before joining them.')
+        remaining.append(nodes + [finite(part.get('x', 0), 'Curve X offset'),
+                                  finite(part.get('y', 0), 'Curve Y offset'), 0])
+
+    def reverse(nodes):
+        out = nodes[::-1].copy()
+        out[:, 2] = np.r_[-nodes[-2::-1, 2], 0]
+        return out
+
+    def touches(a, b):
+        return np.linalg.norm(a[:2] - b[:2]) <= 1e-6
+
+    path = remaining.pop(0)
+    while remaining:
+        for i, nodes in enumerate(remaining):
+            if touches(path[-1], nodes[0]):
+                tail = nodes
+            elif touches(path[-1], nodes[-1]):
+                tail = reverse(nodes)
+            elif touches(path[0], nodes[-1]):
+                path, tail = nodes, path
+            elif touches(path[0], nodes[0]):
+                path, tail = reverse(nodes), path
+            else:
+                continue
+            path = np.vstack([path[:-1], tail])
+            remaining.pop(i)
+            break
+        else:
+            raise ValueError('Snap the selected curve endpoints together before making a profile.')
+    if len(path) < 4 or not touches(path[0], path[-1]):
+        raise ValueError('The selected lines and polylines must meet in one closed loop.')
+    return dict(kind='custom', nodes=path[:-1].tolist())
+
+
+def with_drawing_parts(profile, drawings):
+    if profile.get('kind') != 'composite':
+        return profile
+    ids = profile.get('drawing_ids')
+    if not isinstance(ids, list) or not 1 <= len(ids) <= 128 or any(not isinstance(i, str) for i in ids):
+        raise ValueError('Select the drawing objects that form this profile.')
+    objects = {obj.get('id'): obj for obj in drawings if isinstance(obj, dict)}
+    parts = [objects.get(ident) for ident in dict.fromkeys(ids)]
+    if any(not p or p.get('kind') not in ('circle', 'rectangle', 'arch', 'custom', 'cad', 'polyline') for p in parts):
+        raise ValueError('A drawing object used by this profile is missing or unsupported.')
+    return {**profile, 'parts': parts}
+
+
 def outline(profile,step_deg=5):
     kind=profile.get('kind');x=finite(profile.get('x',0),'Profile horizontal offset');y=finite(profile.get('y',0),'Profile vertical offset')
     if kind=='circle':
@@ -107,6 +162,22 @@ def outline(profile,step_deg=5):
         if not obj:raise ValueError('Choose an existing closed CAD profile.')
         origin,basis=g.matrix(g.closed_profile_frame(obj))
         points=(np.asarray(obj['vertices'])-origin)@basis[:,:2]
+    elif kind == 'composite':
+        parts = profile.get('parts') or []
+        if not parts:
+            raise ValueError('Select the drawing objects that form this profile.')
+        if all(part['kind'] == 'polyline' for part in parts):
+            points = outline(join_drawing_curves(parts), step_deg)
+        elif any(part['kind'] == 'polyline' for part in parts):
+            raise ValueError('Close the open curves first, or select only the open curves to join.')
+        elif len(parts) == 1:
+            points = outline(parts[0], step_deg)
+        else:
+            _, shapely = g.engines()
+            union = shapely.union_all([shapely.Polygon(outline(part, step_deg)) for part in parts])
+            if union.geom_type != 'Polygon' or union.is_empty or len(union.interiors):
+                raise ValueError('Select overlapping shapes that form one closed profile without internal openings.')
+            points = np.asarray(union.exterior.coords[:-1])
     else:raise ValueError('Choose Circle, Rectangle, Arched, Lines/arcs or an existing profile.')
     points=points+[x,y]
     # Canonical perimeter direction and crown anchor make transitions reproducible.
@@ -132,7 +203,7 @@ def profile_copy(profile, operation, detail, distance=None):
     source=outline(profile,step);faceted=False
     source_profile_nodes=profile.get('nodes',[])
     if operation=='mirror':
-        if kind=='cad':
+        if kind in ('cad','composite'):
             profile=dict(kind='custom',nodes=np.column_stack([-source[:,0],source[:,1],np.zeros(len(source))]).tolist(),x=0,y=0)
         else:
             profile['x']=-finite(profile.get('x',0),'Profile horizontal offset')
@@ -153,7 +224,7 @@ def profile_copy(profile, operation, detail, distance=None):
             if len(offsets)!=1:
                 raise ValueError('This offset splits the outline. Use a smaller distance.')
             profile=dict(kind='custom',nodes=offsets[0]['vertices'],x=0,y=0)
-            faceted=kind in ('arch','cad') or any(float(row[2]) for row in source_profile_nodes)
+            faceted=kind in ('arch','cad','composite') or any(float(row[2]) for row in source_profile_nodes)
     else:
         raise ValueError('Choose Offset or Mirror.')
     if len(outline(profile,step))>512:
@@ -255,7 +326,7 @@ def prepare(design, *, vertex_budget=g.MAX_PROJECT_VERTICES, legacy_sampling=Fal
     step = curve_step(design.get('detail'))
     for profile in profiles:
         try:
-            outlines[profile['id']] = outline(profile, step)
+            outlines[profile['id']] = outline(with_drawing_parts(profile, design.get('drawing_objects', [])), step)
         except ValueError as exc:
             if profile['id'] in used:
                 raise ProfileError(profile, exc) from exc
@@ -359,7 +430,7 @@ def build(design, *, vertex_budget=g.MAX_PROJECT_VERTICES, legacy_sampling=False
 def resolve_profiles(s,design, *, allow_incomplete=False):
     import cad_api
     design=copy.deepcopy(design)
-    for p in design.get('profiles',[]):
+    for p in [*design.get('profiles',[]), *design.get('drawing_objects',[])]:
         if p.get('kind')=='cad' and p.get('object_id'):
             obj=next((o for o in cad_api.current(s)['objects'] if o['id']==p['object_id']),None)
             if obj:
@@ -397,6 +468,9 @@ def profile_operation(s,body):
     if not isinstance(profile,dict):
         raise ValueError('Choose a theoretical profile first.')
     profile=resolve_profiles(s,dict(profiles=[profile]))['profiles'][0]
+    if profile.get('kind') == 'composite':
+        drawings = resolve_profiles(s, dict(drawing_objects=body.get('drawing_objects', [])), allow_incomplete=True)
+        profile = with_drawing_parts(profile, drawings['drawing_objects'])
     if operation=='outline':
         return dict(points=outline(profile,curve_step(body.get('detail'))).tolist())
     result,faceted=profile_copy(profile,operation,body.get('detail'),body.get('distance'))
@@ -448,7 +522,7 @@ def post(s,h,path,body):
             profiles=[]
             for profile in resolved.get('profiles', []):
                 try:
-                    points=outline(profile)
+                    points=outline(with_drawing_parts(profile, resolved.get('drawing_objects', [])), curve_step(resolved.get('detail')))
                 except ValueError:
                     continue
                 profiles.append(dict(id=profile.get('id'),name=profile.get('name'),points=points.tolist()))

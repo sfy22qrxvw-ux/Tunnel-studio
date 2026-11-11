@@ -33,7 +33,6 @@ body.cad-model-mode .job-editbar{display:none!important}.job-sidebar.cad-propert
 .cad-options{gap:8px 10px}
 
 .cad-reference-toggle{display:flex;gap:5px;align-items:center;margin:0;font:11px system-ui;white-space:nowrap;color:#31596c}.cad-reference-toggle input{width:auto;accent-color:#197d79}.cad-reference-toggle[hidden]{display:none}
-body:not(.cad-model-mode) .cad-model-row,body:not(.cad-model-mode) .cad-model-heading{display:none}
 body.cad-model-only #job-marker-labels,body.cad-model-only #job-selection-overlay,body.cad-model-only #job-selection-box,body.cad-model-only #job-limit-overlay,body.cad-model-only #job-review-legend,body.cad-model-only #job-setup-stations,body.cad-model-only .heatmap-legend{display:none!important}
 
 /* Keep the drawing controls accessible while giving short windows a useful canvas. */

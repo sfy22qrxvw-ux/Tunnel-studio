@@ -296,16 +296,24 @@ def post(s,h,path,body):
                 if x['kind']!='scan' or s.STATE['axis'] is None:raise ValueError('Survey analysis needs a design alignment. Import the design alignment first, then try again.')
                 if s.STATE.get('demo'):raise ValueError('Load your own alignment before analysing a real job scan.')
                 if body.get('position_confirmed') is not True:raise ValueError('Confirm that this scan is in the alignment coordinate system and metres.')
-                cached=scan_edits.reusable_projection(m,s.STATE['axis'],s.WORK)
-                if cached:
-                    derived,count=cached
+                axis=s.STATE['axis']
+                derived,count=scan_edits.reusable_projection(m,axis,s.WORK) or (None,None)
+                if derived is None and s.STATE.get('active_job_scan')==x['id']:
+                    previous=s.STATE.get('derived')
+                    if previous and __import__('storage_cleanup').projection_matches(s.WORK,m,axis,previous):
+                        derived=previous
+                if derived:
                     progress(s,'Reusing the verified alignment projection')
+                    if count!=0 and scan_edits.analysis_range(m,derived) is None:
+                        count,coverage=scan_edits.measure_projection_range(m,derived,lambda msg:progress(s,msg))
+                        scan_edits.record_projection(m,derived,count,coverage)
                 else:
                     jobdata.room(s.WORK,m['count']*32);dest=asset_folder(s.WORK,'analysis')/(uuid.uuid4().hex+'.analysis64')
                     progress(s,f"Preparing {x['name']} for analysis · {m['count']:,} source points")
+                    coverage={}
                     try:
-                        derived,count=project_cloud(m,s.STATE['axis'],dest,lambda msg:progress(s,msg))
-                        if count:scan_edits.record_projection(m,derived,count)
+                        derived,count=project_cloud(m,axis,dest,lambda msg:progress(s,msg),coverage=coverage)
+                        if count:scan_edits.record_projection(m,derived,count,coverage)
                         else:dest.unlink(missing_ok=True)
                     except Exception:dest.unlink(missing_ok=True);raise
                 if not count:raise ValueError('No points fall within the alignment. Check units, positioning and extent.')

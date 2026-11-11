@@ -166,7 +166,7 @@ class _Recovery:
             if isinstance(props,dict) and props.get('derived'):
                 try:props['derived']=self.cache(props['derived'],m.get('count'),32)
                 except (OSError,ValueError):
-                    for key in ('derived','valid_points','derived_signature'):props.pop(key,None)
+                    for key in ('derived','valid_points','derived_signature','analysis_range'):props.pop(key,None)
         m.setdefault('name',str(name))
         return m
 
@@ -742,9 +742,10 @@ def post(s,h,path,body):
                 if body.get('to_survey'):
                     destination=asset_folder(s.WORK,'analysis')/(uuid.uuid4().hex+'.analysis64');created.append(destination)
                     jobdata.room(s.WORK,int(meta['count'])*32)
-                    derived,count=project_cloud(meta,s.STATE['axis'],destination,s.progress)
+                    coverage={}
+                    derived,count=project_cloud(meta,s.STATE['axis'],destination,s.progress,coverage=coverage)
                     if not count:raise ValueError('No positioned points lie within the alignment extent. Check the alignment and target control coordinates.')
-                    __import__('scan_edits').record_projection(meta,derived,count)
+                    __import__('scan_edits').record_projection(meta,derived,count,coverage)
                     source=registration_workspace.scan(s,active) if active else {}
                     s.STATE.update(cloud=copy.deepcopy(meta),derived=derived,valid_points=count,joints=None,
                                    active_job_scan=active,edits=copy.deepcopy(source.get('edit_history',[])),

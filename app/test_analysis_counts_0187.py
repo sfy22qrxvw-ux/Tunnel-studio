@@ -10,6 +10,7 @@ import uuid
 
 import numpy as np
 from core import Alignment,project_cloud
+import heatmap
 import job_api
 import projects
 import scan_edits
@@ -39,10 +40,12 @@ class AnalysisCounts0187Tests(unittest.TestCase):
                          'Temporary mesh projections must not attach a discarded derived path')
 
     def test_fresh_analysis_keeps_exact_total_after_deleting_outside_alignment(self):
-        derived,count=project_cloud(self.meta,self.axis,self.root/'derived.analysis64')
-        scan_edits.record_projection(self.meta,derived,count)
+        coverage={}
+        derived,count=project_cloud(self.meta,self.axis,self.root/'derived.analysis64',coverage=coverage)
+        scan_edits.record_projection(self.meta,derived,count,coverage)
         summary=scan_edits.cached_summary(self.meta)
         self.assertEqual(summary['count'],8);self.assertEqual(summary['valid_points'],2)
+        self.assertEqual(scan_edits.analysis_range(self.meta,derived),dict(start=4.,end=5.))
         item=dict(id='scan',name='Scan',kind='scan',visible=True,meta=self.meta,
                   edit_history=[],redo_history=[],deleted_groups=[])
         s=SimpleNamespace(WORK=self.root,STATE=dict(job_items=[item],active_job_scan='scan',
@@ -53,9 +56,34 @@ class AnalysisCounts0187Tests(unittest.TestCase):
         result=scan_edits.delete_many(s,['scan'],dict(mode='box',
             minimum=[10.9,-.1,-.1],maximum=[11.1,.1,.1]))
         self.assertEqual(result['count'],1);self.assertEqual(s.STATE['valid_points'],2)
+        self.assertEqual(scan_edits.analysis_range(s.STATE['cloud'],derived),coverage)
         scan_edits.apply(s,item,'undo_edit')
         self.assertEqual(s.STATE['valid_points'],2)
+        self.assertEqual(scan_edits.analysis_range(s.STATE['cloud'],derived),coverage)
         self.assertEqual(Path(derived).read_bytes(),original)
+
+    def test_positioned_scan_range_is_measured_in_both_projection_paths(self):
+        chainages=np.array([-21.,3100.,3102.,3150.,3220.,3298.,3300.,5800.])
+        xyz=np.column_stack((chainages-50,np.ones(len(chainages)),np.zeros(len(chainages))))
+        xyz.astype('<f8').tofile(self.root/'source.xyz64')
+        np.array([0,1,0,0,0,0,1,0],'u1').tofile(self.root/'source.mask')
+        meta={**self.meta,'count':len(xyz),'registration_translation':[50.,0.,0.]}
+        axis=Alignment([dict(chainage=s,e=s,n=0.,h=0.,radius=1.) for s in (-20.,5794.856)])
+        serial={}
+        with patch('compute_runtime.workers',return_value=1):
+            path,count=project_cloud(meta,axis,self.root/'serial.analysis64',coverage=serial)
+        self.assertEqual(count,4)
+        np.testing.assert_allclose([serial['start'],serial['end']],[3102.,3298.],atol=1e-9)
+        parallel={}
+        with patch('compute_runtime.workers',return_value=2), patch('core.CHUNK',2), patch('parallel_meshing.CHUNK',2):
+            other,other_count=project_cloud(meta,axis,self.root/'parallel.analysis64',coverage=parallel)
+        self.assertEqual((other_count,parallel),(count,serial))
+        self.assertEqual(Path(other).read_bytes(),Path(path).read_bytes())
+        grid=heatmap.calculate(meta,path,axis,**serial,step=10.)
+        self.assertEqual((grid['points'],grid['nx']),(4,20))
+        self.assertEqual(grid['counts'][8::grid['nx']],[0]*grid['ny'])
+        one_station=heatmap.calculate(meta,path,axis,serial['start'],serial['start'])
+        self.assertEqual((one_station['points'],one_station['nx']),(1,1))
 
     def test_incomplete_deletion_mask_cannot_produce_exact_count(self):
         Path(self.meta['mask_file']).write_bytes(b'\0'*11)
@@ -80,9 +108,13 @@ class AnalysisCounts0187Tests(unittest.TestCase):
             start_job=lambda fn,*args,**kwargs:fn())
         request=dict(action='analyse',id='scan',position_confirmed=True)
         with patch.object(job_api,'project_cloud',side_effect=AssertionError('reprojected')), \
-             patch.object(job_api.jobdata,'room',side_effect=AssertionError('reserved new disk space')):
+             patch.object(job_api.jobdata,'room',side_effect=AssertionError('reserved new disk space')), \
+             patch.object(scan_edits,'measure_projection_range',wraps=scan_edits.measure_projection_range) as measure:
             self.assertTrue(job_api.post(s,SimpleNamespace(send=lambda _:None),'/api/job-action',request))
+            self.assertTrue(job_api.post(s,SimpleNamespace(send=lambda _:None),'/api/job-action',request))
+            self.assertEqual(measure.call_count,1)
         self.assertEqual((s.STATE['derived'],s.STATE['valid_points']),(derived,count))
+        self.assertEqual(scan_edits.analysis_range(s.STATE['cloud'],derived),dict(start=4.,end=5.))
 
     def test_projection_reuse_validates_alignment_pose_file_and_edited_count(self):
         derived,count=project_cloud(self.meta,self.axis,self.root/(uuid.uuid4().hex+'.analysis64'))

@@ -28,6 +28,23 @@
   if(Math.abs(den)<1e-7)return null;
   return add(p,mul(forward,dot(sub(origin,p),n)/den));
  }
+ function visiblePlaneGrid(f,view,width,height,step){
+  if(!(width>0&&height>0&&step>0)||Math.abs(dot(f.z,view.basis.forward))<.005)return null;
+  const corners=[[0,0],[width,0],[width,height],[0,height]].map(pixel=>toLocal(planePoint(pixel,view,f),f));
+  const lo=[0,1].map(i=>Math.min(...corners.map(p=>p[i]))),hi=[0,1].map(i=>Math.max(...corners.map(p=>p[i])));
+  const ratio=Math.max(1,(hi[0]-lo[0])/(80*step),(hi[1]-lo[1])/(80*step));
+  const scale=10**Math.floor(Math.log10(ratio)),spacing=step*[1,2,5,10].map(v=>v*scale).find(v=>v>=ratio);
+  const lines=[];
+  for(let i=0;i<2;i++){
+   const first=Math.ceil(lo[i]/spacing),last=Math.floor(hi[i]/spacing);
+   if(!Number.isSafeInteger(first)||!Number.isSafeInteger(last))continue;
+   for(let n=first;n<=last;n++){
+    const a=[...lo,0],b=[...hi,0];a[i]=b[i]=n*spacing;
+    lines.push({a:toWorld(a,f),b:toWorld(b,f),major:n%5===0});
+   }
+  }
+  return {spacing,lines};
+ }
  function constrain(point,last,f,axis,ortho){
   if(!last)return point;const d=toLocal(sub(point,last),f,true);
   let index={x:0,y:1,z:2}[axis];if(index==null&&ortho)index=d.reduce((best,v,i)=>Math.abs(v)>Math.abs(d[best])?i:best,0);
@@ -86,6 +103,6 @@
   }
   return [...found.values()].filter(row=>row.count===1||row.crease).map(row=>row.edge);
  }
- const exports={add,sub,mul,dot,cross,norm,unit,worldFrame,toWorld,toLocal,parse,planePoint,constrain,segmentClosest,segmentPixel,intersection,rayTriangle,frameFromPoints,midpoint,commonFaceFrame,edges};
+ const exports={add,sub,mul,dot,cross,norm,unit,worldFrame,toWorld,toLocal,parse,planePoint,visiblePlaneGrid,constrain,segmentClosest,segmentPixel,intersection,rayTriangle,frameFromPoints,midpoint,commonFaceFrame,edges};
  if(typeof module!=='undefined')module.exports=exports;else window.CadMath=exports;
 })();
