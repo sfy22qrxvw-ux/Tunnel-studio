@@ -148,6 +148,10 @@ def alignment_preview(design):
                 vertical=vertical.tolist(),gradients_percent=(slopes*100).tolist(),
                 plan_chainages=samples.tolist(),plan=[at(x)[0].tolist() for x in samples])
 
+class ModelRangeError(ValueError):
+    """The selected range exceeds the model geometry budget."""
+
+
 def prepare(design):
     design=copy.deepcopy(design);stations,vertical,slopes,at=alignment(design)
     profiles=design.get('profiles',[])
@@ -182,8 +186,11 @@ def prepare(design):
     spacing=g.number(design.get('spacing',1),'Profile spacing',True);start=sections[0]['start'];end=sections[-1]['end']
     mandatory=distinct_stations(np.r_[stations[(stations>start)&(stations<end)],vertical[(vertical[:,0]>start)&(vertical[:,0]<end),0],*[ [q['start'],q['end']] for q in sections]])
     maximum=min(2048,g.MAX_VERTICES//len(knots),(g.MAX_FACES-2*len(knots))//(2*len(knots))+1)
-    if len(mandatory)>maximum-2:raise ValueError('Too many mandatory section/height changes for one model. Split the design into consecutive models.')
-    slots=max(2,maximum-len(mandatory));intervals=min(max(1,math.ceil((end-start)/spacing)),slots-1)
+    if len(mandatory)>maximum:
+        raise ModelRangeError(f'This range needs {len(mandatory):,} cross-sections at alignment and profile boundaries. '
+                              f'One model fits {maximum:,} at this profile detail. Choose a shorter range.')
+    slots=maximum-len(mandatory)
+    intervals=min(max(1,math.ceil((end-start)/spacing)),slots+1)
     samples=distinct_stations(np.r_[mandatory,np.linspace(start,end,intervals+1)])
     loops=[];centres=[]
     for station in samples:
@@ -242,10 +249,21 @@ def post(s,h,path,body):
     if path.endswith('preview'):
         design=body.get('design',{})
         info=alignment_preview(design)
+        resolved=design
         try:
-            clean,loops,info=prepare(resolve_profiles(s,design))
+            resolved=resolve_profiles(s,design)
+            _,_,info=prepare(resolved)
         except ValueError as exc:
-            info.update(model_error=str(exc),profiles=[],rings=[],centres=[])
+            # Profiles can be edited independently of the loft range or budget.
+            profiles=[]
+            for profile in resolved.get('profiles', []):
+                try:
+                    points=outline(profile)
+                except ValueError:
+                    continue
+                profiles.append(dict(id=profile.get('id'),name=profile.get('name'),points=points.tolist()))
+            info.update(model_error=str(exc),range_limited=isinstance(exc,ModelRangeError),
+                        profiles=profiles,rings=[],centres=[])
         h.send(info);return True
     design=resolve_profiles(s,body.get('design',{}))
     import cad_api
