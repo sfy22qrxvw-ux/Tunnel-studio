@@ -9,6 +9,7 @@ import numpy as np
 
 import design_api
 import design_compare
+import feature_selection
 import inspection
 import inspection_api
 import jobdata
@@ -16,6 +17,7 @@ import preview_index
 import registration_pose
 import section_circle
 import shape_selection
+import shape_matching
 import surface_api
 from core import Alignment
 
@@ -70,6 +72,7 @@ class SavedLimitBoxTests(unittest.TestCase):
             return rows
         def run(server,body,cached=None):
             if body['selection']['mode']=='full':return 'whole scan'
+            self.assertEqual(body['processing_area'],'limit_box')
             self.assertEqual(body['selection']['mode'],'oriented_box')
             self.assertIsNotNone(cached)
             for _ in range(2):
@@ -78,8 +81,39 @@ class SavedLimitBoxTests(unittest.TestCase):
         with patch.object(np,'fromfile',side_effect=observe),patch.object(surface_api,'_run',side_effect=run):
             surface_api.run(self.s,dict(source='separate',selection={'mode':'limit_box'}))
             self.assertEqual(reads,[self.block])
+            reads.clear()
+            surface_api.run(self.s,dict(source='separate',selection={'mode':'full'}))
+            self.assertEqual(reads,[self.block])
             self.assertEqual(surface_api.run(self.s,dict(source='separate',selection={'mode':'full'},
                                                         ignore_limit_box=True)),'whole scan')
+
+    def test_alignment_change_invalidates_local_circle_review(self):
+        axis=SimpleNamespace(a=np.array([[0.,100000.,400000.,0.,4.],[50000.,100000.,450000.,0.,4.]]))
+        self.s.STATE['axis']=axis
+        with patch.object(section_circle,'run',return_value={}):
+            row=shape_selection.preview(self.s,dict(source_id='merged',mode='circle',settings={'axis_source':'project'}))
+        self.assertIs(shape_selection.current(self.s),row)
+        axis.a[1,1]+=.1
+        with self.assertRaisesRegex(ValueError,'project alignment changed'):
+            shape_selection.current(self.s)
+
+    def test_shape_and_seeded_searches_use_saved_box_with_full_scan_visible(self):
+        cfg=shape_matching.settings({'search_scope':'auto'})
+        batches=list(shape_selection.batches(self.item,cfg,lambda _:None))
+        np.testing.assert_array_equal(np.concatenate([ids for ids,_,_ in batches]),self.expected)
+        seed=np.array([100000.,400000.+self.block+35,0.])
+        read=np.fromfile
+        reads=[]
+        def observe(file,*args,**kwargs):
+            result=read(file,*args,**kwargs)
+            if getattr(file,'name',None)==self.meta['file']:reads.append(result.size//3)
+            return result
+        with patch.object(np,'fromfile',side_effect=observe):
+            points,ids=feature_selection.local_points(self.item,seed,
+                dict(radius_m=20.,max_points=100,normal_neighbours=10),lambda _:None)
+        self.assertEqual(reads,[self.block])
+        np.testing.assert_array_equal(ids,self.expected[self.expected<=self.block+55])
+        np.testing.assert_array_equal(points[:,1],400000.+ids)
 
     def test_comparison_endpoints_clip_world_points_before_reading_and_writing(self):
         self.s.JOB={'busy':False}

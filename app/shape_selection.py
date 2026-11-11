@@ -23,6 +23,7 @@ import uuid
 
 import numpy as np
 from bounded_rows import RowFile
+from design_compare import axis_fingerprint
 from project_data_layout import folder as asset_folder
 import feature_selection
 import jobdata
@@ -75,9 +76,8 @@ def source(s, ident):
 
 def search_limit(item, cfg):
     scope=cfg.get('search_scope')
-    box=item.get('limit_box') if item.get('limit_hide_outside',True) else None
-    # Other consumers without a shape scope keep their existing view-filter policy.
-    if box and (scope=='auto' or scope is None and cfg['respect_view']):
+    box=item.get('limit_box')
+    if box and (scope=='auto' or scope is None and cfg['respect_view'] and item.get('limit_hide_outside',True)):
         return jobdata.selection_spec({'mode':'box',**box})
     return None
 
@@ -189,6 +189,11 @@ def discard(row):
     if row and row.get('folder'):shutil.rmtree(row['folder'],ignore_errors=True)
 
 
+def project_axis_revision(s):
+    axis=s.STATE.get('axis')
+    return axis_fingerprint(axis.a) if axis is not None else None
+
+
 def current(s, body=None):
     row=getattr(s,'SHAPE_SELECTION',None)
     if not row:raise ValueError('Draw an example and preview similar shapes first.')
@@ -196,6 +201,8 @@ def current(s, body=None):
         raise ValueError('The shape review changed. Refresh it before applying an action.')
     if feature_selection.fingerprint(source(s,row['source_id']))!=row['source_fingerprint']:
         raise ValueError('The source changed. Preview similar shapes again before editing points.')
+    if row.get('axis_fingerprint') and project_axis_revision(s)!=row['axis_fingerprint']:
+        raise ValueError('The project alignment changed. Preview local circles again before editing points.')
     return row
 
 
@@ -246,9 +253,11 @@ def preview(s, body):
                   for signature in record['signatures']}
     before=feature_selection.fingerprint(item); folder=asset_folder(s.WORK,'analysis')/('shape-'+uuid.uuid4().hex)
     folder.mkdir(); cancelled=lambda:__import__('job_api').CANCEL.is_set()
+    alignment_revision=None
     try:
         if mode=='circle':
             axis=s.STATE.get('axis');rows=np.array(axis.a,copy=True) if axis is not None else None
+            if rows is not None and cfg['axis_source']=='project':alignment_revision=axis_fingerprint(rows)
             with circle_source(item,cfg,selection,limit,folder,s.progress,cancelled) as read:
                 result=section_circle.run(read,folder,cfg,s.progress,cancelled,axis_rows=rows)
             if 'statistics' in result:result['statistics']['source_points']=int(item['meta']['count'])
@@ -256,6 +265,8 @@ def preview(s, body):
                                       bank=bank,reviewed=reviewed)
         if feature_selection.fingerprint(source(s,item['id']))!=before:
             raise ValueError('The source changed during shape matching. The previous preview is unchanged.')
+        if alignment_revision and project_axis_revision(s)!=alignment_revision:
+            raise ValueError('The project alignment changed. Preview local circles again.')
         area='whole'
         if selection is not None:area='selection'
         elif (limit if mode=='circle' else search_limit(item,cfg)):area='limit_box'
@@ -263,7 +274,7 @@ def preview(s, body):
         shape_matching.emit(s.progress,cancelled,'Local-circle candidates ready for review' if mode=='circle' else 'Shape candidates ready for review')
         row={**result,'id':uuid.uuid4().hex,'revision':uuid.uuid4().hex,'source_id':item['id'],'source_name':item['name'],
              'source_fingerprint':before,'settings':cfg,'example':example,'folder':str(folder),'mode':mode,
-             'class_id':body.get('class_id'),'review_scope':scope,'search_area':area}
+             'class_id':body.get('class_id'),'review_scope':scope,'search_area':area,'axis_fingerprint':alignment_revision}
         old=getattr(s,'SHAPE_SELECTION',None);s.SHAPE_SELECTION=row;discard(old)
         return row
     except BaseException:
@@ -273,7 +284,8 @@ def preview(s, body):
 def public(s, page=0, region=None, sort='id', *, include_points=True):
     row=getattr(s,'SHAPE_SELECTION',None)
     if not row:return None
-    try:stale=feature_selection.fingerprint(source(s,row['source_id']))!=row['source_fingerprint']
+    try:
+        current(s);stale=False
     except (OSError,ValueError):stale=True
     db=sqlite3.connect(row['review_file'])
     try:

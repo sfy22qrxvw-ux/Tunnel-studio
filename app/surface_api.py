@@ -113,7 +113,7 @@ def metrics(r):
 def public_result(s, r):
     if not r: return None
     out = {k:copy.deepcopy(r[k]) for k in ('id','revision','created_at','source_kind','selection','settings','statistics','warnings','clusters','kept','review_log','method','doi')}
-    for k in ('features','lining_frame','research_dois','rings','classification','detection','algorithm_notes'):
+    for k in ('features','lining_frame','research_dois','rings','classification','detection','algorithm_notes','processing_area'):
         if k in r:out[k]=copy.deepcopy(r[k])
     out['source_name'] = r['source_meta']['name']
     out['source_count'] = r['source_meta']['count']
@@ -314,11 +314,14 @@ def run(s, body):
     key=body.get('source','survey');item=source_item(s,key)
     area=body.get('selection') or {'mode':'full'}
     mode=area.get('mode','full')
+    body['processing_area']=None
     limit=item.get('limit_box') if item else None
     if mode=='limit_box' and not limit:
         raise ValueError('The saved limit box changed. Set it again or choose another processing area.')
     if limit and not (mode=='full' and body.get('ignore_limit_box') is True):
-        if mode in ('full','limit_box'):area={'mode':'box',**limit}
+        if mode in ('full','limit_box'):
+            area={'mode':'box',**limit}
+            body['processing_area']='limit_box'
         else:area['clip_box']=limit
     body['selection']=area
     # Small selections are collected once; later passes never rescan the source.
@@ -444,7 +447,7 @@ def _run(s, body, cached=None):
                 method='Remove stray points: radius support and locally adaptive neighbour-distance filtering'
             r.update(settings=settings,method=method,doi='10.3390/app15062926' if settings['method'] in ('gusac','tmatch') else '10.1016/j.measurement.2026.123609' if settings['method']=='ray_box' else '',
                 id=ident,revision=uuid.uuid4().hex,created_at=time.time(),source_kind=key,source_meta=meta,
-                source_item_id=source_item_id,source_fingerprint=fingerprint,
+                source_item_id=source_item_id,source_fingerprint=fingerprint,processing_area=body.get('processing_area'),
                 point_ids_file=str(idpath),labels_file=str(labelpath),selection=count_spec,review_log=[],outputs={})
             commit_result(s,r)
         except Exception:
@@ -489,7 +492,7 @@ def _run(s, body, cached=None):
            'method':('Tunnel Studio tunnel-envelope extraction; block-processed and merged for tunnel lining review.' if settings.get('method')=='tunnel_envelope' else 'SMRG research implementation, Song et al. 2026; independent interpretation, automatically block-processed for large selections.'),'doi':('' if settings.get('method')=='tunnel_envelope' else '10.1038/s41598-026-73755-6')}
         r.update(id=ident,revision=uuid.uuid4().hex,created_at=time.time(),source_kind=key,source_meta=meta,point_ids_file=str(idpath),labels_file=str(labelpath),selection=spec or {'mode':'full'},review_log=[],outputs={})
         if CANCEL.is_set():raise ValueError('Surface extraction cancelled. The previous result is unchanged.')
-        r['source_item_id']=source_item_id
+        r.update(source_item_id=source_item_id,processing_area=body.get('processing_area'))
         commit_result(s,r)
     except Exception:
         idpath.unlink(missing_ok=True);labelpath.unlink(missing_ok=True);raise

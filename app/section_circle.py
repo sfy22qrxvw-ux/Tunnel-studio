@@ -91,6 +91,37 @@ class Curve:
         return s,np.c_[np.sum(delta*r,axis=1),np.sum(delta*u,axis=1)],valid
 
 
+class ProjectGuide:
+    """Exact 3D alignment segments with fixed normal planes and metre windows."""
+    def __init__(self,rows):
+        from design_compare import CircularDesign
+        self.alignment=CircularDesign(rows)
+        self.length=np.sqrt(self.alignment.length2)
+        self.s=np.r_[0.,np.cumsum(self.length)]
+        self.normal=self.alignment.vector/self.length[:,None]
+        self.right=np.c_[self.normal[:,1],-self.normal[:,0],np.zeros(len(self.length))]
+        vertical=np.linalg.norm(self.right,axis=1)<1e-8
+        self.right[vertical]=np.cross(self.normal[vertical],[0.,1.,0.])
+        self.right/=np.linalg.norm(self.right,axis=1)[:,None]
+        self.up=np.cross(self.right,self.normal)
+
+    def at(self,s):
+        s=np.asarray(s,float)
+        idx=np.clip(np.searchsorted(self.s,s,side='right')-1,0,len(self.length)-1)
+        t=(s-self.s[idx])/self.length[idx]
+        centre=self.alignment.origin+self.alignment.start[idx]+t[...,None]*self.alignment.vector[idx]
+        return centre,self.normal[idx],self.right[idx],self.up[idx]
+
+    def chainage_at(self,s):
+        return float(np.interp(s,self.s,self.alignment.a[:,0]))
+
+    def project(self,p):
+        idx,t,_,valid=self.alignment.project(p)
+        delta=(p-self.alignment.origin)-(self.alignment.start[idx]+t[:,None]*self.alignment.vector[idx])
+        uv=np.c_[np.einsum('ij,ij->i',delta,self.right[idx]),np.einsum('ij,ij->i',delta,self.up[idx])]
+        return self.s[idx]+t*self.length[idx],uv,valid
+
+
 class Samples:
     """Up to 12k actual, spatially balanced observations per distance bin."""
     def __init__(self,path,length):
@@ -163,7 +194,7 @@ def circle(q,radius_hint,band,rng):
     bins=np.minimum(71,(np.mod(np.arctan2(used[:,1]-centre[1],used[:,0]-centre[0]),2*np.pi)*72/(2*np.pi)).astype(int))
     rms=float(np.sqrt(np.mean(errors**2)));coverage=len(np.unique(bins))*5.
     supported=coverage>=240 and rms<=band*.35 and shell.mean()>=.45
-    reason='Supported circular lining' if supported else 'Too little circular coverage' if coverage<240 else 'Circle residual is too large for the chosen keep band' if rms>band*.35 else 'Most measured shape does not support this circle'
+    reason='Supported circular lining' if supported else 'Too little circular coverage' if coverage<240 else 'Circle residual is too large for the chosen keep band' if rms>band*.35 else 'Wall support below 45%'
     return dict(offset=centre,radius=radius,rms_mm=rms*1000,coverage_deg=coverage,support_points=int(shell.sum()),calibration_points=len(q),inlier_fraction=float(shell.mean()),supported=bool(supported),reason=reason)
 
 
@@ -178,21 +209,24 @@ def merge_stations(base,extra):
 def fit(samples,guide,stations,cfg,progress,cancel,radius_hint):
     rng=np.random.default_rng(215);length=cfg['section_m'];band=min(cfg['inward_mm'],cfg['outward_mm'])/1000
     quality=[]
-    # Refinement affects the reference only, never the measured coordinates.
-    for iteration in range(4):
+    fixed=isinstance(guide,ProjectGuide)
+    passes=1 if fixed else 4
+    for iteration in range(passes):
+        final=iteration==passes-1
         quality=[];new=[];usable=[];projected={}
-        working=stations if iteration==3 else merge_stations(stations,np.arange(stations[0],stations[-1],min(1.,length/2)))
-        support_length=length if iteration==3 else min(1.,length)
+        working=stations if final else merge_stations(stations,np.arange(stations[0],stations[-1],min(1.,length/2)))
+        support_length=length if final else min(1.,length)
         for i,station in enumerate(working):
-            emit(progress,cancel,f'Fitting local circles · pass {iteration+1}/4 · window {i+1}/{len(working)}')
+            emit(progress,cancel,f'Fitting local circles · pass {iteration+1}/{passes} · window {i+1}/{len(working)}')
             c,n,r,u=guide.at(station)
             uv=samples.projected_window(station,support_length,guide,projected)
             info=circle(uv,radius_hint,band,rng)
             if info is None:info=dict(offset=np.zeros(2),radius=radius_hint,rms_mm=None,coverage_deg=0.,support_points=0,calibration_points=0,inlier_fraction=0.,supported=False,reason='Insufficient circular wall evidence')
             info['station_m']=float(station);quality.append(info)
+            if final:continue
             seed_ok=info['coverage_deg']>=200 and info['inlier_fraction']>=.45 and info['rms_mm'] is not None and info['rms_mm']<40
             shift=info['offset']
-            if iteration<3 and len(uv)>=120 and (not seed_ok or info['rms_mm']>2 or info['coverage_deg']<280):
+            if len(uv)>=120 and (not seed_ok or info['rms_mm']>2 or info['coverage_deg']<280):
                 # Before the direction has converged, an oblique circular
                 # tube cuts an ellipse. Its robust bilateral midpoint can
                 # guide the centre without claiming a circular fit. Missing
@@ -201,7 +235,7 @@ def fit(samples,guide,stations,cfg,progress,cancel,radius_hint):
                 if width.min()>1.4*radius_hint and width.max()<3.5*radius_hint:
                     shift=(lo+hi)/2;seed_ok=True
             new.append(c+shift[0]*r+shift[1]*u if seed_ok else c);usable.append(seed_ok)
-        if iteration<3 and sum(usable)>=2:
+        if not final and sum(usable)>=2:
             # Missing fitted centres remain on the guide and are not promoted
             # to evidence. Final support still requires neighbouring good fits.
             # Preserve the guide's finer bend geometry. Replacing it with
@@ -217,6 +251,7 @@ def fit(samples,guide,stations,cfg,progress,cancel,radius_hint):
     offsets=np.array([q['offset'] for q in quality]);radii=np.array([q['radius'] for q in quality]);supported=np.array([q['supported'] for q in quality],bool)
     for q in quality:
         c,n,r,u=guide.at(q['station_m']);q.update(centre=(c+q['offset'][0]*r+q['offset'][1]*u).tolist(),normal=n.tolist(),right=r.tolist(),up=u.tolist(),radius_m=q['radius'])
+        if fixed:q['chainage_m']=guide.chainage_at(q['station_m'])
         q['offset']=q['offset'].tolist()
     return dict(guide=guide,stations=np.asarray(stations),offsets=offsets,radii=radii,supported=supported,sections=quality)
 
@@ -237,7 +272,8 @@ def run(batches,folder,cfg,progress=lambda _:None,cancel=lambda:False,axis_rows=
     if guide is None and cfg['axis_source']=='project':
         a=np.asarray(axis_rows,float)
         if a.ndim!=2 or a.shape[1]<4 or len(a)<2:raise ValueError('Load a project alignment, or choose Scan-derived centreline.')
-        guide=Curve(a[:,1:4]);hint=float(np.median(a[:,4])) if a.shape[1]>4 else None
+        if a.shape[1]>4:guide=ProjectGuide(a[:,:5]);hint=float(np.median(a[:,4]))
+        else:guide=ProjectGuide(np.c_[a,np.ones(len(a))])
     bounds=np.array([[np.inf]*3,[-np.inf]*3])
     def measure_area():
         for part in source():
@@ -270,16 +306,22 @@ def run(batches,folder,cfg,progress=lambda _:None,cancel=lambda:False,axis_rows=
         if not np.isfinite([low,high]).all() or high-low<cfg['section_m']*.25:raise ValueError('Too little tunnel length follows this centreline. Choose the correct alignment or a longer branch.')
         step=cfg['section_m']/2
         stations=np.arange(math.floor(low/step)*step,math.ceil(high/step)*step+step*.1,step)
-        stations=np.unique(np.clip(stations,guide.s[0],guide.s[-1]))
+        limits=(low,high) if isinstance(guide,ProjectGuide) else (guide.s[0],guide.s[-1])
+        stations=np.unique(np.clip(stations,*limits))
         if len(stations)<2:raise ValueError('Too few local windows along the centreline.')
         model=fit(cache,guide,stations,cfg,lambda m:progress('2/3 '+m),cancel,hint)
+        supported=model['supported']
+        has_supported_span=bool(np.any(supported[:-1]&supported[1:]))
         ids_path=folder/'candidate_ids.bin';labels_path=folder/'candidate_labels.bin';flags_path=folder/'selected.bin';db_path=folder/'review.sqlite'
         db=sqlite3.connect(db_path);db.execute(shape_matching.MATCH_SCHEMA);groups={};counts=np.zeros(4,np.int64);read=matched=0
         # The preview is bounded, whereas exact candidate identities are streamed.
         preview=[];preview_labels=[];preview_indices=[];preview_stations=[];reservoir_rank=np.empty(0,np.uint64)
         try:
             with ids_path.open('wb') as out,labels_path.open('wb') as lab,flags_path.open('wb') as flags:
-                for ids,p,_ in source():
+                if not has_supported_span:
+                    emit(progress,cancel,'3/3 All points retained · no neighbouring fits passed')
+                    counts[3]=total;read=total
+                for ids,p,_ in source() if has_supported_span else ():
                     emit(progress,cancel,f'3/3 Checking each original point against local circles · {read+len(p):,}/{total:,} area points')
                     label,s,_=classify(p,model,cfg);counts+=np.bincount(label,minlength=4);take=np.flatnonzero((label==1)|(label==2))
                     section=np.maximum(0,np.floor((s[take]-low)/cfg['section_m']).astype(np.int64));gid=(section*2+label[take]).astype('<i4')
@@ -310,10 +352,11 @@ def run(batches,folder,cfg,progress=lambda _:None,cancel=lambda:False,axis_rows=
             warnings.append(f'Measured lining spans {high-low:.2f} m along the guide with {cfg["section_m"]:g} m fitting windows. These fits share much of the same data. Review their coverage and RMS. Classification requires two supported neighbouring fits.')
         if counts[1]+counts[2]>total*.25:warnings.append('More than a quarter of the retained scan lies outside the requested band. Inspect the circles and tolerances before selecting any candidates.')
         if good<len(sections):warnings.append(f'{len(sections)-good} fitting windows failed circularity, coverage or residual checks; affected points remain unselected.')
-        if not good:warnings.append('No local circle meets the chosen band and wall-coverage checks. Restore missing lining, widen the tolerance, or review the centreline. All source points remain unselected.')
+        if not has_supported_span:
+            warnings.append('No two neighbouring fits passed. All points were retained. Inspect the fit coverage, support and section direction before previewing again.')
         return dict(count=matched,point_ids_file=str(ids_path),labels_file=str(labels_path),selected_file=str(flags_path),review_file=str(db_path),preview_file=str(folder/'preview.npz'),circle_sections=sections,
                     statistics=dict(input_points=total,effective_bounds=bounds.tolist(),guide_range_m=[low,high],
-                        candidate_points=matched,selected_points=0,inward_points=int(counts[1]),outward_points=int(counts[2]),within_points=int(counts[0]),unassessed_points=int(counts[3]),section_length_m=cfg['section_m'],overlap_percent=50,fit_windows=len(sections),supported_windows=good,calibration_points=len(sample),seconds=round(time.monotonic()-started,3)),
+                        candidate_points=matched,selected_points=0,inward_points=int(counts[1]),outward_points=int(counts[2]),within_points=int(counts[0]),unassessed_points=int(counts[3]),section_length_m=cfg['section_m'],overlap_percent=50,fit_windows=len(sections),supported_windows=good,has_supported_span=has_supported_span,calibration_points=len(sample),seconds=round(time.monotonic()-started,3)),
                     warnings=warnings,method='Overlapping local best-fit circles in moving perpendicular centreline frames',research_dois=[])
     finally:
         cache.close()

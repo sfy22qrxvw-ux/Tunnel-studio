@@ -8,12 +8,11 @@ candidates measured relative to an explicitly supplied interior/view direction.
 An explicit shape choice distinguishes raised fittings and recessed pockets. No missing lining is reconstructed.
 """
 from project_data_layout import folder as asset_folder
-from contextlib import ExitStack
 from pathlib import Path
 import copy, hashlib, json, math, time, uuid
 import numpy as np
 from scipy.spatial import cKDTree, ConvexHull, QhullError
-import jobdata, preview_index, scan_edits, scan_export, registration_pose, registered_cloud
+import jobdata, scan_edits, scan_export, registration_pose, registered_cloud
 
 MAX_LOCAL_POINTS = 1_000_000
 MAX_GRAPH_VISITS = 30_000_000
@@ -76,27 +75,14 @@ def local_points(item,seed,cfg,progress,selection=None):
     if meta.get('mask_file') and Path(meta['mask_file']).stat().st_size!=n:raise ValueError('The exclusion mask is incomplete.')
     spec=jobdata.selection_spec(selection) if selection else None
     area={'mode':'box','minimum':(seed-radius).tolist(),'maximum':(seed+radius).tolist()}
-    points=[];ids=[];total=checked=0
-    with ExitStack() as files:
-        xyz=files.enter_context(open(meta['file'],'rb'))
-        mask=files.enter_context(open(meta['mask_file'],'rb')) if meta.get('mask_file') else None
-        boxes=preview_index.world_boxes(meta,preview_index.bounds(meta,progress))
-        for start,stop in preview_index.selection_blocks(meta,area,boxes=boxes):
-            xyz.seek(start*24);q=np.fromfile(xyz,'<f8',count=(stop-start)*3)
-            if q.size!=(stop-start)*3:raise ValueError('The point cache changed during the local read.')
-            q=registration_pose.points(meta,q.reshape(-1,3));use=np.isfinite(q).all(1)&(np.sum((q-seed)**2,axis=1)<=radius**2)
-            if mask is not None:
-                mask.seek(start);excluded=np.fromfile(mask,'u1',count=stop-start)
-                if len(excluded)!=len(q):raise ValueError('The exclusion mask changed during the local read.')
-                use&=excluded==0
-            if spec:use&=jobdata.selection_mask(q,spec)
-            for hidden in item.get('hidden_boxes',[]):use&=~jobdata.selection_mask(q,hidden)
-            if item.get('isolate_box'):use&=jobdata.selection_mask(q,item['isolate_box'])
-            if item.get('limit_box') and item.get('limit_hide_outside',True):use&=jobdata.selection_mask(q,{'mode':'box',**item['limit_box']})
-            found=int(use.sum());total+=found;checked+=len(q)
-            if total>cap:raise ValueError(f'This local area contains more than {cap:,} retained points. Reduce Search radius or draw a smaller limit box. No points were sampled or deleted.')
-            if found:points.append(q[use]);ids.append(np.flatnonzero(use).astype('<i8')+start)
-            progress(f'Reading local area · {checked:,} source points checked · {total:,} retained points inside radius')
+    points=[];ids=[];total=0
+    visibility={**item,'limit_hide_outside':True}
+    for original,q in jobdata.selection_rows(meta,area,progress,visibility=visibility):
+        use=np.sum((q-seed)**2,axis=1)<=radius**2
+        if spec:use&=jobdata._selection_mask_validated(q,spec)
+        found=int(use.sum());total+=found
+        if total>cap:raise ValueError(f'This local area contains more than {cap:,} retained points. Reduce Search radius or draw a smaller limit box. No points were sampled or deleted.')
+        if found:points.append(q[use]);ids.append(original[use])
     if total<max(20,cfg['normal_neighbours']+1):raise ValueError('Too few retained points around the seed. Increase Search radius or choose a denser area.')
     return np.concatenate(points),np.concatenate(ids)
 

@@ -7,7 +7,7 @@
  const panel=document.createElement('section');panel.id='tab-feature-selection';panel.className='tab feature-panel';
  const field=(id,label,value,min,max,help)=>`<label><span>${label}</span><input id="feature-${id}" type="number" value="${value}" min="${min}" max="${max}" step="any" title="${help}"><small>${help}</small></label>`;
  panel.innerHTML=`<header class="feature-heading"><span class="feature-eyebrow">POINT SELECTION</span><h2 id="feature-title">Grow a connected region</h2><p id="feature-intro"></p></header>
- <section class="feature-step"><h3><span>1</span> Choose the measured surface</h3><label>Source scan<select id="feature-source" title="The scan containing the original measured points. Only this scan can be changed by this tool."></select></label><label id="feature-scope-row">Processing area<select id="feature-scope"><option value="whole">Whole retained cloud · automatic blocks</option><option value="local">Near a picked point · local search</option></select><small>The whole-cloud route checks all retained points through bounded lining windows. An active limit box still applies.</small></label><label id="feature-kind-row">Feature shape<select id="feature-kind"><option value="departures">All lining departures · both raised and recessed</option><option value="recess">Recessed bolt pocket · dip below the wall</option><option value="raised">Raised fitting · bump above the wall</option></select></label><button id="feature-pick" type="button">Pick seed in 3D</button><p id="feature-seed" class="feature-hint">Pick a point on the surface you want to select.</p></section>
+ <section class="feature-step"><h3><span>1</span> Choose the measured surface</h3><label>Source scan<select id="feature-source" title="The scan containing the original measured points. Only this scan can be changed by this tool."></select></label><label id="feature-scope-row">Processing area<select id="feature-scope"><option value="whole">Lining analysis</option><option value="local">Near a picked point · local search</option></select><small>The saved limit box or current highlight scopes lining analysis.</small></label><label id="feature-kind-row">Feature shape<select id="feature-kind"><option value="departures">All lining departures · both raised and recessed</option><option value="recess">Recessed bolt pocket · dip below the wall</option><option value="raised">Raised fitting · bump above the wall</option></select></label><button id="feature-pick" type="button">Pick seed in 3D</button><p id="feature-seed" class="feature-hint">Pick a point on the surface you want to select.</p></section>
  <section class="feature-step"><h3><span>2</span> Set the local search</h3><div class="feature-fields">${field('radius','Search radius · m',.6,.03,20,'Only retained points within this distance of the seed are checked. A smaller area is quicker and easier to review.')}${field('connection','Connection distance · mm',18,.1,500,'Largest gap between neighbouring points in the same group. Increase for sparse scans; decrease to avoid joining adjacent objects.')}<div id="feature-region-fields">${field('angle','Maximum surface turn · °',25,1,85,'Neighbours must have similar surface directions. Lower values stop growth at smaller changes of direction.')}${field('offset','Surface step limit · mm',12,.1,500,'Stops growth across a height step between nearby surfaces. Smaller values can separate a pipe or bolt from the wall.')}</div><div id="feature-bolt-fields" hidden>${field('height','Minimum protrusion · mm',8,.5,300,'Points must stand at least this far towards you from surrounding measured lining. Choose a value above the scan roughness.')}${field('diameter','Maximum fitting diameter · mm',250,5,2000,'Rejects broad or elongated protrusions. The search radius must be at least this diameter, with lining visible around the feature.')}<label class="feature-check"><input id="feature-flip" type="checkbox" title="Reverses which side counts as protruding. The default side faces the camera when you picked the seed.">Reverse inferred inside direction</label><small id="feature-side-help">Local search uses the view direction recorded when you picked the seed. Look from inside the tunnel towards the wall.</small></div></div>
  <details class="feature-advanced"><summary>Advanced settings</summary><div class="feature-fields">${field('neighbours','Neighbours for surface direction',16,6,40,'More neighbours smooth local direction estimates; fewer follow small details. Used by seeded region growth.')}${field('max-height','Maximum protrusion · mm',150,1,1000,'Taller points are left for a separate cleaning review, so distant services are not treated as bolt heads.')}${field('min-points','Minimum candidate points',8,3,100000,'Rejects small disconnected groups with less measured support. Used for bolt and fitting candidates.')}<label>Local point budget<select id="feature-budget" title="This is a processing limit, not sampling. If the local area exceeds it, the operation stops and asks for a smaller area."><option value="100000">100,000 points</option><option value="250000">250,000 points</option><option value="500000" selected>500,000 points</option><option value="1000000">1,000,000 points</option></select><small>Every retained point inside the area is checked. Over-budget areas stop without changing the previous result.</small></label><label class="feature-check"><input id="feature-use-area" type="checkbox" title="Also restrict the local search to the current box, lasso or polygon selection.">Also use the current drawn selection</label></div></details>
  <div class="feature-actions"><button id="feature-preview" class="primary" type="button">Preview selection</button><button id="feature-stop" hidden type="button">Stop</button></div><p id="feature-status" role="status" aria-live="polite"></p></section>
@@ -68,7 +68,7 @@
  function wholeScope(){return mode==='bolts'&&el('scope').value==='whole';}
  function activeLimitBox(){
   const scan=window.JobUI.scanItems().find(item=>item.id===el('source').value);
-  return !!scan?.limit_box&&scan.limit_hide_outside!==false;
+  return !!scan?.limit_box;
  }
  function scopeInfo(){
   const whole=wholeScope(),bolt=mode==='bolts',recess=el('kind').value==='recess';
@@ -85,7 +85,10 @@
   el('height').min=whole?2:.5;el('height').max=whole?100:300;
   el('diameter').min=whole?50:5;el('diameter').max=whole?800:2000;
   if(whole)el('flip').checked=false;
-  el('preview').textContent=whole?(activeLimitBox()?'Preview inside limit box':'Preview whole cloud'):'Preview local selection';
+  const highlighted=window.JobUI.selectedItem()?.id===el('source').value&&window.JobUI.currentSelection();
+  const area=highlighted?'Highlighted points':activeLimitBox()?'Saved limit box':'Whole retained scan';
+  el('scope').querySelector('[value=whole]').textContent=area;
+  el('preview').textContent=whole?(highlighted?'Analyse highlighted points':activeLimitBox()?'Analyse inside limit box':'Analyse whole scan'):'Preview local selection';
   el('seed').textContent=recess?'From inside the tunnel, face the wall and click inside or beside the bolt pocket. Include surrounding wall.':'From inside the tunnel, face the wall and click a raised fitting. Include surrounding wall.';
   if(el('kind').value==='departures'&&bolt){
    for(const id of ['diameter','max-height','min-points','flip','connection'])el(id).closest('label').hidden=true;
@@ -102,8 +105,9 @@
   const id=el('source').value;if(!id)throw Error('Choose a source scan.');
   running=true;controls();
   try{
-   window.JobUI.clearFeaturePreview?.();window.JobUI.selectScan(id);
-   if(!await window.JobUI.openSurface({whole:true}))throw Error('The scan could not be opened for whole-cloud detection.');
+   window.JobUI.clearFeaturePreview?.();
+   if(window.JobUI.selectedItem()?.id!==id)window.JobUI.selectScan(id);
+   if(!await window.JobUI.openSurface())throw Error('Choose the scan and open lining analysis again.');
    window.SurfaceUI.configureBolts(cfg);
    $('surf-run').click();
   }finally{running=false;controls();}

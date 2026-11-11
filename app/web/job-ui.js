@@ -615,14 +615,14 @@
  $('job-import-scans').onclick=()=>$('job-scan-files').click();$('job-import-mesh').onclick=()=>$('job-mesh-files').click();$('job-scan-files').onchange=e=>{const f=Array.from(e.target.files);e.target.value='';uploadFiles(f,'job_scan');};$('job-mesh-files').onchange=e=>{const f=Array.from(e.target.files);e.target.value='';uploadFiles(f,'job_mesh');};
  $('job-browse-paths').onclick=()=>window.TunnelRibbon?.openImport?.('scan');$('job-import-paths').onclick=()=>{const paths=$('job-paths').value.split(/\r?\n/).map(x=>x.trim()).filter(Boolean);if(paths.length)importPaths(paths);};$('job-cancel').onclick=()=>{const transferring=!!uploadController;if(uploading){stopQueue=true;uploadController?.abort();}return post('/api/cancel-operation',{}).catch(e=>{if(!transferring)notice(e.message,true);});};
  $('job-register').onclick=()=>action({action:'register',id:selected},'registration');$('job-surface').onclick=openSurface;
- async function openSurface(options={}){
+ async function openSurface(){
   if(busy||uploading)return false;
   const item=current();if(!item||item.kind!=='scan'){showTunnelMessage('Select a scan first','Select a point-cloud scan in the scene list, then open Clean Tunnel.',true);return false;}
   // Capture before any preview refresh or drawer change can clear the selection.
   const limit=item.limit_box;
-  const selectedArea=options.whole===true||!selectionSpec?null:JSON.parse(JSON.stringify(selectionSpec));
+  const selectedArea=selectionSpec?JSON.parse(JSON.stringify(selectionSpec)):null;
   if(selectedArea&&limit)selectedArea.clip_box=limit;
-  const area=selectedArea||(options.whole===true?{mode:'full'}:limit?{mode:'limit_box'}:null);
+  const area=selectedArea||(limit?{mode:'limit_box'}:null);
   if(window.CadUI?.modelSpace?.()&&!window.CadUI.enter('Clean',{openTool:false}))return false;
   const ok=await action({action:'surface',id:item.id,selection:selectedArea});if(!ok)return false;
   const ready=await window.SurfaceUI?.selectSource('separate',area);if(ready===false)return false;

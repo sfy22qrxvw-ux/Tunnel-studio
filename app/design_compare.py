@@ -43,33 +43,64 @@ class CircularDesign:
         self.origin=self.a[0,1:4].copy();self.a[:,1:4]-=self.origin
         self.start=self.a[:-1,1:4];self.vector=np.diff(self.a[:,1:4],axis=0)
         self.length2=np.sum(self.vector**2,axis=1);self.mid=self.start+self.vector*.5
-        self.halfmax=float(np.sqrt(self.length2).max()/2);self.tree=cKDTree(self.mid)
+        self.tree=cKDTree(self.mid)
+        self.bounds=self._bounds(np.arange(len(self.start)))
+
+    def _bounds(self,ids):
+        a,b=self.start[ids],self.a[ids+1,1:4]
+        lo=np.minimum(a,b).min(axis=0);hi=np.maximum(a,b).max(axis=0)
+        if len(ids)<=8:return lo,hi,np.sort(ids),None,None
+        order=ids[np.argsort(self.mid[ids,np.argmax(hi-lo)])];middle=len(order)//2
+        return lo,hi,None,self._bounds(order[:middle]),self._bounds(order[middle:])
+
+    def _distances(self,p,ids):
+        delta=p-self.start[ids];vector=self.vector[ids]
+        raw=np.sum(delta*vector,axis=-1)/self.length2[ids];t=np.clip(raw,0,1)
+        delta-=t[...,None]*vector
+        return np.sum(delta**2,axis=-1),t,raw
+
+    def _project_block(self,p):
+        # The midpoint is a starting upper bound. Segment bounds below
+        # verify the exact nearest result, including competing branches.
+        _,idx=self.tree.query(p,eps=.5)
+        best,t,raw=self._distances(p,idx)
+
+        def visit(node,rows):
+            lo,hi,ids,left,right=node
+            q=p[rows]
+            gap=np.maximum(np.maximum(lo-q,q-hi),0.)
+            rows=rows[np.sum(gap**2,axis=1)<=best[rows]+1e-10]
+            if not len(rows):return
+            if ids is None:
+                visit(left,rows);visit(right,rows);return
+            d2,f,r=self._distances(p[rows,None,:],ids[None,:])
+            minimum=d2.min(axis=1)
+            column=np.argmax(d2<=minimum[:,None]+1e-20,axis=1)
+            candidates=ids[column]
+            use=(minimum<best[rows]-1e-20)|((abs(minimum-best[rows])<=1e-20)&(candidates<idx[rows]))
+            dest=rows[use];selected=column[use]
+            best[dest]=minimum[use];idx[dest]=candidates[use]
+            t[dest]=f[use,selected];raw[dest]=r[use,selected]
+
+        visit(self.bounds,np.arange(len(p)))
+        beyond=((idx==0)&(raw < -1e-10))|((idx==len(self.start)-1)&(raw > 1+1e-10))
+        return idx,t,best,~beyond
+
+    def project(self,points):
+        """Nearest 3D segment, clamped fraction, squared distance and end validity."""
+        p=np.asarray(points,dtype=np.float64)-self.origin
+        segments=np.empty(len(p),dtype=np.intp);fractions=np.empty(len(p));distance2=np.empty(len(p))
+        valid=np.empty(len(p),dtype=bool)
+        for start in range(0,len(p),25000):
+            part=slice(start,start+25000)
+            segments[part],fractions[part],distance2[part],valid[part]=self._project_block(p[part])
+        return segments,fractions,distance2,valid
 
     def evaluate(self,points):
-        p=np.asarray(points,dtype=np.float64)-self.origin;dev=[];station=[];valid=[]
-        for start in range(0,len(p),2000):
-            batch=p[start:start+2000];nearest,_=self.tree.query(batch)
-            radius=nearest+self.halfmax+1e-9
-            sizes=self.tree.query_ball_point(batch,radius,return_length=True)
-            cumulative=np.r_[0,np.cumsum(sizes)];first=0
-            while first<len(batch):
-                # Dense curves or distant points shrink this work block rather
-                # than rejecting the tunnel or changing nearest-segment search.
-                end=max(first+1,int(np.searchsorted(cumulative,cumulative[first]+500000,side='right')-1))
-                end=min(end,len(batch));q=batch[first:end];counts=sizes[first:end]
-                neighbours=self.tree.query_ball_point(q,radius[first:end],return_sorted=True)
-                qi=np.repeat(np.arange(len(q)),counts);si=np.concatenate(neighbours).astype(np.int64)
-                raw=np.einsum('ij,ij->i',q[qi]-self.start[si],self.vector[si])/self.length2[si]
-                t=np.clip(raw,0,1);delta=q[qi]-(self.start[si]+t[:,None]*self.vector[si]);dist2=np.sum(delta**2,axis=1)
-                best=np.full(len(q),np.inf);np.minimum.at(best,qi,dist2)
-                take=np.full(len(q),len(qi),dtype=np.int64);equal=dist2<=best[qi]+1e-20
-                np.minimum.at(take,qi[equal],np.flatnonzero(equal))
-                idx=si[take];u=t[take];r=self.a[idx,4]*(1-u)+self.a[idx+1,4]*u
-                dev.append(np.sqrt(best)-r);station.append(self.a[idx,0]*(1-u)+self.a[idx+1,0]*u)
-                beyond=((idx==0)&(raw[take]<-1e-10))|((idx==len(self.start)-1)&(raw[take]>1+1e-10))
-                valid.append(~beyond);first=end
-        if not len(p):return np.empty(0),np.empty(0),np.empty(0,dtype=bool)
-        return np.concatenate(dev),np.concatenate(station),np.concatenate(valid)
+        idx,t,distance2,valid=self.project(points)
+        radius=self.a[idx,4]*(1-t)+self.a[idx+1,4]*t
+        station=self.a[idx,0]*(1-t)+self.a[idx+1,0]*t
+        return np.sqrt(distance2)-radius,station,valid
 
 
 class MeshDesign:

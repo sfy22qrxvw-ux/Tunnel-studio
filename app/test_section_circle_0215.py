@@ -8,6 +8,7 @@ import section_circle as sc
 import shape_selection as ss
 import workspace_history
 import test_shape_matching_0214 as shape_fixture
+from core import Alignment
 
 
 def curved(length=40.,bend_radius=45.,tube_radius=2.5,spacing=.08):
@@ -95,12 +96,50 @@ class SectionCircleTests(unittest.TestCase):
                 np.testing.assert_array_equal(result['statistics']['effective_bounds'],[p.min(0),p.max(0)])
                 self.assertTrue(any('These fits share much of the same data' in text for text in result['warnings']))
 
+    def test_project_planes_follow_curved_graded_alignment_and_fit_measured_radius(self):
+        station=np.arange(0.,24.1,.4);bend=station/65
+        xyz=np.array([400000.,550000.,125.])+np.c_[65*np.sin(bend),65*(1-np.cos(bend)),.05*station]
+        axis=Alignment([dict(chainage=s-20,e=p[0],n=p[1],h=p[2],radius=4.)
+                        for s,p in zip(station,xyz)])
+        angles=np.arange(90)*2*np.pi/90
+        angles=angles[np.abs(angles-np.pi/2)>.44]
+        duct_angles=np.linspace(np.pi,2*np.pi,21)
+        wall=[];services=[]
+        for s in np.arange(7.03,17.03,.10):
+            c,_,r,u,_=axis.at(s-20)
+            # The measured centre shifts across stations. The section planes
+            # still follow the loaded alignment through its curve and grade.
+            c=c+(.04+.012*np.sin(s*.5))*r-.025*u
+            wall.append(c+3.775*(np.cos(angles)[:,None]*r+np.sin(angles)[:,None]*u))
+            services.append(c+(.72*np.cos(duct_angles))[:,None]*r+
+                            (2.4+.72*np.sin(duct_angles))[:,None]*u)
+        wall=np.vstack(wall);points=np.vstack([wall,*services])
+        with tempfile.TemporaryDirectory() as tmp:
+            result=sc.run(stream(points),tmp,{'axis_source':'project','inward_mm':100,'outward_mm':600},axis_rows=axis.a)
+            stats=result['statistics']
+            self.assertTrue(stats['has_supported_span'])
+            self.assertEqual(stats['supported_windows'],stats['fit_windows'])
+            np.testing.assert_array_equal(np.fromfile(result['point_ids_file'],'<i8'),np.arange(len(wall),len(points)))
+            self.assertTrue(all(q['chainage_m']<0 for q in result['circle_sections']))
+            for q in result['circle_sections']:
+                c,normal,_,_,_=axis.at(q['chainage_m'])
+                np.testing.assert_allclose(q['normal'],normal,rtol=0,atol=1e-9)
+                self.assertAlmostEqual(float((np.asarray(q['centre'])-c)@normal),0.,places=8)
+                self.assertAlmostEqual(q['radius_m'],3.775,delta=.012)
+
     def test_oval_tunnel_is_not_forced_into_a_circular_deletion(self):
         s,a=np.meshgrid(np.arange(0,15,.1),np.arange(160)*2*np.pi/160,indexing='ij')
         p=np.c_[s.ravel(),(2.5*np.cos(a)).ravel(),(2.8*np.sin(a)).ravel()]
+        passes=0
+        def source():
+            nonlocal passes
+            passes+=1
+            yield from stream(p)()
         with tempfile.TemporaryDirectory() as tmp:
-            r=sc.run(stream(p),tmp,{'inward_mm':5,'outward_mm':5},prepared_guide=sc.Curve([[0,0,0],[15,0,0]]))
+            r=sc.run(source,tmp,{'inward_mm':5,'outward_mm':5},prepared_guide=sc.Curve([[0,0,0],[15,0,0]]))
             self.assertEqual(r['statistics']['candidate_points'],0);self.assertEqual(r['statistics']['unassessed_points'],len(p))
+            self.assertFalse(r['statistics']['has_supported_span'])
+            self.assertEqual(passes,2)
 
     def test_stream_over_one_million_observations_and_64bit_ids_has_no_admission_cap(self):
         p,route,inside,outside,_,_=curved(length=24.);repeats=40;total=len(p)*repeats;self.assertGreater(total,1000000)

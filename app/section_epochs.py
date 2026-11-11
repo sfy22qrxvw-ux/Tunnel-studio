@@ -22,10 +22,11 @@ def available(s):
 def _read_stations(item, frames, width, band, datum, progress, cancel):
     rng=np.random.default_rng(13271)
     buckets=[dict(points=np.empty((0,3)), keys=np.empty(0), total=0) for _ in frames]
-    clip=item.get('limit_box') if item.get('limit_hide_outside',True) else None
-    for _, q in analysis_sources.blocks(item['meta'], progress=progress, cancel=cancel):
-        if clip:
-            q=q[jobdata.selection_mask(q, {'mode':'box', **clip})]
+    clip=item.get('limit_box')
+    scope=None
+    if clip:
+        scope=dict(mode='limit',selection=None,limits=[jobdata.selection_spec({'mode':'box',**clip})])
+    for _, q in analysis_sources.blocks(item['meta'], progress=progress, cancel=cancel,scope=scope):
         if not len(q):continue
         lo,hi=q.min(axis=0),q.max(axis=0)
         for bucket, (_, frame, radius) in zip(buckets,frames):

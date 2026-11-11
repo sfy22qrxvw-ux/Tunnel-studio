@@ -19,7 +19,7 @@
  ${field('grid','Shape grid size · mm',10,2,100,'Working resolution for the shape map, not a point limit. Final selection tests all original observations.')}
  <label class="feature-check"><input id="shape-rotations" type="checkbox" checked>Allow different orientations on the lining</label><label class="feature-check"><input id="shape-view-filters" type="checkbox">Also use hidden and isolated areas</label><p class="feature-hint">Compact objects use their principal directions, including oblique rotations. Continuing services use quarter turns. This option applies hidden areas and isolation in addition to the search area below.</p></details>
  <label class="feature-check"><input id="shape-include-reviewed" type="checkbox">Show previously reviewed matches<small>Current match settings and incorrect-example filters still apply.</small></label>
- <label>Search area<select id="shape-search-scope"><option value="auto">Use the active limit box</option><option value="whole">Ignore limit box</option></select></label>
+ <label>Search area<select id="shape-search-scope"><option value="auto">Use the saved limit box</option><option value="whole">Ignore limit box</option></select></label>
  <p id="shape-scope-note" class="feature-hint"></p>
  <div class="feature-actions"><button id="shape-run" class="primary">Find across whole cloud</button><button id="shape-stop" hidden>Stop</button></div><p id="shape-status" role="status" aria-live="polite"></p></section>
  <section id="shape-review" class="feature-step" hidden><h3><span>3</span> Review matching points</h3><p id="shape-summary"></p><p class="feature-hint"><b>Orange:</b> selected. <b>Cyan:</b> unselected match. <b>Grey:</b> surrounding scan. These are geometric candidates, not confirmed object identities.</p><div id="shape-warnings" class="feature-warnings"></div><div class="feature-actions"><button type="button" id="shape-pick-3d" aria-pressed="false">Pick matches in 3D</button><button id="shape-all">Select all matches</button><button id="shape-none">Clear selection</button></div>
@@ -40,10 +40,10 @@
  const regionName=()=>result?.region==null?'All regions':result.coverage[result.region].region;
  const selectedType=()=>library.classes.find(x=>x.id===el('library').value);
  const librarySearch=()=>!!(el('use-library').checked&&selectedType()?.active&&selectedType()?.positive);
- const scopeNames={limit_box:'active limit box',view:'current view filters',whole:'whole retained cloud'};
+ const scopeNames={limit_box:'saved limit box',view:'current view filters',whole:'whole retained cloud'};
  function searchArea(){
   const source=window.JobUI.scanItems().find(scan=>scan.id===el('source').value);
-  if(el('search-scope').value!=='whole'&&source?.limit_box&&source.limit_hide_outside!==false)return 'limit_box';
+  if(el('search-scope').value!=='whole'&&source?.limit_box)return 'limit_box';
   return el('view-filters').checked?'view':'whole';
  }
  const status=(message,error=false)=>{el('status').textContent=message;el('status').style.color=error?'var(--danger,#b64c45)':'';};
@@ -58,7 +58,7 @@
   const area=searchArea();
   el('run').textContent=area==='limit_box'?'Find inside limit box':area==='view'?'Find with view filters':'Find across whole cloud';
   el('scope-note').textContent=area==='limit_box'
-   ?'Only retained points inside the source scan’s active limit box will be searched. Include both walls and the crown so the lining can be fitted.'
+   ?'Only retained points inside the source scan’s saved limit box will be searched. Include both walls and the crown so the lining can be fitted.'
    :`Search area: ${scopeNames[area]}.`;
   el('run').disabled=editingLocked||(!example&&!librarySearch())||!el('source').value;el('stop').hidden=!running;
   for(const id of ['all','none','keep','exclude'])el(id).disabled=lock||inspectionLoading||!result||dirty||result.stale;

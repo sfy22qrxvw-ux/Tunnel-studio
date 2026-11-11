@@ -52,7 +52,7 @@ def sample_sources(items,selection=None,cap=180000,progress=lambda _:None):
     """One bounded deterministic reservoir across all selected registered sources."""
     rng=np.random.default_rng(134);cloud=np.empty((0,3));keys=np.empty(0);counts={}
     for item in items:
-        count=0;clip=item.get('limit_box') if item.get('limit_hide_outside',True) else None
+        count=0;clip=item.get('limit_box')
         for ids,q in chunks(item['meta'],selection,clip):
             count+=len(q)
             if len(q):
@@ -138,7 +138,8 @@ def section_overview(item,s=None,selection=None):
     meta=item['meta'];lo,hi=registration_pose.world_bounds(meta);origin=(lo+hi)/2
     # Match section scope: retained points and the optional limit box. Other
     # viewport-only hide/isolate controls do not define a section selection.
-    source={k:item[k] for k in ('id','kind','meta','limit_box','limit_hide_outside') if k in item}
+    source={k:item[k] for k in ('id','kind','meta','limit_box') if k in item}
+    source['limit_hide_outside']=True
     if selection:
         scoped,_,_=sample_sources([item],selection,40000)
         packed=np.c_[scoped-origin,np.tile([.3,.8,.7],(len(scoped),1))]
@@ -184,7 +185,7 @@ def section(s,item,body,progress):
     meta=item['meta'];selection=body.get('selection')
     if selection:selection=jobdata.selection_spec(selection)
     original_selection=copy.deepcopy(selection)
-    if item.get('limit_box') and item.get('limit_hide_outside',True):
+    if item.get('limit_box'):
         if selection:selection['clip_box']=item['limit_box']
         else:selection={'mode':'box',**item['limit_box']}
     mode=body.get('plane','tunnel')
@@ -320,7 +321,7 @@ def post(s,h,path,body):
                     points,total,counts=sample_sources(items,spec,progress=progress)
                     source_name=items[0]['name'] if len(items)==1 else str(len(items))+' linked scans · '+', '.join(x['name'] for x in items)
                     result=estimate({'name':source_name},spec,body.get('interval',2),body.get('smoothing',1),body.get('start',0),progress,prepared=(points,total))
-                    result.update(source_id=items[0]['id'],source_revision=scene_objects.source_revision(items[0]),source_ids=ids,source_revisions={x['id']:scene_objects.source_revision(x) for x in items},source_counts=counts,requested_selection=copy.deepcopy(body.get('selection')),source_scope='selected area' if body.get('selection') else 'limit box' if any(x.get('limit_box') and x.get('limit_hide_outside',True) for x in items) else 'all retained points')
+                    result.update(source_id=items[0]['id'],source_revision=scene_objects.source_revision(items[0]),source_ids=ids,source_revisions={x['id']:scene_objects.source_revision(x) for x in items},source_counts=counts,requested_selection=copy.deepcopy(body.get('selection')),source_scope='selected area' if body.get('selection') else 'limit box' if any(x.get('limit_box') for x in items) else 'all retained points')
                     name=str(body.get('name') or '').strip()[:150]
                     if name:result['name']=name
                     scene_objects.remember(s,'alignment',result);s.STATE['estimated_alignment']=result
