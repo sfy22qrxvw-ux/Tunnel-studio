@@ -94,3 +94,29 @@ async function checkControlPlan(){
  assert.equal(calls.length,2);
 }
 checkControlPlan().then(()=>console.log('Apply control plan exits setup view, uses updated bounds and frames only the positioned scans.')).catch(error=>{console.error(error);process.exitCode=1;});
+
+async function checkBundleMerge(){
+ const source=fs.readFileSync(path.join(__dirname,'web/selected-merge-ui.js'),'utf8');
+ const fields=new Map(),requests=[],messages=[];
+ const get=id=>{if(!fields.has(id))fields.set(id,{});return fields.get(id);};
+ const dialog={open:false,addEventListener(){},showModal(){this.open=true;}};
+ const items=[
+  {id:'a',kind:'scan',name:'Setup A',registration_summary:{links:[{other_id:'b'}]}},
+  {id:'b',kind:'scan',name:'Setup B',registration_summary:{links:[{other_id:'a'}]}},
+  {id:'other',kind:'scan',name:'Other scan'}
+ ];
+ const context={busy:false,window:{JobUI:{inventory:()=>({items,bundles:[{id:'bundle',name:'Bundle 1',scan_ids:['a','b']}]})}},
+  document:{createElement:()=>dialog,getElementById:get,body:{append(){}}},
+  esc:x=>x,fmt:x=>String(x),notice:x=>messages.push(x),
+  post:async(_url,body)=>{requests.push(JSON.parse(JSON.stringify(body)));return {setups:2,points:100,enough:true};}};
+ vm.runInNewContext(source,context);
+ await context.window.SelectedMergeUI.openBundle('bundle');
+ assert.deepEqual(requests,[{action:'selection_merge_estimate',ids:['a','b']}]);
+ assert.equal(get('selected-merge-title').textContent,'Merge Bundle 1');
+ assert.equal(get('selected-merge-start').textContent,'Merge bundle');
+ assert.equal(get('selected-merge-start').disabled,false);
+ await context.window.SelectedMergeUI.openBundle('missing');
+ assert.equal(requests.length,1);
+ assert.match(messages[0],/Select a connected bundle/);
+}
+checkBundleMerge().then(()=>console.log('Merge bundle reviews exactly the setups in the selected bundle.')).catch(error=>{console.error(error);process.exitCode=1;});

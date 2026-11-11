@@ -2,7 +2,7 @@
 'use strict';
 window.SelectedMergeUI=(()=>{
  const dialog=document.createElement('dialog');dialog.id='selected-merge-dialog';
- dialog.innerHTML=`<div class="dialog-heading"><h2>Merge registered scans</h2><button id="selected-merge-close" aria-label="Close">×</button></div>
+ dialog.innerHTML=`<div class="dialog-heading"><h2 id="selected-merge-title">Merge registered scans</h2><button id="selected-merge-close" aria-label="Close">×</button></div>
  <p>Copy exactly these selected setups into one independent Registered cloud at their current saved positions.</p>
  <ul id="selected-merge-sources"></ul><label>New cloud name<input id="selected-merge-name" value="Registered cloud" maxlength="120"></label>
  <p id="selected-merge-space" class="project-merge-space"></p>
@@ -25,14 +25,16 @@ window.SelectedMergeUI=(()=>{
   el('selected-merge-name').disabled=running;el('selected-merge-close').disabled=running;
   el('selected-merge-progress').hidden=!running;el('selected-merge-stop').hidden=!running;
  }
- async function open(selected){
+ async function open(selected,bundleName=null){
   if(busy||running)return;
   if(!eligible(selected))return notice('Select two or more setups with saved registration connections first.',true);
   ids=[...selected];estimate=null;const token=++generation;
+  el('selected-merge-title').textContent=bundleName?'Merge '+bundleName:'Merge registered scans';
+  el('selected-merge-start').textContent=bundleName?'Merge bundle':'Merge scans';
   const rows=window.JobUI.inventory().items;
   el('selected-merge-sources').innerHTML=ids.map(id=>'<li>'+esc(rows.find(x=>x.id===id)?.name||id)+'</li>').join('');
   el('selected-merge-name').value='Registered cloud';el('selected-merge-message').textContent='Checking current positions and disk space…';el('selected-merge-space').textContent='';
-  dialog.showModal();controls();
+  if(!dialog.open)dialog.showModal();controls();
   try{
    const result=await post('/api/scan-registration',{action:'selection_merge_estimate',ids});
    if(token!==generation||!dialog.open)return;
@@ -64,5 +66,10 @@ window.SelectedMergeUI=(()=>{
  el('selected-merge-stop').onclick=async()=>{el('selected-merge-stop').disabled=true;try{await post('/api/cancel-operation',{});el('selected-merge-message').textContent='Stopping safely…';}catch(error){el('selected-merge-message').textContent=error.message;}finally{el('selected-merge-stop').disabled=false;}};
  el('selected-merge-close').onclick=()=>{if(!running)dialog.close();};
  dialog.addEventListener('cancel',e=>{if(running)e.preventDefault();});dialog.addEventListener('close',()=>{generation++;estimate=null;});
- return {eligible,open};
+ function openBundle(bundleId){
+  const bundle=window.JobUI.inventory().bundles?.find(item=>item.id===bundleId);
+  if(!bundle){notice('Select a connected bundle in Project Explorer first.',true);return;}
+  return open(bundle.scan_ids,bundle.name);
+ }
+ return {eligible,open,openBundle};
 })();
