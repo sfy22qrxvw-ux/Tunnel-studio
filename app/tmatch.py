@@ -926,4 +926,5 @@ def run_batches(batches, work, ids_path, labels_path, settings, progress, cancel
     result['statistics']['seconds'] = round(time.monotonic() - started, 3)
     result['statistics']['calibration_points'] = int(model.get('sample_points', 0))
     result['statistics']['reference_radius_m'] = float(model.get('radius', 0.0))
+    result['sampler_version'] = gusac.SAMPLER_VERSION
     return result

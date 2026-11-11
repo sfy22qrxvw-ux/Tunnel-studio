@@ -12,7 +12,7 @@ from scipy.spatial import cKDTree
 from scipy.sparse import coo_matrix
 from scipy.sparse.csgraph import connected_components
 import tunnel_lining
-from combined_denoising import sample_originals
+from combined_denoising import SAMPLER_VERSION, sample_originals
 
 PRESETS={'fast':dict(cell=.04,cap=80000,spacing=.04,trials=80),
          'detailed':dict(cell=.02,cap=160000,spacing=.02,trials=180),
@@ -327,7 +327,9 @@ def run_batches(batches,ids_path,labels_path,settings,progress,cancel,selected_t
     m=tunnel_lining.fit_model(sample,{**settings,'envelope_thickness':.04,'envelope_angle_deg':1.5,'resolution':.2},progress,cancel)
     m=tunnel_lining.longitudinal_reference(sample,m)
     if settings.get('lining_task')=='departures':
-        return __import__('lining_departures').run_batches(batches,ids_path,labels_path,settings,m,progress,cancel,selected_total)
+        result=__import__('lining_departures').run_batches(batches,ids_path,labels_path,settings,m,progress,cancel,selected_total)
+        result['sampler_version']=SAMPLER_VERSION
+        return result
     lo=np.inf;hi=-np.inf
     for _,p,_ in batches():
         emit('2/5 Measuring analysis extent');t,_=frame(p,m);lo=min(lo,t.min());hi=max(hi,t.max())
@@ -376,4 +378,5 @@ def run_batches(batches,ids_path,labels_path,settings,progress,cancel,selected_t
         if detection['status'] not in ('candidates','review'):warnings.append(detection['summary'])
         lining_frame = {k:np.asarray(m[k]).tolist() for k in ('reference','axis','u','v')}
         lining_frame.update(nodes=m['nodes'].tolist(), radius_m=float(m['radius']))
-        return dict(kept=kept,clusters=rows,features=features,detection=detection,lining_frame=lining_frame,research_dois=REFERENCES,warnings=warnings,statistics=dict(input_points=written,unique_points=None,duplicate_locations=None,supervoxels=0,expected_supervoxels=0,merge_passes=0,initial_edges=0,removed_edges=0,retained_edges=0,clusters=len(rows),kept_points=int(counts[kept].sum()),noise_points=0,noise_candidates=int(counts[[1,2]].sum()),calibration_points=len(sample),map_cell_m=detector.cell,map_cells=int(detector.na*detector.nt),detail=settings.get('lining_detail','detailed'),depth_threshold_mm=detector.threshold*1000,seam_depth_threshold_mm=detector.seam_threshold*1000,intensity_used=detector.intensity_used,bolt_holes=sum(r['kind']=='bolt_hole' for r in features),bolt_fittings=sum(r['kind']=='bolt_fitting' for r in features),ring_seams=len(detector.rings),longitudinal_seams=len(detector.longitudinal),segment_candidates=detection['segment_candidates'],ambiguous_segment_boundaries=detection['ambiguous_segment_boundaries'],intervals_with_segments=detection['intervals_with_segments'],observed_ring_intervals=detection['observed_ring_intervals'],uncertain_retained=int(counts[3]),seconds=round(time.monotonic()-started,3)))
+        return dict(kept=kept,clusters=rows,features=features,detection=detection,lining_frame=lining_frame,research_dois=REFERENCES,warnings=warnings,sampler_version=SAMPLER_VERSION,
+                    statistics=dict(input_points=written,unique_points=None,duplicate_locations=None,supervoxels=0,expected_supervoxels=0,merge_passes=0,initial_edges=0,removed_edges=0,retained_edges=0,clusters=len(rows),kept_points=int(counts[kept].sum()),noise_points=0,noise_candidates=int(counts[[1,2]].sum()),calibration_points=len(sample),map_cell_m=detector.cell,map_cells=int(detector.na*detector.nt),detail=settings.get('lining_detail','detailed'),depth_threshold_mm=detector.threshold*1000,seam_depth_threshold_mm=detector.seam_threshold*1000,intensity_used=detector.intensity_used,bolt_holes=sum(r['kind']=='bolt_hole' for r in features),bolt_fittings=sum(r['kind']=='bolt_fitting' for r in features),ring_seams=len(detector.rings),longitudinal_seams=len(detector.longitudinal),segment_candidates=detection['segment_candidates'],ambiguous_segment_boundaries=detection['ambiguous_segment_boundaries'],intervals_with_segments=detection['intervals_with_segments'],observed_ring_intervals=detection['observed_ring_intervals'],uncertain_retained=int(counts[3]),seconds=round(time.monotonic()-started,3)))

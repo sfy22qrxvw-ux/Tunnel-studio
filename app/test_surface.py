@@ -200,15 +200,20 @@ class SurfaceWorkflowTests(unittest.TestCase):
     def test_portable_project_preserves_result_review_and_truth(self):
         # The truth file is a first-class project asset, not an absolute path left behind.
         truth=self.root/'demo.truth8';np.ones(400,'u1').tofile(truth);self.meta.update(truth_file=str(truth),synthetic_surface_demo=True)
-        r=self.run_surface();surface_api.review(self.s,{'revision':r['revision'],'kept':[r['clusters'][0]['id'],-1]})
+        r=self.run_surface()
+        self.assertNotIn('sampler_version',surface_api.public_result(self.s,r))
+        r['sampler_version']=2  # Exercise the persisted field without running a second extraction engine.
+        surface_api.review(self.s,{'revision':r['revision'],'kept':[r['clusters'][0]['id'],-1]})
         saved=projects.save_named(self.root,workflows.serial(self.s),'Surface project')
         copy_state=projects.save_named(self.root,saved,'Second',True);copy_state['surface_result']['kept']=[];projects.save_named(self.root,copy_state)
         self.assertTrue(projects.read_named(self.root,saved['project_id'])['surface_result']['kept'])
         dest=self.root/'portable.tstudio';projects.portable(self.root,saved,dest);opened=projects.unpack(self.root,dest);workflows.restore_data(self.s,opened)
         rr=self.s.STATE['surface_result'];self.assertNotEqual(rr['labels_file'],r['labels_file'])
+        self.assertEqual(rr['sampler_version'],2)
         self.assertEqual(surface_api.metrics(rr)['scope'],'Synthetic selected area only; not a real-scan accuracy estimate')
         self.assertTrue(Path(rr['source_meta']['truth_file']).is_file());self.assertEqual(rr['kept'],saved['surface_result']['kept'])
         report,ctype,name=surface_api.report(self.s,'json');self.assertIsInstance(report,dict);json.dumps(report,allow_nan=False)
+        self.assertEqual(report['sampler_version'],2)
         text,_,_=surface_api.report(self.s,'html');self.assertIn('10.1038/s41598-026-73755-6',text)
         # Tampered point IDs must not reach an index operation.
         bad=copy.deepcopy(opened);np.full(400,500,dtype='<i8').tofile(bad['surface_result']['point_ids_file'])

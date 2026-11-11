@@ -301,6 +301,7 @@ def public(s, page=0, region=None, sort='id', *, include_points=True):
                 for k,t,a,score,side,n,selected,regional in db.execute(query,(*params,PAGE_SIZE,page*PAGE_SIZE))]
     finally:db.close()
     out={k:copy.deepcopy(row[k]) for k in ('id','revision','source_id','source_name','mode','settings','statistics','warnings','method','research_dois')}
+    if 'sampler_version' in row:out['sampler_version']=row['sampler_version']
     out.update(groups=groups,group_count=visible,total_group_count=total,page=page,region=region,sort=sort,stale=stale,last_edit=copy.deepcopy(row.get('last_edit')))
     out.update(class_id=row.get('class_id'),library_names=copy.deepcopy(row.get('library_names',{})))
     out['search_area']=row.get('search_area','view' if row['settings'].get('respect_view') else 'whole')

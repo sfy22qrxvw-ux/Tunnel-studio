@@ -13,24 +13,101 @@ from scipy.optimize import least_squares
 import clean_tunnel,tunnel_lining
 
 
+SAMPLER_VERSION = 2
+
+
+def voxel_ranks(keys):
+    """Assign the calibration hash rank to each integer XYZ key."""
+    h = keys.astype(np.uint64)
+    rank = h[:, 0]*np.uint64(73856093) ^ h[:, 1]*np.uint64(19349663) ^ h[:, 2]*np.uint64(83492791)
+    rank ^= rank >> np.uint64(30)
+    rank *= np.uint64(0xbf58476d1ce4e5b9)
+    rank ^= rank >> np.uint64(27)
+    rank *= np.uint64(0x94d049bb133111eb)
+    rank ^= rank >> np.uint64(31)
+    return rank
+
+
+def _lexicographic_minima(keys, points):
+    order = np.lexsort((points[:, 2], points[:, 1], points[:, 0], keys[:, 2], keys[:, 1], keys[:, 0]))
+    keys = keys[order]
+    first = np.r_[True, np.any(keys[1:] != keys[:-1], axis=1)]
+    return keys[first], points[order[first]]
+
+
+def _voxel_minima(keys, points):
+    # Pack local 21-bit voxel offsets in XYZ order for one integer sort.
+    # Wide extents or overflowing differences use the full coordinate keys.
+    low = keys.min(axis=0)
+    span = keys.max(axis=0) - low
+    if np.any((span < 0) | (span >= 1 << 21)):
+        return _lexicographic_minima(keys, points)
+    packed = ((keys[:, 0]-low[0]) << 42) | ((keys[:, 1]-low[1]) << 21) | (keys[:, 2]-low[2])
+    order = np.argsort(packed, kind='stable')
+    packed = packed[order]
+    starts = np.flatnonzero(np.r_[True, packed[1:] != packed[:-1]])
+    if len(starts) == len(keys):
+        return keys[order], points[order]
+    # The smallest measured XYZ per voxel is independent of block boundaries.
+    x = points[order, 0]
+    counts = np.diff(starts, append=len(keys))
+    winners = order[x == np.repeat(np.minimum.reduceat(x, starts), counts)]
+    if len(winners) == len(starts):
+        return keys[winners], points[winners]
+    return _lexicographic_minima(keys[winners], points[winners])
+
+
+def _merge_samples(key_blocks, point_blocks, cap):
+    if len(key_blocks) == 1:
+        keys, points = key_blocks[0], point_blocks[0]
+    else:
+        keys, points = _voxel_minima(np.concatenate(key_blocks), np.concatenate(point_blocks))
+    if len(keys) <= cap:
+        return keys, points, None
+    rank = voxel_ranks(keys)
+    cutoff = np.partition(rank, cap-1)[cap-1]
+    keep = rank < cutoff
+    # Preserve the original stable rank tie-break and lexicographic output.
+    keep[np.flatnonzero(rank == cutoff)[:cap-int(keep.sum())]] = True
+    return keys[keep], points[keep], cutoff
+
+
 def sample_originals(batches,spacing,cap,progress,cancel):
     """Keep one actual coordinate per voxel, with deterministic bounded hashing."""
-    keys=np.empty((0,3),np.int64);points=np.empty((0,3));total=0
-    for _,p,_ in batches():
-        tunnel_lining._emit(progress,cancel,f'2/3 Learning lining from measured points · {total+len(p):,}')
-        p=np.asarray(p,float)
-        if not np.isfinite(p).all():raise ValueError('Invalid scan coordinates.')
-        k=np.floor(p/spacing).astype(np.int64);keys=np.concatenate((keys,k));points=np.concatenate((points,p));total+=len(p)
-        # Coordinate tie-break makes representatives independent of file order.
-        order=np.lexsort((points[:,2],points[:,1],points[:,0],keys[:,2],keys[:,1],keys[:,0]))
-        keys=keys[order];points=points[order];first=np.r_[True,np.any(np.diff(keys,axis=0),axis=1)]
-        keys=keys[first];points=points[first]
-        if len(keys)>cap:
-            h=keys.astype(np.uint64);rank=h[:,0]*np.uint64(73856093)^h[:,1]*np.uint64(19349663)^h[:,2]*np.uint64(83492791)
-            rank^=rank>>np.uint64(30);rank*=np.uint64(0xbf58476d1ce4e5b9);rank^=rank>>np.uint64(27);rank*=np.uint64(0x94d049bb133111eb);rank^=rank>>np.uint64(31)
-            use=np.argsort(rank,kind='stable')[:cap];keys=keys[use];points=points[use]
-    order=np.lexsort(keys.T[::-1]) if len(keys) else []
-    return points[order],total
+    key_blocks, point_blocks = [], []
+    buffered = total = 0
+    cutoff = None
+    for _, points, _ in batches():
+        total += len(points)
+        tunnel_lining._emit(progress, cancel, f'2/3 Learning lining from measured points · {total:,}')
+        points = np.asarray(points, float)
+        if not np.isfinite(points).all():
+            raise ValueError('Invalid scan coordinates.')
+        if not len(points) or not cap:
+            continue
+        keys = np.floor(points/spacing).astype(np.int64)
+        if cutoff is not None:
+            # A voxel outside the current best ranks cannot re-enter later.
+            use = voxel_ranks(keys) <= cutoff
+            keys, points = keys[use], points[use]
+        if not len(keys):
+            continue
+        keys, points = _voxel_minima(keys, points)
+        key_blocks.append(keys)
+        point_blocks.append(points)
+        buffered += len(keys)
+        # Deduplicate each block once. Merge only after accumulating another
+        # sample's worth of voxels to avoid repeatedly sorting the retained set.
+        if buffered >= 2*cap:
+            keys, points, next_cutoff = _merge_samples(key_blocks, point_blocks, cap)
+            key_blocks, point_blocks = [keys], [points]
+            buffered = len(keys)
+            if next_cutoff is not None:
+                cutoff = next_cutoff
+    if not point_blocks:
+        return np.empty((0, 3)), total
+    _, points, _ = _merge_samples(key_blocks, point_blocks, cap)
+    return points, total
 
 
 def cylinder(sample,model,tolerance):
@@ -106,7 +183,7 @@ def run_batches(batches,work,ids_path,labels_path,settings,progress,cancel,selec
         protected_sparse_wall_points=protected_wall,uncertain_retained_points=int(counts[5]),calibration_points=len(sample),lining_tolerance_mm=tolerance*1000,lining_shape=shape,
         reference_radius_m=strict['radius'] if strict else model['radius'],strategy='full-density neighbour evidence and robust lining fit; geometric wall support protects sparse original points',seconds=round(time.monotonic()-started,3))
     if strict:stats.update(cylinder_fit_rms_mm=strict['fit_rms_mm'],cylinder_support_fraction=strict['support_fraction'])
-    return dict(kept=kept,clusters=rows,statistics=stats,warnings=[
+    return dict(kept=kept,clusters=rows,statistics=stats,sampler_version=SAMPLER_VERSION,warnings=[
         'Red points are candidates, not confirmed noise. Joints, recesses, cables and real defects may be in surface-departure groups. Keep any details you need before applying.',
         'Neighbour support uses every selected retained point; only model fitting uses a bounded sample. Coordinates and intensity are unchanged. Sparse points matching the lining and uncertain lining areas stay green.',
         'Circular mode assumes a short straight round tunnel. Follow measured lining supports gentle variation and floor profiles, but neither mode resolves junctions automatically. The published 4 mm threshold and accuracy do not transfer automatically to this scan.'])

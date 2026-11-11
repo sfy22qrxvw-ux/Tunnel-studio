@@ -30,7 +30,7 @@ import numpy as np
 from scipy.spatial import cKDTree
 from scipy.ndimage import median_filter
 
-from combined_denoising import sample_originals
+from combined_denoising import SAMPLER_VERSION, sample_originals
 import tunnel_lining
 
 
@@ -443,7 +443,7 @@ def run_batches(batches, work, ids_path, labels_path, settings, progress, cancel
                  seconds=round(time.monotonic()-started, 3))
     workload = {path: dict(points_per_call=details['points_per_call'], seconds=round(details['seconds'], 3))
                 for path, details in model['regional_plane_workload'].items()}
-    return dict(kept=kept, clusters=rows, statistics=stats, regional_plane_workload=workload, warnings=[
+    return dict(kept=kept, clusters=rows, statistics=stats, regional_plane_workload=workload, sampler_version=SAMPLER_VERSION, warnings=[
         'This GuSAC-based implementation corrects the paper\'s inconsistent normal equations and adds measured-reference and uncertainty safeguards. It is not an author-exact reproduction or a reproduction of the paper\'s reported accuracy.',
         'Every selected original point receives a label. Plane fitting and surface-normal neighbourhoods use a bounded, spatially balanced model sample; sparse or ambiguous lining is retained. Coordinates, RGB and intensity are unchanged.',
         'Inspect Inward objects / services before applying. Joints, recesses, uncertain regions and near-wall normal disagreements are retained separately. Geometry alone cannot reliably distinguish a service touching the wall from real lining detail.',

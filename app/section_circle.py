@@ -14,6 +14,7 @@ semantic service classifier, or reconstruction of missing lining. Real lining
 that departs from a circle can be a candidate and must be reviewed.
 """
 from pathlib import Path
+from collections import OrderedDict
 import math,sqlite3,time
 import numpy as np
 from scipy.interpolate import CubicSpline
@@ -21,10 +22,12 @@ from scipy.optimize import least_squares
 from scipy.spatial import cKDTree
 from scipy.spatial.transform import Rotation
 import compute_runtime,shape_matching,scan_geometry,tunnel_lining
-from combined_denoising import sample_originals
+from combined_denoising import SAMPLER_VERSION, sample_originals, voxel_ranks
 
 DEFAULTS=dict(section_m=5.,inward_mm=20.,outward_mm=20.,axis_source='auto',respect_view=False)
 WINDOW_SAMPLE=12000
+RESIDENT_SAMPLE_BINS=32
+SAMPLE_ROW=np.dtype([('keys','<i8',(3,)),('rank','<i8'),('xyz','<f8',(3,))])
 
 
 def settings(raw=None):
@@ -125,30 +128,67 @@ class ProjectGuide:
 class Samples:
     """Up to 12k actual, spatially balanced observations per distance bin."""
     def __init__(self,path,length):
-        self.path=Path(path);self.length=length;self.db=sqlite3.connect(path);self.cut={}
+        self.length=length;self.db=sqlite3.connect(path);self.recent=OrderedDict()
         self.db.execute('PRAGMA cache_size=-32768');self.db.execute('PRAGMA temp_store=FILE')
-        self.db.execute('CREATE TABLE p(b INTEGER,k INTEGER,a INTEGER,c INTEGER,h INTEGER,x REAL,y REAL,z REAL,PRIMARY KEY(b,k,a,c)) WITHOUT ROWID')
-        self.db.execute('CREATE INDEX ranks ON p(b,h,k,a,c)')
+        self.db.execute('CREATE TABLE p(b INTEGER PRIMARY KEY,samples BLOB NOT NULL)')
+
+    def read(self,b):
+        if b in self.recent:
+            self.recent.move_to_end(b)
+            return self.recent[b]
+        row=self.db.execute('SELECT samples FROM p WHERE b=?',(b,)).fetchone()
+        return np.frombuffer(row[0],SAMPLE_ROW) if row else np.empty(0,SAMPLE_ROW)
 
     def add(self,p,s,uv):
+        if not len(p):return
         bins=np.floor(s/self.length).astype(np.int64)
-        keys=np.c_[bins,np.floor(s/.20).astype(np.int64),np.floor(uv/.025).astype(np.int64)]
-        # Choose an actual coordinate, never a voxel-centre replacement.
-        order=np.lexsort((p[:,2],p[:,1],p[:,0],keys[:,3],keys[:,2],keys[:,1],keys[:,0]));keys=keys[order];p=p[order]
-        use=np.r_[True,np.any(keys[1:]!=keys[:-1],axis=1)];keys=keys[use];p=p[use]
-        h=keys.astype(np.uint64);rank=h[:,1]*np.uint64(73856093)^h[:,2]*np.uint64(19349663)^h[:,3]*np.uint64(83492791)
-        rank^=rank>>np.uint64(30);rank*=np.uint64(0xbf58476d1ce4e5b9);rank^=rank>>np.uint64(27);rank*=np.uint64(0x94d049bb133111eb);rank^=rank>>np.uint64(31)
-        rank=(rank&np.uint64(2**63-1)).astype(np.int64)
-        for b in np.unique(keys[:,0]):
-            take=(keys[:,0]==b)&(rank<=self.cut.get(int(b),2**63-1));k=keys[take];q=p[take];h=rank[take]
-            self.db.executemany('''INSERT INTO p VALUES(?,?,?,?,?,?,?,?) ON CONFLICT(b,k,a,c) DO UPDATE SET
-                x=excluded.x,y=excluded.y,z=excluded.z WHERE (excluded.x,excluded.y,excluded.z)<(x,y,z)''',
-                ((int(v[0]),int(v[1]),int(v[2]),int(v[3]),int(r),float(x[0]),float(x[1]),float(x[2])) for v,r,x in zip(k,h,q)))
-            row=self.db.execute('SELECT h,k,a,c FROM p WHERE b=? ORDER BY h,k,a,c LIMIT 1 OFFSET ?',(int(b),WINDOW_SAMPLE-1)).fetchone()
-            if row:
-                self.cut[int(b)]=row[0]
-                self.db.execute('DELETE FROM p WHERE b=? AND (h,k,a,c)>(?,?,?,?)',(int(b),*row))
-        self.db.commit()
+        keys=np.c_[np.floor(s/.20).astype(np.int64),np.floor(uv/.025).astype(np.int64)]
+        rank=(voxel_ranks(keys)&np.uint64(2**63-1)).astype(np.int64)
+        order=np.argsort(bins,kind='stable')
+        boundaries=np.r_[0,np.flatnonzero(np.diff(bins[order]))+1,len(p)]
+        for start,stop in zip(boundaries[:-1],boundaries[1:]):
+            indices=order[start:stop];b=int(bins[indices[0]]);previous=self.read(b)
+            if len(previous)==WINDOW_SAMPLE:
+                indices=indices[rank[indices]<=previous['rank'][-1]]
+            if not len(indices):continue
+            rows=np.empty(len(previous)+len(indices),SAMPLE_ROW)
+            rows[:len(previous)]=previous
+            new=rows[len(previous):];new['keys']=keys[indices];new['rank']=rank[indices];new['xyz']=p[indices]
+            self.recent[b]=self._compact(rows)
+            self.recent.move_to_end(b)
+            # Keep adjacent active bins in memory. Spill whole bin arrays so
+            # Python and SQLite never have to exchange a row per measured point.
+            if len(self.recent)>RESIDENT_SAMPLE_BINS:
+                old,values=self.recent.popitem(last=False)
+                self.db.execute('INSERT OR REPLACE INTO p VALUES(?,?)',(old,values.tobytes()))
+        if self.db.in_transaction:self.db.commit()
+
+    @staticmethod
+    def _compact(rows):
+        # Select only from the lowest ranks, then resolve repeated voxels.
+        # A rank collision can add distinct keys, so retaining WINDOW_SAMPLE
+        # distinct ranks supplies enough candidates even if a collision occurs.
+        order=np.argsort(rows['rank'],kind='stable')
+        ranks=rows['rank'][order]
+        starts=np.r_[0,np.flatnonzero(ranks[1:]!=ranks[:-1])+1,len(rows)]
+        starts=starts[:WINDOW_SAMPLE+1];rows=rows[order[:starts[-1]]]
+        if len(rows)==len(starts)-1:return rows
+        keys=rows['keys'];p=rows['xyz'];rank=rows['rank']
+        if np.any((rank[1:]==rank[:-1])&np.any(keys[1:]!=keys[:-1],axis=1)):
+            # Preserve key ordering for distinct voxels tied at the cap.
+            order=np.lexsort((p[:,2],p[:,1],p[:,0],*keys.T[::-1],rank))
+            ordered=keys[order]
+            first=np.r_[True,np.any(ordered[1:]!=ordered[:-1],axis=1)]
+            return rows[order[first][:WINDOW_SAMPLE]]
+        # Within each voxel keep the least XYZ tuple as an actual scan point.
+        groups=np.repeat(np.arange(len(starts)-1),np.diff(starts))
+        starts=starts[:-1]
+        keep=np.ones(len(rows),bool)
+        for coordinate in p.T:
+            minimum=np.minimum.reduceat(np.where(keep,coordinate,np.inf),starts)
+            keep&=coordinate==minimum[groups]
+        first=np.minimum.reduceat(np.where(keep,np.arange(len(rows)),len(rows)),starts)
+        return rows[first]
 
     def projected_window(self,station,length,guide,projected):
         first=int(math.floor(station/self.length))-2
@@ -157,9 +197,10 @@ class Samples:
         window=[]
         for b in range(first,first+5):
             if b not in projected:
-                rows=self.db.execute('SELECT x,y,z FROM p WHERE b=? ORDER BY k,a,c',(b,)).fetchall()
-                if rows:
-                    s,uv,valid=guide.project(np.asarray(rows,float))
+                rows=self.read(b)
+                if len(rows):
+                    order=np.lexsort(rows['keys'].T[::-1])
+                    s,uv,valid=guide.project(rows['xyz'][order])
                     projected[b]=(s[valid],uv[valid])
                 else:
                     projected[b]=(np.empty(0),np.empty((0,2)))
@@ -354,7 +395,7 @@ def run(batches,folder,cfg,progress=lambda _:None,cancel=lambda:False,axis_rows=
         if good<len(sections):warnings.append(f'{len(sections)-good} fitting windows failed circularity, coverage or residual checks; affected points remain unselected.')
         if not has_supported_span:
             warnings.append('No two neighbouring fits passed. All points were retained. Inspect the fit coverage, support and section direction before previewing again.')
-        return dict(count=matched,point_ids_file=str(ids_path),labels_file=str(labels_path),selected_file=str(flags_path),review_file=str(db_path),preview_file=str(folder/'preview.npz'),circle_sections=sections,
+        return dict(count=matched,point_ids_file=str(ids_path),labels_file=str(labels_path),selected_file=str(flags_path),review_file=str(db_path),preview_file=str(folder/'preview.npz'),circle_sections=sections,sampler_version=SAMPLER_VERSION,
                     statistics=dict(input_points=total,effective_bounds=bounds.tolist(),guide_range_m=[low,high],
                         candidate_points=matched,selected_points=0,inward_points=int(counts[1]),outward_points=int(counts[2]),within_points=int(counts[0]),unassessed_points=int(counts[3]),section_length_m=cfg['section_m'],overlap_percent=50,fit_windows=len(sections),supported_windows=good,has_supported_span=has_supported_span,calibration_points=len(sample),seconds=round(time.monotonic()-started,3)),
                     warnings=warnings,method='Overlapping local best-fit circles in moving perpendicular centreline frames',research_dois=[])

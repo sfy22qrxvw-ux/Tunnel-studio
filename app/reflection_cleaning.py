@@ -10,7 +10,7 @@ import time
 import numpy as np
 from scipy.spatial import cKDTree
 import tunnel_lining
-from combined_denoising import sample_originals
+from combined_denoising import SAMPLER_VERSION, sample_originals
 
 
 def scanner_origin(item):
@@ -128,4 +128,4 @@ def run_batches(batches,ids_path,labels_path,settings,progress,cancel,selected_t
     if not detector.origin_valid:warnings.append('No usable scanner position inside this lining is available. Visibility evidence is disabled; missing pose data is never guessed.')
     if limits is None:warnings.append('No usable intensity variation is available. Intensity evidence is disabled.')
     stats=dict(input_points=written,unique_points=None,duplicate_locations=None,supervoxels=0,expected_supervoxels=0,merge_passes=0,initial_edges=0,removed_edges=0,retained_edges=0,clusters=len(rows),kept_points=int(counts[[0,2,3]].sum()),noise_points=0,noise_candidates=int(counts[1]),reflection_candidates=int(counts[1]),weak_evidence_retained=int(counts[2]),uncertain_retained=int(counts[3]),calibration_points=len(sample),mirror_supported_points=int(cues[0]),scanner_obstructed_points=int(cues[1]),intensity_cue_points=int(cues[2]),scanner_position_used=bool(detector.origin_valid),intensity_used=limits is not None,minimum_departure_mm=detector.gap*1000,geometry_match_mm=detector.match*1000,strategy='Supported lining departure plus multiple independent cues; weak evidence retained; review before removal',seconds=round(time.monotonic()-started,3))
-    return dict(kept=kept,clusters=rows,statistics=stats,warnings=warnings)
+    return dict(kept=kept,clusters=rows,statistics=stats,warnings=warnings,sampler_version=SAMPLER_VERSION)

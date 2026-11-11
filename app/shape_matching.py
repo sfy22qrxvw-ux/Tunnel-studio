@@ -28,7 +28,7 @@ import compute_runtime
 import jobdata
 import lining_features
 import tunnel_lining
-from combined_denoising import sample_originals
+from combined_denoising import SAMPLER_VERSION, sample_originals
 
 BLOCK = 100000
 DISPLAY = 30000
@@ -419,7 +419,7 @@ def run(batches, example, folder, cfg, progress=lambda _:None, cancel=lambda:Fal
                               matched=int(v[3]),candidate_count=len(region_counts[i])) for i,v in enumerate(coverage)]
         hemisphere=[0,1,7];upper=coverage[hemisphere].sum(0);lower=coverage[[3,4,5]].sum(0)
         if upper[0] and not upper[3] and lower[3]:warnings.append('No matches were selected in the upper region. Review the circumference coverage panel: missing wall support, offset candidates and rejected shape matches are reported separately.')
-        return dict(count=matched,point_ids_file=str(ids_path),labels_file=str(labels_path),selected_file=str(flags_path),review_file=str(review_path),preview_file=str(folder/'preview.npz'),
+        return dict(count=matched,point_ids_file=str(ids_path),labels_file=str(labels_path),selected_file=str(flags_path),review_file=str(review_path),preview_file=str(folder/'preview.npz'),sampler_version=SAMPLER_VERSION,
                     statistics=dict(input_points=total,candidate_points=matched,selected_points=matched,unsupported_points=unsupported,example_area_points=example_total,example_candidate_points=t['example_points'],example_footprint_cells=t['footprint_cells'],example_size_m=t['size_m'],continuing_service=t['long'],map_cell_mm=cfg['grid_mm'],calibration_points=len(sample),matching_windows=windows,seconds=round(time.monotonic()-started,3),library_positive=sum(e['label']=='positive' for e in bank['entries']) if bank else 0,library_negative=sum(e['label']=='negative' for e in bank['entries']) if bank else 0),
                      library_names=bank['names'] if bank else {},coverage=coverage_report,
                      reviewed_skipped=len(skipped),

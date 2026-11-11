@@ -168,6 +168,36 @@ class SectionCircleTests(unittest.TestCase):
                 sc.run(stream(p),tmp,{'axis_source':'project'})
 
 
+class WindowSampleTests(unittest.TestCase):
+    def test_sample_is_stable_across_blocks_and_disk_spill(self):
+        rng=np.random.default_rng(3)
+        p=np.column_stack((rng.uniform(0,30,4000),rng.uniform(-.2,.2,(4000,2))))
+        # Interleave bins and include repeated voxels with different XYZ.
+        p=np.vstack((p,p+[.002,.001,.001]))
+        with tempfile.TemporaryDirectory() as tmp, mock.patch.object(sc,'WINDOW_SAMPLE',40), mock.patch.object(sc,'RESIDENT_SAMPLE_BINS',2):
+            full=sc.Samples(Path(tmp)/'full.sqlite',5.)
+            chunked=sc.Samples(Path(tmp)/'chunked.sqlite',5.)
+            try:
+                full.add(p,p[:,0],p[:,1:])
+                for block in np.array_split(p[::-1],21):
+                    chunked.add(block,block[:,0],block[:,1:])
+                self.assertGreater(chunked.db.execute('SELECT count(*) FROM p').fetchone()[0],0)
+                for b in range(6):
+                    actual=chunked.read(b)
+                    self.assertEqual(len(actual),40)
+                    np.testing.assert_array_equal(actual,full.read(b))
+            finally:
+                full.close();chunked.close()
+
+    def test_distinct_voxels_with_tied_rank_keep_key_order_and_true_xyz(self):
+        rows=np.empty(4,sc.SAMPLE_ROW)
+        rows['keys']=[[0,4,1],[0,-2,1],[0,-2,1],[1,4,1]]
+        rows['rank']=[1,1,1,2]
+        rows['xyz']=[[.01,.105,.03],[.03,-.04,.035],[.03,-.04,.03],[.22,.10,.03]]
+        with mock.patch.object(sc,'WINDOW_SAMPLE',2):
+            np.testing.assert_array_equal(sc.Samples._compact(rows),rows[[2,0]])
+
+
 class CircleReviewTests(unittest.TestCase):
     def test_restricted_preview_reads_exact_rows_once_and_reuses_the_index(self):
         import preview_index

@@ -113,7 +113,7 @@ def metrics(r):
 def public_result(s, r):
     if not r: return None
     out = {k:copy.deepcopy(r[k]) for k in ('id','revision','created_at','source_kind','selection','settings','statistics','warnings','clusters','kept','review_log','method','doi')}
-    for k in ('features','lining_frame','research_dois','rings','classification','detection','algorithm_notes','processing_area'):
+    for k in ('features','lining_frame','research_dois','rings','classification','detection','algorithm_notes','processing_area','sampler_version'):
         if k in r:out[k]=copy.deepcopy(r[k])
     out['source_name'] = r['source_meta']['name']
     out['source_count'] = r['source_meta']['count']
@@ -568,6 +568,7 @@ def add_clean_scan(s,body):
            'cleaning_provenance':{'result_id':r['id'],'revision':r['revision'],'method':r['method'],
                 'source_item_id':r.get('source_item_id'),'source_name':r['source_meta']['name'],
                 'settings':copy.deepcopy(r['settings']),'area':copy.deepcopy(r['selection'])}}
+    if 'sampler_version' in r:entry['cleaning_provenance']['sampler_version']=r['sampler_version']
     __import__('scan_edits').archive_cleaning(entry,r)
     entries=job_api.items(s)
     original=next((x for x in entries if x['id']==r.get('source_item_id') and x['kind']=='scan'),None)

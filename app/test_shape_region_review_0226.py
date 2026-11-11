@@ -37,6 +37,11 @@ class ShapeRegionReviewTests(unittest.TestCase):
     def view(self, page=0, region=None, sort='id'):
         return shape_selection.public(self.server,page,region,sort,include_points=False)
 
+    def test_sampler_version_is_optional_in_shape_review(self):
+        self.assertNotIn('sampler_version',self.view())
+        self.row['sampler_version']=2
+        self.assertEqual(self.view()['sampler_version'],2)
+
     def test_score_order_applies_before_pagination_with_stable_ties(self):
         best = sorted(self.matches,key=lambda row:(-row[3],row[0]))
         for page,expected in ((0,best[:40]),(1,best[40:])):
