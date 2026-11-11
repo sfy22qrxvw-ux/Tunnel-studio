@@ -58,7 +58,7 @@ async function poll(){
 }
 function refreshState(){
  const revision=JSON.stringify([state.axis?.name,state.cloud?.name,state.cloud?.count,state.removed_points,state.edit_count]);if(lastAnalysisRevision!==revision){heatData=null;$('heat-canvas').getContext('2d').clearRect(0,0,$('heat-canvas').width,$('heat-canvas').height);$('heat-info').textContent='Generate a new heatmap for the current scan / edits.';lastAnalysisRevision=revision;}
- $('axis-name').textContent=state.axis?state.axis.name:'CSV · chainage, E, N, H, radius';
+ $('axis-name').textContent=state.axis?state.axis.name:'CSV or LandXML · design alignment';
  $('cloud-name').textContent=state.cloud?`${state.cloud.name} · ${fmt(state.cloud.count,0)} points`:'Leica HSPCA · E57 · LAS/LAZ · PLY · PTS · XYZ/CSV';
  $('ring-name').textContent=state.rings.length?`${state.rings.length} ring-face observations`:'CSV · design and measured chainage';
  $('project-tag').textContent=state.demo?'SYNTHETIC DEMO':(state.axis||state.job_item_count)?'PROJECT DATA':'NO PROJECT';
@@ -260,7 +260,7 @@ function initialiseDisplaySettings(){
 initialiseDisplaySettings();
 $('demo').onclick=async()=>{resetEditingView();scene.initialised=false;try{setBusy(true);await post('/api/demo',{});poll();}catch(e){setBusy(false);notice(e.message,true);}};
 for(const kind of ['axis','cloud','rings'])$(kind==='axis'?'axis-file':kind==='cloud'?'cloud-file':'rings-file').onchange=async e=>{
- const f=e.target.files[0];if(!f)return;if(kind==='cloud'&&f.size>150000000){e.target.value='';$('path-kind').value='cloud';showTunnelMessage('Use the large-file browser','This point cloud is large. Read it directly from disk instead of transferring it through the embedded WebView. This avoids the blank black/white window problem.',true,'Browse point cloud',()=>{document.body.classList.remove('panel-hidden');document.querySelector('.path-load').open=true;$('path-browse').click();});return;}if(kind!=='rings'){resetEditingView();scene.initialised=false;}try{setBusy(true);notice('Copying '+f.name+' to the local app…');await api('/api/upload?'+new URLSearchParams({kind,name:f.name}),{method:'POST',headers:{'X-Tunnel-Token':window.TUNNEL_TOKEN},body:f});poll();}catch(err){setBusy(false);notice(err.message,true);}finally{e.target.value='';}
+ const f=e.target.files[0];if(!f)return;if(kind==='cloud'&&f.size>150000000){e.target.value='';$('path-kind').value='cloud';showTunnelMessage('Use the large-file browser','This point cloud is large. Read it directly from disk instead of transferring it through the embedded WebView. This avoids the blank black/white window problem.',true,'Browse point cloud',()=>{document.body.classList.remove('panel-hidden');document.querySelector('.path-load').open=true;$('path-browse').click();});return;}if(kind!=='rings'){resetEditingView();scene.initialised=false;}try{setBusy(true);notice('Copying '+f.name+' to the local app…');await api('/api/upload?'+new URLSearchParams({kind,name:f.name,...(kind==='axis'&&$('import-alignment-radius').value?{alignment_radius:$('import-alignment-radius').value}:{})}),{method:'POST',headers:{'X-Tunnel-Token':window.TUNNEL_TOKEN},body:f});poll();}catch(err){setBusy(false);notice(err.message,true);}finally{e.target.value='';}
 };
 async function browseLargeFile(){
  try{
@@ -271,7 +271,7 @@ async function browseLargeFile(){
  }catch(e){notice('Could not open the Windows file picker. You can still paste the full local path.',true);}
 }
 $('path-browse').onclick=browseLargeFile;
-$('path-import').onclick=async()=>{resetEditingView();scene.initialised=false;try{setBusy(true);await post('/api/load',{kind:$('path-kind').value,path:$('local-path').value});poll();}catch(e){setBusy(false);notice(e.message,true);}};
+$('path-import').onclick=async()=>{resetEditingView();scene.initialised=false;try{setBusy(true);await post('/api/load',{kind:$('path-kind').value,path:$('local-path').value,alignment_radius:$('import-alignment-radius').value});poll();}catch(e){setBusy(false);notice(e.message,true);}};
 $('analyse').onclick=analyse;$('apply').onclick=()=>{scene.recolour();renderRings();analyse();};
 $('station').onchange=()=>{const v=+$('station').value;if(Number.isFinite(v)){setStation(v);analyse();}};
 let sliderTimer;$('chainage-slider').oninput=()=>{setStation(+$('chainage-slider').value);clearTimeout(sliderTimer);sliderTimer=setTimeout(analyse,220);};

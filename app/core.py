@@ -48,7 +48,12 @@ class Alignment:
         self.tree = self._tree(np.arange(len(self.d)))
 
     @classmethod
-    def read(cls,path): return cls(list(csv_rows(path)),Path(path).name)
+    def read(cls, path, fallback_radius=None):
+        path = Path(path)
+        if path.suffix.lower() in ('.xml', '.landxml'):
+            from landxml_alignment import rows
+            return cls(rows(path, fallback_radius), path.name)
+        return cls(list(csv_rows(path)), path.name)
 
     def _tree(self,ids):
         p=self.p[ids,:2]; q=p+self.d[ids,:2]

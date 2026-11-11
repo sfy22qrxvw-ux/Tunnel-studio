@@ -152,7 +152,7 @@ class DesktopBridge:
                 'registration': ('Point clouds (*.hspca;*.e57;*.las;*.laz;*.ply;*.pts;*.xyz;*.csv;*.txt)', 'All files (*.*)'),
                 'surface': ('Point clouds (*.hspca;*.e57;*.las;*.laz;*.ply;*.pts;*.xyz;*.csv;*.txt)', 'All files (*.*)'),
                 'project': ('Tunnel Studio projects (*.tstudio)', 'All files (*.*)'),
-                'axis': ('Alignment files (*.csv;*.txt)', 'All files (*.*)'),
+                'axis': ('Alignment files (*.csv;*.txt;*.xml;*.landxml)', 'All files (*.*)'),
                 'rings': ('CSV files (*.csv)', 'All files (*.*)'),
                 'job': ('Scans and models (*.hspca;*.e57;*.las;*.laz;*.ply;*.pts;*.xyz;*.csv;*.txt;*.obj;*.zip)', 'All files (*.*)'),
                 'job_scan': ('Point clouds (*.hspca;*.e57;*.las;*.laz;*.ply;*.pts;*.xyz;*.csv;*.txt)', 'All files (*.*)'),

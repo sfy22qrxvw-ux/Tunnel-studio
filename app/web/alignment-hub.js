@@ -8,7 +8,7 @@
  <div id="alignment-hub-methods" class="alignment-actions">
   <button id="alignment-hub-draw"><strong>Draw alignment in 3D</strong><span>Draw the route, then set its heights and gradients.</span></button>
   <button id="alignment-hub-manual"><strong>Create from coordinates</strong><span>Enter chainage, Easting, Northing, height and design radius.</span></button>
-  <button id="alignment-hub-import"><strong>Import alignment CSV</strong><span>Use an existing design through the project Import window.</span></button>
+  <button id="alignment-hub-import"><strong>Import alignment</strong><span>Choose a CSV or metric LandXML design.</span></button>
   <button id="alignment-hub-estimate"><strong>Fit scan alignment</strong><span>Estimate a centreline from the selected tunnel branch and review it.</span></button>
   <button id="alignment-hub-edit"><strong>Edit active coordinates</strong><span>Change nodes and heights on the current alignment.</span></button>
  </div>

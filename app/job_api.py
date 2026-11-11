@@ -293,7 +293,7 @@ def post(s,h,path,body):
                 s.STATE['surface_source_item']=x['id']
                 s.STATE['surface_job_selection']=jobdata.selection_spec(body['selection']) if body.get('selection') else None
             elif action=='analyse':
-                if x['kind']!='scan' or s.STATE['axis'] is None:raise ValueError('Survey analysis needs a design alignment. Import the alignment CSV first, then try again.')
+                if x['kind']!='scan' or s.STATE['axis'] is None:raise ValueError('Survey analysis needs a design alignment. Import the design alignment first, then try again.')
                 if s.STATE.get('demo'):raise ValueError('Load your own alignment before analysing a real job scan.')
                 if body.get('position_confirmed') is not True:raise ValueError('Confirm that this scan is in the alignment coordinate system and metres.')
                 cached=scan_edits.reusable_projection(m,s.STATE['axis'],s.WORK)

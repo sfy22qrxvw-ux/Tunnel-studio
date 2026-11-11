@@ -101,7 +101,7 @@
   let choosing=!!pickerIds[kind];
   try{
    if(kind==='scan'||kind==='model'){const paths=await window.pywebview.api.choose_large_file(kind==='model'?'job_mesh':'job_scan',true);choosing=false;if(paths?.length)await window.JobUI?.importPaths(paths,destination);return;}
-   if(kind==='axis'||kind==='rings'){const paths=await window.pywebview.api.choose_large_file(kind,false);choosing=false;if(!paths?.length)return;setBusy(true);await post('/api/load',{kind,path:paths[0]});poll();return;}
+   if(kind==='axis'||kind==='rings'){const paths=await window.pywebview.api.choose_large_file(kind,false);choosing=false;if(!paths?.length)return;setBusy(true);await post('/api/load',{kind,path:paths[0],alignment_radius:kind==='axis'?$('import-alignment-radius').value:null});poll();return;}
    if(kind==='control'){window.TargetUI?.importControl();return;}
    if(kind==='project'){projectDialog('open');setTimeout(()=>$('project-import-file').click(),100);return;}
   }catch(e){
@@ -124,7 +124,7 @@
   $('import-dialog').close();
   try{
    if(kind==='scan'||kind==='model')await window.JobUI?.importPaths(paths,destination);
-   else{setBusy(true);await post('/api/load',{kind,path:paths[0]});poll();}
+   else{setBusy(true);await post('/api/load',{kind,path:paths[0],alignment_radius:kind==='axis'?$('import-alignment-radius').value:null});poll();}
   }catch(e){setBusy(false);notice(e.message,true);}
  };
  $('import-dialog-close').onclick=()=>$('import-dialog').close();$('import-dialog').querySelectorAll('[data-import-kind]').forEach(b=>b.onclick=()=>importChoice(b.dataset.importKind));

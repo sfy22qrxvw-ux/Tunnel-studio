@@ -121,17 +121,17 @@ def _start_native_progress():
     except Exception:
         pass
 
-def load(kind,path,demo=False,display_name=None):
+def load(kind,path,demo=False,display_name=None,alignment_radius=None):
     global SELECTION
     path=Path(str(path).strip().strip('"')).expanduser()
     if workflows.load(sys.modules[__name__],kind,path,display_name): return
     if not path.is_file(): raise ValueError('File not found. Use Choose file, or paste the full local path including its extension.')
     if kind=='axis':
-        axis=Alignment.read(path)
+        axis=Alignment.read(path, alignment_radius)
         # Loading a design starts a fresh project: never mix old/demo measurements with a new design.
         STATE.update(axis=axis,axis_provenance={'kind':'imported_design'},cloud=None,derived=None,rings=[],demo=demo,valid_points=0,joints=None,structures=[])
     elif kind=='cloud':
-        if STATE['axis'] is None: raise ValueError('Load your alignment CSV before loading a point cloud.')
+        if STATE['axis'] is None: raise ValueError('Import your design alignment before loading a point cloud.')
         if STATE['demo'] and not demo: raise ValueError('Load your own alignment first. A real scan cannot be analysed against the demonstration alignment.')
         name=uuid.uuid4().hex
         if path.suffix.lower() in ('.e57','.hspca'):
@@ -371,7 +371,7 @@ class Handler(BaseHTTPRequestHandler):
                         if kind in ('job_scan','job_mesh'):
                             import job_api
                             job_api.load(sys.modules[__name__],kind,dest,display_name=name,bundle_id=bundle_id)
-                        else:load(kind,dest,display_name=name)
+                        else:load(kind,dest,display_name=name,alignment_radius=args.get('alignment_radius',[None])[0])
                         if kind=='cloud': STATE['cloud']['name']=name
                         if kind=='registration': STATE['registration']['cloud']['name']=name
                         if kind=='surface': STATE['surface_source']['name']=name
@@ -533,7 +533,7 @@ class Handler(BaseHTTPRequestHandler):
                 start_job(clean)
             elif parsed.path=='/api/demo': start_job(demo)
             elif parsed.path=='/api/load':
-                k=body['kind']; start_job(lambda:load(k,body['path']),'job' if k in ('job_scan','job_mesh') else 'surface' if k=='surface' else 'registration' if k=='registration' else 'general',native_progress=k in ('job_scan','job_mesh','surface','registration','cloud'))
+                k=body['kind']; start_job(lambda:load(k,body['path'],alignment_radius=body.get('alignment_radius')),'job' if k in ('job_scan','job_mesh') else 'surface' if k=='surface' else 'registration' if k=='registration' else 'general',native_progress=k in ('job_scan','job_mesh','surface','registration','cloud'))
             elif parsed.path=='/api/detect-joints':
                 if JOB['busy']:raise ValueError('Wait for the current operation to finish.')
                 import joint_scan
