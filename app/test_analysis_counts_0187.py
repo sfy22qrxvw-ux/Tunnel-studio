@@ -56,10 +56,10 @@ class AnalysisCounts0187Tests(unittest.TestCase):
         result=scan_edits.delete_many(s,['scan'],dict(mode='box',
             minimum=[10.9,-.1,-.1],maximum=[11.1,.1,.1]))
         self.assertEqual(result['count'],1);self.assertEqual(s.STATE['valid_points'],2)
-        self.assertEqual(scan_edits.analysis_range(s.STATE['cloud'],derived),coverage)
+        self.assertEqual(scan_edits.analysis_range(s.STATE['cloud'],derived),dict(start=4.,end=5.))
         scan_edits.apply(s,item,'undo_edit')
         self.assertEqual(s.STATE['valid_points'],2)
-        self.assertEqual(scan_edits.analysis_range(s.STATE['cloud'],derived),coverage)
+        self.assertEqual(scan_edits.analysis_range(s.STATE['cloud'],derived),dict(start=4.,end=5.))
         self.assertEqual(Path(derived).read_bytes(),original)
 
     def test_positioned_scan_range_is_measured_in_both_projection_paths(self):
@@ -79,11 +79,22 @@ class AnalysisCounts0187Tests(unittest.TestCase):
             other,other_count=project_cloud(meta,axis,self.root/'parallel.analysis64',coverage=parallel)
         self.assertEqual((other_count,parallel),(count,serial))
         self.assertEqual(Path(other).read_bytes(),Path(path).read_bytes())
-        grid=heatmap.calculate(meta,path,axis,**serial,step=10.)
+        grid=heatmap.calculate(meta,path,axis,serial['start'],serial['end'],step=10.)
         self.assertEqual((grid['points'],grid['nx']),(4,20))
         self.assertEqual(grid['counts'][8::grid['nx']],[0]*grid['ny'])
         one_station=heatmap.calculate(meta,path,axis,serial['start'],serial['start'])
         self.assertEqual((one_station['points'],one_station['nx']),(1,1))
+        scan_edits.record_projection(meta,path,count,serial)
+        interior,_=scan_edits.update_mask(meta,[np.array([3])],self.root,1,lambda _:None,[],path,count)
+        meta['mask_file']=interior
+        observed=dict(start=serial['start'],end=serial['end'])
+        self.assertEqual(scan_edits.analysis_range(meta,path),observed)
+        edge,_=scan_edits.update_mask(meta,[np.array([2])],self.root,1,lambda _:None,[],path,count-1)
+        meta['mask_file']=edge
+        self.assertIsNone(scan_edits.analysis_range(meta,path))
+        remaining,updated=scan_edits.measure_projection_range(meta,path)
+        self.assertEqual(remaining,2)
+        np.testing.assert_allclose([updated['start'],updated['end']],[3220.,3298.],atol=1e-9)
 
     def test_incomplete_deletion_mask_cannot_produce_exact_count(self):
         Path(self.meta['mask_file']).write_bytes(b'\0'*11)
