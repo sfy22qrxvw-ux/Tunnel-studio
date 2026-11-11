@@ -453,7 +453,10 @@ def get(s,h,path,args):
         projects.resume_storage_purges(s.WORK);h.send(projects.storage_purge_status(s.WORK));return True
     if path=='/api/project-recovery':
         report=s.STATE.get('project_recovery') or {}
-        h.send({'warnings':report.get('warnings',[]),'unavailable':[{k:v for k,v in entry.items() if k!='original_data_json'} for entry in report.get('unavailable',[])]});return True
+        warnings=report.get('warnings',[])
+        unavailable=[{k:v for k,v in entry.items() if k!='original_data_json'} for entry in report.get('unavailable',[])]
+        needs_review=bool(unavailable or any(note not in projects.PROJECT_FORMAT_NOTICES for note in warnings))
+        h.send({'warnings':warnings,'unavailable':unavailable,'needs_review':needs_review});return True
     if path=='/api/registration':
         r=reg(s,False); result={k:v for k,v in r.items() if k not in ('cloud','transformed','target_undo')}
         result['cloud']={k:v for k,v in r['cloud'].items() if k not in ('file','attributes_file','mask_file')} if r.get('cloud') else None

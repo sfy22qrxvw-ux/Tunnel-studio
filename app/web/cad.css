@@ -3,7 +3,9 @@
 .cad-profile-bar[hidden]{display:none}
 .cad-profile-bar>span{margin-right:auto;font-size:12px}
 .cad-profile-bar label{display:flex;align-items:center;gap:5px}
-.single-workspace.cad-profile-edit .cad-toolbar{display:flex!important}
+.single-workspace.cad-profile-edit .cad-toolbar{display:flex!important;background:var(--ts-theme-panel,#fff);border-color:var(--ts-theme-border,#d1dfe6)}
+.cad-profile-edit .cad-tools-group{border-color:var(--ts-theme-border,#dbe5e9)}
+.cad-profile-edit .cad-tools-group>span{color:var(--ts-theme-muted,#6b8391)}
 .single-workspace.cad-profile-edit .cad-modebar,
 .cad-profile-edit :is(.cad-tools-group:nth-child(2),.cad-tools-group:last-child,[data-cad-command="cut"],#cad-frame-button,#cad-view-lock,#cad-plane-at-view),
 .cad-profile-edit .job-cad-nav button:not([data-job-nav="pan"]):not([data-job-nav="fit"]),

@@ -66,10 +66,10 @@
  class JobScene extends CloudScene{
   basis(){
    const frame=super.basis();
+   if(this.setupCamera||this.workPlaneView)return frame;
    // In orthographic mode positive depth is towards the camera. The screen
    // right vector must be evaluated from that side of the scene.
-   if(!this.setupCamera)frame.right=frame.right.map(v=>-v);
-   return frame;
+   return {...frame,right:frame.right.map(v=>-v)};
   }
   orbitHorizontal(dx){return this.setupCamera?-dx:dx;}
   setMesh(values,origin){if(!this.gl)return;this.meshValues=values;this.meshOrigin=origin;if(!this.meshBuffer)this.meshBuffer=this.gl.createBuffer();this.upload(this.meshBuffer,values);this.meshCount=values.length/6;this.meshMode=$('job-mesh-display').value;this.updateMeshWire();this.draw();}

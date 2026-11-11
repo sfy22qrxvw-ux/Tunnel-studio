@@ -249,7 +249,7 @@
  async function projectReady(showRecovery=true){
   if($('project-dialog').open)$('project-dialog').close();setBusy(false);resetEditingView();formAxis=null;scene.initialised=false;lastProjectId=Symbol('opened project');
   await window.JobUI?.projectOpened();await poll();viewTab('three');
-  if(showRecovery){const report=await api('/api/project-recovery');if(report.warnings?.length){
+  if(showRecovery){const report=await api('/api/project-recovery');if(report.needs_review){
    const total=report.unavailable?.length||0;const text=`Project opened with ${report.warnings.length} recovery notice(s)${total?` and ${total} unavailable asset or history record(s)`:''}. Available scans, models and current edits have been restored.\n\n`+report.warnings.slice(0,12).join('\n\n')+(report.warnings.length>12?'\n\nDownload the recovery report to review all notices.':'');
    showTunnelMessage('Project recovery',text,false,'Download recovery report',()=>{const url=URL.createObjectURL(new Blob([JSON.stringify(report,null,2)],{type:'application/json'}));const a=document.createElement('a');a.href=url;a.download='Tunnel_Studio_project_recovery.json';a.click();setTimeout(()=>URL.revokeObjectURL(url),1000);});
   }}

@@ -162,9 +162,33 @@ class StorageWorkflow0180Tests(unittest.TestCase):
         self.s=SimpleNamespace(WORK=self.root,STATE=workflows.empty(),JOB={'busy':False},
                                SELECTION=None,WORKSPACE_HISTORY={'undo':[],'redo':[]})
         self.s.save=lambda:projects.atomic_json(self.root/'project.json',self.s.STATE)
+        self.s.progress=lambda _:None
         self.h=SimpleNamespace(send=lambda value:setattr(self,'response',value))
 
     def tearDown(self):self.temp.cleanup()
+
+    def test_legacy_notice_stays_in_report_without_prompting_on_reopen(self):
+        state,warnings=projects.normalize_manifest(self.workflows.empty())
+        state['_project_import']={'warnings':warnings}
+        self.workflows.restore_data(self.s,state)
+        saved=projects.save_named(self.root,self.s.STATE,'Imported tunnel',True)
+        for _ in range(2):
+            self.workflows.restore_data(self.s,projects.read_named(self.root,saved['project_id']))
+            self.workflows.get(self.s,self.h,'/api/project-recovery',{})
+            self.assertEqual(self.response['warnings'],['Opened a legacy raw project snapshot.'])
+            self.assertFalse(self.response['needs_review'])
+
+    def test_recovery_issues_prompt_even_with_a_legacy_notice(self):
+        for warnings,unavailable in (
+            ([projects.LEGACY_RAW_NOTICE,'A scan cache is missing.'],[]),
+            ([projects.LEGACY_RAW_NOTICE],[{'kind':'scan','original_data_json':'{}'}]),
+        ):
+            with self.subTest(warnings=warnings,unavailable=unavailable):
+                self.s.STATE['project_recovery']={'warnings':warnings,'unavailable':unavailable}
+                self.workflows.get(self.s,self.h,'/api/project-recovery',{})
+                self.assertTrue(self.response['needs_review'])
+                self.assertEqual(self.response['warnings'],warnings)
+                if unavailable:self.assertEqual(self.response['unavailable'],[{'kind':'scan'}])
 
     def test_switching_projects_keeps_one_hidden_recovery_without_named_copies(self):
         saved=projects.save_named(self.root,self.s.STATE,'Tunnel',True);self.s.STATE.update(saved)

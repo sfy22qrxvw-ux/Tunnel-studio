@@ -253,6 +253,12 @@ def read_json(path):
     return json.loads(raw.decode('utf-8-sig'),parse_constant=invalid)
 
 
+LEGACY_RAW_NOTICE='Opened a legacy raw project snapshot.'
+LEGACY_WRAPPER_NOTICE='Opened a legacy project state wrapper.'
+LEGACY_VERSION_NOTICE='Opened a legacy version-0 project container and upgraded its metadata in memory.'
+PROJECT_FORMAT_NOTICES=(LEGACY_RAW_NOTICE,LEGACY_WRAPPER_NOTICE,LEGACY_VERSION_NOTICE)
+
+
 def normalize_manifest(value):
     """Read current v1 wrappers and known older raw-state/v0 layouts.
 
@@ -266,11 +272,11 @@ def normalize_manifest(value):
         version=value.get('version',0)
         if version not in (0,1,'0','1'):raise ValueError('This project uses an unsupported container version. Open it with a compatible Tunnel Studio version.')
         state=value.get('state')
-        if version in (0,'0'):warnings.append('Opened a legacy version-0 project container and upgraded its metadata in memory.')
+        if version in (0,'0'):warnings.append(LEGACY_VERSION_NOTICE)
     elif isinstance(value.get('state'),dict) and not any(k in value for k in ('axis','cloud','job_items','cad')):
-        state=value['state'];warnings.append('Opened a legacy project state wrapper.')
+        state=value['state'];warnings.append(LEGACY_WRAPPER_NOTICE)
     else:
-        state=value;warnings.append('Opened a legacy raw project snapshot.')
+        state=value;warnings.append(LEGACY_RAW_NOTICE)
     if not isinstance(state,dict) or not any(k in state for k in ('axis','cloud','job_items','cad','project_title','registration','structures','tunnel_design')):
         raise ValueError('The file does not contain recognizable Tunnel Studio project data.')
     return copy.deepcopy(state),warnings

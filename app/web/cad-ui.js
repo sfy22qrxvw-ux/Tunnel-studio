@@ -58,7 +58,7 @@
    scene.workPlaneView=null;return;
   }
   const f=drawingPlane();
-  scene.workPlaneView={right:f.x,up:f.y,forward:M.mul(f.z,-1)};
+  scene.workPlaneView={right:f.x,up:f.y,forward:f.z};
  }
  function view(){const scene=J().cadScene();return {scene,basis:scene.basis(),screenPoint:J().cadScreenPoint};}
  function say(message,error=false){$c('cad-prompt').textContent=message;$c('cad-prompt').classList.toggle('cad-error',error);}
