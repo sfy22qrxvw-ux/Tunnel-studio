@@ -84,7 +84,7 @@ def alignment(design):
 def outline(profile,step_deg=5):
     kind=profile.get('kind');x=finite(profile.get('x',0),'Profile horizontal offset');y=finite(profile.get('y',0),'Profile vertical offset')
     if kind=='circle':
-        r=g.number(profile.get('radius'),'Profile radius',True);t=np.linspace(0,2*np.pi,max(16,math.ceil(360/step_deg)),endpoint=False)
+        r=g.number(profile.get('radius') or 0,'Profile radius',True);t=np.linspace(0,2*np.pi,max(16,math.ceil(360/step_deg)),endpoint=False)
         points=np.column_stack([r*np.cos(t),r*np.sin(t)])
     elif kind in ('rectangle','arch'):
         w=g.number(profile.get('width'),'Profile width',True);h=g.number(profile.get('height'),'Profile height',True)
@@ -181,72 +181,182 @@ class ModelRangeError(ValueError):
     """The selected range exceeds the model geometry budget."""
 
 
-def prepare(design):
-    design=copy.deepcopy(design);stations,vertical,slopes,at=alignment(design)
-    profiles=design.get('profiles',[])
-    if not profiles or len(profiles)>32:raise ValueError('Define between 1 and 32 theoretical profiles.')
-    ids=[p.get('id') for p in profiles]
-    if any(not isinstance(i,str) or not i for i in ids) or len(set(ids))!=len(ids):raise ValueError('Profile identifiers must be unique.')
-    step_deg=curve_step(design.get('detail'))
-    outlines={p['id']:outline(p,step_deg) for p in profiles}
-    fractions={}
-    for ident,p in outlines.items():
-        d=np.linalg.norm(np.roll(p,-1,axis=0)-p,axis=1)
-        if np.any(d<1e-9):raise ValueError('Remove duplicate profile nodes.')
-        fractions[ident]=np.r_[0,np.cumsum(d)]/d.sum()
-    # Keep every original profile corner; common perimeter fractions preserve line/arc junctions.
-    knots=np.unique(np.round(np.concatenate([*fractions.values(),np.linspace(0,1,65)]),12));knots=knots[knots<1]
-    if len(knots)>512:raise ValueError('These profiles contain too much combined curve detail. Choose Balanced/Fast or simplify imported profiles.')
-    sampled={ident:np.column_stack([np.interp(knots,fractions[ident],np.r_[p[:,j],p[0,j]]) for j in range(2)]) for ident,p in outlines.items()}
-    sections=design.get('sections',[])
-    if not sections or len(sections)>1000:raise ValueError('Add at least one chainage section.')
-    previous=None;smooth_samples=[]
+class ProfileError(ValueError):
+    def __init__(self, profile, error):
+        self.profile_id = profile['id']
+        super().__init__(f"Profile “{profile.get('name') or self.profile_id}” · {error}")
+
+
+def spaced_stations(mandatory, spacing, maximum):
+    """Keep each design break and subdivide the gaps within the vertex budget."""
+    gaps = np.diff(mandatory)
+
+    def intervals(limit):
+        return np.maximum(1, np.ceil(np.nextafter(gaps / limit, -np.inf)))
+
+    counts = intervals(spacing)
+    if counts.sum() + 1 > maximum:
+        lower, upper = spacing, float(gaps.max())
+        for _ in range(48):
+            middle = (lower + upper) / 2
+            if intervals(middle).sum() + 1 <= maximum:
+                upper = middle
+            else:
+                lower = middle
+        counts = intervals(upper)
+    pieces = [np.linspace(a, b, n + 1)[:-1]
+              for a, b, n in zip(mandatory, mandatory[1:], counts.astype(int))]
+    return np.concatenate([*pieces, mandatory[-1:]])
+
+
+def prepare(design, *, vertex_budget=g.MAX_PROJECT_VERTICES, legacy_sampling=False, preview=False):
+    design = copy.deepcopy(design)
+    stations, vertical, _, at = alignment(design)
+    profiles = design.get('profiles', [])
+    if not profiles or len(profiles) > 32:
+        raise ValueError('Define between 1 and 32 theoretical profiles.')
+    ids = [p.get('id') for p in profiles]
+    if any(not isinstance(i, str) or not i for i in ids) or len(set(ids)) != len(ids):
+        raise ValueError('Profile identifiers must be unique.')
+    sections = design.get('sections', [])
+    if not sections or len(sections) > 1000:
+        raise ValueError('Add at least one chainage section.')
+    used = set()
+    previous = None
+    smooth_samples = []
     for section in sections:
-        section['start']=finite(section.get('start'),'Section start');section['end']=finite(section.get('end'),'Section end');section.setdefault('last',section.get('first'))
-        if section.get('type') not in (None,'constant','interpolate'):raise ValueError('Choose Constant theoretical profile or Interpolate between profiles.')
-        if section.get('type')=='constant':section['last']=section.get('first')
-        if section.get('interpolation','linear') not in ('linear','smoothstep'):
+        section['start'] = finite(section.get('start'), 'Section start')
+        section['end'] = finite(section.get('end'), 'Section end')
+        section.setdefault('last', section.get('first'))
+        if section.get('type') not in (None, 'constant', 'interpolate'):
+            raise ValueError('Choose Constant theoretical profile or Interpolate between profiles.')
+        if section.get('type') == 'constant':
+            section['last'] = section.get('first')
+        if section.get('interpolation', 'linear') not in ('linear', 'smoothstep'):
             raise ValueError('Choose Linear or Smooth transition.')
-        if section['first'] not in sampled or section['last'] not in sampled:raise ValueError('Choose available start and end profiles for every section.')
-        if section['end']-section['start']<1e-6:raise ValueError('Every section or transition needs a positive length; zero-length transitions are ambiguous.')
-        at(section['start']);at(section['end'])
-        if previous:
-            if abs(section['start']-previous['end'])>1e-6:raise ValueError('Consecutive sections must meet exactly, without a gap or overlap.')
-            if not np.allclose(sampled[previous['last']],sampled[section['first']],atol=1e-7,rtol=0):raise ValueError('Profiles change abruptly at a section boundary. Add a positive-length transition or match the touching profiles.')
-        if section.get('interpolation')=='smoothstep' and section['first']!=section['last']:
-            span=section['end']-section['start']
-            smooth_samples.extend(section['start']+span*t for t in (.25,.5,.75))
-        previous=section
-    spacing=g.number(design.get('spacing',1),'Profile spacing',True);start=sections[0]['start'];end=sections[-1]['end']
-    mandatory=distinct_stations(np.r_[stations[(stations>start)&(stations<end)],vertical[(vertical[:,0]>start)&(vertical[:,0]<end),0],
-                                      smooth_samples,*[[q['start'],q['end']] for q in sections]])
-    maximum=min(2048,g.MAX_VERTICES//len(knots),(g.MAX_FACES-2*len(knots))//(2*len(knots))+1)
-    if len(mandatory)>maximum:
+        first, last = section.get('first'), section['last']
+        if first not in ids or last not in ids:
+            raise ValueError('Choose available start and end profiles for every section.')
+        used.update((first, last))
+        span = section['end'] - section['start']
+        if span < 1e-6:
+            raise ValueError('Every section or transition needs a positive length.')
+        at(section['start'])
+        at(section['end'])
+        if previous and abs(section['start'] - previous['end']) > 1e-6:
+            raise ValueError('Consecutive sections must meet exactly, without a gap or overlap.')
+        if section.get('interpolation') == 'smoothstep' and first != last:
+            smooth_samples.extend(section['start'] + span * t for t in (.25, .5, .75))
+        previous = section
+
+    if legacy_sampling:
+        used = set(ids)
+    outlines = {}
+    step = curve_step(design.get('detail'))
+    for profile in profiles:
+        try:
+            outlines[profile['id']] = outline(profile, step)
+        except ValueError as exc:
+            if profile['id'] in used:
+                raise ProfileError(profile, exc) from exc
+    fractions = {}
+    for ident in used:
+        points = outlines[ident]
+        lengths = np.linalg.norm(np.roll(points, -1, axis=0) - points, axis=1)
+        if np.any(lengths < 1e-9):
+            raise ProfileError(profiles[ids.index(ident)], 'Remove duplicate profile nodes.')
+        fractions[ident] = np.r_[0, np.cumsum(lengths)] / lengths.sum()
+    # A single outline already supplies every corner and arc sample. Only
+    # profile transitions need a common perimeter grid.
+    if len(used) == 1 and not legacy_sampling:
+        sampled = {ident: outlines[ident] for ident in used}
+    else:
+        grids = list(fractions.values())
+        if legacy_sampling:
+            grids.append(np.linspace(0, 1, 65))
+        knots = np.unique(np.round(np.concatenate(grids), 12))
+        knots = knots[knots < 1]
+        sampled = {}
+        for ident, fractions_at_nodes in fractions.items():
+            points = outlines[ident]
+            sampled[ident] = np.column_stack([
+                np.interp(knots, fractions_at_nodes, np.r_[points[:, j], points[0, j]]) for j in range(2)
+            ])
+    count = len(next(iter(sampled.values())))
+    if count > 512:
+        raise ValueError('These profiles contain too much combined curve detail. Choose Balanced/Fast or simplify imported profiles.')
+    for left, right in zip(sections, sections[1:]):
+        if not np.allclose(sampled[left['last']], sampled[right['first']], atol=1e-7, rtol=0):
+            raise ValueError('Profiles change abruptly at a section boundary. Add a positive-length transition or match the touching profiles.')
+
+    spacing = g.number(design.get('spacing', 1), 'Profile spacing', True)
+    start, end = sections[0]['start'], sections[-1]['end']
+    mandatory = distinct_stations(np.r_[
+        stations[(stations > start) & (stations < end)],
+        vertical[(vertical[:, 0] > start) & (vertical[:, 0] < end), 0],
+        smooth_samples, *[[section['start'], section['end']] for section in sections]
+    ])
+    if legacy_sampling:
+        maximum = min(2048, g.MAX_VERTICES // count, (g.MAX_FACES - 2 * count) // (2 * count) + 1)
+    else:
+        maximum = max(0, min(g.MAX_PROJECT_VERTICES, int(vertex_budget)) // count)
+    if len(mandatory) > maximum:
         raise ModelRangeError(f'This range needs {len(mandatory):,} cross-sections at alignment and profile stations. '
-                              f'One model fits {maximum:,} at this profile detail. Choose a shorter range.')
-    slots=maximum-len(mandatory)
-    intervals=min(max(1,math.ceil((end-start)/spacing)),slots+1)
-    samples=distinct_stations(np.r_[mandatory,np.linspace(start,end,intervals+1)])
-    loops=[];centres=[]
-    for station in samples:
-        index=min(len(sections)-1,int(np.searchsorted([q['end'] for q in sections],station,side='right')));section=sections[index]
-        t=np.clip((station-section['start'])/(section['end']-section['start']),0,1)
-        if section.get('interpolation')=='smoothstep':t=t*t*(3-2*t)
-        xy=sampled[section['first']]*(1-t)+sampled[section['last']]*t
-        # Check transitions too: a valid pair of outlines can still morph through a bad intermediate shape.
-        g.polygon(np.column_stack([xy,np.zeros(len(xy))]));centre,right,up=at(station);centres.append(centre)
-        loops.append(dict(vertices=(centre+xy[:,0,None]*right+xy[:,1,None]*up).tolist(),closed=True))
-    diagnostics=dict(start=float(stations[0]),end=float(stations[-1]),horizontal_chainages=stations.tolist(),vertical=vertical.tolist(),gradients_percent=(slopes*100).tolist(),profiles=[dict(id=p['id'],name=p.get('name',p['id']),points=outlines[p['id']].tolist()) for p in profiles],profile_count=len(samples),maximum_spacing=float(np.diff(samples).max()),vertices=len(samples)*len(knots),orientation=design.get('orientation','vertical'))
-    preview_ids=np.unique(np.linspace(0,len(loops)-1,min(30,len(loops))).astype(int));ring_ids=np.unique(np.r_[np.arange(0,len(knots),max(1,len(knots)//96)),len(knots)-1])
-    diagnostics['rings']=[np.array(loops[i]['vertices'])[ring_ids].tolist() for i in preview_ids];diagnostics['centres']=np.asarray(centres).tolist()
-    # The plan view covers the complete alignment, including outside the modelled sections.
-    diagnostics.update(alignment_preview(design))
-    return design,loops,diagnostics
+                              f'The project has room for {maximum:,} at this profile detail. Choose a shorter range.')
+    if legacy_sampling:
+        intervals = min(max(1, math.ceil((end - start) / spacing)), maximum - len(mandatory) + 1)
+        samples = distinct_stations(np.r_[mandatory, np.linspace(start, end, intervals + 1)])
+    else:
+        samples = spaced_stations(mandatory, spacing, maximum)
 
-def build(design):
-    clean,loops,info=prepare(design);value=g.loft(loops);value.update(shape='tunnel_design',definition=dict(kind='tunnel_design',design=clean),design_summary={k:v for k,v in info.items() if k not in ('rings','centres','profiles','plan','plan_chainages')});return value,info
+    preview_ids = set(np.linspace(0, len(samples) - 1, min(30, len(samples))).astype(int))
+    ring_ids = np.unique(np.r_[np.arange(0, count, max(1, count // 96)), count - 1])
+    section_ids = np.minimum(len(sections) - 1, np.searchsorted(
+        [section['end'] for section in sections], samples, side='right'))
+    loops, centres, rings = [], [], []
+    for xy in sampled.values():
+        g.polygon(np.column_stack([xy, np.zeros(count)]))
+    for index, (station, section_id) in enumerate(zip(samples, section_ids)):
+        section = sections[section_id]
+        first, last = section['first'], section['last']
+        xy = sampled[first]
+        if first != last or legacy_sampling:
+            t = float(np.clip((station - section['start']) / (section['end'] - section['start']), 0, 1))
+            if section.get('interpolation') == 'smoothstep':
+                t = t * t * (3 - 2 * t)
+            xy = xy * (1 - t) + sampled[last] * t
+            if first != last:
+                g.polygon(np.column_stack([xy, np.zeros(count)]))
+        if preview and index not in preview_ids:
+            continue
+        centre, right, up = at(station)
+        points = centre + xy[:, 0, None] * right + xy[:, 1, None] * up
+        centres.append(centre.tolist())
+        if not preview:
+            loops.append(dict(vertices=points, closed=True))
+        if index in preview_ids:
+            rings.append(points[ring_ids].tolist())
+    diagnostics = alignment_preview(design)
+    diagnostics.update(profiles=[dict(id=p['id'], name=p.get('name', p['id']), points=outlines[p['id']].tolist())
+                                 for p in profiles if p['id'] in outlines],
+                       profile_count=len(samples), required_sections=len(mandatory), requested_spacing=spacing,
+                       maximum_spacing=float(np.diff(samples).max()), vertices=len(samples) * count,
+                       orientation=design.get('orientation', 'vertical'), rings=rings, centres=centres)
+    return design, loops, diagnostics
 
-def resolve_profiles(s,design):
+
+def build(design, *, vertex_budget=g.MAX_PROJECT_VERTICES, legacy_sampling=False):
+    clean, loops, info = prepare(design, vertex_budget=vertex_budget, legacy_sampling=legacy_sampling)
+    value = g.loft_rings([ring['vertices'] for ring in loops], shape='tunnel_design')
+    definition = dict(kind='tunnel_design', design=clean)
+    if not legacy_sampling:
+        definition['vertex_budget'] = vertex_budget
+    value.update(definition=definition, design_summary={k: v for k, v in info.items()
+                 if k not in ('rings', 'centres', 'profiles', 'plan', 'plan_chainages')})
+    return value, info
+
+
+def resolve_profiles(s,design, *, allow_incomplete=False):
     import cad_api
     design=copy.deepcopy(design)
     for p in design.get('profiles',[]):
@@ -254,15 +364,24 @@ def resolve_profiles(s,design):
             obj=next((o for o in cad_api.current(s)['objects'] if o['id']==p['object_id']),None)
             if obj:
                 if obj.get('faces') or not obj.get('closed'):
+                    if allow_incomplete:
+                        p.pop('geometry', None)
+                        continue
                     raise ValueError('The linked CAD object must be a closed outline.')
                 p['geometry']={k:copy.deepcopy(obj[k]) for k in ('vertices','closed','definition','transform') if k in obj}
-            elif not p.get('geometry'):raise ValueError('The selected CAD profile no longer exists. Choose another profile.')
+            elif not p.get('geometry') and not allow_incomplete:
+                raise ValueError('The selected CAD profile no longer exists. Choose another profile.')
     return design
 
 def profile_operation(s,body):
     import cad_api
     cad_api.check(s,body)
     operation=body.get('operation')
+    if operation == 'drawing_frame':
+        station = finite(body.get('chainage'), 'Profile plane chainage')
+        _, _, _, at = alignment({**body.get('design', {}), 'orientation': 'normal'})
+        origin, right, up = at(station)
+        return dict(frame=g.frame(dict(name=f'Tunnel section · Ch. {station:.3f} m', origin=origin, x=right, y=up)))
     if operation in ('link','edit_frame'):
         obj=cad_api.get_object(cad_api.current(s),body.get('object_id'))
         if operation=='edit_frame':
@@ -307,20 +426,25 @@ def get(s,h,path,args):
             value['initialization_warning']=str(exc)
     h.send(value);return True
 
+def available_vertices(data, replacing=None):
+    return g.MAX_PROJECT_VERTICES - sum(len(obj['vertices']) for obj in data['objects'] if obj['id'] != replacing)
+
+
 def post(s,h,path,body):
     if path not in ('/api/tunnel-design-preview','/api/tunnel-design-action'):return False
     if s.JOB.get('busy'):raise ValueError('Wait for the current operation.')
+    import cad_api
     if path.endswith('preview'):
         if 'operation' in body:
             h.send(profile_operation(s,body));return True
         design=body.get('design',{})
-        info=alignment_preview(design)
-        resolved=design
+        resolved=resolve_profiles(s, design, allow_incomplete=True)
         try:
-            resolved=resolve_profiles(s,design)
-            _,_,info=prepare(resolved)
+            budget = available_vertices(cad_api.current(s), body.get('model_id'))
+            _,_,info=prepare(resolved, vertex_budget=budget, preview=True)
         except ValueError as exc:
             # Profiles can be edited independently of the loft range or budget.
+            info=alignment_preview(design)
             profiles=[]
             for profile in resolved.get('profiles', []):
                 try:
@@ -329,10 +453,10 @@ def post(s,h,path,body):
                     continue
                 profiles.append(dict(id=profile.get('id'),name=profile.get('name'),points=points.tolist()))
             info.update(model_error=str(exc),range_limited=isinstance(exc,ModelRangeError),
+                        profile_error_id=getattr(exc, 'profile_id', None),
                         profiles=profiles,rings=[],centres=[])
         h.send(info);return True
-    design=resolve_profiles(s,body.get('design',{}))
-    import cad_api
+    design=resolve_profiles(s, body.get('design',{}), allow_incomplete=True)
     cad_api.check(s,body)
     action=body.get('action');old=None;old_selection=getattr(s,'SELECTION',None)
     try:
@@ -342,19 +466,25 @@ def post(s,h,path,body):
             json.dumps(design,allow_nan=False)
             model_id=body.get('model_id')
         elif action=='build':
-            import cad_api
-            value,info=build(design);data=copy.deepcopy(cad_api.current(s));model_id=body.get('model_id');obj=next((o for o in data['objects'] if o['id']==model_id),None)
+            current=cad_api.current(s);model_id=body.get('model_id')
             separate_copy=body.get('separate_copy',False)
             if not isinstance(separate_copy,bool):raise ValueError('Separate copy must be true or false.')
             if separate_copy and not model_id:raise ValueError('Choose the existing design model to make a separate copy.')
+            obj=next((o for o in current['objects'] if o['id']==model_id),None)
             if model_id and obj is None:raise ValueError('The previous design model was removed. Create a new model instead.')
+            if obj and obj.get('definition',{}).get('kind')!='tunnel_design':
+                raise ValueError('Only a Tunnel designer model can be updated here.')
+            budget=available_vertices(current, None if separate_copy else model_id)
+            value,_=build(design, vertex_budget=budget)
+            data=copy.deepcopy(current)
             if obj:
-                if obj.get('definition',{}).get('kind')!='tunnel_design':raise ValueError('Only a Tunnel designer model can be updated here.')
+                obj=cad_api.get_object(data,model_id)
                 T=np.asarray(obj.get('transform',np.eye(4)),float)
                 if T.shape!=(4,4) or not np.isfinite(T).all() or not np.allclose(T[3],[0,0,0,1],rtol=0,atol=1e-12):raise ValueError('The saved model transform is invalid.')
-                p=np.asarray(value['vertices']);faces=np.asarray(value['faces'],dtype=int)
-                if np.linalg.det(T[:3,:3])<0:faces=faces[:,[0,2,1]]
-                value=g.geometry(p@T[:3,:3].T+T[:3,3],faces,solid=True,shape='tunnel_design',definition=value['definition'],transform=T.tolist(),design_summary=value['design_summary'])
+                if not np.array_equal(T,np.eye(4)):
+                    p=np.asarray(value['vertices']);faces=np.asarray(value['faces'],dtype=int)
+                    if np.linalg.det(T[:3,:3])<0:faces=faces[:,[0,2,1]]
+                    value=g.geometry(p@T[:3,:3].T+T[:3,3],faces,solid=True,shape='tunnel_design',definition=value['definition'],transform=T.tolist(),design_summary=value['design_summary'])
                 if separate_copy:
                     name=(str(design.get('name') or 'Tunnel design')[:115]+' copy')[:120]
                     design['name']=name;value['definition']['design']['name']=name

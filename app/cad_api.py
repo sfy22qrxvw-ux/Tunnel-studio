@@ -7,7 +7,7 @@ import numpy as np
 import cad_geometry as g
 
 GEOMETRY_KEYS={'vertices','faces','closed','solid','minimum','maximum','area_m2','volume_m3','shape','definition','transform','centre','radius','design_summary'}
-MAX_PROJECT_VERTICES=300000
+MAX_PROJECT_VERTICES=g.MAX_PROJECT_VERTICES
 
 def empty():
     return dict(revision='empty',objects=[],frames=[],active_frame=g.frame({'name':'World'}),layers=[dict(name='Model',visible=True)],last_created=[])
@@ -245,13 +245,14 @@ def import_model_json(path,progress=lambda message:None):
     for index,raw in enumerate(rows):
         progress(f'Importing editable models · {index+1:,} / {len(rows):,}')
         if not isinstance(raw,dict):raise ValueError('Invalid model object.')
-        vertices=g.points(raw.get('vertices'),1,g.MAX_VERTICES);count+=len(vertices)
-        if count>MAX_PROJECT_VERTICES:raise ValueError('Model exceeds the editable vertex budget.')
-        faces=raw.get('faces',[])
-        if not isinstance(faces,list) or len(faces)>g.MAX_FACES or any(not isinstance(f,list) or len(f)!=3 or any(type(i) is not int for i in f) for f in faces):
-            raise ValueError('Model faces must contain three integer vertex indices.')
         for key in ('closed','solid','visible'):
             if key in raw and type(raw[key]) is not bool:raise ValueError('Invalid model '+key+' flag.')
+        max_vertices, max_faces = g.mesh_limits(raw.get('solid',False))
+        vertices=g.points(raw.get('vertices'),1,max_vertices);count+=len(vertices)
+        if count>MAX_PROJECT_VERTICES:raise ValueError('Model exceeds the editable vertex budget.')
+        faces=raw.get('faces',[])
+        if not isinstance(faces,list) or len(faces)>max_faces or any(not isinstance(f,list) or len(f)!=3 or any(type(i) is not int for i in f) for f in faces):
+            raise ValueError('Model faces must contain three integer vertex indices.')
         value=g.geometry(vertices,faces,closed=raw.get('closed',False),solid=raw.get('solid',False),shape=str(raw.get('shape','geometry'))[:40])
         if raw.get('transform') is not None:
             transform=np.asarray(raw['transform'],dtype=float)

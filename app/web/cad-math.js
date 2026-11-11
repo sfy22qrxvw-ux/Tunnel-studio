@@ -67,8 +67,24 @@
   const z=dot(p.z,forward)<0?mul(p.z,-1):p.z,x=p.x;
   return {frame:{name:'Face plane',origin:midpoint(a,b),x,y:cross(z,x),z},faces:p.faces};
  }
- function edges(o){if(!o.faces?.length){const r=o.vertices.slice(1).map((v,i)=>[i,i+1]);if(o.closed&&o.vertices.length>2)r.push([o.vertices.length-1,0]);return r;}const found=new Map();for(const f of o.faces)for(let i=0;i<3;i++){const a=f[i],b=f[(i+1)%3],key=a<b?a+':'+b:b+':'+a;const n=unit(cross(sub(o.vertices[f[1]],o.vertices[f[0]]),sub(o.vertices[f[2]],o.vertices[f[0]])));if(!found.has(key))found.set(key,{edge:[a,b],n,count:1,crease:false});else{const r=found.get(key);r.count++;r.crease ||= Math.abs(dot(r.n,n))<.999;}}
-  return [...found.values()].filter(r=>r.count===1||r.crease).map(r=>r.edge);
+ function edges(o){
+  const count=o.vertices.length;
+  if(!o.faces?.length){
+   const result=o.vertices.slice(1).map((v,i)=>[i,i+1]);
+   if(o.closed&&count>2)result.push([count-1,0]);
+   return result;
+  }
+  const found=new Map();
+  for(const face of o.faces){
+   const [p,q,r]=face.map(i=>o.vertices[i]),normal=unit(cross(sub(q,p),sub(r,p)));
+   for(let i=0;i<3;i++){
+    const a=face[i],b=face[(i+1)%3],key=Math.min(a,b)*count+Math.max(a,b);
+    const row=found.get(key);
+    if(!row)found.set(key,{edge:[a,b],normal,count:1,crease:false});
+    else{row.count++;row.crease ||= Math.abs(dot(row.normal,normal))<.999;}
+   }
+  }
+  return [...found.values()].filter(row=>row.count===1||row.crease).map(row=>row.edge);
  }
  const exports={add,sub,mul,dot,cross,norm,unit,worldFrame,toWorld,toLocal,parse,planePoint,constrain,segmentClosest,segmentPixel,intersection,rayTriangle,frameFromPoints,midpoint,commonFaceFrame,edges};
  if(typeof module!=='undefined')module.exports=exports;else window.CadMath=exports;

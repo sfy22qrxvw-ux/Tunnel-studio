@@ -14,6 +14,7 @@ if sys.platform=='win32' and ENGINE.is_dir() and str(ENGINE) not in sys.path:
 
 MAX_VERTICES = 50000
 MAX_FACES = 100000
+MAX_PROJECT_VERTICES = 300000
 MAX_PROFILE = 2048
 EPS = 1e-9
 
@@ -97,10 +98,15 @@ def polygon(p):
     triangles = order[np.asarray(m.triangulate([uv[order]]), dtype=np.int64)]
     return origin, basis, uv, triangles
 
+def mesh_limits(solid):
+    return (MAX_PROJECT_VERTICES, 2 * MAX_PROJECT_VERTICES) if solid else (MAX_VERTICES, MAX_FACES)
+
+
 def geometry(vertices, faces=None, closed=False, solid=False, **metadata):
-    p = points(vertices, 1, MAX_VERTICES)
+    max_vertices, max_faces = mesh_limits(solid)
+    p = points(vertices, 1, max_vertices)
     f = np.asarray(faces if faces is not None else [], dtype=np.int64).reshape(-1, 3)
-    if len(f) > MAX_FACES or len(f) and (np.min(f) < 0 or np.max(f) >= len(p)):
+    if len(f) > max_faces or len(f) and (np.min(f) < 0 or np.max(f) >= len(p)):
         raise ValueError('Mesh exceeds the modelling limit or has invalid triangle indices.')
     if len(f):
         local = p - p[0]; triangles = local[f]
@@ -225,16 +231,25 @@ def loft(profiles):
     loops = [p if len(p)==count else resample(p, count, closed) for p, _ in rows]
     if closed:
         for p in loops: polygon(p)
-    faces = []
-    for k in range(len(loops)-1):
-        for i in range(count if closed else count-1):
-            j=(i+1)%count; a=k*count+i; b=k*count+j
-            faces.extend([[a,b,b+count],[a,b+count,a+count]])
+    return loft_rings(loops, closed=closed)
+
+
+def loft_rings(loops, *, closed=True, shape='loft'):
+    """Join matched, validated rings with caps at the two outer ends."""
+    rings = np.asarray(loops, dtype=float)
+    rows, count, _ = rings.shape
+    offsets = (np.arange(rows - 1) * count)[:, None]
+    i = np.arange(count if closed else count - 1)
+    a = offsets + i
+    b = offsets + (i + 1) % count
+    first = np.stack([a, b, b + count], axis=-1)
+    second = np.stack([a, b + count, a + count], axis=-1)
+    faces = np.stack([first, second], axis=2).reshape(-1, 3)
     if closed:
-        for a,b,c in polygon(loops[0])[3]: faces.append([int(c),int(b),int(a)])
-        offset=(len(loops)-1)*count
-        for a,b,c in polygon(loops[-1])[3]:faces.append([int(a+offset),int(b+offset),int(c+offset)])
-    return geometry(np.vstack(loops),faces,solid=closed,shape='loft')
+        start = polygon(rings[0])[3][:, ::-1]
+        end = polygon(rings[-1])[3] + (rows - 1) * count
+        faces = np.concatenate([faces, start, end])
+    return geometry(rings.reshape(-1, 3), faces, solid=closed, shape=shape)
 
 def rotation(axis, degrees):
     x,y,z=unit(axis); a=math.radians(number(degrees,'Angle')); c=math.cos(a); s=math.sin(a); t=1-c
@@ -268,7 +283,10 @@ def build(raw, resolve=lambda ident:None):
         if obj is None:raise ValueError('Select the required source geometry.')
         spec[key]={k:copy.deepcopy(obj[k]) for k in ('vertices','faces','closed','solid') if k in obj}
         return spec[key]
-    if kind=='tunnel_design':return __import__('tunnel_designer').build(spec['design'])[0]
+    if kind=='tunnel_design':
+        return __import__('tunnel_designer').build(spec['design'],
+            legacy_sampling='vertex_budget' not in spec,
+            vertex_budget=spec.get('vertex_budget', MAX_PROJECT_VERTICES))[0]
     if kind in ('point','line','polyline','rectangle'):
         p=points(spec.get('points'),1 if kind=='point' else 2)
         closed=kind=='rectangle' or bool(spec.get('closed'))
