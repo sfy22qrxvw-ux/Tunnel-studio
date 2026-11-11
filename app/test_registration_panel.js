@@ -64,3 +64,33 @@ const sorted=descending=>Array.from(sortContext.sortPairResiduals(pairs,descendi
 assert.deepEqual(sorted(true),[1,3,2,0]);
 assert.deepEqual(sorted(false),[2,1,3,0]);
 console.log('Target pair residuals sort both ways, with unavailable values last.');
+
+async function checkControlPlan(){
+ const jobSource=fs.readFileSync(path.join(__dirname,'web/job-ui.js'),'utf8');
+ const extract=(from,to)=>jobSource.slice(jobSource.indexOf(from),jobSource.indexOf(to));
+ const calls=[];
+ const context={
+  busy:false,uploading:false,loading:false,setupState:true,previewRequest:null,detailView:null,
+  previewRequested:false,signature:'old',fitPreviewPending:false,packed:null,
+  data:{items:[{id:'a',minimum:[0,0,0],maximum:[1,1,1]}]},
+  jobScene:{yaw:0,pitch:0,draw(){}},$(){return {};},clearCleaningPreview(){},clearPreviewCaches(){},
+  focusWorld:(bounds,refine)=>calls.push({bounds,refine}),fitWholeScene:()=>calls.push('fit all'),
+  window:{SetupCameraUI:{exit:async()=>{context.setupState=false;calls.push('exit setup');}}},
+  sync:async()=>{
+   context.data.items=[{id:'a',minimum:[100,200,1],maximum:[105,208,4]},
+     {id:'unrelated',minimum:[900,900,0],maximum:[950,950,5]}];
+   context.packed=[1];
+  }
+ };
+ vm.runInNewContext(extract(' async function loadPreview(',' async function projectOpened(')+
+                    extract(' function setView(name)','\n for(const b of document.querySelectorAll(\'[data-job-nav]\'))'),context);
+ assert.equal(await context.loadPreview({northUp:true,fitIds:['a']}),true);
+ assert.equal(context.jobScene.yaw,Math.PI);
+ assert.equal(context.jobScene.pitch,Math.PI/2);
+ assert.deepEqual(JSON.parse(JSON.stringify(calls)),['exit setup',{bounds:[[100,200,1],[105,208,4]],refine:false}]);
+ context.jobScene.yaw=.7;
+ await context.loadPreview();
+ assert.equal(context.jobScene.yaw,.7);
+ assert.equal(calls.length,2);
+}
+checkControlPlan().then(()=>console.log('Apply control plan exits setup view, uses updated bounds and frames only the positioned scans.')).catch(error=>{console.error(error);process.exitCode=1;});

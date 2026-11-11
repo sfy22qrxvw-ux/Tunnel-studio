@@ -131,14 +131,17 @@
  $('reg-apply').onclick=async()=>{
   if(!data.solution||dirty||busy)return;
   const solution=data.solution,body={action:'apply',solution_id:solution.id,reviewed:true,to_survey:!$('reg-to-survey').disabled&&$('reg-to-survey').checked};
-  if(!solution.control_group){await action(body);return;}
+  const source=data.source_item_id;
+  if(!source&&!solution.control_group){await action(body);return;}
   try{
    setBusy(true);await post('/api/registration-action',body);
    const job=await window.JobUI.waitReady(null,{skipSync:true});
-   if(job.cancelled)return;
-   await window.JobUI.loadPreview();
+   if(job?.cancelled)return;
+   const bundle=window.JobUI.inventory?.().bundles?.find(item=>item.scan_ids.includes(source));
+   const displayed=await window.JobUI.loadPreview({northUp:true,fitIds:bundle?.scan_ids||[source]});
    await poll();
-   notice(`Applied survey control to ${solution.control_group.setups} linked setup(s).`);
+   const count=solution.control_group?.setups||bundle?.scan_ids.length||1;
+   notice(`Applied survey control to ${count} setup(s).${displayed?' Showing north-up plan.':''}`);
   }catch(e){setBusy(false);notice(e.message,true);}
  };
  $('reg-export').onclick=()=>window.TunnelRibbon.export('registered');
@@ -383,18 +386,18 @@
  };
  bc('apply').onclick=async()=>{
   if(bundleWorking||!bundleDraft)return;
+  const fitIds=bundleData?.bundle.scan_ids||[];
   bundleWorking=true;renderBundle();
   try{
    await post('/api/scan-registration',{action:'bundle_control_apply',bundle_id:bundleId,solution_id:bundleDraft.id,reviewed:true});
    const job=await window.JobUI.waitReady(null,{skipSync:true});
    if(job?.cancelled){endControlDiagnostic('abandoned');throw Error('Control was not applied.');}
    endControlDiagnostic('applied');
-   await window.JobUI.sync({inventoryOnly:true});
+   bundleDraft=null;bundleDialog.close();
+   const displayed=await window.JobUI.loadPreview({northUp:true,fitIds});
    await sync({skipPreview:true});
-   window.JobUI.loadPreview();
-   await refreshBundle();
    window.WorkspaceUI?.refreshBundleQA?.();
-   bc('message').textContent='Control applied to the entire bundle. Residuals saved with the project.';
+   notice('Control applied to the entire bundle.'+(displayed?' Showing north-up plan.':''));
   }catch(e){endControlDiagnostic('failed');bc('message').textContent=e.message;bundleDraft=null;}
   finally{bundleWorking=false;renderBundle();}
  };

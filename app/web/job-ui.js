@@ -598,7 +598,7 @@
  $('job-analyse').onclick=()=>{if(!state?.axis){showTunnelMessage('Alignment required','The scan can be viewed and edited without an alignment. Alignment is only required for chainage/design analysis.',true,'Import alignment',()=>window.TunnelRibbon?.openImport?.('axis'));return;}if(confirm('Confirm this scan is already positioned in the alignment coordinate system and uses metres.'))action({action:'analyse',id:selected,position_confirmed:true});};
  $('job-keep-active').onclick=()=>action({action:'keep_active',source:'survey'});$('job-keep-positioned').onclick=()=>action({action:'keep_active',source:'positioned'});$('job-rename').onclick=()=>{const x=current();if(!x)return;const name=prompt('Item name',x.name);if(name!==null)action({action:'rename',id:x.id,name});};$('job-remove').onclick=removeSelected;$('job-delete-points-sidebar').onclick=()=>$('job-delete-selection').click();
  $('job-isolate').onclick=async()=>{if(await action({action:'isolate_items',ids:[...selectedItems]}))jobScene.fit();};$('job-show-all').onclick=()=>action({action:'show_all'});$('job-fit').onclick=fitWholeScene;$('job-top').onclick=()=>setView('top');$('job-side').onclick=()=>setView('front');
- async function loadPreview(){
+ async function loadPreview({northUp=false,fitIds=[]}={}){
   if(busy||uploading)return false;
   if(window.CadUI?.modelSpace?.()&&!window.CadUI.enter('Edit',{openTool:false})){
    notice('Finish or cancel the modelling command before opening the scan preview.',true);return false;
@@ -609,7 +609,16 @@
   while(loading)await new Promise(resolve=>previewIdleWaiters.push(resolve));
   if(busy||uploading)return false;
   clearCleaningPreview();clearPreviewCaches();detailView=null;previewRequested=true;signature='';fitPreviewPending=true;
-  $('job-empty').textContent='Preparing 3D preview…';await sync();return !!packed?.length;
+  $('job-empty').textContent='Preparing 3D preview…';
+  await sync();
+  if(northUp&&packed?.length){
+   setView('top');
+   const ids=new Set(fitIds);
+   const bounds=data.items.filter(item=>ids.has(item.id)&&item.minimum&&item.maximum)
+    .flatMap(item=>[item.minimum,item.maximum]);
+   if(bounds.length)focusWorld(bounds,false);else fitWholeScene();
+  }
+  return !!packed?.length;
  }
  async function projectOpened(){
   pendingPointDelete=null;jobScene.pendingDelete=false;
