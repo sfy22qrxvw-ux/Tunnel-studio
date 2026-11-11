@@ -25,6 +25,7 @@
    <label class="inspection-wide"><span>Reference · compare against</span><select id="inspection-reference" title="The object treated as the reference. This comparison does not move or register either object."></select><small id="inspection-reference-info"></small></label>
    <label>Tolerance <span class="inspection-unit">mm</span><input id="inspection-tolerance" type="number" min="0.001" step="1" value="25" title="Distances within this value count as within tolerance. This changes the assessment threshold, not the measured coordinates or scan accuracy."><small>Accepted distance from the reference.</small></label>
    <label>Distance direction<select id="inspection-sign" title="Unsigned reports the size of the gap. Oriented distance also reports its direction along the reference surface normals; check the orientation before interpreting the sign."><option value="unsigned">Unsigned · gap size</option><option value="oriented">Oriented · reference normals</option></select><small id="inspection-sign-info"></small></label>
+   <label class="inspection-wide inspection-check" id="inspection-wall-option" hidden><input id="inspection-wall-only" type="checkbox"><span>Review tunnel wall keep band<small>Choose a saved limit box or highlighted points. Compare signed distances to the tunnel wall for separate inward and outward limits.</small></span></label>
    <label id="inspection-spacing-label" class="inspection-wide" hidden>Mesh sampling spacing <span class="inspection-unit">mm</span><input id="inspection-spacing" type="number" min="0.1" step="5" value="50" title="Approximate spacing of samples on the inspected mesh. Smaller spacing checks finer detail and takes longer. Statistics are area-weighted samples, not an exact maximum over every location on the surface."><small>Smaller spacing checks finer detail; more samples take longer.</small></label>
   </div>
   <details class="inspection-advanced"><summary>Advanced settings</summary><label>Exclude distances above <span class="inspection-unit">m</span><input id="inspection-band" type="number" min="0" step="0.05" value="0" title="Zero includes every valid distance. A positive value excludes larger absolute distances from the statistics. Excluded counts remain visible; review them before accepting the result."><small>0 = no exclusion. Excluded samples remain counted in the result.</small></label></details>
@@ -35,6 +36,17 @@
   <section id="inspection-result" class="inspection-result" hidden>
    <div class="inspection-result-heading"><span class="inspection-eyebrow">LAST RESULT</span><h3 id="inspection-result-title"></h3><p id="inspection-result-context"></p></div>
    <p id="inspection-result-state" class="inspection-help"></p>
+   <details id="inspection-keep-band" class="inspection-display" open hidden>
+    <summary>Design keep band</summary>
+    <div class="inspection-form">
+     <label>Inward limit <span class="inspection-unit">mm</span><input id="inspection-keep-inward" type="number" min="0" step="any" value="40" placeholder="Off"></label>
+     <label>Outward limit <span class="inspection-unit">mm</span><input id="inspection-keep-outward" type="number" min="0" step="any" placeholder="Off"></label>
+    </div>
+    <p class="inspection-help">Leave a side blank to turn its limit off. Points beyond an active limit are highlighted for review.</p>
+    <div class="inspection-actions"><button id="inspection-keep-review" type="button" class="primary">Preview keep band</button><button id="inspection-keep-stop" type="button" hidden>Stop</button></div>
+    <p id="inspection-keep-status" class="inspection-help" role="status" aria-live="polite"></p>
+    <div id="inspection-keep-summary"></div>
+   </details>
    <div id="inspection-summary"></div>
    <p id="inspection-sampling-note" class="inspection-result-note"></p>
    <details id="inspection-method-details" class="inspection-method-details"><summary>Method and sampling details</summary><p id="inspection-method-note" class="inspection-result-note"></p></details>
@@ -46,7 +58,8 @@
  const legend=document.createElement('div');legend.id='inspection-legend';legend.className='inspection-legend';legend.hidden=true;legend.setAttribute('aria-label','Comparison colour legend');
  byId('job-canvas').parentElement.append(legend);
  let options={sources:[],references:[]},result=null,preview=null,displayedId=null,running=false,stopping=false,loading=null,showing=false,preferredSource=null,lastResultId=null;
- const controls=['inspection-mode','inspection-source','inspection-area','inspection-reference','inspection-tolerance','inspection-sign','inspection-spacing','inspection-band'];
+ let wallSettings=null,bandReview=null,bandRunning=false,displayingBand=false,bandAreaChanged=false;
+ const controls=['inspection-mode','inspection-source','inspection-area','inspection-reference','inspection-tolerance','inspection-sign','inspection-spacing','inspection-band','inspection-wall-only','inspection-keep-inward','inspection-keep-outward'];
  const isBusy=()=>running||!!(typeof busy!=='undefined'&&busy);
  const mode=()=>byId('inspection-mode').value;
  const meshSource=()=>mode().startsWith('mesh_');
@@ -54,6 +67,12 @@
  const source=()=>options.sources.find(x=>String(x.id)===byId('inspection-source').value);
  const reference=()=>options.references.find(x=>String(x.id)===byId('inspection-reference').value);
  const status=(text,error=false)=>{byId('inspection-status').textContent=text;byId('inspection-status').classList.toggle('error',error);};
+ const bandStatus=(text,error=false)=>{byId('inspection-keep-status').textContent=text;byId('inspection-keep-status').classList.toggle('error',error);};
+ const wallAvailable=()=>mode()==='cloud_cad'&&reference()?.tunnel_wall_supported===true;
+ const wallOnly=()=>wallAvailable()&&byId('inspection-wall-only').checked;
+ const bandAvailable=()=>result?.keep_band_supported===true;
+ const bandMatchesSetup=()=>bandAvailable()&&!bandAreaChanged&&mode()===result.mode&&source()?.id===result.source_id&&reference()?.id===result.reference_id;
+ const bandMinimum=()=>10*(result?.coordinate_step_mm||0);
  function prepareView(){
   if(window.CadUI?.modelSpace?.()&&window.CadUI.enter('Analyse',{openTool:false})===false){
    const message='Finish or cancel the active modelling command before opening a comparison.';
@@ -97,6 +116,21 @@
   if(item.note)parts.push(item.note);
   return parts.filter(Boolean).join(' · ');
  }
+ function wallChoices(){
+  const sign=byId('inspection-sign'),band=byId('inspection-band');
+  byId('inspection-wall-option').hidden=!wallAvailable();
+  if(!wallAvailable())byId('inspection-wall-only').checked=false;
+  if(wallOnly()){
+   if(!wallSettings)wallSettings={sign:sign.value,band:band.value};
+   sign.value='oriented';band.value='0';
+  }else if(wallSettings){
+   sign.value=wallSettings.sign;band.value=wallSettings.band;wallSettings=null;
+  }
+  const oriented=reference()?.signed_supported===true;
+  sign.options[1].disabled=!oriented;
+  if(!oriented)sign.value='unsigned';
+  byId('inspection-sign-info').textContent=wallOnly()?'Negative distances are inward and positive distances are outward.':oriented?'Oriented signs follow the reference normals; verify their direction.':'This reference supports unsigned distances.';
+ }
  function choices(){
   const definition=modes[mode()]||modes.cloud_mesh;
   fill('inspection-source',options.sources.filter(matching),'Import an appropriate '+(meshSource()?'mesh':'cloud')+' first',preferredSource);preferredSource=null;
@@ -107,10 +141,7 @@
   if(!meshSource())window.AnalysisArea.configure('inspection-area',source());
   byId('inspection-reference-info').textContent=description(reference());
   byId('inspection-spacing-label').hidden=!meshSource();
-  const oriented=reference()?.signed_supported===true;
-  byId('inspection-sign').options[1].disabled=!oriented;
-  if(!oriented)byId('inspection-sign').value='unsigned';
-  byId('inspection-sign-info').textContent=oriented?'Oriented signs follow the reference normals; verify their direction.':'This reference supports unsigned distances.';
+  wallChoices();
  }
  function request(){
   const value={mode:mode(),source_id:byId('inspection-source').value,reference_id:byId('inspection-reference').value,tolerance_mm:Number(byId('inspection-tolerance').value),band_m:Number(byId('inspection-band').value),signed:byId('inspection-sign').value==='oriented',spacing_m:Number(byId('inspection-spacing').value)/1000};
@@ -120,18 +151,27 @@
   if(!Number.isFinite(value.band_m)||value.band_m<0)throw Error('Enter a non-negative exclusion distance; use 0 for no exclusion.');
   if(meshSource()&&(!Number.isFinite(value.spacing_m)||value.spacing_m<=0))throw Error('Enter a positive mesh sampling spacing.');
   if(!meshSource())Object.assign(value,{spacing_m:.05},window.AnalysisArea.request('inspection-area',source()));
+  if(wallOnly()){
+   if(!['limit','selection'].includes(value.scope))throw Error('Set a saved limit box or highlight the scan area for tunnel wall review.');
+   Object.assign(value,{tunnel_wall_only:true,signed:true,band_m:0});
+  }
   return value;
  }
  function changedFromResult(){
   if(!result)return false;
   let r;try{r=request();}catch(_){return true;}
   if(!meshSource()&&(result.processing_scope?.mode||'whole')!==(r.scope==='auto'?'whole':r.scope))return true;
+  if(!!result.tunnel_wall_only!==!!r.tunnel_wall_only)return true;
   return ['mode','source_id','reference_id','signed','tolerance_mm','band_m',...(meshSource()?['spacing_m']:[])].some(key=>result[key]!==undefined&&String(result[key])!==String(r[key]));
+ }
+ function statistics(rows){
+  return '<dl class="inspection-statistics">'+rows.map(([label,value])=>`<div><dt>${escape(label)}</dt><dd>${escape(value)}</dd></div>`).join('')+'</dl>';
  }
  function render(){
   const blocked=isBusy();for(const id of controls)byId(id).disabled=blocked;
+  byId('inspection-sign').disabled=byId('inspection-band').disabled=blocked||wallOnly();
   byId('inspection-run').disabled=blocked||!source()||!reference();
-  byId('inspection-cancel').hidden=!running;byId('inspection-cancel').disabled=stopping;
+  byId('inspection-cancel').hidden=!running||bandRunning;byId('inspection-cancel').disabled=stopping;
   byId('inspection-progress').hidden=!running;
   byId('inspection-result').hidden=!result;
   const ready=!!result&&!result.stale;
@@ -141,6 +181,15 @@
   byId('inspection-colour-scale').disabled=!ready||blocked||byId('inspection-colouring').value!=='ramp';
   byId('inspection-csv').setAttribute('aria-disabled',String(!ready||blocked));
   byId('inspection-csv').tabIndex=ready&&!blocked?0:-1;
+  byId('inspection-keep-band').hidden=!bandMatchesSetup();
+  byId('inspection-keep-review').disabled=!ready||blocked||showing;
+  byId('inspection-keep-stop').hidden=!bandRunning;byId('inspection-keep-stop').disabled=stopping;
+  byId('inspection-keep-inward').min=byId('inspection-keep-outward').min=bandMinimum();
+  byId('inspection-keep-summary').innerHTML=bandReview&&!result?.stale?statistics([
+   ...(bandReview.inward_mm===null?[]:[['Beyond inward limit',number(bandReview.inward)]]),
+   ...(bandReview.outward_mm===null?[]:[['Beyond outward limit',number(bandReview.outward)]]),
+   ['Within active limits',number(bandReview.within)],['Unassessed',number(bandReview.unassessed)],['Points evaluated',number(bandReview.total)]
+  ]):'';
   if(!result)return;
   const signed=!!result.signed,used=first(result,'used','used_count'),evaluated=first(result,'evaluated','evaluated_count','input_points','source_count','total');
   byId('inspection-result-title').textContent=result.mode_label||modes[result.mode]?.label||'Comparison';
@@ -162,7 +211,7 @@
    rows.unshift(['Processing area',result.processing_area||'Whole retained source']);
    if(result.effective_bounds)rows.splice(1,0,['Measured extent',window.AnalysisArea.extent(result.effective_bounds)]);
   }
-  byId('inspection-summary').innerHTML='<dl class="inspection-statistics">'+rows.map(([label,value])=>`<div><dt>${escape(label)}</dt><dd>${escape(value)}</dd></div>`).join('')+'</dl>';
+  byId('inspection-summary').innerHTML=statistics(rows);
   const notes=[result.note,result.statistics_note,result.sampling_note,result.quantiles_note];
   let summary=(result.mode||'').startsWith('mesh_')?'Mesh statistics describe area-weighted surface samples'+(Number.isFinite(result.spacing_m)?' at '+number(result.spacing_m*1000,2)+' mm spacing':'')+'. They do not establish the exact maximum over the continuous surface.':'Statistics use retained source points with valid included distances. The 3D preview can show fewer points.';
   if(signed)summary+=' Oriented signs follow the reference normals.';
@@ -185,13 +234,14 @@
     choices();result=next.result||null;
     window.JobUI?.invalidateAnalysis?.(result,'inspection');
     if(displayedId&&(!result||result.stale||displayedId!==result.id))restore();
-    if(result?.id!==lastResultId){preview=null;lastResultId=result?.id||null;if(result)byId('inspection-colour-scale').value=result.tolerance_mm||25;}
+    if(!bandAvailable()||result?.stale||bandReview&&bandReview.id!==result.id){bandReview=null;if(!bandRunning)bandStatus('');}
+    if(result?.id!==lastResultId){preview=null;bandAreaChanged=false;lastResultId=result?.id||null;if(result)byId('inspection-colour-scale').value=result.tolerance_mm||25;}
     render();return true;
    }catch(error){status('Comparison tools could not refresh: '+error.message,true);return false;}
    finally{loading=null;}
   })();return loading;
  }
- function hideLegend(){const wasDisplayed=!!displayedId;legend.hidden=true;displayedId=null;if(byId('inspection-restore'))byId('inspection-restore').disabled=true;if(wasDisplayed)window.JobUI?.refreshTree();}
+ function hideLegend(){const wasDisplayed=!!displayedId;legend.hidden=true;displayedId=null;displayingBand=false;if(byId('inspection-restore'))byId('inspection-restore').disabled=true;if(wasDisplayed)window.JobUI?.refreshTree();}
  function restore(){window.JobUI?.clearCleaningPreview?.('inspection');hideLegend();byId('inspection-preview-info').textContent='Normal object colours restored.';render();}
  function paint(){
   if(!preview||!result||result.stale)return;
@@ -200,7 +250,7 @@
   if(!Number.isFinite(scale)||scale<=0)throw Error('Enter a positive colour scale in millimetres.');
   const coloured=window.TunnelDisplayBuffers.recolour(preview,scale,ramp);
   window.JobUI?.analysisPreview({...coloured,source_id:result.source_id,result_id:result.id,signed:!!result.signed,mode_label:result.mode_label||modes[result.mode]?.label},'inspection');
-  displayedId=result.id;legend.hidden=false;
+  displayedId=result.id;displayingBand=false;legend.hidden=false;
   const signed=!!result.signed;
   legend.innerHTML=`<div class="inspection-legend-heading"><b>${escape(result.mode_label||modes[result.mode]?.label||'Comparison')} · mm</b><button type="button" title="Restore the original object colours">Restore</button></div>${ramp?'<div class="inspection-ramp '+(signed?'signed':'unsigned')+'"></div><div class="inspection-legend-ticks"><span>'+(signed?'−'+number(scale,1):'0')+'</span><span>'+(signed?'0':'Distance')+'</span><span>+'+number(scale,1)+'</span></div>':'<div class="inspection-legend-bands">'+(signed?'<span><i class="below"></i>Below −'+number(scale,1)+'</span>':'')+'<span><i class="within"></i>Within '+(signed?'±':'')+number(scale,1)+'</span><span><i class="above"></i>Above +'+number(scale,1)+'</span></div>'}<small>${signed?'Sign follows reference normals.':'Unsigned distance to the reference.'} ${ramp?'Display scale only.':'Comparison tolerance.'}</small>`;
   legend.querySelector('button').onclick=restore;
@@ -208,17 +258,62 @@
   byId('inspection-preview-info').textContent=number(count)+' displayed of '+number(first(result,'used','used_count'))+' compared '+((result.mode||'').startsWith('mesh_')?'mesh samples':'points')+'. The CSV and statistics use the comparison result, not the display sample.';
   dismissFinishedStatus();placeLegend();render();window.JobUI?.refreshTree();
  }
+ async function loadPreview(id){
+  const p=await window.TunnelDisplayBuffers.load('/api/inspection-preview'+(id?'?id='+encodeURIComponent(id):''));
+  if(!(p.packed instanceof Float32Array)||!Array.isArray(p.origin)||p.origin.length!==3)throw Error('The comparison preview is incomplete.');
+  if(result?.id!==id||result.stale||(p.result_id&&p.result_id!==id))throw Error('The result changed while its preview was loading. Show the latest result again.');
+  return p;
+ }
  async function show(){
   if(!result||result.stale||isBusy()||showing)return false;
   if(!prepareView())return false;
   showing=true;render();
   try{
-   const id=result.id;const p=await window.TunnelDisplayBuffers.load('/api/inspection-preview'+(id?'?id='+encodeURIComponent(id):''));
-   if(!(p.packed instanceof Float32Array)||!Array.isArray(p.origin)||p.origin.length!==3)throw Error('The comparison preview is incomplete.');
-   if(result?.id!==id||(p.result_id&&p.result_id!==id))throw Error('The result changed while its preview was loading. Show the latest result again.');
-   preview=p;paint();return true;
+   preview=await loadPreview(result.id);paint();return true;
   }catch(error){status('Could not show the heatmap: '+error.message,true);return false;}
   finally{showing=false;render();}
+ }
+ function bandLimit(side){
+  const input=byId('inspection-keep-'+side);
+  if(input.value===''&&!input.validity.badInput)return null;
+  const value=input.valueAsNumber,minimum=bandMinimum();
+  if(!Number.isFinite(value)||value<=0)throw Error('Enter a positive '+side+' limit in millimetres.');
+  if(value<minimum)throw Error('The '+side+' limit must be at least '+minimum.toPrecision(4)+' mm for this comparison.');
+  return value;
+ }
+ function paintBand(review){
+  const {inward_mm:inward,outward_mm:outward}=review;
+  const coloured=window.TunnelDisplayBuffers.recolourKeepBand(preview,inward,outward);
+  window.JobUI?.analysisPreview({...coloured,source_id:result.source_id,result_id:result.id,mode_label:'Design keep band'},'inspection');
+  displayedId=result.id;displayingBand=true;legend.hidden=false;
+  legend.innerHTML=`<div class="inspection-legend-heading"><b>Design keep band</b><button type="button">Restore</button></div><div class="inspection-legend-bands">${inward===null?'':`<span><i class="below"></i>Inward &gt; ${number(inward,3)} mm</span>`}<span><i class="within"></i>Within active limits</span>${outward===null?'':`<span><i class="above"></i>Outward &gt; ${number(outward,3)} mm</span>`}</div><small>${number(preview.sample_count)} points displayed. Keep-band counts use the full comparison.</small>`;
+  legend.querySelector('button').onclick=restore;
+  byId('inspection-preview-info').textContent='The design keep band is displayed. Select Show heatmap to return to comparison colours.';
+  placeLegend();window.JobUI?.refreshTree();
+ }
+ async function reviewBand(){
+  if(!bandMatchesSetup()||result.stale||isBusy()||showing||!prepareView())return;
+  const id=result.id;let inward_mm,outward_mm;
+  try{
+   inward_mm=bandLimit('inward');outward_mm=bandLimit('outward');
+   if(inward_mm===null&&outward_mm===null)throw Error('Enter at least one keep-band limit.');
+  }catch(error){bandStatus(error.message,true);return;}
+  bandRunning=true;running=true;stopping=false;
+  try{
+   setBusy(true);render();
+   bandStatus('Counting points in the saved comparison…');
+   const started=await post('/api/inspection-keep-band',{id,inward_mm,outward_mm});
+   if(!started.started)throw Error('Keep-band review did not start.');
+   const job=await window.JobUI.waitReady(j=>{if(j.busy&&!stopping)bandStatus(j.message||'Counting points in the saved comparison…');},{keepBusy:true,skipSync:true});
+   if(job.cancelled){bandStatus('Keep-band review stopped.');return;}
+   const review=await api('/api/inspection-keep-band?id='+encodeURIComponent(id));
+   if(!bandMatchesSetup()||result.id!==id||result.stale||review.id!==id||review.inward_mm!==inward_mm||review.outward_mm!==outward_mm)throw Error('The saved comparison or limits changed. Review the current result again.');
+   bandReview=review;
+   preview=await loadPreview(id);
+   paintBand(review);
+   bandStatus('Full-density counts ready. Check the coloured 3D sample.');
+  }catch(error){bandStatus(error.message,true);}
+  finally{running=false;bandRunning=false;stopping=false;setBusy(false);dismissFinishedStatus();render();}
  }
  async function run(){
   if(isBusy())return;
@@ -251,14 +346,23 @@
   }catch(error){setBusy(false);status('CSV preparation failed: '+error.message,true);window.WorkStatus?.show('CSV could not be prepared',error.message,false,true);}
   finally{running=false;stopping=false;render();}
  }
- byId('inspection-mode').onchange=()=>{choices();render();};
- byId('inspection-source').onchange=()=>{choices();render();};
- byId('inspection-reference').onchange=()=>{choices();render();};
- for(const id of ['inspection-area','inspection-tolerance','inspection-sign','inspection-spacing','inspection-band'])byId(id).onchange=render;
+ function resetBandReview(){bandReview=null;bandStatus('');if(displayingBand)restore();else render();}
+ function bandAreaChange(){
+  const area=byId('inspection-area'),scope=area.value==='auto'?area.dataset.defaultMode:area.value;
+  bandAreaChanged=!!result&&(scope==='auto'?'whole':scope)!==(result.processing_scope?.mode||'whole');
+  resetBandReview();
+ }
+ for(const id of ['inspection-mode','inspection-source','inspection-reference'])byId(id).onchange=()=>{choices();bandAreaChange();};
+ for(const id of ['inspection-tolerance','inspection-sign','inspection-spacing','inspection-band'])byId(id).onchange=render;
+ byId('inspection-area').onchange=bandAreaChange;
+ byId('inspection-wall-only').onchange=()=>{wallChoices();resetBandReview();};
+ for(const id of ['inspection-keep-inward','inspection-keep-outward'])byId(id).oninput=resetBandReview;
+ byId('inspection-keep-review').onclick=reviewBand;
  byId('inspection-run').onclick=run;
- byId('inspection-cancel').onclick=async()=>{if(!running||stopping)return;stopping=true;render();try{await post('/api/cancel-operation',{});status('Stopping the current operation…');}catch(error){stopping=false;status('Could not request cancellation: '+error.message,true);render();}};
+ async function stop(){if(!running||stopping)return;const report=bandRunning?bandStatus:status;stopping=true;render();try{await post('/api/cancel-operation',{});report('Stopping the current operation…');}catch(error){stopping=false;report('Could not request cancellation: '+error.message,true);render();}}
+ byId('inspection-cancel').onclick=byId('inspection-keep-stop').onclick=stop;
  byId('inspection-show').onclick=show;byId('inspection-restore').onclick=restore;
- for(const id of ['inspection-colouring','inspection-colour-scale'])byId(id).onchange=()=>{if(displayedId)try{paint();}catch(error){status(error.message,true);}render();};
+ for(const id of ['inspection-colouring','inspection-colour-scale'])byId(id).onchange=()=>{if(displayedId&&!displayingBand)try{paint();}catch(error){status(error.message,true);}render();};
  byId('inspection-csv').onclick=e=>{e.preventDefault();if(!result||result.stale||isBusy()){status('Run or finish a current comparison before downloading its result.',true);return;}void exportCSV();};
  async function open(selectedMode){
   if(!prepareView())return false;
@@ -269,6 +373,7 @@
  }
  async function openResult(){
   if(!await open()||!result)return;
+  byId('inspection-wall-only').checked=false;wallChoices();
   if(modes[result.mode])byId('inspection-mode').value=result.mode;
   preferredSource=result.source_id;choices();
   if(options.references.some(x=>String(x.id)===String(result.reference_id)))byId('inspection-reference').value=result.reference_id;
@@ -276,6 +381,8 @@
   for(const [id,key] of [['inspection-tolerance','tolerance_mm'],['inspection-band','band_m']])if(Number.isFinite(result[key]))byId(id).value=result[key];
   if(Number.isFinite(result.spacing_m))byId('inspection-spacing').value=result.spacing_m*1000;
   byId('inspection-sign').value=result.signed&&reference()?.signed_supported?'oriented':'unsigned';
+  byId('inspection-wall-only').checked=!!result.tunnel_wall_only;wallChoices();
+  bandAreaChanged=false;
   render();await show();
  }
  window.InspectionUI={open,openResult,sync,busy:render,show,restore,hideLegend,run,exportCSV,request,displayedResult:()=>displayedId,modes:()=>Object.keys(modes)};

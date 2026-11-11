@@ -526,12 +526,80 @@ def reference_info(item_or_geometry):
         return None
 
 
+def _tunnel_rim_size(item):
+    """Recognize the ordered ring layout emitted by CAD loft_rings."""
+    definition = item.get('definition')
+    if (item.get('shape') != 'tunnel_design' or item.get('solid') is not True
+            or not isinstance(definition, dict) or definition.get('kind') != 'tunnel_design'):
+        return None
+    faces, vertices = item.get('faces', ()), item.get('vertices', ())
+    try:
+        first = sorted(faces[0])
+        if len(first) != 3 or first[:2] != [0, 1]:
+            return None
+        rim = int(first[2])-1
+        count = len(vertices)
+        if 3 <= rim <= 512 and count >= 2*rim and count % rim == 0 and len(faces) == 2*count-4:
+            return rim
+    except (IndexError, TypeError, ValueError, OverflowError):
+        pass
+    return None
+
+
+def tunnel_wall_supported(item):
+    return _tunnel_rim_size(_unwrap(item)) is not None
+
+
+def _loft_end_planes(vertices, faces, rim, origin):
+    """Validate cap and wall ordering before interpreting closest triangle IDs."""
+    wall_count = 2*(len(vertices)-rim)
+    caps = faces[wall_count:]
+    cap_size = rim-2
+    starts = ((caps[:cap_size], 0), (caps[cap_size:], len(vertices)-rim))
+    planes = []
+    for triangles, start in starts:
+        if len(triangles) != cap_size or np.any((triangles < start) | (triangles >= start+rim)):
+            raise ValueError('Tunnel wall review needs the original ordered tunnel loft. Rebuild the model in Tunnel Designer.')
+        a, b, c = vertices[triangles[0]]
+        normal = _unit(np.cross(b-a, c-a), 'Tunnel end face normal')
+        ring = vertices[start:start+rim]-a
+        if np.max(abs(ring @ normal)) > max(1e-8, float(np.max(abs(ring)))*1e-8):
+            raise ValueError('Tunnel wall review needs planar end rings. Rebuild the model in Tunnel Designer.')
+        planes.append((a-origin, normal))
+    for start in range(0, wall_count, FACE_BLOCK):
+        triangles = faces[start:min(start+FACE_BLOCK, wall_count)]
+        strip = np.arange(start, start+len(triangles)) // (2*rim)
+        if np.any(triangles.min(axis=1)//rim != strip) or np.any(triangles.max(axis=1)//rim != strip+1):
+            raise ValueError('Tunnel wall review needs the original ordered tunnel loft. Rebuild the model in Tunnel Designer.')
+    return wall_count, planes
+
+
+def _wall_hits(local, closest, primitive, rim, wall_count, planes, allowance):
+    # The raycaster may return a wall triangle for an end-rim tie. Treat
+    # its rim and anything beyond that end plane as unassessed as well.
+    valid = primitive < wall_count
+    strips = (primitive < 2*rim, primitive >= wall_count-2*rim)
+    for strip, (origin, normal) in zip(strips, planes):
+        use = np.flatnonzero(valid & strip)
+        if len(use):
+            rim_distance = np.einsum('ij,j->i', closest[use]-origin, normal)
+            query_distance = np.einsum('ij,j->i', local[use]-origin, normal)
+            valid[use] = (rim_distance < -allowance) & (query_distance <= allowance)
+    return valid
+
+
 class TriangleReference(_Reference):
-    def __init__(self, item, signed=False, tolerance_mm=25, progress=None, cancel=None, reason=None):
+    def __init__(self, item, signed=False, tolerance_mm=25, progress=None, cancel=None, reason=None, *, tunnel_rim=None):
         self.cancel = cancel; self.signed = bool(signed); self.signed_supported = True
         self.meta = surface_meta(item); self._info = _triangle_info(self.meta, reason)
         self.kind = self._info['kind']; self.representation = self._info['representation']; self.note = self._info['note']
         self.scene = None; self.coordinate_step_mm = None
+        self.tunnel_rim = tunnel_rim
+        if tunnel_rim is not None:
+            self.representation = 'Tunnel wall (tessellated)'
+            self.note = ('Nearest tunnel wall face. Negative distances point into the bore. '
+                         'End cap and rim matches, matches beyond the adjacent end plane, and ambiguous signs are unassessed. '
+                         'Distances are to the faceted CAD model.')
         self.query_precision_limit_mm = _number(tolerance_mm, 'Comparison tolerance', True)/10
         estimate = self._info['reference_workspace_estimate_bytes']
         if estimate > REFERENCE_WORKSPACE_LIMIT_BYTES:
@@ -589,6 +657,8 @@ class TriangleReference(_Reference):
             q32 = local[indices].astype(np.float64)
             if np.any(np.linalg.norm(np.cross(q32[:, 1]-q32[:, 0], q32[:, 2]-q32[:, 0]), axis=1) <= 0):
                 raise ValueError('A reference triangle collapses at the local float32 engine precision. Split the reference surface.')
+        if tunnel_rim is not None:
+            self.wall_count, self.end_planes = _loft_end_planes(vertices, faces, tunnel_rim, self.origin)
         del vertices
         _emit(progress, cancel, 'Building reference triangle distance index')
         scene = o3d.t.geometry.RaycastingScene(nthreads=2)
@@ -598,7 +668,8 @@ class TriangleReference(_Reference):
 
     @property
     def info(self):
-        return {**self._info, 'signed': self.signed, 'coordinate_step_mm': self.coordinate_step_mm}
+        return {**self._info, 'signed': self.signed, 'coordinate_step_mm': self.coordinate_step_mm,
+                'representation': self.representation, 'note': self.note}
 
     def evaluate(self, points):
         if self.scene is None:
@@ -618,12 +689,18 @@ class TriangleReference(_Reference):
                 raise ValueError('Query points are too far from the reference origin for this tolerance. Check coordinates or use a smaller section.')
             self.coordinate_step_mm = max(self.coordinate_step_mm, step)
             hit = self.scene.compute_closest_points(self.o3d.core.Tensor(local.astype(np.float32)), nthreads=2)
-            delta = local-hit['points'].numpy().astype(np.float64)
+            closest = hit['points'].numpy().astype(np.float64)
+            delta = local-closest
             d = np.linalg.norm(delta, axis=1)
             if self.signed:
                 side = np.einsum('ij,ij->i', delta, hit['primitive_normals'].numpy())
                 ambiguous = (abs(side) < 1e-10) & (d > 1e-8)
                 d *= np.where(side < 0, -1., 1.); d[ambiguous] = np.nan
+            if self.tunnel_rim is not None:
+                primitive = hit['primitive_ids'].numpy()
+                wall = _wall_hits(local, closest, primitive, self.tunnel_rim, self.wall_count, self.end_planes,
+                                  max(1e-8, 4*self.coordinate_step_mm/1000))
+                d[~wall] = np.nan
             distances[start:start+len(part)][valid] = d
         return distances, np.isfinite(distances)
 
@@ -631,10 +708,16 @@ class TriangleReference(_Reference):
         self.scene = None
 
 
-def make_reference(item_or_geometry, work=None, signed=False, progress=None, cancel=None, tolerance_mm=25):
+def make_reference(item_or_geometry, work=None, signed=False, progress=None, cancel=None, tolerance_mm=25,
+                   *, tunnel_wall_only=False):
     """Create an analytic or explicitly tessellated distance evaluator."""
     _number(tolerance_mm, 'Comparison tolerance', True)
     _check(cancel); item = _unwrap(item_or_geometry); reason = None
+    if tunnel_wall_only:
+        rim = _tunnel_rim_size(item)
+        if not signed or rim is None:
+            raise ValueError('Tunnel wall review requires oriented distances and a closed model built in Tunnel Designer.')
+        return TriangleReference(item, signed, tolerance_mm, progress, cancel, tunnel_rim=rim)
     try:
         reference = _analytic(item, bool(signed), cancel)
         if reference is not None:

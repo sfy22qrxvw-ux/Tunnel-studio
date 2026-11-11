@@ -143,6 +143,69 @@ class AnalyticReferenceTests(unittest.TestCase):
         with self.assertRaises(Cancelled): ref.evaluate(np.zeros((3, 3)))
 
 
+class TunnelWallReferenceTests(unittest.TestCase):
+    @staticmethod
+    def loft():
+        import cad_geometry
+        ring = np.array([[-1., -1., 0.], [1., -1., 0.], [1., 1., 0.], [-1., 1., 0.]])
+        cap = np.array([[0, 1, 2], [0, 2, 3]])
+        with mock.patch.object(cad_geometry, 'polygon', return_value=(None, None, None, cap)), \
+             mock.patch.object(cad_geometry, 'as_manifold'):
+            item = cad_geometry.loft_rings([ring, ring+[0, 0, 6]], shape='tunnel_design')
+        return {**item, 'definition': {'kind': 'tunnel_design'}}
+
+    def test_wall_hits_exclude_caps_rim_ties_and_beyond_end_planes(self):
+        item = self.loft()
+        self.assertTrue(geometry.tunnel_wall_supported(item))
+        self.assertFalse(geometry.tunnel_wall_supported({**item, 'solid': False}))
+        rim = geometry._tunnel_rim_size(item)
+        wall_count, planes = geometry._loft_end_planes(np.array(item['vertices']), np.array(item['faces']), rim, np.zeros(3))
+        points = np.array([[.8, 0, 3], [0, 0, .2], [1.2, 0, -.2], [1.2, 0, -.2], [1.1, 0, 6.2]])
+        closest = np.array([[1, 0, 3], [0, 0, 0], [1, 0, 0], [1, 0, .1], [1, 0, 6]])
+        primitives = np.array([2, 8, 2, 2, 2])
+        actual = geometry._wall_hits(points, closest, primitives, rim, wall_count, planes, 1e-7)
+        np.testing.assert_array_equal(actual, [True, False, False, False, False])
+
+    def test_reordered_cap_triangle_cannot_enable_wall_review(self):
+        item = self.loft()
+        item['faces'][8], item['faces'][10] = item['faces'][10], item['faces'][8]
+        with self.assertRaisesRegex(ValueError, 'ordered tunnel loft'):
+            geometry._loft_end_planes(np.array(item['vertices']), np.array(item['faces']), 4, np.zeros(3))
+
+    def test_signed_query_preserves_wall_distances_and_drops_cap_hit(self):
+        item = self.loft()
+        reference = geometry.TriangleReference.__new__(geometry.TriangleReference)
+        reference.origin = np.zeros(3)
+        reference.tunnel_rim = 4
+        reference.wall_count, reference.end_planes = geometry._loft_end_planes(
+            np.array(item['vertices']), np.array(item['faces']), 4, reference.origin)
+        reference.cancel = None
+        reference.signed = True
+        reference.coordinate_step_mm = 0.
+        reference.query_precision_limit_mm = 2.5
+        reference.o3d = mock.Mock()
+        reference.scene = mock.Mock()
+        reference.scene.compute_closest_points.return_value = {
+            'points': mock.Mock(numpy=lambda: np.array([[1., 0., 3.], [1., 0., 3.], [0., 0., 0.]])),
+            'primitive_normals': mock.Mock(numpy=lambda: np.array([[1., 0., 0.], [1., 0., 0.], [0., 0., -1.]])),
+            'primitive_ids': mock.Mock(numpy=lambda: np.array([2, 2, 8])),
+        }
+        values, valid = reference.evaluate([[.8, 0, 3], [1.2, 0, 3], [0, 0, .1]])
+        np.testing.assert_allclose(values, [-.2, .2, np.nan], atol=1e-6)
+        np.testing.assert_array_equal(valid, [True, True, False])
+
+    @unittest.skipUnless(importlib.util.find_spec('open3d'), 'Open3D is not installed')
+    def test_native_tunnel_query_has_inward_and_outward_signs(self):
+        item = self.loft()
+        ref = geometry.make_reference(item, signed=True, tunnel_wall_only=True)
+        try:
+            values, valid = ref.evaluate([[.8, 0, 3], [1.2, 0, 3], [0, 0, .1], [1.2, 0, -.2]])
+            np.testing.assert_allclose(values[:2], [-.2, .2], atol=1e-6)
+            np.testing.assert_array_equal(valid, [True, True, False, False])
+        finally:
+            ref.close()
+
+
 class SurfaceSamplingTests(unittest.TestCase):
     def test_every_face_has_area_conserving_interior_samples_and_first_moment(self):
         source = mesh([[0, 0, 0], [2, 0, 0], [0, 1, 0], [7, 0, 0], [10, 0, 0], [7, 4, 0]],

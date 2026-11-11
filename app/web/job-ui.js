@@ -291,7 +291,7 @@
   jobScene.target=world.map((v,i)=>v-previewOrigin[i]);jobScene.setMesh(new Float32Array(),previewOrigin);jobScene.setPacked(packed,previewOrigin);if(!sameLayer)jobScene.fit();else jobScene.draw();
   $('job-empty').hidden=!!packed.length;
   $('job-preview-info').textContent=p.colour_mode==='ramp'?`3D DEVIATION · continuous colouring · scale ${p.signed?'±':'0 to '}${p.tolerance_mm} mm · ${fmt(p.sample_count,0)} displayed of ${fmt(p.used,0)} compared points.`:`CLOUD VS DESIGN · ${p.signed?'blue below / ':''}green within / red above ${p.tolerance_mm} mm tolerance · ${fmt(p.sample_count,0)} displayed of ${fmt(p.used,0)} compared points.`;
-  if(owner==='inspection')$('job-preview-info').textContent=`COMPARE / INSPECT · ${p.mode_label||'Object comparison'} · ${p.signed?'oriented':'unsigned'} distances · ${fmt(p.sample_count,0)} displayed of ${fmt(p.used,0)} compared samples. ${p.colour_mode==='ramp'?'Continuous colour scale':'Tolerance bands'} ${p.tolerance_mm} mm.`;
+  if(owner==='inspection')$('job-preview-info').textContent=p.colour_mode==='keep-band'?`DESIGN KEEP BAND · ${fmt(p.sample_count,0)} displayed of ${fmt(p.used,0)} assessed points. See the review for full counts.`:`COMPARE / INSPECT · ${p.mode_label||'Object comparison'} · ${p.signed?'oriented':'unsigned'} distances · ${fmt(p.sample_count,0)} displayed of ${fmt(p.used,0)} compared samples. ${p.colour_mode==='ramp'?'Continuous colour scale':'Tolerance bands'} ${p.tolerance_mm} mm.`;
   if(p.reference_label)$('job-preview-info').textContent=p.reference_label+' · '+(p.reference_name||'')+' · '+$('job-preview-info').textContent;
  }
  function stopSceneLoadForOverlay(){clearTimeout(detailTimer);previewRequest?.controller.abort();previewRefreshPending=false;previewFeedback('ready');}

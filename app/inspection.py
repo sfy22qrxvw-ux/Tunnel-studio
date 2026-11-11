@@ -202,7 +202,7 @@ class Quantiles:
 
 def run(source, reference, work, mode, tolerance_mm=25, band_m=0,
         signed=False, spacing_m=.05, progress=lambda message: None,
-        cancel=lambda: False, *, scope=None):
+        cancel=lambda: False, *, scope=None, tunnel_wall_only=False):
     if mode not in MODES:
         raise ValueError('Choose a supported Cloud or Mesh comparison.')
     label, source_kind, _ = MODES[mode]
@@ -219,6 +219,10 @@ def run(source, reference, work, mode, tolerance_mm=25, band_m=0,
         raise ValueError('Mesh sample spacing must be a positive distance in metres.')
     if type(signed) is not bool:
         raise ValueError('Signed distance must be on or off.')
+    if type(tunnel_wall_only) is not bool:
+        raise ValueError('Tunnel wall comparison must be on or off.')
+    if tunnel_wall_only and (mode != 'cloud_cad' or not signed or band or not scope):
+        raise ValueError('Tunnel wall comparison needs signed Cloud vs CAD, a processing area and no distance exclusion.')
     if mode == 'cloud_cloud' and signed:
         raise ValueError('Cloud vs Cloud nearest-point distances are unsigned.')
     from project_data_layout import folder
@@ -255,7 +259,8 @@ def run(source, reference, work, mode, tolerance_mm=25, band_m=0,
             progress('Preparing the reference surface…')
             evaluator = make_reference(reference, work=work, signed=signed,
                                        tolerance_mm=float(tolerance_mm),
-                                       progress=reference_progress, cancel=cancel)
+                                       progress=reference_progress, cancel=cancel,
+                                       tunnel_wall_only=tunnel_wall_only)
         actual_signed = bool(getattr(evaluator, 'signed', False))
         if signed and not actual_signed:
             raise ValueError('This reference does not support the requested signed distance.')
@@ -371,6 +376,7 @@ def run(source, reference, work, mode, tolerance_mm=25, band_m=0,
             rms_mm=math.sqrt(max(0., total2 / total_weight)) * 1000.,
             median_mm=median * 1000., p95_mm=p95 * 1000., p95_absolute_mm=p95abs * 1000.,
             tolerance_mm=tolerance * 1000., band_m=band, signed=actual_signed,
+            tunnel_wall_only=tunnel_wall_only, keep_band_supported=tunnel_wall_only,
             spacing_m=spacing if source_kind == 'mesh' else None,
             coordinate_step_mm=getattr(evaluator, 'coordinate_step_mm', None),
             source_fingerprint=initial_source, reference_fingerprint=initial_reference,
@@ -401,6 +407,65 @@ def validate_result(result):
     count = result.get('record_count')
     if type(count) is not int or count < 1 or not p.is_file() or p.stat().st_size != count * RECORD.itemsize:
         raise ValueError('Inspection result data is missing or incomplete. Run the comparison again.')
+
+
+def keep_band_limits(inward_mm, outward_mm, *, coordinate_step_mm=None):
+    def limit(value):
+        if value is None or value == '':
+            return None
+        try:
+            if isinstance(value, bool):
+                raise ValueError
+            number = float(value)
+        except (TypeError, ValueError, OverflowError):
+            raise ValueError('Enter finite, positive keep-band limits in millimetres.') from None
+        if not math.isfinite(number) or number <= 0:
+            raise ValueError('Enter finite, positive keep-band limits in millimetres.')
+        if coordinate_step_mm and number < 10 * coordinate_step_mm:
+            raise ValueError(f'Use a keep-band limit of at least {10 * coordinate_step_mm:.6g} mm at this comparison precision.')
+        return number
+    inward, outward = limit(inward_mm), limit(outward_mm)
+    if inward is None and outward is None:
+        raise ValueError('Enter an inward or outward keep-band limit.')
+    return inward, outward
+
+
+def keep_band(result, inward_mm, outward_mm, progress=lambda message: None, cancel=lambda: False):
+    """Count all saved wall distances against independent inward and outward limits."""
+    if (result.get('keep_band_supported') is not True or result.get('mode') != 'cloud_cad'
+            or result.get('tunnel_wall_only') is not True or result.get('signed') is not True
+            or result.get('band_m') != 0 or not result.get('processing_scope')):
+        raise ValueError('Run a signed tunnel-wall comparison within a processing area first.')
+    inward_mm, outward_mm = keep_band_limits(inward_mm, outward_mm,
+                                            coordinate_step_mm=result.get('coordinate_step_mm'))
+    validate_result(result)
+    count = result['record_count']
+    path = Path(result['results_file'])
+    initial = path.stat()
+    inward = outward = assessed = 0
+    with path.open('rb') as stream:
+        for start in range(0, count, 4 * BLOCK):
+            check_cancel(cancel)
+            size = min(4 * BLOCK, count - start)
+            rows = np.fromfile(stream, RECORD, count=size)
+            if len(rows) != size:
+                raise ValueError('The saved comparison changed. Run the comparison again.')
+            distances = rows['deviation_m']
+            valid = (rows['status'] == 0) & np.isfinite(distances)
+            values_mm = distances[valid] * 1000.
+            assessed += len(values_mm)
+            if inward_mm is not None:
+                inward += int(np.count_nonzero(values_mm < -inward_mm))
+            if outward_mm is not None:
+                outward += int(np.count_nonzero(values_mm > outward_mm))
+            progress(f'Checking saved tunnel-wall distances · {start + size:,} / {count:,} points')
+    check_cancel(cancel)
+    latest = path.stat()
+    if (initial.st_size, initial.st_mtime_ns, initial.st_ctime_ns) != (latest.st_size, latest.st_mtime_ns, latest.st_ctime_ns):
+        raise ValueError('The saved comparison changed. Run the comparison again.')
+    return dict(id=result['id'], inward_mm=inward_mm, outward_mm=outward_mm,
+                inward=inward, outward=outward, within=assessed-inward-outward,
+                assessed=assessed, unassessed=count-assessed, total=count)
 
 
 def preview(result, maximum=100000, packed=False):

@@ -3,6 +3,7 @@
 (()=>{
  'use strict';
  const MAX_POINTS=1000000,MAX_METADATA=1024*1024;
+ const green=[.2,.82,.48],red=[1,.22,.12],blue=[.16,.45,1];
  function decode(buffer){
   if(!(buffer instanceof ArrayBuffer)||buffer.byteLength<24)throw Error('Incomplete display buffer.');
   const head=new DataView(buffer);
@@ -34,13 +35,23 @@
   if(!(scale>0&&Number.isFinite(scale)))throw Error('Enter a positive colour scale in millimetres.');
   const source=packed(data),distances=data.deviations_mm,count=source.length/6;
   if(!distances||distances.length!==count)throw Error('This preview has no matching distance values.');
-  const out=new Float32Array(source),green=[.2,.82,.48],red=[1,.22,.12],blue=[.16,.45,1];
+  const out=new Float32Array(source);
   for(let i=0;i<count;i++){
    const d=distances[i];if(!Number.isFinite(d))continue;
    const end=d<0?blue:red,t=ramp?Math.min(1,Math.abs(d)/scale):Math.abs(d)>scale?1:0;
    for(let j=0;j<3;j++)out[i*6+3+j]=green[j]+(end[j]-green[j])*t;
   }
   return {...data,points:undefined,packed:out,tolerance_mm:scale,colour_mode:ramp?'ramp':'tolerance'};
+ }
+ function recolourKeepBand(data,inward,outward){
+  const source=packed(data),distances=data.deviations_mm,count=source.length/6;
+  if(!distances||distances.length!==count)throw Error('This preview has no matching distance values.');
+  const out=new Float32Array(source);
+  for(let i=0;i<count;i++){
+   const d=distances[i];
+   out.set(inward!==null&&d < -inward?blue:outward!==null&&d>outward?red:green,i*6+3);
+  }
+  return {...data,points:undefined,packed:out,colour_mode:'keep-band'};
  }
  // All indices refer to the uploaded scan vertex stream. Sorting an index buffer
  // instead of the scan itself keeps source ownership, colours and edit flags intact.
@@ -222,5 +233,5 @@
    this.submitted=submitted;return true;
   }
  }
- window.TunnelDisplayBuffers={decode,load,packed,recolour,buildPointGrid,viewFrame,classifyCell,SpatialPointDraw};
+ window.TunnelDisplayBuffers={decode,load,packed,recolour,recolourKeepBand,buildPointGrid,viewFrame,classifyCell,SpatialPointDraw};
 })();

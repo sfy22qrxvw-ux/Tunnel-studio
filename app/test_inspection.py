@@ -242,6 +242,103 @@ class InspectionTests(unittest.TestCase):
             self.assertTrue(valid.all());self.assertAlmostEqual(d[0],1.,places=10)
 
 
+class KeepBandTests(unittest.TestCase):
+    def setUp(self):
+        temporary = tempfile.TemporaryDirectory()
+        self.addCleanup(temporary.cleanup)
+        self.root = Path(temporary.name)
+        self.s = Workspace(self.root)
+        points = np.column_stack([np.arange(7), np.zeros(7), [-.1, -.04, -.039, .06, .061, 0., -.8]])
+        path = self.root / 'source.xyz64'
+        points.astype('<f8').tofile(path)
+        self.source = dict(id='source', name='Source', kind='scan',
+                           meta=dict(file=str(path), count=len(points), name='Source',
+                                     minimum=points.min(0).tolist(), maximum=points.max(0).tolist()),
+                           limit_box=dict(mode='oriented_box', centre=[2.5, 0., 0.],
+                                          axes=np.eye(3).tolist(), half_size=[2.6, 1., 1.]))
+        self.s.STATE['job_items'] = [self.source]
+        self.s.STATE['cad']['objects'] = [
+            dict(id='cad:tunnel', name='Tunnel', shape='tunnel_design', solid=True,
+                 definition={'kind': 'tunnel_design'},
+                 vertices=[[x,y,z] for x in (-1., 7.) for y,z in ((0., 0.), (1., 0.), (0., 1.))],
+                 faces=[[0,1,4],[0,4,3],[1,2,5],[1,5,4],[2,0,3],[2,3,5],[0,2,1],[3,4,5]])]
+
+    def invoke_wall(self, **settings):
+        import inspection_geometry
+        body = dict(mode='cloud_cad', source_id='source', reference_id='cad:tunnel',
+                    signed=True, tunnel_wall_only=True, scope='limit')
+        def mock_reference(*args, **kwargs):
+            self.assertTrue(kwargs['tunnel_wall_only'])
+            return SimpleNamespace(signed=True, coordinate_step_mm=.01,
+                                   evaluate=lambda p: (p[:, 2], p[:, 0] != 5))
+        with patch.object(inspection_geometry, 'make_reference', side_effect=mock_reference):
+            inspection_api.post(self.s, Reply(), '/api/inspect', {**body, **settings})
+        self.assertIsNone(self.s.JOB['error'])
+        return self.s.STATE['inspection_result']
+
+    def review(self, result, inward_mm, outward_mm):
+        response = Reply()
+        inspection_api.post(self.s, response, '/api/inspection-keep-band',
+                            dict(id=result['id'], inward_mm=inward_mm, outward_mm=outward_mm))
+        self.assertEqual(response.value, {'started': True})
+        self.assertIsNone(self.s.JOB['error'])
+        return self.read_review(result)
+
+    def read_review(self, result):
+        response = Reply()
+        inspection_api.get(self.s, response, '/api/inspection-keep-band', {'id': [result['id']]})
+        return response.value
+
+    def test_reuses_all_admitted_records_and_keeps_limit_boundaries_inclusive(self):
+        result = self.invoke_wall()
+        self.assertTrue(result['keep_band_supported'])
+        self.assertEqual(result['record_count'], 6)
+        self.assertEqual(result['outside_design_or_ambiguous'], 1)
+        saved = (self.root / 'project.json').read_bytes()
+        with patch.object(inspection, 'cloud_batches', side_effect=AssertionError('Reopened source scan')):
+            review = self.review(result, 40, 60)
+            self.assertEqual(review, dict(id=result['id'], inward_mm=40, outward_mm=60,
+                                         inward=1, outward=1, within=3, assessed=5, unassessed=1, total=6))
+            review = self.review(result, 40, None)
+            self.assertEqual((review['inward'], review['outward'], review['within']), (1, 0, 4))
+        self.assertEqual((self.root / 'project.json').read_bytes(), saved)
+
+    def test_rejects_bad_limits_unsupported_comparison_and_stale_scope(self):
+        result = self.invoke_wall()
+        for inward, outward in ((0, None), (-40, None), (True, None), ('NaN', None), (.05, None), (None, None)):
+            with self.subTest(inward=inward, outward=outward), self.assertRaises(ValueError):
+                self.review(result, inward, outward)
+        self.review(result, None, 40)
+        result['keep_band_supported'] = False
+        with self.assertRaisesRegex(ValueError, 'Run a signed tunnel-wall comparison'):
+            self.review(result, 40, None)
+        result['keep_band_supported'] = True
+        self.source['limit_box']['centre'][0] += 1
+        with self.assertRaisesRegex(ValueError, 'processing area changed'):
+            self.read_review(result)
+
+    def test_wall_mode_validates_signed_cad_scope_and_distance_exclusion(self):
+        for options in (dict(signed=False), dict(scope='whole'), dict(band_m=1), dict(band_m=None)):
+            with self.subTest(options=options), self.assertRaisesRegex(ValueError, 'Tunnel wall comparison needs'):
+                self.invoke_wall(**options)
+        mixed_scope = dict(mode='limit', selection=None, limits=[self.source['limit_box'], None])
+        with patch.object(inspection_api.analysis_sources, 'processing_scope', return_value=mixed_scope):
+            with self.assertRaisesRegex(ValueError, 'limit box for each scan'):
+                self.invoke_wall()
+        self.s.STATE['cad']['objects'][0]['shape'] = 'loft'
+        with self.assertRaisesRegex(ValueError, 'solid from Tunnel Designer'):
+            self.invoke_wall()
+
+    def test_cancelled_count_preserves_previous_review(self):
+        result = self.invoke_wall()
+        previous = self.review(result, 40, None)
+        self.s.JOB_CANCEL_FILE.touch()
+        inspection_api.post(self.s, Reply(), '/api/inspection-keep-band',
+                            dict(id=result['id'], inward_mm=100))
+        self.assertTrue(self.s.JOB['cancelled'])
+        self.assertEqual(self.read_review(result), previous)
+
+
 class QuantileTests(unittest.TestCase):
     def check_values(self,values,weights=None):
         values=np.asarray(values,dtype=float)

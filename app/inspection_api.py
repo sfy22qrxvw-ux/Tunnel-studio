@@ -116,6 +116,7 @@ def options(s):
             row = _row(item, _reference_modes(item, info))
             row.update({k: v for k, v in info.items() if k != 'kind'})
             row['geometry_kind'] = info['kind']
+            row['tunnel_wall_supported'] = inspection_geometry.tunnel_wall_supported(item)
             references.append(row)
         except (ValueError, OSError, KeyError) as error:
             unavailable.append(dict(id=ident, reason=str(error)))
@@ -189,7 +190,7 @@ def _cancelled(s):
 
 def get(s, h, path, args):
     if path not in ('/api/inspection-options', '/api/inspection',
-                    '/api/inspection-preview', '/api/inspection.csv'):
+                    '/api/inspection-preview', '/api/inspection-keep-band', '/api/inspection.csv'):
         return False
     if path == '/api/inspection-options':
         h.send(options(s)); return True
@@ -197,6 +198,11 @@ def get(s, h, path, args):
         h.send(dict(result=public(current(s)))); return True
     _busy(s)
     result = _require_result(s, args.get('id', [None])[0])
+    if path == '/api/inspection-keep-band':
+        review = getattr(s, '_inspection_keep_band_review', None)
+        if not review or review['id'] != result['id']:
+            raise ValueError('Count candidates for this comparison first.')
+        h.send(review); return True
     if path == '/api/inspection-preview':
         if args.get('format', [''])[0] == 'binary':
             import display_buffers
@@ -213,9 +219,22 @@ def get(s, h, path, args):
 
 
 def post(s, h, path, body):
-    if path not in ('/api/inspect', '/api/inspection-export'):
+    if path not in ('/api/inspect', '/api/inspection-export', '/api/inspection-keep-band'):
         return False
     _busy(s)
+    if path == '/api/inspection-keep-band':
+        result = _require_result(s, body.get('id'))
+        if result.get('keep_band_supported') is not True:
+            raise ValueError('Run a signed tunnel-wall comparison within a processing area first.')
+        inward, outward = inspection.keep_band_limits(body.get('inward_mm'), body.get('outward_mm'),
+                                                      coordinate_step_mm=result.get('coordinate_step_mm'))
+        def count_candidates():
+            review = inspection.keep_band(result, inward, outward, s.progress, lambda: _cancelled(s))
+            _require_result(s, result['id'])
+            s.progress(f'Keep-band review complete · {review["inward"] + review["outward"]:,} candidates')
+            s._inspection_keep_band_review = review
+        s.start_job(count_candidates, 'inspection-keep-band', native_progress=True)
+        h.send(dict(started=True)); return True
     if path == '/api/inspection-export':
         result = _require_result(s, body.get('id'))
         def export():
@@ -246,6 +265,20 @@ def post(s, h, path, body):
     if mode == 'cloud_cloud' and analysis_sources.overlap(source['meta'], reference['meta']):
         raise ValueError('Source and reference contain the same scan. Choose separate scans or disjoint registered bundles.')
     scope=analysis_sources.processing_scope(s,source,body.get('scope','auto'),body.get('selection'))
+    tunnel_wall_only = body.get('tunnel_wall_only', False)
+    if type(tunnel_wall_only) is not bool:
+        raise ValueError('Tunnel wall comparison must be on or off.')
+    if tunnel_wall_only:
+        try:
+            exclusion = float(body.get('band_m', 0))
+        except (TypeError, ValueError, OverflowError):
+            exclusion = math.nan
+        if mode != 'cloud_cad' or body.get('signed') is not True or exclusion != 0 or not scope:
+            raise ValueError('Tunnel wall comparison needs signed Cloud vs CAD, a processing area and no distance exclusion.')
+        if scope['mode'] == 'limit' and not all(scope['limits']):
+            raise ValueError('Save a limit box for each scan in this source, or highlight the processing area.')
+        if not inspection_geometry.tunnel_wall_supported(reference):
+            raise ValueError('Choose a supported solid from Tunnel Designer.')
     # Snapshots hold file-backed input metadata only. Native CAD definitions
     # are already in the project and must not be duplicated into its manifest.
     snapshots = {role: copy.deepcopy(item) for role, item in
@@ -259,7 +292,8 @@ def post(s, h, path, body):
                 tolerance_mm=body.get('tolerance_mm', 25),
                 band_m=body.get('band_m', 0), signed=body.get('signed', False),
                 spacing_m=body.get('spacing_m', .05),
-                progress=s.progress, cancel=lambda: _cancelled(s),scope=scope)
+                progress=s.progress, cancel=lambda: _cancelled(s), scope=scope,
+                tunnel_wall_only=tunnel_wall_only)
             result['input_snapshots'] = snapshots
             s.STATE['inspection_result'] = result
             s.save()
