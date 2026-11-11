@@ -78,7 +78,16 @@ def execute(data,body,progress=lambda message:None):
         o=selected[0];p=copy.deepcopy(o['vertices']);index=int(body.get('index',-1))
         if not 0<=index<len(p):raise ValueError('Choose a valid vertex.')
         p[index]=g.vector(body.get('point')).tolist();kind='point' if len(p)==1 else 'polyline'
-        replace_geometry(o,g.build(dict(kind=kind,points=p,closed=o['closed'])));created=ids
+        spec=dict(kind=kind,points=p,closed=o['closed'])
+        if body.get('profile_plane') is True:
+            if not g.profile_vertex_editable(o):
+                raise ValueError('Choose a closed polyline or rectangle for graphical vertex editing.')
+            spec['frame']=g.closed_profile_frame(o)
+            origin,basis=g.matrix(spec['frame'])
+            if np.max(np.abs((np.asarray(p)-origin)@basis[:,2]))>1e-6:
+                raise ValueError('The vertex must stay in the profile plane.')
+            g.polygon(np.asarray(p))
+        replace_geometry(o,g.build(spec));created=ids
     elif action in ('union','subtract','intersect'):
         add(g.boolean(selected,action));
         for o in selected:o['visible']=False

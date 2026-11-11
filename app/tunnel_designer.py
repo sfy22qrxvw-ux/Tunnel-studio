@@ -105,16 +105,8 @@ def outline(profile,step_deg=5):
     elif kind=='cad':
         obj=profile.get('geometry')
         if not obj:raise ValueError('Choose an existing closed CAD profile.')
-        p,closed=g.profile(obj)
-        if not closed:raise ValueError('A theoretical profile must be closed.')
-        frame=obj.get('definition',{}).get('frame')
-        if frame:
-            origin,basis=g.matrix(frame)
-            transform=np.asarray(obj.get('transform',np.eye(4)),float);origin=origin@transform[:3,:3].T+transform[:3,3];basis=transform[:3,:3]@basis;basis/=np.linalg.norm(basis,axis=0)
-            local=(p-origin)@basis
-            if np.ptp(local[:,2])>1e-6:raise ValueError('The imported profile is not planar in its drawing frame.')
-            points=local[:,:2]
-        else:_,_,points=g.plane(p);points-=points.mean(0)
+        origin,basis=g.matrix(g.closed_profile_frame(obj))
+        points=(np.asarray(obj['vertices'])-origin)@basis[:,:2]
     else:raise ValueError('Choose Circle, Rectangle, Arched, Lines/arcs or an existing profile.')
     points=points+[x,y]
     # Canonical perimeter direction and crown anchor make transitions reproducible.
@@ -130,6 +122,43 @@ def outline(profile,step_deg=5):
     else:anchor=int(ids[0])
     points=np.roll(points,-anchor,axis=0);g.polygon(np.column_stack([points,np.zeros(len(points))]))
     return points
+
+def curve_step(detail):
+    return {'fast':10,'balanced':5,'fine':2}.get(detail,5)
+
+def profile_copy(profile, operation, detail, distance=None):
+    """Keep analytic dimensions and signed arc radii where the operation permits."""
+    profile=copy.deepcopy(profile);kind=profile.get('kind');step=curve_step(detail)
+    source=outline(profile,step);faceted=False
+    source_profile_nodes=profile.get('nodes',[])
+    if operation=='mirror':
+        if kind=='cad':
+            profile=dict(kind='custom',nodes=np.column_stack([-source[:,0],source[:,1],np.zeros(len(source))]).tolist(),x=0,y=0)
+        else:
+            profile['x']=-finite(profile.get('x',0),'Profile horizontal offset')
+            if kind=='custom':
+                profile['nodes']=[[-x,y,-radius] for x,y,radius in np.asarray(profile['nodes'],dtype=float)]
+    elif operation=='offset':
+        distance=finite(distance,'Profile offset')
+        if abs(distance)<g.EPS:
+            raise ValueError('Enter a non-zero offset.')
+        if kind=='circle':
+            profile['radius']=finite(profile['radius'],'Radius')+distance
+        elif kind=='rectangle' or (kind=='arch' and float(profile['height'])+distance>=float(profile['width'])/2):
+            for key in ('width','height'):
+                profile[key]=finite(profile[key],key.title())+2*distance
+        else:
+            points=np.column_stack([source,np.zeros(len(source))])
+            offsets=g.offset(g.geometry(points,closed=True),distance)
+            if len(offsets)!=1:
+                raise ValueError('This offset splits the outline. Use a smaller distance.')
+            profile=dict(kind='custom',nodes=offsets[0]['vertices'],x=0,y=0)
+            faceted=kind in ('arch','cad') or any(float(row[2]) for row in source_profile_nodes)
+    else:
+        raise ValueError('Choose Offset or Mirror.')
+    if len(outline(profile,step))>512:
+        raise ValueError('The new outline exceeds 512 vertices. Use a simpler profile or lower curve detail.')
+    return profile,faceted
 
 def alignment_preview(design):
     """Keep the centreline usable while profiles or section ranges are unfinished."""
@@ -158,7 +187,7 @@ def prepare(design):
     if not profiles or len(profiles)>32:raise ValueError('Define between 1 and 32 theoretical profiles.')
     ids=[p.get('id') for p in profiles]
     if any(not isinstance(i,str) or not i for i in ids) or len(set(ids))!=len(ids):raise ValueError('Profile identifiers must be unique.')
-    step_deg={'fast':10,'balanced':5,'fine':2}.get(design.get('detail','balanced'),5)
+    step_deg=curve_step(design.get('detail'))
     outlines={p['id']:outline(p,step_deg) for p in profiles}
     fractions={}
     for ident,p in outlines.items():
@@ -171,23 +200,29 @@ def prepare(design):
     sampled={ident:np.column_stack([np.interp(knots,fractions[ident],np.r_[p[:,j],p[0,j]]) for j in range(2)]) for ident,p in outlines.items()}
     sections=design.get('sections',[])
     if not sections or len(sections)>1000:raise ValueError('Add at least one chainage section.')
-    previous=None
+    previous=None;smooth_samples=[]
     for section in sections:
         section['start']=finite(section.get('start'),'Section start');section['end']=finite(section.get('end'),'Section end');section.setdefault('last',section.get('first'))
         if section.get('type') not in (None,'constant','interpolate'):raise ValueError('Choose Constant theoretical profile or Interpolate between profiles.')
         if section.get('type')=='constant':section['last']=section.get('first')
+        if section.get('interpolation','linear') not in ('linear','smoothstep'):
+            raise ValueError('Choose Linear or Smooth transition.')
         if section['first'] not in sampled or section['last'] not in sampled:raise ValueError('Choose available start and end profiles for every section.')
         if section['end']-section['start']<1e-6:raise ValueError('Every section or transition needs a positive length; zero-length transitions are ambiguous.')
         at(section['start']);at(section['end'])
         if previous:
             if abs(section['start']-previous['end'])>1e-6:raise ValueError('Consecutive sections must meet exactly, without a gap or overlap.')
             if not np.allclose(sampled[previous['last']],sampled[section['first']],atol=1e-7,rtol=0):raise ValueError('Profiles change abruptly at a section boundary. Add a positive-length transition or match the touching profiles.')
+        if section.get('interpolation')=='smoothstep' and section['first']!=section['last']:
+            span=section['end']-section['start']
+            smooth_samples.extend(section['start']+span*t for t in (.25,.5,.75))
         previous=section
     spacing=g.number(design.get('spacing',1),'Profile spacing',True);start=sections[0]['start'];end=sections[-1]['end']
-    mandatory=distinct_stations(np.r_[stations[(stations>start)&(stations<end)],vertical[(vertical[:,0]>start)&(vertical[:,0]<end),0],*[ [q['start'],q['end']] for q in sections]])
+    mandatory=distinct_stations(np.r_[stations[(stations>start)&(stations<end)],vertical[(vertical[:,0]>start)&(vertical[:,0]<end),0],
+                                      smooth_samples,*[[q['start'],q['end']] for q in sections]])
     maximum=min(2048,g.MAX_VERTICES//len(knots),(g.MAX_FACES-2*len(knots))//(2*len(knots))+1)
     if len(mandatory)>maximum:
-        raise ModelRangeError(f'This range needs {len(mandatory):,} cross-sections at alignment and profile boundaries. '
+        raise ModelRangeError(f'This range needs {len(mandatory):,} cross-sections at alignment and profile stations. '
                               f'One model fits {maximum:,} at this profile detail. Choose a shorter range.')
     slots=maximum-len(mandatory)
     intervals=min(max(1,math.ceil((end-start)/spacing)),slots+1)
@@ -195,7 +230,9 @@ def prepare(design):
     loops=[];centres=[]
     for station in samples:
         index=min(len(sections)-1,int(np.searchsorted([q['end'] for q in sections],station,side='right')));section=sections[index]
-        t=np.clip((station-section['start'])/(section['end']-section['start']),0,1);xy=sampled[section['first']]*(1-t)+sampled[section['last']]*t
+        t=np.clip((station-section['start'])/(section['end']-section['start']),0,1)
+        if section.get('interpolation')=='smoothstep':t=t*t*(3-2*t)
+        xy=sampled[section['first']]*(1-t)+sampled[section['last']]*t
         # Check transitions too: a valid pair of outlines can still morph through a bad intermediate shape.
         g.polygon(np.column_stack([xy,np.zeros(len(xy))]));centre,right,up=at(station);centres.append(centre)
         loops.append(dict(vertices=(centre+xy[:,0,None]*right+xy[:,1,None]*up).tolist(),closed=True))
@@ -215,9 +252,36 @@ def resolve_profiles(s,design):
     for p in design.get('profiles',[]):
         if p.get('kind')=='cad' and p.get('object_id'):
             obj=next((o for o in cad_api.current(s)['objects'] if o['id']==p['object_id']),None)
-            if obj:p['geometry']={k:copy.deepcopy(obj[k]) for k in ('vertices','closed','definition','transform') if k in obj}
+            if obj:
+                if obj.get('faces') or not obj.get('closed'):
+                    raise ValueError('The linked CAD object must be a closed outline.')
+                p['geometry']={k:copy.deepcopy(obj[k]) for k in ('vertices','closed','definition','transform') if k in obj}
             elif not p.get('geometry'):raise ValueError('The selected CAD profile no longer exists. Choose another profile.')
     return design
+
+def profile_operation(s,body):
+    import cad_api
+    cad_api.check(s,body)
+    operation=body.get('operation')
+    if operation in ('link','edit_frame'):
+        obj=cad_api.get_object(cad_api.current(s),body.get('object_id'))
+        if operation=='edit_frame':
+            if not g.profile_vertex_editable(obj):
+                raise ValueError('Use a closed CAD polyline or rectangle for graphical vertex editing.')
+            return dict(frame=g.closed_profile_frame(obj))
+        profile=dict(kind='cad',name=obj['name'],object_id=obj['id'],x=0,y=0)
+        resolved=resolve_profiles(s,dict(profiles=[profile]))['profiles'][0]
+        if len(outline(resolved,curve_step(body.get('detail'))))>512:
+            raise ValueError('Use a CAD outline with at most 512 profile vertices.')
+        return dict(profile=profile)
+    profile=body.get('profile')
+    if not isinstance(profile,dict):
+        raise ValueError('Choose a theoretical profile first.')
+    profile=resolve_profiles(s,dict(profiles=[profile]))['profiles'][0]
+    if operation=='outline':
+        return dict(points=outline(profile,curve_step(body.get('detail'))).tolist())
+    result,faceted=profile_copy(profile,operation,body.get('detail'),body.get('distance'))
+    return dict(profile=result,faceted=faceted)
 
 def get(s,h,path,args):
     if path!='/api/tunnel-design':return False
@@ -247,6 +311,8 @@ def post(s,h,path,body):
     if path not in ('/api/tunnel-design-preview','/api/tunnel-design-action'):return False
     if s.JOB.get('busy'):raise ValueError('Wait for the current operation.')
     if path.endswith('preview'):
+        if 'operation' in body:
+            h.send(profile_operation(s,body));return True
         design=body.get('design',{})
         info=alignment_preview(design)
         resolved=design

@@ -40,7 +40,7 @@
  const $=id=>document.getElementById('td-'+id),esc=v=>String(v??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
  let pickState=null,sectionIndex=0,wireMap=null,wirePick=null;
  const plotViews=new Map();
- let plotFrame=null,plotDrag=null,plotHover=null,sketch=null;
+ let plotFrame=null,plotDrag=null,plotHover=null,sketch=null,chain=null,previousSections=null;
  let d=null,modelId=null,context=null,revision=null,axis=null,step=0,profileIndex=0,info=null,pending=false,dirty=0,timer=null,previewRunning=false,previewAgain=false,yaw=-.7,pitch=.45,zoom=1;
  const api=async(path,body)=>{const r=await fetch(path,body?{method:'POST',headers:{'Content-Type':'application/json','X-Tunnel-Token':window.TUNNEL_TOKEN},body:JSON.stringify(body)}:{});const v=await r.json();if(!r.ok)throw Error(v.error||'The operation could not finish.');return v;};
  const status=(text,error=false)=>{$('status').textContent=text;$('status').dataset.error=String(error);};
@@ -54,31 +54,115 @@
  function boundsChanged(oldEnd){const end=stations().at(-1);if(Math.abs(d.vertical.at(-1)[0]-oldEnd)<1e-7)d.vertical.at(-1)[0]=end;if(d.sections.length===1&&Math.abs(d.sections[0].end-oldEnd)<1e-7)d.sections[0].end=end;}
  function interpolate(ch){const a=d.vertical;let i=a.findIndex(r=>r[0]>=ch);if(i<0)return a.at(-1)[1];if(!i)return a[0][1];const [x,y]=a[i-1],[xx,yy]=a[i];return y+(yy-y)*(ch-x)/(xx-x);}
  function sectionType(r){return r.type||(r.first===r.last?'constant':'interpolate');}
+ const transitionOptions=[['linear','Linear'],['smoothstep','Smooth at both ends']];
  function profileOptions(){return d.profiles.map(p=>[p.id,p.name]);}
+ function selectedOutline(){
+  const ids=window.CadUI.selectedIds?.()||[];
+  return ids.length===1?window.CadUI.model().objects.find(o=>o.id===ids[0]&&o.closed&&!o.faces.length):null;
+ }
+ function profileTools(profile){
+  const candidate=selectedOutline();
+  const linked=profile.kind==='cad'&&window.CadUI.model().objects.find(o=>o.id===profile.object_id);
+  const canMove=profile.kind==='custom'||linked&&['polyline','rectangle'].includes(linked.shape);
+  return `<div class="td-actions"><button data-action="profile-link" ${candidate?'':'disabled'} title="Select one closed outline in Model space first">Use selected CAD outline</button>
+   ${canMove?'<button data-action="profile-move">Move a node with CAD snaps</button>':''}</div>
+   <details id="td-profile-tools"><summary>Offset and mirror</summary><div class="td-fields">
+   <label>Offset · m<input id="td-profile-offset" type="number" step="any" placeholder="e.g. 0.30"></label>
+   </div><div class="td-actions"><button data-action="profile-offset">Offset copy</button><button data-action="profile-mirror" title="Reflect across profile X = 0">Mirror left/right copy</button></div>
+   <p class="td-note">Positive offsets expand the outline. Curved outlines without analytic dimensions use the selected curve detail.</p></details>`;
+ }
+ function transitionChain(){
+  if(!chain)return `<div class="td-actions"><button data-action="chain-start" ${d.profiles.length<2?'disabled':''}>Build transition chain</button>
+    ${previousSections?'<button data-action="chain-undo">Restore previous ranges</button>':''}</div>`;
+  return `<div class="td-section"><h3>Transition chain</h3>
+   <table><thead><tr><th>Chainage · m</th><th>Profile</th><th></th></tr></thead><tbody>${chain.rows.map((row,i)=>
+    `<tr><td><input type="number" step="any" aria-label="Chainage ${i+1}" data-chain-row="${i}" data-chain-key="station" value="${esc(row.station)}"></td>
+     <td><select aria-label="Profile ${i+1}" data-chain-row="${i}" data-chain-key="profile">${opts(profileOptions(),row.profile)}</select></td>
+     <td><button data-action="chain-remove" data-index="${i}" aria-label="Remove chainage ${i+1}" ${chain.rows.length<=2?'disabled':''}>×</button></td></tr>`).join('')}
+   </tbody></table><label>Transition<select id="td-chain-method">${opts(transitionOptions,chain.method)}</select></label>
+   <div class="td-actions"><button data-action="chain-add" ${chain.rows.length>=32?'disabled':''}>Add chainage</button>
+   <button data-action="chain-apply" class="primary">Replace ranges with this chain</button><button data-action="chain-cancel">Cancel</button></div></div>`;
+ }
+ function chainAction(name,index){
+  if(name==='chain-start'){
+   const start=d.sections[0].start,end=d.sections.at(-1).end,profiles=d.profiles.slice(0,3);
+   chain={rows:profiles.map((p,i)=>({station:i===0?start:i===profiles.length-1?end:Number((start+(end-start)*i/(profiles.length-1)).toFixed(6)),profile:p.id})),method:'linear'};
+  }else if(name==='chain-add'){
+   const before=chain.rows.at(-2),last=chain.rows.at(-1);
+   chain.rows.splice(-1,0,{station:Number.isFinite(before.station)&&Number.isFinite(last.station)?(before.station+last.station)/2:'',profile:last.profile});
+  }else if(name==='chain-remove')chain.rows.splice(index,1);
+  else if(name==='chain-cancel')chain=null;
+  else if(name==='chain-undo'){
+   d.sections=previousSections;previousSections=null;sectionIndex=0;changed();
+  }else if(name==='chain-apply'){
+   const {rows,method}=chain,end=stations().at(-1);
+   if(rows.some((row,i)=>!Number.isFinite(row.station)||row.station<d.start-1e-7||row.station>end+1e-7||
+      i>0&&row.station-rows[i-1].station<1e-6||!d.profiles.some(p=>p.id===row.profile)))
+    throw Error('Enter increasing chainages within the alignment and choose a profile at each one.');
+   previousSections=d.sections;
+   d.sections=rows.slice(1).map((row,i)=>({start:rows[i].station,end:row.station,first:rows[i].profile,last:row.profile,
+    type:rows[i].profile===row.profile?'constant':'interpolate',interpolation:method}));
+   chain=null;sectionIndex=0;changed();
+  }
+  render();
+ }
+ function addProfile(profile,name){
+  if(d.profiles.length>=32)throw Error('Use up to 32 profiles in one design.');
+  d.profiles.push({...profile,id:window.crypto?.randomUUID?.()||'p'+Date.now().toString(36)+d.profiles.length,name});
+  profileIndex=d.profiles.length-1;sketch=null;
+ }
  function cadOptions(){return (window.CadUI?.model?.()?.objects||[]).filter(o=>o.closed&&!o.faces.length).map(o=>[o.id,o.name]);}
  function render(){if(!d)return;$('title').textContent=modelId?'Edit tunnel design':'Create 3D model from alignment';$('step-help').textContent=modelId&&step===4?'Review your changes, then select Update 3D model. Choose Create a separate 3D copy to keep the original model as well.':stepGuidance[step];profileIndex=Math.min(profileIndex,d.profiles.length-1);$('name').value=d.name||'Tunnel design';el.querySelectorAll('[data-step]').forEach(b=>b.setAttribute('aria-current',Number(b.dataset.step)===step?'step':'false'));$('back').disabled=step===0;$('next').hidden=step===4;$('build').textContent=modelId?'Update 3D model':'Create 3D model';let html='';
  if(step===0){const ch=stations();html=`<h3>Plan alignment · the tunnel route</h3><p class="td-note">The main viewer faces the drawing plane when you start. Click the route in order, then select Finish. Edit coordinates and curve radii below.</p><div class="td-fields"><label>Drawing plane<select id="td-draw-plane"><option value="horizontal">Horizontal · E/N</option><option value="current">Current CAD work plane</option></select></label><label>Drawing height · m<input id="td-draw-height" type="number" step="any" value="${esc(d.vertical?.[0]?.[1]||0)}"></label></div><div class="td-actions"><button class="primary" data-action="draw-alignment">Start drawing alignment</button></div><details><summary>Coordinates and curves</summary><p class="td-note">Place centreline nodes in plan. Each row describes the segment to the next node. Radius 0 is straight; a positive radius turns left and a negative radius turns right (arcs up to 180°).</p><div class="td-fields">${field('Start chainage · m',numeric('start',d.start,'Start chainage'))}</div><table><thead><tr><th>Easting / X</th><th>Northing / Y</th><th>Radius to next · m</th><th>Chainage</th><th></th></tr></thead><tbody>${d.plan.map((r,i)=>`<tr>${r.map((v,j)=>`<td>${j===2&&i===d.plan.length-1?'End':numeric('plan.'+i+'.'+j,v,['Easting','Northing','Signed radius'][j]+' node '+(i+1))}</td>`).join('')}<td data-chainage="${i}">${ch[i].toFixed(3)}</td><td>${remove('plan-remove',i)}</td></tr>`).join('')}</tbody></table><div class="td-actions"><button data-action="plan-add">Add plan node</button><button data-action="active-axis" ${axis?.rows?.length?'':'disabled'}>Use active alignment</button></div><p class="td-note">Using an active alignment copies its coordinates and heights into this design. Designer chainage follows horizontal distance; supplied chainages are recalculated. Existing Along alignment modelling retains the imported chainages.</p></details>`;}
  if(step===1){html=`<h3>Vertical alignment · heights and gradients</h3><p class="td-note">Add a height at every chainage where the gradient changes. One design can contain many different heights. Heights interpolate linearly between rows; 1% gradient is 10 mm rise per metre. Enter heights in your project datum.</p><table><thead><tr><th>Chainage · m</th><th>Height / Z · m</th><th>Gradient to next</th><th></th></tr></thead><tbody>${d.vertical.map((r,i)=>`<tr><td>${numeric('vertical.'+i+'.0',r[0],'Chainage height row '+(i+1))}</td><td>${numeric('vertical.'+i+'.1',r[1],'Height at row '+(i+1))}</td><td data-gradient="${i}"></td><td>${remove('height-remove',i)}</td></tr>`).join('')}</tbody></table><div class="td-actions"><button data-action="height-add">Add chainage / height</button><button data-action="height-sort">Sort by chainage</button><button data-action="height-ends">Cover alignment ends</button></div><p class="td-note">The first and last height rows must cover ${stations()[0].toFixed(3)}–${stations().at(-1).toFixed(3)} m. You can return and change any height after building or reopening the project.</p>`;}
- if(step===2){const p=d.profiles[profileIndex],base='profiles.'+profileIndex,r=activeRadius();html=`<h3>Theoretical profiles · tunnel cross-sections</h3><div class="td-actions"><button class="primary" data-action="sketch-profile">Sketch outline in 2D</button>${r?`<button data-action="alignment-radius">Use alignment circle · R ${r.toFixed(3)} m</button>`:''}</div><p class="td-note">Choose a shape below or click points in the cross-section pane to sketch an outline.</p><details><summary>Draw on a plane in the 3D viewer</summary><div class="td-actions"><select id="td-profile-plane" aria-label="Profile drawing plane"><option value="XZ">Vertical · X/Z</option><option value="YZ">Vertical · Y/Z</option><option value="XY">Horizontal · X/Y</option><option value="current">Current CAD work plane</option></select><button data-action="draw-profile">Start 3D drawing</button></div></details><div class="td-profile-head">${field('Profile',`<select id="td-profile-choice">${opts(d.profiles.map((x,i)=>[i,x.name]),profileIndex)}</select>`)}<button data-action="profile-add">Add</button><button data-action="profile-copy">Duplicate</button><button data-action="profile-remove">Remove</button></div><div class="td-fields">${field('Name',text(base+'.name',p.name,'Profile name'))}${field('Shape',select(base+'.kind',[['circle','Circle'],['rectangle','Rectangle'],['arch','Arched'],['custom','Lines and arcs'],['cad','Existing CAD profile']],p.kind,'Profile shape'))}</div>`;
+ if(step===2){const p=d.profiles[profileIndex],base='profiles.'+profileIndex,r=activeRadius();html=`<h3>Theoretical profiles · tunnel cross-sections</h3><div class="td-actions"><button class="primary" data-action="sketch-profile">Sketch outline in 2D</button>${r?`<button data-action="alignment-radius">Use alignment circle · R ${r.toFixed(3)} m</button>`:''}</div><p class="td-note">Choose a shape below or click points in the cross-section pane to sketch an outline.</p><details><summary>Draw on a plane in the 3D viewer</summary><div class="td-actions"><select id="td-profile-plane" aria-label="Profile drawing plane"><option value="XZ">Vertical · X/Z</option><option value="YZ">Vertical · Y/Z</option><option value="XY">Horizontal · X/Y</option><option value="current">Current CAD work plane</option></select><button data-action="draw-profile">Start 3D drawing</button></div></details><div class="td-profile-head">${field('Profile',`<select id="td-profile-choice">${opts(d.profiles.map((x,i)=>[i,x.name]),profileIndex)}</select>`)}<button data-action="profile-add">Add</button><button data-action="profile-copy">Duplicate</button><button data-action="profile-remove">Remove</button></div><div class="td-fields">${field('Name',text(base+'.name',p.name,'Profile name'))}${field('Shape',select(base+'.kind',[['circle','Circle'],['rectangle','Rectangle'],['arch','Arched'],['custom','Lines and arcs'],['cad','Existing CAD profile']],p.kind,'Profile shape'))}</div>${profileTools(p)}`;
  if(p.kind==='circle')html+=field('Radius · m',numeric(base+'.radius',p.radius,'Circle radius'));
  if(['rectangle','arch'].includes(p.kind))html+=`<div class="td-fields">${field('Width · m',numeric(base+'.width',p.width,'Profile width'))}${field('Total height · m',numeric(base+'.height',p.height,'Profile height'))}</div>`;
- if(p.kind==='cad')html+=field('Closed profile',select(base+'.object_id',[['','Choose a closed profile…'],...cadOptions()],p.object_id||'','Existing profile'))+'<div class="td-actions"><button data-action="cad-refresh">Refresh profile list</button></div><p class="td-note">Choose a closed outline already drawn or imported in the 3D modeller.</p>';
+ if(p.kind==='cad')html+=field('Closed profile',select(base+'.object_id',[['','Choose a closed profile…'],...cadOptions()],p.object_id||'','Existing profile'))+'<div class="td-actions"><button data-action="cad-refresh">Refresh profile list</button></div><p class="td-note">The designer reads the linked CAD outline when previewing or rebuilding the model.</p>';
  if(p.kind==='custom')html+=`<p class="td-note">List boundary nodes in order. The last joins the first. Radius to next is 0 for a straight edge, positive for counterclockwise and negative for clockwise.</p><details id="td-boundary-table"><summary>Boundary coordinates and arcs</summary><table><thead><tr><th>X · m</th><th>Y · m</th><th>Radius to next · m</th><th></th></tr></thead><tbody>${(p.nodes||[]).map((r,i)=>`<tr>${r.map((v,j)=>`<td>${numeric(base+'.nodes.'+i+'.'+j,v,['X','Y','Radius'][j]+' profile node '+(i+1))}</td>`).join('')}<td>${remove('node-remove',i)}</td></tr>`).join('')}</tbody></table><button data-action="node-add">Add boundary node</button></details>`;
  html+=`<div class="td-fields">${field('Horizontal offset · m',numeric(base+'.x',p.x||0,'Profile horizontal offset'))}${field('Vertical offset · m',numeric(base+'.y',p.y||0,'Profile vertical offset'))}</div><p class="td-note">Circle and rectangle sizes are centred on the profile origin. Arched sections use vertical walls and a semicircular crown. Lines/arcs allow custom invert and crown shapes.</p>`;}
- if(step===3){html=`<h3>Chainage ranges · where each profile is used</h3><p class="td-note">Choose a constant section or a transition, then pick its start and end on the highlighted centreline in 3D. Chainages remain editable. Sections must touch and share the same boundary shape.</p>${d.sections.map((r,i)=>`<article class="td-section ${i===sectionIndex?'active':''}" data-section="${i}"><div class="td-section-header"><strong>Section ${i+1}</strong>${remove('section-remove',i)}</div>${field('Section type',select('sections.'+i+'.type',[['constant','Constant theoretical profile'],['interpolate','Interpolate between profiles']],sectionType(r),'Section '+(i+1)+' type'))}<div class="td-fields">${field('From · m',numeric('sections.'+i+'.start',r.start,'Section '+(i+1)+' start'))}${field('To · m',numeric('sections.'+i+'.end',r.end,'Section '+(i+1)+' end'))}</div><div class="td-actions"><button data-action="pick-range" data-index="${i}">Pick start / end in main 3D</button><button data-action="pick-preview" data-index="${i}">Pick in this preview</button></div><div class="td-fields">${field(sectionType(r)==='constant'?'Theoretical profile':'Start profile',select('sections.'+i+'.first',profileOptions(),r.first,'Section '+(i+1)+' start profile'))}${sectionType(r)==='interpolate'?field('End profile',select('sections.'+i+'.last',profileOptions(),r.last,'Section '+(i+1)+' end profile')):''}</div></article>`).join('')}<div class="td-actions"><button data-action="section-split">Split last section in two</button><button data-action="section-add">Append section</button><button data-action="section-full">One section over full alignment</button></div><p class="td-note">Alignment range: ${stations()[0].toFixed(3)}–${stations().at(-1).toFixed(3)} m. Model all of it or a shorter continuous range. Yellow highlights the selected section.</p>`;}
+ if(step===3){html=`<h3>Chainage ranges · where each profile is used</h3><p class="td-note">Choose a constant section or a transition, then pick its start and end on the highlighted centreline in 3D. Chainages remain editable. Sections must touch and share the same boundary shape.</p>${transitionChain()}${d.sections.map((r,i)=>`<article class="td-section ${i===sectionIndex?'active':''}" data-section="${i}"><div class="td-section-header"><strong>Section ${i+1}</strong>${remove('section-remove',i)}</div>${field('Section type',select('sections.'+i+'.type',[['constant','Constant theoretical profile'],['interpolate','Interpolate between profiles']],sectionType(r),'Section '+(i+1)+' type'))}<div class="td-fields">${field('From · m',numeric('sections.'+i+'.start',r.start,'Section '+(i+1)+' start'))}${field('To · m',numeric('sections.'+i+'.end',r.end,'Section '+(i+1)+' end'))}</div><div class="td-actions"><button data-action="pick-range" data-index="${i}">Pick start / end in main 3D</button><button data-action="pick-preview" data-index="${i}">Pick in this preview</button></div><div class="td-fields">${field(sectionType(r)==='constant'?'Theoretical profile':'Start profile',select('sections.'+i+'.first',profileOptions(),r.first,'Section '+(i+1)+' start profile'))}${sectionType(r)==='interpolate'?field('End profile',select('sections.'+i+'.last',profileOptions(),r.last,'Section '+(i+1)+' end profile')):''}</div>${sectionType(r)==='interpolate'?field('Transition',select('sections.'+i+'.interpolation',transitionOptions,r.interpolation||'linear','Section '+(i+1)+' transition')):''}</article>`).join('')}<div class="td-actions"><button data-action="section-split">Split last section in two</button><button data-action="section-add">Append section</button><button data-action="section-full">One section over full alignment</button></div><p class="td-note">Alignment range: ${stations()[0].toFixed(3)}–${stations().at(-1).toFixed(3)} m. Model all of it or a shorter continuous range. Yellow highlights the selected section.</p>`;}
  if(step===4){html=`<h3>Preview and create the 3D tunnel model</h3><p class="td-note">The plan, heights and section transitions produce a closed solid. After building, orbit and zoom in the main viewer, inspect area / volume, or use Move, Rotate, Cut and Export. Open this model’s Parameters to edit its original design and rebuild.</p><div class="td-fields">${field('Requested profile spacing · m',numeric('spacing',d.spacing,'Profile spacing'))}${field('Curve quality',select('detail',[['fast','Fast'],['balanced','Balanced'],['fine','Fine']],d.detail,'Curve quality'))}</div>${field('Cross-section orientation',select('orientation',[['vertical','Keep sections vertical'],['normal','Perpendicular to 3D gradient']],d.orientation,'Cross-section orientation'))}<p class="td-note">Smaller spacing follows bends more closely. Curve quality controls arc facets. Spacing adjusts automatically for a very long model; every height change and section boundary remains included. The preview reports the actual maximum spacing.</p><div class="td-actions"><button data-action="use-alignment">Also use this design as active alignment</button>${modelId?'<button data-action="build-copy">Create a separate 3D copy</button>':''}</div><p class="td-note">Using a new active alignment resets active alignment-based survey results; scene scans and independent models stay in the project. Workspace Undo can restore the previous alignment. A rebuilt designer model replaces edits made with Cut or other shape operations; duplicate the model first to keep both versions.</p>`;}
- const tableOpen=$('boundary-table')?.open;
- $('editor').innerHTML=html;if(tableOpen&&$('boundary-table'))$('boundary-table').open=true;updateNumbers();draw();const plane=$('draw-plane');if(plane)plane.onchange=()=>{$('draw-height').disabled=plane.value==='current';};const choice=$('profile-choice');if(choice)choice.onchange=()=>{profileIndex=Number(choice.value);sketch=null;plotHover=null;render();};}
+ const tableOpen=$('boundary-table')?.open,toolsOpen=$('profile-tools')?.open,offset=$('profile-offset')?.value;
+ $('editor').innerHTML=html;if(tableOpen&&$('boundary-table'))$('boundary-table').open=true;if(toolsOpen&&$('profile-tools'))$('profile-tools').open=true;if(offset&&$('profile-offset'))$('profile-offset').value=offset;updateNumbers();draw();const plane=$('draw-plane');if(plane)plane.onchange=()=>{$('draw-height').disabled=plane.value==='current';};const choice=$('profile-choice');if(choice)choice.onchange=()=>{profileIndex=Number(choice.value);sketch=null;plotHover=null;render();};}
  function updateNumbers(){const ch=stations();el.querySelectorAll('[data-chainage]').forEach(e=>e.textContent=ch[Number(e.dataset.chainage)]?.toFixed(3)||'—');el.querySelectorAll('[data-gradient]').forEach(e=>{const i=Number(e.dataset.gradient),a=d.vertical[i],b=d.vertical[i+1];e.textContent=b&&b[0]>a[0]?((b[1]-a[1])/(b[0]-a[0])*100).toFixed(3)+'%':b?'Check order':'End';});}
  function changed(){dirty++;status('Changes pending · save the design or build the model.');updateNumbers();$('summary').textContent='Updating preview…';clearTimeout(timer);timer=setTimeout(preview,550);draw();}
  $('name').oninput=()=>{d.name=$('name').value;changed();};
- $('editor').addEventListener('input',e=>{const path=e.target.dataset.field;if(!path)return;const parts=path.split('.'),key=parts.pop();let obj=d;for(const p of parts)obj=obj[p];const oldEnd=stations().at(-1),oldStart=d.start,oldType=path.startsWith('sections.')?sectionType(obj):null;obj[key]=e.target.type==='number'?(e.target.value.trim()?Number(e.target.value):null):e.target.value;
+ $('editor').addEventListener('input',e=>{
+ const chainKey=e.target.dataset.chainKey;
+ if(chain&&chainKey){
+  const row=chain.rows[Number(e.target.dataset.chainRow)];
+  row[chainKey]=chainKey==='station'?(e.target.value.trim()?Number(e.target.value):''):e.target.value;
+  return;
+ }
+ if(chain&&e.target.id==='td-chain-method'){chain.method=e.target.value;return;}
+ const path=e.target.dataset.field;if(!path)return;const parts=path.split('.'),key=parts.pop();let obj=d;for(const p of parts)obj=obj[p];const oldEnd=stations().at(-1),oldStart=d.start,oldType=path.startsWith('sections.')?sectionType(obj):null;obj[key]=e.target.type==='number'?(e.target.value.trim()?Number(e.target.value):null):e.target.value;
  if(path.startsWith('plan.'))boundsChanged(oldEnd);
  if(path==='start'&&Number.isFinite(d.start)){const delta=d.start-oldStart;d.vertical.forEach(r=>r[0]+=delta);d.sections.forEach(r=>{r.start+=delta;r.end+=delta;});}
  if(path.endsWith('.kind')&&obj.kind==='custom'&&!obj.nodes)obj.nodes=[[-3,-3,0],[3,-3,0],[3,3,0],[-3,3,0]];
  if(oldType){sectionIndex=Number(parts[1]);if(key==='type')obj.type=e.target.value;else obj.type=oldType;if(obj.type==='constant')obj.last=obj.first;}
  changed();if(path.endsWith('.kind')||path.endsWith('.type'))render();});
+ function profileOperation(operation,options={}){
+  return api('/api/tunnel-design-preview',{operation,detail:d.detail,context,revision,...options});
+ }
  async function action(name,index){const p=d.profiles[profileIndex],oldEnd=stations().at(-1);
+ if(name.startsWith('chain-')){chainAction(name,index);return;}
+ if(name==='profile-move'){await moveProfileNode(p);return;}
+ if(['profile-link','profile-offset','profile-mirror'].includes(name)){
+  if(d.profiles.length>=32)throw Error('Use up to 32 profiles in one design.');
+  if(sketch)throw Error('Finish or cancel the current sketch first.');
+  const candidate=name==='profile-link'?selectedOutline():null;
+  if(name==='profile-link'&&!candidate)throw Error('Select one closed CAD outline in Model space.');
+  const operation=name.slice(8),distance=operation==='offset'&&$('profile-offset').value.trim()?Number($('profile-offset').value):null;
+  let result;lock(true);
+  try{result=await profileOperation(operation,candidate?{object_id:candidate.id}:{profile:p,distance});}
+  finally{lock(false);}
+  addProfile(result.profile,candidate?candidate.name:p.name+(operation==='offset'?' offset':' mirrored'));
+  render();changed();
+  status(result.faceted?'Offset copy created from the sampled outline. Review its curve detail before using it.':
+   candidate?'Linked to '+candidate.name+'.':'Profile copy created. Review the outline before building.');
+  return;
+ }
  if(name==='sketch-profile'){
   sketch={points:[],id:p.id};
   plotViews.delete(plotKey());plotHover=null;draw();$('plot').focus();
@@ -98,8 +182,11 @@
  if(name==='height-remove'&&d.vertical.length>2)d.vertical.splice(index,1);
  if(name==='height-sort')d.vertical.sort((a,b)=>a[0]-b[0]);
  if(name==='height-ends'){d.vertical.sort((a,b)=>a[0]-b[0]);for(const ch of [d.start,stations().at(-1)])if(!d.vertical.some(r=>Math.abs(r[0]-ch)<1e-7))d.vertical.push([ch,interpolate(ch)]);d.vertical.sort((a,b)=>a[0]-b[0]);}
- if(name==='profile-add'||name==='profile-copy'){if(d.profiles.length>=32)throw Error('Use up to 32 profiles in one design.');const copy=name==='profile-copy'?JSON.parse(JSON.stringify(p)):{kind:'circle',radius:3,width:6,height:6,x:0,y:0};copy.id='p'+Date.now().toString(36)+d.profiles.length;copy.name=name==='profile-copy'?p.name+' copy':'Section '+(d.profiles.length+1);d.profiles.push(copy);profileIndex=d.profiles.length-1;}
- if(name==='profile-remove'){if(d.profiles.length===1)throw Error('Keep at least one profile.');if(d.sections.some(r=>r.first===p.id||r.last===p.id))throw Error('This profile is used in Sections. Choose another profile there before removing it.');d.profiles.splice(profileIndex,1);profileIndex=0;}
+ if(name==='profile-add'||name==='profile-copy'){
+  const copy=name==='profile-copy'?JSON.parse(JSON.stringify(p)):{kind:'circle',radius:3,width:6,height:6,x:0,y:0};
+  addProfile(copy,name==='profile-copy'?p.name+' copy':'Section '+(d.profiles.length+1));
+ }
+ if(name==='profile-remove'){if(d.profiles.length===1)throw Error('Keep at least one profile.');if(d.sections.some(r=>r.first===p.id||r.last===p.id))throw Error('This profile is used in Sections. Choose another profile there before removing it.');if(previousSections?.some(r=>r.first===p.id||r.last===p.id))previousSections=null;d.profiles.splice(profileIndex,1);profileIndex=0;}
  if(name==='node-add')p.nodes.push([p.nodes.at(-1)[0]+.5,p.nodes.at(-1)[1]+.5,0]);
  if(name==='node-remove'&&p.nodes.length>3)p.nodes.splice(index,1);
  if(name==='section-remove'&&d.sections.length>1)d.sections.splice(index,1);
@@ -117,7 +204,7 @@
  $('range-shortcut').onclick=()=>goStep(3);
  async function preview(){if(!el.open||!d)return;if(previewRunning){previewAgain=true;return;}previewRunning=true;const generation=dirty;try{const result=await api('/api/tunnel-design-preview',{design:d});if(generation===dirty){info=result;$('summary').textContent=result.model_error?'Alignment ready · '+result.model_error:`${result.profile_count} profiles · ${result.maximum_spacing.toFixed(3)} m maximum spacing · ${result.vertices.toLocaleString()} model vertices`;draw();}}catch(e){if(generation===dirty){info=null;$('summary').textContent='Preview needs correction';status(e.message,true);draw();}}finally{previewRunning=false;if(previewAgain){previewAgain=false;preview();}}}
  function lock(value){pending=value;el.querySelectorAll('button,input,select').forEach(x=>{if(value){x.dataset.wasDisabled=String(x.disabled);x.disabled=true;}else{x.disabled=x.dataset.wasDisabled==='true';delete x.dataset.wasDisabled;}});}
- async function commit(action,copy=false){if(pending)return;if(sketch){status('Finish or cancel the profile sketch first.',true);return;}lock(true);clearTimeout(timer);status(action==='build'?'Building and validating the 3D solid…':'Saving design…');try{const response=await api('/api/tunnel-design-action',{action,design:d,model_id:modelId,separate_copy:copy,context,revision});modelId=response.model_id;const saved=await api('/api/tunnel-design');context=saved.context;revision=saved.revision;d=saved.design;axis=saved.active_alignment;await window.CadUI.load(true);await window.JobUI.sync({inventoryOnly:true});status(action==='build'?(copy?'Separate 3D copy built and saved.':'3D model built and saved.'):action==='use_alignment'?'Design saved and active alignment updated.':'Design draft saved with the project.');if(action==='build'){el.close();window.CadUI.enter('Model');window.CadUI.select(modelId);window.CadUI.tool('fit');}else render();return response;}catch(e){status(e.message,true);throw e;}finally{lock(false);}}
+ async function commit(action,copy=false){if(pending)return;if(sketch){status('Finish or cancel the profile sketch first.',true);return;}lock(true);clearTimeout(timer);status(action==='build'?'Building and validating the 3D solid…':'Saving design…');try{const response=await api('/api/tunnel-design-action',{action,design:d,model_id:modelId,separate_copy:copy,context,revision});modelId=response.model_id;const saved=await api('/api/tunnel-design');context=saved.context;revision=saved.revision;d=saved.design;axis=saved.active_alignment;previousSections=null;chain=null;await window.CadUI.load(true);await window.JobUI.sync({inventoryOnly:true});status(action==='build'?(copy?'Separate 3D copy built and saved.':'3D model built and saved.'):action==='use_alignment'?'Design saved and active alignment updated.':'Design draft saved with the project.');if(action==='build'){el.close();window.CadUI.enter('Model');window.CadUI.select(modelId);window.CadUI.tool('fit');}else render();return response;}catch(e){status(e.message,true);throw e;}finally{lock(false);}}
  $('save').onclick=()=>commit('save').catch(()=>{});$('build').onclick=()=>commit('build').catch(()=>{});$('close').onclick=()=>{if(!pending){wirePick=null;clearTimeout(timer);el.close();}};el.addEventListener('cancel',e=>{if(pending)e.preventDefault();else clearTimeout(timer);});
  function activeRadius(){
   const r=axis?.rows?.[0]?.[4];
@@ -264,18 +351,58 @@
  };
  let drag=null;$('wire').onpointerdown=e=>{drag={x:e.clientX,y:e.clientY,start:[e.clientX,e.clientY],moved:false};$('wire').setPointerCapture?.(e.pointerId);};$('wire').onpointermove=e=>{if(!drag)return;const dx=e.clientX-drag.x,dy=e.clientY-drag.y;if(Math.hypot(e.clientX-drag.start[0],e.clientY-drag.start[1])>4)drag.moved=true;if(drag.moved){yaw+=dx*.01;pitch=Math.max(-1.5,Math.min(1.5,pitch+dy*.01));}drag.x=e.clientX;drag.y=e.clientY;draw();};$('wire').onpointerup=e=>{const g=drag;drag=null;if(!g||g.moved||!wirePick||!wireMap)return;const r=$('wire').getBoundingClientRect(),pixel=[(e.clientX-r.left)*$('wire').width/r.width,(e.clientY-r.top)*$('wire').height/r.height],hit=nearestChainage(pixel,wireMap,info);if(hit)rangeHit(hit,true);else status('Click closer to the centreline. You can drag to turn the preview.');};$('wire').onpointercancel=()=>drag=null;$('wire').addEventListener('wheel',e=>{e.preventDefault();zoom=Math.max(.2,Math.min(8,zoom*Math.exp(-e.deltaY*.001)));draw();},{passive:false});
  $('new').onclick=()=>{step=0;profileIndex=0;open('new');};
- async function open(id=null){if(pending)return;wirePick=null;pickState=null;drawbar.hidden=true;try{window.TunnelRibbon?.closeTool?.();await window.CadUI.load(true);const fromAlignment=id==='alignment',drawAlignment=id==='draw',selected=window.CadUI.selectedIds?.()||[];if(!id&&selected.length===1&&window.CadUI.model().objects.find(o=>o.id===selected[0])?.definition?.kind==='tunnel_design')id=selected[0];const value=await api('/api/tunnel-design'+(id==='new'||fromAlignment||drawAlignment?'?new=1':id&&id!=='draft'?'?model='+encodeURIComponent(id):''));plotViews.clear();plotHover=null;sketch=null;d=value.design;modelId=value.model_id;context=value.context;revision=value.revision;axis=value.active_alignment;step=drawAlignment?0:(value.initial_step??0);profileIndex=0;sectionIndex=0;if(value.initialization_warning)status(value.initialization_warning,true);else if(drawAlignment)status('Draw the route in plan view, then set its heights and profiles.');else if(value.initialized_from_alignment)status('Alignment loaded. Draw or choose the tunnel profile, then confirm the section range and build.'+(value.alignment_chainages_recalculated?' Designer chainages were recalculated from horizontal distances; the active alignment is unchanged.':''));else status(modelId?'Edit the saved profiles, alignment, heights or sections, then update this model or create a separate copy.':'Saved designs remain editable. Start with the plan, then add heights and profiles.');info=null;dirty++;if(!el.open)el.showModal();render();preview();}catch(e){notice(e.message,true);status(e.message,true);}}
+ async function open(id=null){if(pending)return;wirePick=null;pickState=null;drawbar.hidden=true;try{window.TunnelRibbon?.closeTool?.();await window.CadUI.load(true);const fromAlignment=id==='alignment',drawAlignment=id==='draw',selected=window.CadUI.selectedIds?.()||[];if(!id&&selected.length===1&&window.CadUI.model().objects.find(o=>o.id===selected[0])?.definition?.kind==='tunnel_design')id=selected[0];const value=await api('/api/tunnel-design'+(id==='new'||fromAlignment||drawAlignment?'?new=1':id&&id!=='draft'?'?model='+encodeURIComponent(id):''));plotViews.clear();plotHover=null;sketch=null;chain=null;previousSections=null;d=value.design;modelId=value.model_id;context=value.context;revision=value.revision;axis=value.active_alignment;step=drawAlignment?0:(value.initial_step??0);profileIndex=0;sectionIndex=0;if(value.initialization_warning)status(value.initialization_warning,true);else if(drawAlignment)status('Draw the route in plan view, then set its heights and profiles.');else if(value.initialized_from_alignment)status('Alignment loaded. Draw or choose the tunnel profile, then confirm the section range and build.'+(value.alignment_chainages_recalculated?' Designer chainages were recalculated from horizontal distances; the active alignment is unchanged.':''));else status(modelId?'Edit the saved profiles, alignment, heights or sections, then update this model or create a separate copy.':'Saved designs remain editable. Start with the plan, then add heights and profiles.');info=null;dirty++;if(!el.open)el.showModal();render();preview();}catch(e){notice(e.message,true);status(e.message,true);}}
  const drawbar=document.createElement('div');drawbar.className='td-drawbar';drawbar.id='td-drawbar';drawbar.hidden=true;drawbar.innerHTML='<div><strong id="td-draw-title"></strong><p id="td-draw-help"></p></div><button id="td-draw-finish">Finish</button><button id="td-draw-cancel">Cancel</button>';document.body.append(drawbar);
  function showDrawbar(title,help,finish,cancel){$('draw-title').textContent=title;$('draw-help').textContent=help;$('draw-finish').hidden=!finish;$('draw-finish').onclick=finish;$('draw-cancel').onclick=cancel;drawbar.hidden=false;}
  function resumeDesigner(message){drawbar.hidden=true;pickState=null;wirePick=null;window.JobUI.draw();if(!el.open)el.showModal();render();if(message)status(message);}
- function beginDrawing(profile){
-  if(window.CadUI.command())throw Error('Finish or cancel the current drawing command first.');
+ function drawingFrame(profile){
   const M=window.CadMath,choice=profile?$('profile-plane').value:$('draw-plane').value;
   const height=profile?Number(d.vertical[0][1]):Number($('draw-height').value);
   if(choice!=='current'&&(!Number.isFinite(height)||(!profile&&!$('draw-height').value.trim())))throw Error('Enter a drawing height in metres.');
   let frame=choice==='current'?window.CadUI.workPlane():{...M.worldFrame(),origin:[Number(d.plan[0][0]),Number(d.plan[0][1]),height]};
   if(choice==='XZ')frame={...frame,y:[0,0,1],z:[0,-1,0]};
   if(choice==='YZ')frame={...frame,x:[0,1,0],y:[0,0,1],z:[1,0,0]};
+  return {M,choice,height,frame};
+ }
+ async function moveProfileNode(profile){
+  if(sketch)throw Error('Finish or cancel the current sketch first.');
+  if(window.CadUI.command())throw Error('Finish or cancel the current drawing command first.');
+  let frame,vertices,outline;
+  const M=window.CadMath,objectId=profile.kind==='cad'?profile.object_id:null;
+  lock(true);
+  try{
+   if(objectId)({frame}=await profileOperation('edit_frame',{object_id:objectId}));
+   else{
+    ({frame}=drawingFrame(true));
+    const shape=await profileOperation('outline',{profile});
+    outline=shape.points.map(([x,y])=>M.toWorld([x,y,0],frame));
+    vertices=profile.nodes.map(([x,y])=>M.toWorld([Number(x)+Number(profile.x??0),Number(y)+Number(profile.y??0),0],frame));
+   }
+  }finally{lock(false);}
+  clearTimeout(timer);el.close();
+  try{
+   const started=window.CadUI.moveProfileNode({frame,vertices,objectId,outline,
+    onMove:async(index,point)=>{
+     const [x,y]=M.toLocal(point,frame),nodes=profile.nodes.map(node=>node.slice());
+     nodes[index]=[x-(profile.x||0),y-(profile.y||0),nodes[index][2]];
+     await profileOperation('outline',{profile:{...profile,nodes}});
+     profile.nodes=nodes;
+    },
+    onDone:(message,error,{cadChanged,workspaceChanged})=>{
+     if(workspaceChanged){drawbar.hidden=true;notice(message,true);return;}
+     if(cadChanged){
+      const model=window.CadUI.model();
+      context=model.context;revision=model.revision;
+     }
+     info=null;resumeDesigner();changed();status(message,error);
+    }});
+   if(!started)throw Error('The Model workspace is busy. Finish the current command first.');
+   showDrawbar('Edit profile node','Click a marked node, then click its new position. Geometry snaps work on the profile plane.',null,()=>window.CadUI.cancel());
+  }catch(e){resumeDesigner();throw e;}
+ }
+ function beginDrawing(profile){
+  if(window.CadUI.command())throw Error('Finish or cancel the current drawing command first.');
+  const {M,choice,height,frame}=drawingFrame(profile);
   const title=profile?'Draw theoretical profile':'Draw alignment';
   clearTimeout(timer);wirePick=null;el.close();
   const started=window.CadUI.drawPolyline({frame,lockPlane:true,closedRequired:profile,openRequired:!profile,

@@ -137,6 +137,30 @@ def profile(obj):
     if obj.get('faces'): raise ValueError('Choose a drawn profile. A solid is not a profile.')
     return points(obj['vertices'], 2), bool(obj.get('closed'))
 
+def closed_profile_frame(obj):
+    p, closed = profile(obj)
+    if not closed or len(p) < 3:
+        raise ValueError('Choose a closed CAD outline.')
+    saved = (obj.get('definition') or {}).get('frame')
+    if saved:
+        origin, basis = matrix(saved)
+        transform = np.asarray(obj.get('transform', np.eye(4)), float)
+        origin = origin @ transform[:3, :3].T + transform[:3, 3]
+        x, y = (transform[:3, :3] @ basis[:, i] for i in (0, 1))
+        result = frame(dict(name='Profile plane', origin=origin, x=x, y=y))
+        normal = np.asarray(result['z'])
+        depth = (p - origin) @ normal
+        if np.ptp(depth) > 1e-6:
+            raise ValueError('The CAD outline is not planar in its drawing frame.')
+        result['origin'] = (origin + depth.mean() * normal).tolist()
+        return result
+    origin, basis, local = plane(p)
+    return frame(dict(name='Profile plane', origin=origin + basis[:, :2] @ local.mean(0),
+                      x=basis[:, 0], y=basis[:, 1]))
+
+def profile_vertex_editable(obj):
+    return obj.get('shape') in ('polyline', 'rectangle') and obj.get('closed') and not obj.get('faces')
+
 def face_profile(obj, face_index):
     """Extract the connected planar face around a picked triangle, not one facet."""
     p=points(obj.get('vertices'),1,MAX_VERTICES)

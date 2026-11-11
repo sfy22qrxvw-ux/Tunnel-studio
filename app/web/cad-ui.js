@@ -129,7 +129,7 @@
   for(const o of objects().filter(effectiveVisible)){
    const p=o.vertices,pp=p.map(J().projectWorld);for(let i=0;i<p.length;i++){const q=pp[i];if(q&&q[0]>=-24&&q[1]>=-24&&q[0]<=canvas.clientWidth+24&&q[1]<=canvas.clientHeight+24)put(q[0],q[1],{point:p[i],pixel:q,type:'endpoint',object:o});}
    if(o.centre){const q=J().projectWorld(o.centre);if(q)put(q[0],q[1],{point:o.centre,pixel:q,type:'centre',object:o});}
-   for(const [a,b] of objectEdges(o)){if(!pp[a]||!pp[b])continue;const row={a:p[a],b:p[b],pa:pp[a],pb:pp[b],object:o,type:'edge'};edges.push(row);const mid=M.mul(M.add(p[a],p[b]),.5),mp=J().projectWorld(mid);if(mp)put(mp[0],mp[1],{point:mid,pixel:mp,type:'midpoint',object:o});
+   for(const [a,b] of objectEdges(o)){if(!pp[a]||!pp[b])continue;const row={a:p[a],b:p[b],pa:pp[a],pb:pp[b],object:o,type:'edge'};edges.push(row);const mid=M.mul(M.add(p[a],p[b]),.5),mp=J().projectWorld(mid);if(mp)put(mp[0],mp[1],{point:mid,pixel:mp,type:'midpoint',object:o,edge:row});
     const minx=Math.max(0,Math.floor(Math.min(pp[a][0],pp[b][0])/24)),maxx=Math.min(Math.ceil(canvas.clientWidth/24),Math.floor(Math.max(pp[a][0],pp[b][0])/24)),miny=Math.max(0,Math.floor(Math.min(pp[a][1],pp[b][1])/24)),maxy=Math.min(Math.ceil(canvas.clientHeight/24),Math.floor(Math.max(pp[a][1],pp[b][1])/24));
     for(let x=minx;x<=maxx;x++)for(let y=miny;y<=maxy;y++)if(M.segmentPixel([x*24+12,y*24+12],pp[a],pp[b]).d<30)put(x*24+12,y*24+12,row);
    }
@@ -137,7 +137,16 @@
   return snapCache={key,grid,edges};
  }
  function nearby(pixel){const grid=index().grid,x=Math.floor(pixel[0]/24),y=Math.floor(pixel[1]/24),set=new Set();for(let a=x-1;a<=x+1;a++)for(let b=y-1;b<=y+1;b++)for(const row of grid.get(a+','+b)||[])set.add(row);return [...set];}
- function snapped(pixel){if(!$c('cad-snap').checked)return null;const candidates=nearby(pixel),last=command?.points?.at(-1);let best=null,distance=12;
+ function snapped(pixel){
+  if(!$c('cad-snap').checked)return null;
+  const edit=command?.profileEdit,moved=edit?.vertices[edit.index];
+  let candidates=nearby(pixel);
+  if(moved&&edit.objectId)candidates=candidates.filter(c=>{
+   if(c.object.id!==edit.objectId)return true;
+   const edge=c.edge||c;
+   return c.point!==moved&&edge.a!==moved&&edge.b!==moved;
+  });
+  const last=command?.points?.at(-1)||moved;let best=null,distance=12;
   const use=(p,type,object,frame=null)=>{if(command?.faceLocked&&Math.abs(M.dot(M.sub(p,command.points[0]),command.frame.z))>Math.max(1e-7,J().cadScene().scale*1e-8))return;const q=J().projectWorld(p);if(!q)return;const d=Math.hypot(pixel[0]-q[0],pixel[1]-q[1]);if(d<distance-.001||type==='tracked midpoint'&&d<12&&d<=distance+.001||d<12&&best&&Math.abs(d-distance)<.001&&M.dot(M.sub(p,best.point),J().cadScene().basis().forward)>1e-7){distance=d;best={point:p,pixel:q,type,object,frame};}};
   for(const c of candidates){if(c.type!=='edge'&&snapSettings[c.type])use(c.point,c.type,c.object);if(c.type==='edge'){
    if(snapSettings.nearest){const t=M.segmentPixel(pixel,c.pa,c.pb).t;use(M.add(c.a,M.mul(M.sub(c.b,c.a),t)),'nearest',c.object);}
@@ -151,6 +160,7 @@
  function stopHover(){clearTimeout(hoverTimer);hoverTimer=null;hoverCandidate=null;}
  function resetTracking(){stopHover();tracking={points:[],frame:null,faces:[]};}
  function trackHover(pixelPoint){
+  if(command?.profileEdit?.index===null){stopHover();return;}
   const hit=snapHit;if(!trackingEnabled()||!hit||!['endpoint','midpoint','centre','intersection'].includes(hit.type)){stopHover();return;}
   const same=(a,b)=>a.object?.id===b.object?.id&&M.norm(M.sub(a.point,b.point))<1e-8;
   if(tracking.points.some(p=>same(p,hit))){stopHover();return;}
@@ -192,18 +202,60 @@
     points.forEach((p,i)=>{if(p)svg.push(`<g data-cad-tracked-point="${i+1}"><circle cx="${p[0]}" cy="${p[1]}" r="7" fill="#102d3c" stroke="#ffdf80" stroke-width="2"/><text x="${p[0]+11}" y="${p[1]+16}" fill="#ffdf80" font-size="12">${i+1}</text></g>`);});
     if(points.length===2&&points.every(Boolean)){const mid=J().projectWorld(M.midpoint(...tracking.points.map(p=>p.point)));if(mid)svg.push(`<line x1="${points[0][0]}" y1="${points[0][1]}" x2="${points[1][0]}" y2="${points[1][1]}" stroke="#ffdf80" stroke-dasharray="5 5"/><g data-cad-tracked-midpoint="true"><circle cx="${mid[0]}" cy="${mid[1]}" r="8" fill="#102d3c" stroke="#a5f5cd" stroke-width="2"/><path d="M${mid[0]-4},${mid[1]}h8 M${mid[0]},${mid[1]-4}v8" stroke="#a5f5cd"/><text x="${mid[0]+13}" y="${mid[1]+19}" fill="#b9ffe0" stroke="#102d3c" paint-order="stroke" stroke-width="3" font-size="12">Centre · ${tracking.frame?'Face plane':$c('cad-plane').value+' plane'}</text></g>`);}
    }
+   if(command?.profileEdit){
+    const edit=command.profileEdit;
+    edit.vertices.forEach((v,i)=>{
+     const p=J().projectWorld(v);
+     if(p)svg.push(`<circle cx="${p[0]}" cy="${p[1]}" r="${i===edit.index?6:4}" fill="${i===edit.index?'#ffcf78':'#153645'}" stroke="#9ce8de" stroke-width="1.5"/>`);
+    });
+   }
    if(snapHit&&command){const p=snapHit.pixel;svg.push(`<rect x="${p[0]-5}" y="${p[1]-5}" width="10" height="10" fill="none" stroke="#a5f5cd" stroke-width="2"/><text x="${p[0]+12}" y="${p[1]-10}" fill="#b9ffe0" stroke="#102d3c" paint-order="stroke" stroke-width="3" font-size="11">${esc(snapHit.type)}</text>`);}
    if(extrusion?.profile){const h=extrudeHandle();if(h){const polygon=extrusion.profile.vertices.map(p=>J().projectWorld(M.add(p,M.mul(extrusion.vector,extrusion.symmetric?.5:1))));if(polygon.every(Boolean)&&extrusion.profile.closed)svg.push(`<polygon data-cad-extrude-face="true" points="${polygon.map(p=>p.join(',')).join(' ')}" fill="#6ce7cb30" stroke="#8ce8d6" stroke-width="2"/>`);svg.push(`<line x1="${h.a[0]}" y1="${h.a[1]}" x2="${h.b[0]}" y2="${h.b[1]}" stroke="#ffdf80" stroke-width="3"/><circle data-cad-extrude-handle="true" cx="${h.b[0]}" cy="${h.b[1]}" r="9" fill="#ffdf80" stroke="#1b414e" stroke-width="2"/><text x="${h.b[0]+14}" y="${h.b[1]-12}" fill="#fff0b2" stroke="#102d3c" paint-order="stroke" stroke-width="4" font-size="12">${M.norm(extrusion.vector).toFixed(3)} m</text>`);}}
 
    hud.innerHTML=`<b>${esc(command?nameMap[command.kind]||command.kind:'Model')}</b> · ${esc(model.active_frame?.name||'World')}<br>${command?.lockPlane?'Drawing plane locked':command?.faceLocked?'Face plane locked':tracking.frame?'Face plane detected':esc($c('cad-plane').value)+' work plane'} · metres${selected.size?' · '+selected.size+' selected':''}`;
   }else hud.innerHTML='';overlay.innerHTML=svg.join('');
  }
- function cancel(message='Command cancelled.'){const callback=command?.onCancel;resetTracking();if(dialog.open)closeDialog();extrusion=null;handleDrag=null;previewSequence++;clearTimeout(previewTimer);command=null;snapHit=null;cursor=null;dialogSpec=null;setPreview(null);J().setMode('orbit');$c('cad-active-command').textContent='MODEL';say(message);callback?.();}
+ function cancel(message='Command cancelled.'){const callback=command?.onCancel;resetTracking();if(dialog.open)closeDialog();extrusion=null;handleDrag=null;previewSequence++;clearTimeout(previewTimer);command=null;snapHit=null;cursor=null;dialogSpec=null;setPreview(null);J().setMode('orbit');$c('cad-active-command').textContent='MODEL';say(message);callback?.(message);}
  function start(kind,custom={}){if(window.TunnelDesigner?.isPicking()){say('Finish or cancel section picking first.',true);return;}if(pending||busy)return;if(mode!=='Model'&&!enter('Model'))return;if(command){say('Finish or cancel the active command first.',true);return;}
   resetTracking();command={kind,points:[],frame:workPlane(),space:$c('cad-space').value,plane:$c('cad-plane').value,...custom};snapHit=null;J().setMode('cad');$c('cad-active-command').textContent=(nameMap[kind]||kind).toUpperCase();if(commandBarChoice!==true)setCommandBarCollapsed(false);$c('cad-command-input').focus();promptCommand();J().draw();return true;
  }
  function promptCommand(){if(!command)return;const n=command.points.length,k=command.kind;
   const message=command.prompt?.(n)||({point:'Pick or type the point coordinates.',line:n?'Specify the end point.':'Specify the start point.',polyline:n?'Next vertex · Enter finishes · C closes · Backspace removes last vertex.':'Specify the first vertex.',circle:n?'Enter radius in metres or pick a point on the circle.':'Choose centre, or hover over two opposite face corners and click their midpoint.',rectangle:n?'Specify the opposite corner on the work plane.':'Specify the first corner.',arc:['Specify the arc centre.','Specify the arc start point.','Specify the arc end point (counter-clockwise).'][n]})[command.kind];say(message||'Pick or type a point.');
+ }
+ function moveProfileNode({frame,vertices,objectId=null,outline=null,onMove,onDone}){
+  if(command||pending||busy)return false;
+  if(mode!=='Model'&&!enter('Model'))return false;
+  const obj=objectId?get(objectId):null;
+  if(objectId&&(!obj||!effectiveVisible(obj)))throw Error('Show the linked CAD outline in Project Explorer before editing it.');
+  if(obj)select(objectId);
+  const edit={vertices:obj?.vertices||vertices,index:null,objectId};
+  const context=model.context,revision=model.revision,wasLocked=planeLock.getAttribute('aria-pressed')==='true';
+  const done=(message,error=false,details={})=>{
+   if(!wasLocked)releaseViewLock();
+   onDone(message,error,details);
+  };
+  const started=start('pick',{frame,lockPlane:true,count:1,profileEdit:edit,
+   prompt:()=>edit.index===null?'Click the profile node to move.':'Pick or enter its new position in the profile plane. CAD snaps are available.',
+   onCancel:message=>{
+    const workspaceChanged=message.startsWith('Workspace changed');
+    done(workspaceChanged?message:'Profile node edit cancelled.',workspaceChanged,{workspaceChanged});
+   },
+   callback:async ([point])=>{
+    try{
+     if(model.context!==context||model.revision!==revision)throw Error('The CAD workspace changed. Reopen the profile and try again.');
+     if(obj){
+      if(!await run({action:'vertex',ids:[obj.id],index:edit.index,point,profile_plane:true}))return done('Profile node edit cancelled.');
+     }else await onMove(edit.index,point);
+     done('Profile node moved.',false,{cadChanged:!!obj});
+    }catch(e){done(e.message,true);}
+   }});
+  if(!started)return false;
+  planeLock.setAttribute('aria-pressed','true');
+  J().faceWorkPlane(frame.z);
+  syncPlaneView(J().cadScene());
+  if(outline)setPreview({vertices:outline,faces:[],closed:true});
+  J().focusWorld(edit.vertices,false);
+  return true;
  }
  function drawingSpec(p){const c=command,k=c.kind,all=[...c.points,...(p?[p]:[])],f=c.frame;
   if(k==='circle'&&all.length>=2)return {kind:k,centre:all[0],radius:Math.hypot(M.dot(M.sub(all[1],all[0]),f.x),M.dot(M.sub(all[1],all[0]),f.y)),frame:f,segments:96};
@@ -212,7 +264,9 @@
   return {kind:k,points:all,closed:false};
  }
  function simplePreview(spec){if(!spec)return null;if(['circle','arc'].includes(spec.kind)&&spec.frame&&spec.centre&&spec.radius>0){const points=[],f=spec.frame,steps=64,start=spec.start_angle||0,span=spec.kind==='circle'?360:spec.end_angle-start;for(let i=0;i<=(spec.kind==='circle'?steps-1:steps);i++){const t=(start+span*i/steps)*Math.PI/180;points.push(M.add(spec.centre,M.add(M.mul(f.x,spec.radius*Math.cos(t)),M.mul(f.y,spec.radius*Math.sin(t)))));}return {vertices:points,faces:[],closed:spec.kind==='circle'};}return spec.points?.length?{vertices:spec.points,faces:[],closed:!!spec.closed}:null;}
- async function acceptPoint(point){if(!command||pending)return;const c=command;resetTracking();
+ async function acceptPoint(point){if(!command||pending)return;const c=command;
+  if(c.profileEdit?.index===null)throw Error('Click the profile node you want to move first.');
+  resetTracking();
   if(c.lockPlane){const f=c.frame;point=M.sub(point,M.mul(f.z,M.dot(M.sub(point,f.origin),f.z)));}
   if(c.points.length&&M.norm(M.sub(point,c.points.at(-1)))<1e-8){say('Choose a different next point.',true);return;}
 
@@ -227,11 +281,23 @@
  }
  async function input(){const field=$c('cad-command-input'),text=field.value.trim();field.value='';if(!text){await finish();return;}log('› '+text);historyPosition=-1;
   try{if(command){if(command.kind==='polyline'&&/^c(?:lose)?$/i.test(text)){await finish(true);return;}if(command.kind==='circle'&&command.points.length===1&&!/[,@#< ]/.test(text)){const radius=Number(text);if(!Number.isFinite(radius)||radius<=0)throw Error('Radius must be a positive number.');await acceptPoint(M.add(command.points[0],M.mul(command.frame.x,radius)));return;}
-    await acceptPoint(M.parse(text,activeFrame(),command.points.at(-1)||null));
+    await acceptPoint(M.parse(text,command.profileEdit?command.frame:activeFrame(),command.points.at(-1)||null));
    }else{const aliases={l:'line',pl:'polyline',pline:'polyline','3dpoly':'polyline',c:'circle',a:'arc',rec:'rectangle',ex:'extrude',m:'move',co:'copy',tr:'trim',u:'undo',uc:'ucs',del:'delete'};const words=text.toLowerCase().split(/\s+/),key=aliases[words[0]]||words[0];lastCommand=text;await tool(key);}
   }catch(e){say(e.message,true);log('! '+e.message);}
  }
- async function clickPoint(pixel){snapHit=snapped(pixel);if(!$c('cad-snap').checked||!snapSettings.cloud||snapHit){const p=currentPoint(pixel);if(!p){say('The view is edge-on to the work plane. Rotate the view or enter coordinates.',true);return;}adoptTrackedPlane();await acceptPoint(p);return;}
+ async function clickPoint(pixel){
+  const edit=command?.profileEdit;
+  if(edit?.index===null){
+   let index=null,distance=13;
+   edit.vertices.forEach((v,i)=>{
+    const point=J().projectWorld(v);
+    const error=point&&Math.hypot(pixel[0]-point[0],pixel[1]-point[1]);
+    if(point&&error<distance){distance=error;index=i;}
+   });
+   if(index===null){say('Click closer to one of the marked profile nodes.',true);return;}
+   edit.index=index;resetTracking();snapHit=null;promptCommand();J().draw();return;
+  }
+  snapHit=snapped(pixel);if(!$c('cad-snap').checked||!snapSettings.cloud||snapHit){const p=currentPoint(pixel);if(!p){say('The view is edge-on to the work plane. Rotate the view or enter coordinates.',true);return;}adoptTrackedPlane();await acceptPoint(p);return;}
   const sample=$c('cad-cloud-reference').checked?J().cadCloudPoint(pixel):null;if(!sample){say('No displayed cloud point near the cursor. Zoom in, pick a point, or turn off Snap to cloud to draw on the plane.',true);return;}
   const capture=command;try{setBusy(true);await post('/api/cad-pick',{...sample,revision:model.revision,context:model.context});const result=await J().waitReady(null,{skipSync:true});if(result.cancelled)return;const found=await api('/api/cad-pick');if(command!==capture)return;if(!found.point)throw Error('No retained measured point was recovered.');log('Measured cloud point · '+found.source_id+' · index '+found.index);await acceptPoint(found.point);}catch(e){say(e.message,true);}finally{setBusy(false);}
  }
@@ -416,6 +482,6 @@ if(kind==='alignment_setup')return window.AlignmentHub?.open();if(kind==='alignm
  titleBar.addEventListener('pointerdown',e=>{if(e.button!==0||dialog.classList.contains('detached-source'))return;const r=dialog.getBoundingClientRect();dialogDrag={x:e.clientX-r.left,y:e.clientY-r.top};titleBar.setPointerCapture(e.pointerId);e.preventDefault();});
  titleBar.addEventListener('pointermove',e=>{if(!dialogDrag)return;dialog.style.position='fixed';dialog.style.margin='0';dialog.style.left=Math.max(0,Math.min(innerWidth-dialog.offsetWidth,e.clientX-dialogDrag.x))+'px';dialog.style.top=Math.max(0,Math.min(innerHeight-50,e.clientY-dialogDrag.y))+'px';});
  for(const type of ['pointerup','pointercancel','lostpointercapture'])titleBar.addEventListener(type,()=>dialogDrag=null);
- window.CadUI={releaseViewLock,drawPolyline:options=>start('polyline',options),finishDrawing:()=>guard(()=>finish()),workPlane:()=>workPlane(),showCloudReference:(options={})=>{if(mode!=='Model'&&!enter('Model',options))return false;$c('cad-cloud-reference').checked=true;J().draw();return true;},modelSpace:()=>mode==='Model',cloudReference:()=>mode!=='Model'||$c('cad-cloud-reference').checked,visibleBounds:()=>mode==='Model'?objects().filter(effectiveVisible).flatMap(boundsCorners):[],enter,observe,load,beforeDraw,afterDraw,select,selectedIds:(options={})=>mode==='Model'||options.includeInactive?[...selected]:[],clearSelected,properties,pick,menu,exportDialog,importDialog,refreshDestination:frameLabel,renderTree,remove,tool,command:()=>command,model:()=>model,cancel,preview:()=>preview};
+ window.CadUI={releaseViewLock,moveProfileNode,drawPolyline:options=>start('polyline',options),finishDrawing:()=>guard(()=>finish()),workPlane:()=>workPlane(),showCloudReference:(options={})=>{if(mode!=='Model'&&!enter('Model',options))return false;$c('cad-cloud-reference').checked=true;J().draw();return true;},modelSpace:()=>mode==='Model',cloudReference:()=>mode!=='Model'||$c('cad-cloud-reference').checked,visibleBounds:()=>mode==='Model'?objects().filter(effectiveVisible).flatMap(boundsCorners):[],enter,observe,load,beforeDraw,afterDraw,select,selectedIds:(options={})=>mode==='Model'||options.includeInactive?[...selected]:[],clearSelected,properties,pick,menu,exportDialog,importDialog,refreshDestination:frameLabel,renderTree,remove,tool,command:()=>command,model:()=>model,cancel,preview:()=>preview};
  load();
 })();
