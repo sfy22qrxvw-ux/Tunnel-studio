@@ -78,11 +78,15 @@
    <div class="bundle-qa-metrics"><div><span>Global error</span><b>${change(s.before?.rms_mm,s.fit?.rms_mm)}</b><small>${s.target_fit?.count?'Target RMS':'Cloud-to-cloud plane RMS'}</small></div>
    <div><span>Cloud-to-cloud</span><b>${change(s.cloud_before?.rms_mm,s.cloud_fit?.rms_mm)}</b><small>${s.targets_only?'Targets-only run':(s.measured_cloud_links??0)+' of '+s.link_count+' links with measured surface RMS'}</small></div>
    <div><span>Independent checks</span><b>${rms(s.check?.rms_mm)}</b><small>Check-target RMS</small></div></div>`;
-  el('links').innerHTML=s.edge_reports.map(x=>`<tr><td>${esc(x.a)} ↔ ${esc(x.b)}</td><td>${added&&!graph.links.some(link=>link.id===x.id)?'New loop pair':x.loop_closure?'Saved loop':'Saved link'}</td><td>${fmt(x.target_fit?.rms_mm)}</td><td>${fmt(x.cloud?.before?.rms_mm)} → ${fmt(x.cloud?.after?.rms_mm)}</td><td>${x.cloud?.inlier_count??'—'}</td></tr>`).join('');
+  el('links').innerHTML=s.edge_reports.map(x=>`<tr><td>${added&&!graph.links.some(link=>link.id===x.id)?esc(x.a)+' ↔ '+esc(x.b):'<button type="button" data-preview-link="'+esc(x.id)+'">'+esc(x.a)+' ↔ '+esc(x.b)+'</button>'}</td><td>${added&&!graph.links.some(link=>link.id===x.id)?'New loop pair':x.loop_closure?'Saved loop':'Saved link'}</td><td>${fmt(x.target_fit?.rms_mm)}</td><td>${fmt(x.cloud?.before?.rms_mm)} → ${fmt(x.cloud?.after?.rms_mm)}</td><td>${x.cloud?.inlier_count??'—'}</td></tr>`).join('');
   el('movements').innerHTML='<table><thead><tr><th>Setup</th><th>Centre movement (mm)</th><th>Rotation (°)</th></tr></thead><tbody>'+value.preview.map(x=>`<tr><td>${esc(x.name)}${x.fixed?' · held fixed':''}</td><td>${fmt(x.shift_mm)}</td><td>${fmt(x.rotation_deg)}</td></tr>`).join('')+'</tbody></table>';
   el('warnings').replaceChildren(...s.warnings.map(x=>{const p=document.createElement('p');p.textContent=x;return p;}));
   zoom=1;pan=[0,0];controls();draw();
  }
+ el('links').addEventListener('click',event=>{
+  const button=event.target.closest('[data-preview-link]');
+  if(button)window.ScanRegistrationUI?.openLinkPreview(button.dataset.previewLink);
+ });
  async function runAdjustment(useCloud=true){
   if(working||inspecting||(!selectedBundle&&(!graph||graph.scans.length<2)))return;
   const targetsOnly=!!selectedBundle&&!useCloud;

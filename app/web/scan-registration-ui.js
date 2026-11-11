@@ -96,8 +96,82 @@
   $('link-method').value=count===2?'vertical':'rigid';
   networkOptions();
  }
- function linkList(){$('scan-link-list').hidden=linkPhase==='applied';$('scan-link-list-title').hidden=linkPhase==='applied';const links=network.links||[];$('scan-link-list').innerHTML=links.map(l=>`<div class="scan-link-entry ${l.id===linkSelection?'chosen':''}"><button data-view-link="${esc(l.id)}">${esc(l.a_name)} ↔ ${esc(l.b_name)}</button> <span>${esc(l.status)}${l.solution&&!l.solution.manual?' · RMS '+fmt(l.solution.fit.rms_mm,3)+' mm':''}</span><button data-remove-link="${esc(l.id)}">Remove link</button></div>`).join('')||'No links yet.';for(const b of $('scan-link-list').querySelectorAll('[data-view-link]'))b.onclick=()=>{const l=links.find(x=>x.id===b.dataset.viewLink);linkSelection=l.id;clearMatchReview();reviewDraft=null;showResiduals(l);linkStatus('Saved link',l.kind==='leica'?'Saved Leica connection. Imported positions have already been applied.':'Historical result for this saved connection. Solve a new link before applying another position.');linkList();window.SceneObjectsUI?.select('link:'+l.id);};for(const b of $('scan-link-list').querySelectorAll('[data-remove-link]'))b.onclick=async()=>{if(!confirm('Remove this connection? Scan coordinates stay where they are; the groups become disconnected if no other links join them.'))return;try{await post('/api/scan-registration',{action:'remove_link',id:b.dataset.removeLink});await refresh();invalidDraft();linkList();linkStatus('Link removed','Coordinates are unchanged. Match the targets and solve again to calculate a new connection.');window.JobUI.sync({inventoryOnly:true});}catch(e){linkStatus('Could not remove link',e.message,'error');}};}
- function showResiduals(d){const s=d.solution;if(s?.cloud_to_cloud){$('link-residuals').innerHTML='<p><b>Cloud-to-cloud alignment</b> · '+esc(s.method)+'</p><p>Sampled point-to-plane distances: RMS '+fmt(s.rms_mm,3)+' mm · median '+fmt(s.median_mm,3)+' mm · maximum '+fmt(s.max_mm,3)+' mm</p><p>'+fmt(s.inlier_count,0)+' inliers · '+s.iterations+' iterations · fixed: '+esc(s.anchor_name||s.anchor)+'</p><p>'+s.warnings.map(esc).join('<br>')+'</p>';return;}if(s?.manual){$('link-residuals').textContent='Manual visual alignment · no target residual or cloud optimisation calculated. Fixed reference: '+(s.anchor_name||s.anchor)+'. Use Visual alignment to review the position.';return;}$('link-residuals').innerHTML=s?`${s.constraint?'<p><b>'+esc(s.constraint)+'</b></p>':''}${s.edge_reports?'<p>Joint adjustment · '+s.scan_count+' scans · '+s.link_count+' links'+(s.anchor_name?' · fixed: '+esc(s.anchor_name):'')+'</p><p>Total fit RMS: '+fmt(s.before.rms_mm,3)+' → '+fmt(s.fit.rms_mm,3)+' mm</p><table><thead><tr><th>Link</th><th>Before mm</th><th>After mm</th></tr></thead><tbody>'+s.edge_reports.map(e=>'<tr><td>'+esc(e.a)+' ↔ '+esc(e.b)+'</td><td>'+fmt(e.before_mm,3)+'</td><td>'+fmt(e.after_mm,3)+'</td></tr>').join('')+'</tbody></table>':''}${s.coordinate_references?.length?'<p><b>Target coordinates kept</b></p><ul>'+s.coordinate_references.map(r=>'<li>'+esc(r.target)+' · '+esc(r.scan_name)+' · '+r.coordinates.map(n=>fmt(n,6)).join(' / ')+'</li>').join('')+'</ul>':''}<p><b>Fit RMS ${fmt(s.fit.rms_mm,3)} mm · maximum ${fmt(s.fit.max_mm,3)} mm</b></p><table><thead><tr><th>Match</th><th>Use</th><th>3D residual mm</th></tr></thead><tbody>${s.residuals.map(r=>`<tr><td>${esc(r.id)}</td><td>${esc(r.role)}</td><td class="${r.within_limit?'':'residual-bad'}">${fmt(r.error_mm,3)}</td></tr>`).join('')}</tbody></table><p>${s.warnings.map(esc).join('<br>')}</p>`:`<p>Imported Leica link. Saved setup poses were used; this link has no independently recomputed target residuals.</p>${d.source_method?'<p>Method: '+esc(d.source_method)+'</p>':''}${d.matches?.length?'<b>Leica saved target pairs</b><ul>'+d.matches.map(m=>'<li>'+esc(m.a)+' ↔ '+esc(m.b)+(m.role==='off'?' · Excluded':' · Recorded correspondence')+'</li>').join('')+'</ul>':'<p>Target pairs were not recorded for this imported link.</p>'}`;}
+ const pairDialog=document.createElement('dialog');
+ pairDialog.id='link-target-preview';pairDialog.className='ts-analysis-dialog';
+ pairDialog.innerHTML=`<header><div><h2 id="pair-preview-title">Link targets</h2><p>Pairwise preview. Saved bundle RMS and positions are shown in the registration report.</p></div><button id="pair-preview-close" aria-label="Close link targets">×</button></header>
+ <p id="pair-preview-status" role="status" aria-live="polite"></p>
+ <div class="ts-analysis-table"><table><thead><tr><th>Use</th><th>Target pair</th><th>Role</th><th id="pair-preview-order" aria-sort="descending"><button id="pair-preview-sort" type="button">3D residual (mm) ↓</button></th></tr></thead><tbody id="pair-preview-rows"></tbody></table></div>
+ <footer><p>Tick Fit targets to recalculate this link. Check targets are evaluated separately.</p><button id="pair-preview-edit" type="button" hidden>Use selection in link editor</button></footer>`;
+ document.body.append(pairDialog);
+ let previewLink=null,pairPreview=null,pairEnabled=new Set(),pairRequest=0,pairDescending=true,pairCanEdit=false,pairFailed=false,pairPending=false;
+ function sortPairResiduals(rows,descending){
+  const direction=descending?-1:1;
+  return [...rows].sort((a,b)=>{
+   if(!Number.isFinite(a.residual_mm))return Number.isFinite(b.residual_mm)?1:a.index-b.index;
+   if(!Number.isFinite(b.residual_mm))return -1;
+   return direction*(a.residual_mm-b.residual_mm)||a.index-b.index;
+  });
+ }
+ function renderPairPreview(){
+  const tbody=$('pair-preview-rows'),focused=tbody.contains(document.activeElement)?document.activeElement.dataset.pairIndex:null;
+  $('pair-preview-order').setAttribute('aria-sort',pairDescending?'descending':'ascending');
+  $('pair-preview-sort').textContent='3D residual (mm) '+(pairDescending?'↓':'↑');
+  $('pair-preview-edit').hidden=!pairCanEdit||!pairPreview?.pairs.length;
+  $('pair-preview-edit').disabled=pairPending||pairFailed||!pairPreview?.fit;
+  const rows=sortPairResiduals(pairPreview?.pairs||[],pairDescending);
+  tbody.innerHTML=rows.map(row=>{
+   const name=(row.a||'—')+' ↔ '+(row.b||'—');
+   return `<tr><td><input type="checkbox" data-pair-index="${row.index}" aria-label="Use ${esc(name)}" ${pairEnabled.has(row.index)?'checked':''} ${row.available?'':'disabled'}></td><td>${esc(name)}</td><td>${row.available?(row.role==='check'?'Check':'Fit'):'Unavailable'}</td><td>${pairPending||pairFailed||!Number.isFinite(row.residual_mm)?'—':fmt(row.residual_mm,3)}</td></tr>`;
+  }).join('');
+  for(const checkbox of tbody.querySelectorAll('[data-pair-index]'))checkbox.onchange=()=>{
+   const index=Number(checkbox.dataset.pairIndex);
+   if(checkbox.checked)pairEnabled.add(index);else pairEnabled.delete(index);
+   void calculatePairPreview();
+  };
+  if(focused!=null)tbody.querySelector(`[data-pair-index="${focused}"]`)?.focus({preventScroll:true});
+ }
+ async function calculatePairPreview(initial=false){
+  const request=++pairRequest;
+  pairPending=true;pairFailed=false;renderPairPreview();
+  $('pair-preview-status').textContent='Calculating pairwise RMS…';
+  try{
+   const changes=initial?{}:{revision:pairPreview.revision,enabled:[...pairEnabled]};
+   const value=await post('/api/scan-registration',{action:'preview_link_targets',id:previewLink,...changes});
+   if(request!==pairRequest||!pairDialog.open)return;
+   pairPreview=value;
+   pairEnabled=new Set(value.pairs.filter(row=>row.used).map(row=>row.index));
+   $('pair-preview-title').textContent=value.a+' ↔ '+value.b;
+   $('pair-preview-status').textContent=value.error||`Fit RMS ${fmt(value.fit.rms_mm,3)} mm · ${value.fit.count} Fit pairs${value.check?.count?' · Check RMS '+fmt(value.check.rms_mm,3)+' mm':''}`;
+  }catch(error){
+   if(request!==pairRequest||!pairDialog.open)return;
+   pairFailed=true;$('pair-preview-status').textContent=error.message;
+  }finally{
+   if(request===pairRequest&&pairDialog.open){pairPending=false;renderPairPreview();}
+  }
+ }
+ function openLinkPreview(id,canEdit=false){
+  if(busy||!id)return;
+  previewLink=id;pairPreview=null;pairEnabled=new Set();pairDescending=true;pairCanEdit=canEdit;
+  $('pair-preview-title').textContent='Link targets';
+  if(!pairDialog.open)pairDialog.showModal();
+  void calculatePairPreview(true);
+ }
+ $('pair-preview-close').onclick=()=>pairDialog.close();
+ pairDialog.addEventListener('close',()=>{if(!pairDialog.open)pairRequest++;});
+ $('pair-preview-sort').onclick=()=>{pairDescending=!pairDescending;renderPairPreview();};
+ $('pair-preview-edit').onclick=async()=>{
+  if(pairPending||pairFailed||!pairPreview?.fit)return;
+  const choices={revision:pairPreview.revision,enabled:[...pairEnabled]};
+  const id=previewLink;
+  pairDialog.close();
+  await openLinks(id,false,choices);
+ };
+ function linkList(){$('scan-link-list').hidden=linkPhase==='applied';$('scan-link-list-title').hidden=linkPhase==='applied';const links=network.links||[];$('scan-link-list').innerHTML=links.map(l=>`<div class="scan-link-entry ${l.id===linkSelection?'chosen':''}"><button data-view-link="${esc(l.id)}">${esc(l.a_name)} ↔ ${esc(l.b_name)}</button> <span>${esc(l.status)}${l.solution&&!l.solution.manual?' · RMS '+fmt(l.solution.fit.rms_mm,3)+' mm':''}</span><button data-remove-link="${esc(l.id)}">Remove link</button></div>`).join('')||'No links yet.';for(const b of $('scan-link-list').querySelectorAll('[data-view-link]'))b.onclick=()=>openLinkPreview(b.dataset.viewLink,true);for(const b of $('scan-link-list').querySelectorAll('[data-remove-link]'))b.onclick=async()=>{if(!confirm('Remove this connection? Scan coordinates stay where they are; the groups become disconnected if no other links join them.'))return;try{await post('/api/scan-registration',{action:'remove_link',id:b.dataset.removeLink});await refresh();invalidDraft();linkList();linkStatus('Link removed','Coordinates are unchanged. Match the targets and solve again to calculate a new connection.');window.JobUI.sync({inventoryOnly:true});}catch(e){linkStatus('Could not remove link',e.message,'error');}};}
+ function showResiduals(d){const s=d.solution;if(s?.cloud_to_cloud){$('link-residuals').innerHTML='<p><b>Cloud-to-cloud alignment</b> · '+esc(s.method)+'</p><p>Sampled point-to-plane distances: RMS '+fmt(s.rms_mm,3)+' mm · median '+fmt(s.median_mm,3)+' mm · maximum '+fmt(s.max_mm,3)+' mm</p><p>'+fmt(s.inlier_count,0)+' inliers · '+s.iterations+' iterations · fixed: '+esc(s.anchor_name||s.anchor)+'</p><p>'+s.warnings.map(esc).join('<br>')+'</p>';return;}if(s?.manual){$('link-residuals').textContent='Manual visual alignment · no target residual or cloud optimisation calculated. Fixed reference: '+(s.anchor_name||s.anchor)+'. Use Visual alignment to review the position.';return;}$('link-residuals').innerHTML=s?`${s.constraint?'<p><b>'+esc(s.constraint)+'</b></p>':''}${s.edge_reports?'<p>Joint adjustment · '+s.scan_count+' scans · '+s.link_count+' links'+(s.anchor_name?' · fixed: '+esc(s.anchor_name):'')+'</p><p>Total fit RMS: '+fmt(s.before.rms_mm,3)+' → '+fmt(s.fit.rms_mm,3)+' mm</p><table><thead><tr><th>Link</th><th>Before mm</th><th>After mm</th></tr></thead><tbody>'+s.edge_reports.map(e=>'<tr><td><button type="button" data-pair-link="'+esc(e.id)+'">'+esc(e.a)+' ↔ '+esc(e.b)+'</button></td><td>'+fmt(e.before_mm,3)+'</td><td>'+fmt(e.after_mm,3)+'</td></tr>').join('')+'</tbody></table>':''}${s.coordinate_references?.length?'<p><b>Target coordinates kept</b></p><ul>'+s.coordinate_references.map(r=>'<li>'+esc(r.target)+' · '+esc(r.scan_name)+' · '+r.coordinates.map(n=>fmt(n,6)).join(' / ')+'</li>').join('')+'</ul>':''}<p><b>Fit RMS ${fmt(s.fit.rms_mm,3)} mm · maximum ${fmt(s.fit.max_mm,3)} mm</b></p><table><thead><tr><th>Match</th><th>Use</th><th>3D residual mm</th></tr></thead><tbody>${s.residuals.map(r=>`<tr><td>${esc(r.id)}</td><td>${esc(r.role)}</td><td class="${r.within_limit?'':'residual-bad'}">${fmt(r.error_mm,3)}</td></tr>`).join('')}</tbody></table><p>${s.warnings.map(esc).join('<br>')}</p>`:`<p>Imported Leica link. Saved setup poses were used; this link has no independently recomputed target residuals.</p>${d.source_method?'<p>Method: '+esc(d.source_method)+'</p>':''}${d.matches?.length?'<b>Leica saved target pairs</b><ul>'+d.matches.map(m=>'<li>'+esc(m.a)+' ↔ '+esc(m.b)+(m.role==='off'?' · Excluded':' · Recorded correspondence')+'</li>').join('')+'</ul>':'<p>Target pairs were not recorded for this imported link.</p>'}`;}
+ $('link-residuals').addEventListener('click',event=>{
+  const button=event.target.closest('[data-pair-link]');
+  if(button)openLinkPreview(button.dataset.pairLink,true);
+ });
  function linkStatus(title,message,kind='info'){
   $('link-feedback-title').textContent=title;$('link-message').textContent=message;$('link-feedback').dataset.kind=kind;$('link-progress').hidden=kind!=='running';$('link-feedback').scrollIntoView({block:'nearest'});
  }
@@ -140,7 +214,7 @@
   if(linkPhase==='applied')$('link-accept').disabled=true;
   showConnectedMerge();
  }
- async function openLinks(id,review=false){
+ async function openLinks(id,review=false,choices=null){
   if(linkRunning()){if(!$('scan-links-dialog').open)$('scan-links-dialog').showModal();if(matchReviewOperation&&!currentReviewOperation(matchReviewOperation))linkStatus('Finishing the previous review…','The closed review will be discarded. Wait for completion, then review the current matches again.','running');return false;}
   mergeEstimate=null;invalidDraft();$('link-merge-tools').hidden=true;const opening=++linkOpenVersion;linkPhase='loading';linkControls();
   if(!$('scan-links-dialog').open)$('scan-links-dialog').showModal();linkStatus('Loading scan targets…','Reading saved targets and links.','running');
@@ -150,8 +224,16 @@
    $('link-fixed').value=picked[0]||network.scans[0]?.id||'';$('link-moving').value=picked[1]||network.scans.find(x=>x.id!==$('link-fixed').value)?.id||'';matchNames();linkList();
    if(review&&network.draft){
     const draft=network.draft;$('link-fixed').value=draft.a;$('link-moving').value=draft.b;$('link-matches').replaceChildren();for(const m of draft.matches)addMatch(m.a,m.b,m.role);$('link-tolerance').value=draft.solution.tolerance_mm||5;$('link-method').value=draft.solution.mode||'rigid';networkOptions();restoreReferences(draft);reviewDraft=draft;linkPhase='solved';showResiduals(draft);linkStatus('Calculated position','The residuals are shown below. Apply calculated position saves this existing result directly.');
-   }else if(review&&network.last_registration_result){const result=network.last_registration_result;$('link-fixed').value=result.request?.a||result.a;$('link-moving').value=result.request?.b||result.b;matchNames();$('link-method').value=result.request?.mode||result.solution.mode||'rigid';networkOptions();linkPhase='applied';showResiduals(result);$('link-view-scans').hidden=false;linkStatus('Registration result',result.solution?.cloud_to_cloud?'This cloud alignment has been saved. Sampled plane residuals are shown below.':'This position has been saved. Target residuals and independent checks are shown below.');}else if(id){const l=network.links.find(l=>l.id===id);if(l){$('link-fixed').value=l.a;$('link-moving').value=l.b;matchNames();$('link-matches').replaceChildren();for(const m of l.matches||[])addMatch(m.a,m.b,m.role==='leica'?'fit':m.role);restoreReferences(l);showResiduals(l);linkStatus('Saved link',l.kind==='leica'?'Saved Leica positions are already applied. Target pairs and residuals are shown below where recorded.':'This is the saved result of an applied connection.');}}
+   }else if(review&&network.last_registration_result){const result=network.last_registration_result;$('link-fixed').value=result.request?.a||result.a;$('link-moving').value=result.request?.b||result.b;matchNames();$('link-method').value=result.request?.mode||result.solution.mode||'rigid';networkOptions();linkPhase='applied';showResiduals(result);$('link-view-scans').hidden=false;linkStatus('Registration result',result.solution?.cloud_to_cloud?'This cloud alignment has been saved. Sampled plane residuals are shown below.':'This position has been saved. Target residuals and independent checks are shown below.');}else if(id){const l=network.links.find(l=>l.id===id);if(l){$('link-fixed').value=l.a;$('link-moving').value=l.b;matchNames();$('link-matches').replaceChildren();if(choices){
+       const fit=await post('/api/scan-registration',{action:'preview_link_targets',id,...choices});
+       if(opening!==linkOpenVersion||!$('scan-links-dialog').open)return false;
+       if(fit.error)throw Error(fit.error);
+       for(const pair of fit.pairs)addMatch(pair.a,pair.b,pair.used?pair.role:'off');
+      }else for(const m of l.matches||[])addMatch(m.a,m.b,m.role==='leica'?'fit':m.role);
+      restoreReferences(l);showResiduals(l);linkStatus('Saved link',l.kind==='leica'?'Saved Leica positions are already applied. Target pairs and residuals are shown below where recorded.':'This is the saved result of an applied connection.');}}
    else linkStatus('Ready to register','Shared target names are matched. Calculate and apply adjusts the connected setups together.');
+   if(linkPhase==='loading')linkPhase='idle';
+   if(choices)linkStatus('Target selection copied','Review the selected matches. Calculate and apply recalculates the connected setups and saves the result.');
    linkControls();return true;
   }catch(e){if(opening===linkOpenVersion&&$('scan-links-dialog').open){linkPhase='idle';linkControls();linkStatus('Could not load scan targets',e.message,'error');}return false;}
  }
@@ -370,5 +452,5 @@
   if(!$('leica-project-dialog').open)$('leica-project-dialog').showModal();
   await inspectLeica();return true;
  }
- window.ScanRegistrationUI={openLeica,activateTargets,refresh,openLinks,openSetup,activate,solveSelected,reviewPending:()=>openLinks(null,true)};refresh().catch(()=>{});
+ window.ScanRegistrationUI={openLinkPreview,openLeica,activateTargets,refresh,openLinks,openSetup,activate,solveSelected,reviewPending:()=>openLinks(null,true)};refresh().catch(()=>{});
 })();

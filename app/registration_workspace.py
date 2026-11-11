@@ -137,6 +137,60 @@ def matched_targets(aa, bb, matches=None):
         m['role']=role;clean.append(m)
     return clean
 
+def preview_link_targets(s,body):
+    """Refit a saved pair in memory and score all its measurable targets."""
+    import registration_network as network
+    edge=next((link for link in s.STATE.get('scan_links',[]) if link['id']==body.get('id')),None)
+    if edge is None:raise ValueError('This link is no longer saved. Refresh registration and select it again.')
+    a,b=scan(s,edge['a']),scan(s,edge['b'])
+    def measured(item):
+        return targets({**item,'registration_state':copy.deepcopy(item.get('registration_state',{}))})
+    ta,tb=measured(a),measured(b)
+    matches=edge.get('matches') or []
+    revision=hashlib.sha256(json.dumps([edge,ta,tb],sort_keys=True,allow_nan=False).encode()).hexdigest()
+    enabled=body.get('enabled')
+    if enabled is not None:
+        if body.get('revision')!=revision:raise ValueError('The saved link or targets changed. Reopen this link to review the new measurements.')
+        if not isinstance(enabled,list) or any(type(i) is not int or not 0<=i<len(matches) for i in enabled):
+            raise ValueError('Select target pairs from this link.')
+        enabled=set(enabled)
+    pairs=[];rows=[];coordinates={}
+    for i,match in enumerate(matches):
+        left,right=match.get('a'),match.get('b')
+        first,second=ta.get(left),tb.get(right)
+        available=first is not None and second is not None
+        role='check' if match.get('role')=='check' or any(t and t.get('role')=='check' for t in (first,second)) else 'fit'
+        used=available and (match.get('role')!='off' if enabled is None else i in enabled)
+        pairs.append(dict(index=i,a=left,b=right,role=role,used=used,available=available,residual_mm=None))
+        if not available:continue
+        row=dict(id=str(i),role=role,source=second['source'],control=first['source'])
+        coordinates[i]=row
+        if used:rows.append(row)
+    result=dict(revision=revision,a=a['name'],b=b['name'],pairs=pairs,fit=None,check=None,error=None)
+    if not matches:
+        result['error']='This link has no saved target pairs.'
+        return result
+    solution=edge.get('solution') or {}
+    try:
+        selected=[p for p in pairs if p['used']]
+        if any(len({p[side] for p in selected})!=len(selected) for side in ('a','b')):
+            raise ValueError('Each target can be used only once in a link.')
+        if not any(p['role']=='fit' for p in selected):
+            raise ValueError('Tick enough Fit targets to calculate the pairwise RMS.')
+        fit=network._edge_solution(edge,rows,solution.get('tolerance_mm',5))
+    except ValueError as error:
+        result['error']=str(error)
+        return result
+    rotation,translation=np.asarray(fit['rotation']),np.asarray(fit['translation'])
+    for pair in pairs:
+        row=coordinates.get(pair['index'])
+        if row:
+            delta=rotation@np.asarray(row['source'])+translation-np.asarray(row['control'])
+            pair['residual_mm']=float(np.linalg.norm(delta)*1000)
+    result.update(fit=fit['fit'],check=fit['check'])
+    return result
+
+
 def stamp(s,ids):
     return hashlib.sha256(json.dumps([(i,scan(s,i)['meta']['file'],scan(s,i)['meta'].get('mask_file'),targets(scan(s,i))) for i in sorted(ids)],sort_keys=True,allow_nan=False).encode()).hexdigest()
 
@@ -770,6 +824,8 @@ def api(s,h,path,body=None):
         h.send(bundle_workflow.status(s,body));return True
     if s.JOB['busy']:raise ValueError('Wait for the current operation.')
     action=body.get('action')
+    if action=='preview_link_targets':
+        h.send(preview_link_targets(s,body));return True
     if action in ('bundle_control_status','bundle_control_solve','bundle_control_apply'):
         h.send(bundle_control(s,body));return True
     if action in ('bundle_inspect','bundle_preview','bundle_apply'):

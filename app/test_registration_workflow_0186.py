@@ -54,6 +54,40 @@ def run_registration(s,a,b,mode,anchor=None,matches=None,**options):
 
 
 class RegistrationWorkflow0186Tests(unittest.TestCase):
+    def test_link_preview_recalculates_fit_and_scores_excluded_targets(self):
+        with tempfile.TemporaryDirectory() as folder:
+            s=server(folder)
+            a=add_scan(s,'a',np.zeros(3));b=add_scan(s,'b',np.zeros(3))
+            points=[*WORLD,[4.,1.,3.]]
+            for item in (a,b):
+                item['registration_state']['rows']=[
+                    dict(id=str(i),source=np.asarray(p).tolist(),control=[None]*3,
+                         role='check' if i==4 else 'fit') for i,p in enumerate(points)]
+            b['registration_state']['rows'][3]['source'][0]+=.10
+            edge=dict(id='link',a='a',b='b',mode='rigid',
+                      matches=[dict(a=str(i),b=str(i),role='fit') for i in range(5)])
+            s.STATE['scan_links']=[edge]
+            before=copy.deepcopy(s.STATE)
+            def preview(**choices):
+                sent=[]
+                rw.api(s,SimpleNamespace(send=sent.append),'/api/scan-registration',
+                       dict(action='preview_link_targets',id='link',**choices))
+                return sent[0]
+            first=preview()
+            self.assertGreater(first['fit']['rms_mm'],10)
+            revised=preview(revision=first['revision'],enabled=[0,1,2,4])
+            self.assertLess(revised['fit']['rms_mm'],1e-8)
+            self.assertAlmostEqual(revised['pairs'][3]['residual_mm'],100)
+            self.assertFalse(revised['pairs'][3]['used'])
+            self.assertEqual(revised['check']['count'],1)
+            insufficient=preview(revision=first['revision'],enabled=[0,1,4])
+            self.assertIn('at least 3',insufficient['error'])
+            self.assertIsNone(insufficient['fit'])
+            self.assertEqual(s.STATE,before)
+            edge['matches'][0]['role']='off'
+            with self.assertRaisesRegex(ValueError,'Reopen this link'):
+                preview(revision=first['revision'],enabled=[0,1,2,4])
+
     def test_bundle_marker_metadata_keeps_fit_check_and_excluded_roles(self):
         with tempfile.TemporaryDirectory() as folder:
             s=server(folder);item=add_scan(s,'setup',np.zeros(3));r=item['registration_state']

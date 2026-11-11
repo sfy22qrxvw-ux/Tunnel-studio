@@ -53,3 +53,14 @@ assert.equal(data.navigation[0].id,data.timing[0].id);
 field('reg-flow-log').checked=false;field('reg-flow-log').onchange();
 assert.equal(d.begin('bundle','targets'),null);
 console.log('Diagnostics default off and keep timing and navigation in separate local streams.');
+
+const linkSource=fs.readFileSync(path.join(__dirname,'web/scan-registration-ui.js'),'utf8');
+const sortContext={};
+vm.runInNewContext(linkSource.slice(linkSource.indexOf(' function sortPairResiduals('),
+                                    linkSource.indexOf(' function renderPairPreview(')),sortContext);
+const pairs=[{index:0,residual_mm:null},{index:1,residual_mm:12},
+             {index:2,residual_mm:1},{index:3,residual_mm:12}];
+const sorted=descending=>Array.from(sortContext.sortPairResiduals(pairs,descending),pair=>pair.index);
+assert.deepEqual(sorted(true),[1,3,2,0]);
+assert.deepEqual(sorted(false),[2,1,3,0]);
+console.log('Target pair residuals sort both ways, with unavailable values last.');
