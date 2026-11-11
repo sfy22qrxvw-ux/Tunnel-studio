@@ -82,8 +82,13 @@ def create_from_scan(s, body):
     source = job_api.item(s, body.get('source_id'))
     if source['kind'] != 'scan':
         raise ValueError('Select the source scan in the Project Explorer first.')
+    if body.get('hole_handling', 'preserve') != 'preserve' or body.get('engine') == 'watertight_tunnel':
+        from mesh_repair import PRESERVE_MESSAGE
+        raise ValueError(PRESERVE_MESSAGE)
     __import__('registered_cloud').require_current(source)
     identity = _source_identity(source)
+    from surface_api import patch_fingerprint
+    fingerprint = patch_fingerprint(source)
     cloud = source['meta']
     selection = _selection(source, body)
     quality = 'fast' if body.get('preview') else body.get('quality', 'balanced')
@@ -101,9 +106,8 @@ def create_from_scan(s, body):
                 spacing=body.get('step', .1), degrees=body.get('degrees', 2),
                 max_edge=body.get('max_edge', 0), smoothing=body.get('smoothing', 0),
                 ball_radius=body.get('ball_radius'), sampling_distance=body.get('sampling_distance', 0),
-                noise_gap=body.get('noise_gap', 0), hole_handling=body.get('hole_handling', 'preserve'),
-                hole_size=body.get('hole_size', .5), alpha_radius=body.get('alpha_radius', 0),
-                poisson_depth=body.get('poisson_depth', 8), tunnel_gap=body.get('tunnel_gap', .25),
+                noise_gap=body.get('noise_gap', 0), alpha_radius=body.get('alpha_radius', 0),
+                poisson_depth=body.get('poisson_depth', 8), tunnel_gap=body.get('tunnel_gap', 0),
                 progress=lambda message: _progress(s, message), cancel=lambda: _cancelled(s))
         else:
             meta, structure = _alignment_mesh(s, source, folder, name, body, selection)
@@ -111,6 +115,7 @@ def create_from_scan(s, body):
             quality_preset=quality, preview=bool(body.get('preview')),
             creation_engine=engine, source_item_id=source['id'], source_name=source['name'],
             source_geometry_revision=scene_objects.source_revision(source),
+            source_fingerprint=fingerprint,
             source_scope='selection or visible limit box' if selection else 'all retained points')
         result = _publish(s, source['id'], identity, meta, structure)
         published = True
@@ -173,22 +178,24 @@ def refine_mesh(s, body):
     source = job_api.item(s, body.get('source_id'))
     if source['kind'] != 'mesh':
         raise ValueError('Select a triangle mesh in the Project Explorer first.')
-    identity = _source_identity(source)
     operation = str(body.get('operation', 'smooth'))
+    if operation in ('fill_bolt_gaps', 'fill_small', 'watertight'):
+        from mesh_repair import PRESERVE_MESSAGE
+        raise ValueError(PRESERVE_MESSAGE)
+    identity = _source_identity(source)
     name = str(body.get('name') or source['name'] + ' · ' + operation.replace('_', ' '))[:120]
     folder = asset_folder(s.WORK,'mesh') / ('mesh-' + uuid.uuid4().hex)
     folder.mkdir()
     published = False
     try:
         meta = meshing.refine(source['meta'], folder, name, operation=operation,
-                              smoothing=body.get('smoothing', 2), hole_size=body.get('hole_size', .5),
+                              smoothing=body.get('smoothing', 2),
                               decimate_cell=body.get('decimate_cell', .03),
                               target_triangles=body.get('target_triangles', 50000),
-                              gap_min_mm=body.get('gap_min_mm', 50), gap_max_mm=body.get('gap_max_mm', 150),
                               progress=lambda message: _progress(s, message), cancel=lambda: _cancelled(s))
         old = source['meta'].get('mesh_summary', {})
         summary = meta.setdefault('mesh_summary', {})
-        for key in ('source_item_id', 'source_name', 'source_geometry_revision', 'source_scope'):
+        for key in ('source_item_id', 'source_name', 'source_geometry_revision', 'source_fingerprint', 'source_scope'):
             if key in old:
                 summary[key] = old[key]
         summary.update(source_mesh_id=source['id'], refinement_operation=operation)

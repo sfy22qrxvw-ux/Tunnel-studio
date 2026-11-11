@@ -27,6 +27,8 @@ MAX_LOOP_VERTICES = 512
 MAX_HOLES = 6_000
 MAX_SUPPORT_QUERIES = 60_000
 UNSUPPORTED_EXTENT_M = .5
+PRESERVE_MESSAGE = ('Workspace mesh openings are preserved. Use Meshing → Inspect openings '
+                    'to review circular rims on the selected mesh.')
 
 
 def _check(cancel):
@@ -70,6 +72,63 @@ def _edge_data(faces):
     chosen = first[counts == 1]
     boundary = edges[chosen]
     return boundary, chosen % len(faces), unique, counts
+
+
+def _boundary_graph(faces, cancel):
+    _check(cancel)
+    boundary, owners, unique_edges, edge_counts = _edge_data(faces)
+    if len(boundary) > MAX_BOUNDARY_EDGES:
+        raise ValueError(f'This mesh has {len(boundary):,} open edges. Inspect a smaller section '
+                         f'(interactive limit {MAX_BOUNDARY_EDGES:,}).')
+    adjacency, directed = {}, {}
+    for (a, b), owner in zip(boundary, owners):
+        a, b = int(a), int(b)
+        adjacency.setdefault(a, []).append(b)
+        adjacency.setdefault(b, []).append(a)
+        directed[(min(a, b), max(a, b))] = (a, b, int(owner))
+    nonmanifold = unique_edges[edge_counts > 2]
+    vertices = set(int(v) for v in np.r_[nonmanifold >> 32, nonmanifold & 0xffffffff])
+    return adjacency, directed, vertices, len(nonmanifold)
+
+
+def _opening_rows(vertices, adjacency, cancel):
+    visited = set()
+    count = 0
+    for start in sorted(adjacency):
+        if start in visited:
+            continue
+        _check(cancel)
+        count += 1
+        if count > MAX_HOLES:
+            raise ValueError(f'More than {MAX_HOLES:,} separate openings need review. Inspect a smaller section.')
+        component, stack = [], [start]
+        while stack:
+            current = stack.pop()
+            if current in visited:
+                continue
+            visited.add(current)
+            component.append(current)
+            stack.extend(adjacency[current])
+        ids = np.asarray(component, dtype=np.uint32)
+        points = vertices[ids]
+        centre = points[0] + np.mean(points - points[0], axis=0)
+        row = dict(id=f'hole-{count}', vertices=len(ids), centre=centre.tolist(), status='unfilled',
+                   reason='', reason_code='', extent_m=None, width_m=None, plane_deviation_m=None,
+                   support_fraction=None, support_samples=0, support_status='No reference cloud selected',
+                   _ordered=False, _loop=ids)
+        if any(len(adjacency[x]) != 2 for x in component):
+            row.update(reason_code='branched_boundary', reason='Boundary branches or ends.')
+        elif len(ids) > MAX_LOOP_VERTICES:
+            row.update(reason_code='complex_boundary', reason=f'More than {MAX_LOOP_VERTICES} boundary vertices.')
+        else:
+            previous, current = start, min(adjacency[start])
+            loop = [start]
+            while current != start:
+                loop.append(current)
+                following = next(x for x in adjacency[current] if x != previous)
+                previous, current = current, following
+            row.update(_ordered=True, _loop=np.asarray(loop, dtype=np.uint32))
+        yield row
 
 
 def _vertex_fan_ok(vertex, incident, faces, boundary_neighbours):
@@ -156,17 +215,7 @@ def analyse(vertices, faces, settings=None, reference_batches=None, progress=lam
     cfg = parameters(settings); v, f = _arrays(vertices, faces, cancel)
     _, shapely = cad_geometry.engines()
     progress('Inspecting mesh edges and boundary connectivity…'); _check(cancel)
-    boundary, owners, unique_edges, edge_counts = _edge_data(f)
-    if len(boundary) > MAX_BOUNDARY_EDGES:
-        raise ValueError(f'This mesh has {len(boundary):,} open edges; inspect a smaller connected mesh or reduce a separate copy before interactive repair (limit {MAX_BOUNDARY_EDGES:,}).')
-    adjacency, directed = {}, {}
-    for (a, b), owner in zip(boundary, owners):
-        a, b = int(a), int(b)
-        adjacency.setdefault(a, []).append(b); adjacency.setdefault(b, []).append(a)
-        directed[(min(a, b), max(a, b))] = (a, b, int(owner))
-    nonmanifold_vertices = set()
-    for key in unique_edges[edge_counts > 2]:
-        nonmanifold_vertices.update((int(key >> np.uint64(32)), int(key & np.uint64(0xffffffff))))
+    adjacency, directed, nonmanifold_vertices, nonmanifold_edges = _boundary_graph(f, cancel)
     normals = np.empty((len(f), 3)); centres = np.empty((len(f), 3)); radii = np.empty(len(f))
     for start in range(0, len(f), 100_000):
         _check(cancel); q = v[f[start:start+100_000]]
@@ -180,38 +229,17 @@ def analyse(vertices, faces, settings=None, reference_batches=None, progress=lam
     max_face_radius = float(radii.max())
     flat = f.reshape(-1); incidence_order = np.argsort(flat, kind='stable'); sorted_vertices = flat[incidence_order]
     records, patches, frames = [], {}, {}
-    visited = set(); plane_limit = cfg['max_plane_deviation_mm']/1000
+    plane_limit = cfg['max_plane_deviation_mm']/1000
     cosine_limit = math.cos(math.radians(cfg['max_normal_angle_deg']))
-    for start in sorted(adjacency):
-        if start in visited: continue
-        _check(cancel)
-        component, stack = [], [start]
-        while stack:
-            cur = stack.pop()
-            if cur in visited: continue
-            visited.add(cur); component.append(cur); stack.extend(n for n in adjacency[cur] if n not in visited)
-        if len(records) >= MAX_HOLES:
-            raise ValueError(f'More than {MAX_HOLES:,} separate openings need review. Inspect a smaller connected mesh first.')
-        pts = v[np.asarray(component)]; centre = pts[0]+np.mean(pts-pts[0], axis=0)
-        row = dict(id='hole-'+str(len(records)+1), vertices=len(component), centre=centre.tolist(),
-                   status='unfilled', reason='', reason_code='', extent_m=None, width_m=None,
-                   plane_deviation_m=None, support_fraction=None, support_samples=0,
-                   support_status='No reference cloud selected', _ordered=False, _loop=np.asarray(component, dtype=np.uint32))
+    for row in _opening_rows(v, adjacency, cancel):
         records.append(row)
         if len(records)%20==1:progress(f'Inspecting opening {len(records):,}; {len(patches):,} local caps available…')
         def reject(code, message, preserved=False):
             row.update(reason_code=code, reason=message, status='preserved' if preserved else 'unfilled')
-        if any(len(adjacency[x]) != 2 for x in component):
-            reject('branched_boundary', 'Boundary branches or ends; it is not one simple closed hole.'); continue
-        if len(component) > MAX_LOOP_VERTICES:
-            reject('complex_boundary', f'More than {MAX_LOOP_VERTICES} boundary vertices; reduce a separate copy for a reliable local cap.'); continue
-        loop, previous, cur = [], None, min(component)
-        while cur not in loop:
-            loop.append(cur); neighbours = sorted(adjacency[cur]); nxt = next(n for n in neighbours if n != previous)
-            previous, cur = cur, nxt
-        if cur != loop[0] or len(loop) != len(component):
-            reject('non_simple_boundary', 'The boundary is not one closed cycle.'); continue
-        row['_loop'] = np.asarray(loop, dtype=np.uint32); row['_ordered']=True
+        if not row['_ordered']:
+            continue
+        loop = row['_loop'].tolist()
+        centre = np.asarray(row['centre'])
         if any(x in nonmanifold_vertices for x in loop):
             reject('nonmanifold_boundary', 'A boundary vertex touches a non-manifold edge.'); continue
         good_fan = True
@@ -310,7 +338,7 @@ def analyse(vertices, faces, settings=None, reference_batches=None, progress=lam
             patches.pop(row['id'])
     summary=dict(openings=len(records),repairable=sum(r['status']=='repairable' for r in records),
                  preserved=sum(r['status']=='preserved' for r in records),unfilled=sum(r['status']=='unfilled' for r in records),
-                 boundary_edges=len(boundary),nonmanifold_edges=int((edge_counts>2).sum()),
+                 boundary_edges=len(directed),nonmanifold_edges=nonmanifold_edges,
                  extent_metric='Largest 3D distance between boundary vertices; metres',settings=cfg,
                  note='Geometry checks reduce repair risks; they do not certify the original mesh or establish survey accuracy.')
     progress(f"Hole review ready: {summary['repairable']} repairable, {summary['preserved']} preserved, {summary['unfilled']} unfilled.")
@@ -453,28 +481,43 @@ def _public_preview(source,v,f,analysis,token,revision,reference):
             row['cap_faces']=[[lookup[int(ident)] for ident in face] for face in cap]
         else: row['cap_faces']=[]
         holes.append(row)
+    inventory_only = source['kind'] == 'mesh'
     if len(f)<=25_000:
         used,inverse=np.unique(f,return_inverse=True)
         context=dict(vertices=(v[used]-origin).tolist(),faces=inverse.reshape(-1,3).tolist(),mode='full',note='Full source triangles. Selected orange repair triangles use the exact saved boundary coordinates.')
     else:
         stride=max(1,math.ceil(len(v)/20_000))
         context=dict(vertices=(v[::stride]-origin).tolist(),faces=[],mode='points',note='Large-mesh context shown as sampled vertices. All detected boundaries and selected orange repair triangles are shown; source and output meshes keep every triangle.')
+    if inventory_only:
+        context['note'] = ('Sampled mesh context. ' if context['mode'] == 'points' else '') + 'Gold marks inventoried circular rims.'
     return dict(source_id=source['id'],source_name=source['name'],source_revision=revision,preview_token=token,
                 origin=origin.tolist(),holes=holes,summary=analysis['summary'],settings=analysis['settings'],
                 context=context,reference=reference,source_triangles=len(f),source_vertices=len(v),source_units=source['units'],
+                inventory_only=inventory_only,
                 unit_assumption='Distance controls assume one source coordinate unit is one metre; source coordinates are never rescaled.')
 
 
 def create_preview(s,source_id,settings=None,reference_id=None,progress=lambda _:None,cancel=lambda:False):
     source=_source(s,source_id); revision=_revision(s,source)
-    v,f,_=_read_source(source,cancel); batches,reference=_reference(s,reference_id,progress,cancel)
-    analysis=analyse(v,f,settings,batches,progress,cancel)
+    v,f,flags=_read_source(source,cancel)
+    reference, layout = None, None
+    if source['kind'] == 'mesh':
+        import mesh_openings
+        layout = mesh_openings.current_layout(s, source['meta'])
+        analysis = mesh_openings.inspect(v, f, flags, settings, layout, progress, cancel)
+        if layout is not mesh_openings.current_layout(s, source['meta']):
+            raise ValueError('The lining layout changed during inspection. Inspect openings again.')
+        reference_id = None
+    else:
+        batches,reference=_reference(s,reference_id,progress,cancel)
+        analysis=analyse(v,f,settings,batches,progress,cancel)
     if revision!=_revision(s,_source(s,source_id)): raise ValueError('The mesh changed during inspection. Preview it again.')
     if reference_id and _reference(s,reference_id)[1]!=reference:raise ValueError('The reference cloud changed during inspection. Preview it again.')
-    token=uuid.uuid4().hex
+    token=None if source['kind']=='mesh' else uuid.uuid4().hex
     public=_public_preview(source,v,f,analysis,token,revision,reference)
     _check(cancel)
-    cache=dict(source_id=source_id,source_revision=revision,analysis=analysis,public=public,reference_id=reference_id,reference=reference)
+    cache=dict(source_id=source_id,source_revision=revision,analysis=analysis,public=public,reference_id=reference_id,
+               reference=reference,layout_revision=layout.get('revision') if layout else None)
     s._mesh_repair_preview=cache
     return public
 
@@ -512,12 +555,13 @@ def _write_result(work,name,v,f,flags,summary,source_id,source_units,progress,ca
 
 
 def apply_preview(s,source_id,token,selected_ids,name=None,hide_source=False,progress=lambda _:None,cancel=lambda:False):
+    source=_source(s,source_id)
+    if source['kind']=='mesh': raise ValueError(PRESERVE_MESSAGE)
     cache=getattr(s,'_mesh_repair_preview',None)
     if not cache or cache['source_id']!=source_id or cache['public']['preview_token']!=token:
         raise ValueError('Preview this mesh again before applying selected repairs.')
     if not isinstance(selected_ids,list) or not selected_ids or len(selected_ids)>MAX_HOLES or any(not isinstance(i,str) for i in selected_ids):
         raise ValueError('Select at least one repairable opening.')
-    source=_source(s,source_id)
     if _revision(s,source)!=cache['source_revision']: raise ValueError('The mesh changed. Preview its openings again.')
     if cache['reference_id']:
         _,reference=_reference(s,cache['reference_id'])
@@ -582,8 +626,14 @@ def get(s,h,path,args):
     source=_source(s,ident) if ident else None
     cache=getattr(s,'_mesh_repair_preview',None)
     preview=cache['public'] if cache and source and cache['source_id']==ident and cache['source_revision']==_revision(s,source) else None
+    if preview and source['kind']=='mesh':
+        from mesh_openings import current_layout
+        layout=current_layout(s,source['meta'])
+        if not preview.get('inventory_only') or cache.get('layout_revision')!=(layout.get('revision') if layout else None):
+            preview=None
     clouds=[dict(id=x['id'],name=x['name']) for x in s.STATE.get('job_items',[]) if x.get('kind')=='scan']
-    h.send(dict(preview=preview,source=dict(id=source['id'],name=source['name'],units=source['units']) if source else None,
+    h.send(dict(preview=preview,source=dict(id=source['id'],name=source['name'],units=source['units'],
+                                           inventory_only=source['kind']=='mesh') if source else None,
                 sources=_source_choices(s),clouds=clouds,defaults=parameters()))
     return True
 
@@ -591,13 +641,14 @@ def get(s,h,path,args):
 def post(s,h,path,body):
     if path!='/api/mesh-repair': return False
     if s.JOB.get('busy'): raise ValueError('Wait for the current operation, or cancel it first.')
-    ident=body.get('source_id'); _source(s,ident)
+    ident=body.get('source_id'); source=_source(s,ident)
     action=body.get('action')
     cancel=lambda:bool(getattr(s,'JOB_CANCEL_FILE',None) and s.JOB_CANCEL_FILE.exists())
     if action=='analyse':
         cfg=parameters(body.get('settings'))
         run=lambda:create_preview(s,ident,cfg,body.get('reference_id'),s.progress,cancel)
     elif action=='apply':
+        if source['kind']=='mesh': raise ValueError(PRESERVE_MESSAGE)
         import workspace_history
         workspace_history.configure('/api/mesh-repair',dict(action='repair_selected_holes'))
         run=lambda:apply_preview(s,ident,body.get('preview_token'),body.get('selected_ids'),body.get('name'),bool(body.get('hide_source')),s.progress,cancel)

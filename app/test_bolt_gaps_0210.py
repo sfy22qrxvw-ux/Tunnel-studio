@@ -87,9 +87,12 @@ class BoltGaps(unittest.TestCase):
             inputs = dict(operation='tunnel_volume',object_id='lining',start_chainage=999.407,end_chainage=1000.607)
             with self.assertRaisesRegex(ValueError,'openings|boundary'):
                 measure_tools.calculate(s,inputs)
-            mesh_workflows.refine_mesh(s,dict(source_id=mesh['id'],operation='fill_bolt_gaps'))
-            repaired = state['job_items'][-1]
-            audit = repaired['meta']['repair_report']
+            # Exercise the estimator and the volume oracle on a synthetic gap.
+            # Workspace meshes now have a separate preservation gate.
+            reconstructed = meshing.refine(meta, root, 'Synthetic repaired lining', operation='fill_bolt_gaps')
+            repaired = dict(mesh, id='reconstructed', meta=reconstructed)
+            state['job_items'].append(repaired)
+            audit = reconstructed['repair_report']
             self.assertEqual((audit['filled'],audit['preserved']),(1,2))
             self.assertTrue(90 < audit['repairs'][0]['diameter_mm'] < 105)
             flags = np.fromfile(repaired['meta']['face_flags_file'],'u1')
@@ -109,7 +112,7 @@ class BoltGaps(unittest.TestCase):
             meshing.fill_bolt_gaps(v,f,progress=messages.append,
                                    cancel=lambda:any('Reconstructing' in text for text in messages))
 
-    def test_real_refinement_flags_and_cancelled_output_cleanup(self):
+    def test_estimator_flags_and_protected_workspace_mesh(self):
         with TemporaryDirectory() as path:
             root = Path(path)
             v,f=annulus()
@@ -122,19 +125,25 @@ class BoltGaps(unittest.TestCase):
             s=SimpleNamespace(STATE=state,WORK=root,save=lambda:None,progress=lambda m:None,
                               JOB_CANCEL_FILE=root/'cancel')
             body={'source_id':'source','operation':'fill_bolt_gaps','gap_min_mm':80,'gap_max_mm':110}
-            mesh_workflows.refine_mesh(s,body)
-            self.assertEqual(len(state['job_items']),2)
-            out=state['job_items'][-1]['meta']
+            before=set(root.iterdir())
+            with self.assertRaisesRegex(ValueError,'Inspect openings'):
+                mesh_workflows.refine_mesh(s,body)
+            self.assertEqual(state['job_items'],[item])
+            self.assertEqual(set(root.iterdir()),before)
+            out=meshing.refine(meta, root, 'Synthetic estimate', operation='fill_bolt_gaps',
+                               gap_min_mm=80, gap_max_mm=110)
             stored=np.fromfile(out['face_flags_file'],dtype=np.uint8)
             np.testing.assert_array_equal(stored[:len(f)],flags)
             self.assertTrue(np.all(stored[len(f):]==1))
             self.assertEqual(out['mesh_summary']['reconstructed_triangles'],int(stored.sum()))
             self.assertEqual(out['repair_report']['repairs'][0]['estimated_face_start'],len(f))
             before=set(root.iterdir())
-            s.progress=lambda m:s.JOB_CANCEL_FILE.touch() if m.startswith('Saving estimated') else None
+            def stop_when_flagging(message):
+                if message.startswith('Saving estimated'):
+                    s.JOB_CANCEL_FILE.touch()
             with self.assertRaises(compute_runtime.ProcessingCancelled):
-                mesh_workflows.refine_mesh(s,body)
-            self.assertEqual(len(state['job_items']),2)
+                meshing.refine(meta, root, 'Cancelled estimate', operation='fill_bolt_gaps',
+                               progress=stop_when_flagging, cancel=s.JOB_CANCEL_FILE.exists)
             self.assertEqual(set(root.iterdir())-{s.JOB_CANCEL_FILE},before)
             np.testing.assert_array_equal(np.fromfile(flag_path,'u1'),flags)
 

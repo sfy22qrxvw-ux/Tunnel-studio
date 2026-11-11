@@ -23,7 +23,6 @@ def capabilities():
         'tunnel_surface': {'available': True, 'label':'Create Tunnel Surface', 'note':'Joined lining grid for one straight tunnel branch; median radial fit and bounded gap interpolation.'},
         'auto_scan': {'available': True, 'label':'Scan to Mesh · Auto', 'note':'Chooses a practical reconstruction from the selected geometry; designed for quick global meshes.'},
         'pca_tunnel': {'available': True, 'label':'Tunnel unwrap (PCA)', 'note':'Best for a single tunnel branch; no alignment required.'},
-        'watertight_tunnel': {'available': True, 'label':'Capped tunnel (PCA)', 'note':'Tunnel unwrap plus boundary capping; intended for one separated tunnel branch.'},
         'delaunay': {'available': True, 'label':'2D / Planar Delaunay', 'note':'Best for walls, slabs, terrain patches and locally planar selections.'},
         'alpha_shape': {'available': True, 'label':'3D Alpha Shape', 'note':'Boundary of Delaunay tetrahedra; alpha radius controls detail and bridging. Up to 100,000 working points.'},
         'convex_hull': {'available': True, 'label':'Convex hull', 'note':'Fast closed outer envelope; fills concavities/openings.'},

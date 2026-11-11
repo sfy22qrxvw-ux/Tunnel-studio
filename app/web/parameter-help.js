@@ -18,8 +18,6 @@
   'mesh-tunnel-gap':'Largest small gap to interpolate in the tunnel grid, in metres. Zero preserves gaps. Interpolated surface is inferred; it is not a new measured observation.',
   'mesh-alpha-radius':'Radius limit for 3D Alpha Shape, in metres. A larger radius connects broader regions; a smaller radius preserves more openings. Zero chooses an automatic estimate.',
   'mesh-poisson-depth':'Detail level for Screened Poisson reconstruction. Each extra level can substantially increase processing and memory. Start at 8 and inspect the surface before increasing it.',
-  'mesh-hole-handling':'Choose whether to preserve open boundaries or attempt small boundary repairs. Review inferred triangles before using the result for inspection or volume.',
-  'mesh-hole-size':'Largest boundary opening eligible for repair, in metres. This refers to its maximum extent, including the length of a narrow opening.',
   'mesh-degrees':'Angular spacing around the tunnel, in degrees. Smaller values create more circumferential cells and require denser measured support.',
   'mesh-ball-radius':'Ball Pivoting search radius, in metres. It needs to match point spacing. Zero estimates the radius; inspect missed areas and bridged gaps.',
   'mesh-refine-name':'Name of the derived mesh. The source mesh remains available.',

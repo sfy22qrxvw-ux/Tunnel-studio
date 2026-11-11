@@ -185,18 +185,18 @@
   if(!groups[name])return;closeRibbonMenu();window.ParameterHelp?.hideRibbonHint();parking.append(sizeLabel);current=name;document.body.classList.remove('ribbon-collapsed');document.body.dataset.ribbonTab=name;
   tabs.querySelectorAll('[role=tab]').forEach(b=>{const active=b.textContent===name;b.setAttribute('aria-selected',active);b.tabIndex=active?0:-1;});
   const panel=$('ribbon-panel');panel.setAttribute('aria-labelledby','ribbon-tab-'+name);panel.replaceChildren();for(const [label,...commands] of groups[name])panel.append(createGroup(label,commands));
-  if(name==='View')viewControls(panel);$('ribbon-hint').textContent=({Clean:'Select scan → choose area → preview → review → apply. GuSAC is the primary tunnel method.',Alignment:'Create or import the horizontal alignment, then set heights at chainages. Use Model to build the tunnel.',Model:'Create 3D model from alignment → theoretical profiles → chainage sections → preview and build. Or draw and fit geometry.',Meshing:'Create triangle surfaces, improve existing meshes, or review gap repairs.',Analyse:'Choose inspected data and reference, then review differences and export results.',Measure:'Pick points or geometry, calculate distances and angles, then save labelled measurements.'})[name]||'Choose a tool. Hover or focus for guidance.';
+  if(name==='View')viewControls(panel);$('ribbon-hint').textContent=({Clean:'Select scan → choose area → preview → review → apply. GuSAC is the primary tunnel method.',Alignment:'Create or import the horizontal alignment, then set heights at chainages. Use Model to build the tunnel.',Model:'Create 3D model from alignment → theoretical profiles → chainage sections → preview and build. Or draw and fit geometry.',Meshing:'Create or refine a mesh, or inspect circular openings.',Analyse:'Choose inspected data and reference, then review differences and export results.',Measure:'Pick points or geometry, calculate distances and angles, then save labelled measurements.'})[name]||'Choose a tool. Hover or focus for guidance.';
   sync();layoutRibbon();if(name==='Registration')window.RegistrationPanel.open();
  }
  function openMesh(operation='create',engine=null){
   viewTab('structures');const section=$('tab-structures'),create=section.querySelector('.mesh-primary-card'),refine=$('mesh-refine-name').closest('details'),transform=$('mesh-tx').closest('details'),reference=$('object-name').closest('details');section.dataset.meshTask=operation;
-  create.hidden=operation!=='create';refine.hidden=!['taubin','quadric','largest_component','flip_normals','fill_bolt_gaps','refine'].includes(operation);transform.hidden=operation!=='transform';reference.hidden=operation!=='reference';
+  create.hidden=operation!=='create';refine.hidden=!['taubin','quadric','largest_component','flip_normals','refine'].includes(operation);transform.hidden=operation!=='transform';reference.hidden=operation!=='reference';
   for(const block of [refine,transform,reference])if(!block.hidden)block.open=true;
   if(engine){$('mesh-engine').value=engine;$('mesh-engine').dispatchEvent(new Event('change'));}
   $('mesh-alignment-options').hidden=operation!=='create'||$('mesh-engine').value!=='alignment_grid';
-  const title={create:'Create mesh',taubin:'Smooth mesh',quadric:'Reduce triangles',largest_component:'Keep largest piece',flip_normals:'Flip mesh normals',fill_bolt_gaps:'Reconstruct bolt gaps',transform:'Transform mesh',reference:'Reference structures',refine:'Improve selected mesh'}[operation]||'Mesh tools';$('tool-drawer-title').textContent=title;
-  $('mesh-bolt-settings').hidden=!['fill_bolt_gaps','refine'].includes(operation);
-  for(const b of refine.querySelectorAll('[data-mesh-refine]'))b.hidden=operation!=='refine'&&b.dataset.meshRefine!==operation||b.dataset.meshRefine==='watertight';
+  const title={create:'Create mesh',taubin:'Smooth mesh',quadric:'Reduce triangles',largest_component:'Keep largest piece',flip_normals:'Flip mesh normals',transform:'Transform mesh',reference:'Reference structures',refine:'Improve selected mesh'}[operation]||'Mesh tools';$('tool-drawer-title').textContent=title;
+  $('mesh-inspect-openings').hidden=operation!=='refine';
+  for(const b of refine.querySelectorAll('[data-mesh-refine]'))b.hidden=operation!=='refine'&&b.dataset.meshRefine!==operation;
   $('mesh-refine-smoothing').closest('label').hidden=!['taubin','refine'].includes(operation);$('mesh-refine-triangles').closest('label').hidden=!['quadric','refine'].includes(operation);
   const quick=$('tool-quick-actions');if(quick)quick.hidden=operation!=='create';section.querySelector('h2').textContent=title;
  }

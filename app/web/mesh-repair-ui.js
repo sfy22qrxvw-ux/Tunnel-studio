@@ -2,37 +2,50 @@
 'use strict';
 (()=>{
  const dialog=document.createElement('dialog');dialog.id='mesh-repair-dialog';
- dialog.innerHTML=`<div class="dialog-heading"><h2>Preview and repair mesh openings</h2><button id="mr-close" aria-label="Close">×</button></div>
- <label>Mesh to repair<select id="mr-mesh" aria-label="Mesh to repair"><option value="">Choose a mesh or CAD surface</option></select></label>
- <p id="mr-source"></p><p class="tiny">Inspect openings, select only the local caps you want, then create a repaired copy. Orange triangles are inferred geometry. Existing model geometry and editable design parameters stay in the project. Distance controls assume one source coordinate unit is one metre; coordinates are never rescaled.</p>
- <div class="mr-layout"><section><div class="surface-pair"><label>Maximum overall extent · m<input id="mr-extent" type="number" min="0.001" max="5" step="any" value="0.5"></label><label>Maximum plane deviation · mm<input id="mr-plane" type="number" min="0.1" max="50" step="any" value="10"></label><label>Maximum turn from neighbours · °<input id="mr-angle" type="number" min="1" max="80" step="any" value="60"></label><label>Cloud support distance · m<input id="mr-support" type="number" min="0.001" max="0.5" step="any" value="0.05"></label></div>
- <p class="tiny">Overall extent is the largest distance between boundary vertices, including the length of a narrow gap. Portals, sharp openings, overlapping faces and uncertain boundaries are preserved. Gaps above 0.5 m need nearby cloud support at at least 80% of sampled patch locations.</p>
- <label>Reference cloud for support check<select id="mr-cloud"><option value="">No reference cloud</option></select></label>
- <div class="surface-actions"><button id="mr-inspect" class="primary">Inspect openings</button><button id="mr-stop" hidden>Cancel operation</button></div>
- <p id="mr-summary" role="status">Inspect the mesh to see repairable, preserved and unfilled openings.</p>
- <div class="surface-actions"><button id="mr-all" disabled>Select repairable</button><button id="mr-none" disabled>Clear selection</button></div>
- <div class="mr-table"><table><thead><tr><th>Repair</th><th>Opening</th><th>Extent</th><th>Decision / reason</th></tr></thead><tbody id="mr-holes"></tbody></table></div>
+ dialog.innerHTML=`<div class="dialog-heading"><h2>Inspect mesh openings</h2><button id="mr-close" aria-label="Close">×</button></div>
+ <label>Mesh or CAD surface<select id="mr-mesh"><option value="">Choose a mesh or CAD surface</option></select></label>
+ <p id="mr-source"></p><p class="tiny mr-inventory-only">The inventory measures visible circular mesh rims. Missing or bridged rims and areas hidden by equipment are outside its coverage. Open boundaries are preserved.</p>
+ <p class="tiny mr-repair-only">Inspect the CAD surface and select the local caps for a repaired copy. Orange triangles show inferred geometry.</p>
+ <div class="mr-layout"><section><div class="surface-pair"><label>Maximum overall extent · m<input id="mr-extent" type="number" min="0.001" max="5" step="any" value="0.5"></label><label>Maximum plane deviation · mm<input id="mr-plane" type="number" min="0.1" max="50" step="any" value="10"></label><label class="mr-repair-only">Maximum turn from neighbours · °<input id="mr-angle" type="number" min="1" max="80" step="any" value="60"></label><label class="mr-repair-only">Cloud support distance · m<input id="mr-support" type="number" min="0.001" max="0.5" step="any" value="0.05"></label></div>
+ <p class="tiny mr-repair-only">Overall extent is the largest distance between boundary vertices. Gaps above 0.5 m need nearby cloud support at 80% or more of the sampled patch locations.</p>
+ <label class="mr-repair-only">Reference cloud for support check<select id="mr-cloud"><option value="">No reference cloud</option></select></label>
+ <div class="surface-actions"><button id="mr-inspect" class="primary">Inspect openings</button><button id="mr-export" class="mr-inventory-only" disabled>Export CSV</button><button id="mr-stop" hidden>Cancel operation</button></div>
+ <p id="mr-summary" role="status"></p>
+ <div class="surface-actions mr-repair-only"><button id="mr-all" disabled>Select repairable</button><button id="mr-none" disabled>Clear selection</button></div>
+ <div class="mr-table"><table><thead><tr><th class="mr-repair-only">Repair</th><th>Opening</th><th id="mr-size">Extent</th><th id="mr-location">Decision / reason</th></tr></thead><tbody id="mr-holes"></tbody></table></div>
  <div class="surface-actions"><button id="mr-prev">Previous</button><span id="mr-page"></span><button id="mr-next">Next</button></div>
- </section><section><canvas id="mr-canvas" width="900" height="600" aria-label="Mesh opening and inferred cap preview"></canvas><p class="tiny">Drag to orbit · wheel to zoom · click an opening to inspect/select it. Cyan: repairable · gold: preserved · rose: unfilled · orange: selected inferred caps.</p><p id="mr-view-note" class="tiny"></p><p id="mr-detail" class="tiny"></p></section></div>
- <div class="mr-footer"><label>New mesh name<input id="mr-name" maxlength="120"></label><label><input id="mr-hide" type="checkbox" checked> Hide original after repair</label><button id="mr-apply" class="primary" disabled>Create repaired copy</button><button id="mr-undo" disabled>Undo last repair</button></div><p id="mr-status" role="status"></p>`;
+ </section><section><canvas id="mr-canvas" width="900" height="600" aria-label="Mesh opening preview"></canvas><p class="tiny">Drag to orbit · wheel to zoom · click an opening for details.</p><p id="mr-view-note" class="tiny"></p><p id="mr-detail" class="tiny"></p></section></div>
+ <div class="mr-footer mr-repair-only"><label>New mesh name<input id="mr-name" maxlength="120"></label><label><input id="mr-hide" type="checkbox" checked> Hide original after repair</label><button id="mr-apply" class="primary" disabled>Create repaired copy</button><button id="mr-undo" disabled>Undo last repair</button></div><p id="mr-status" role="status"></p>`;
  const style=document.createElement('style');style.textContent='#mesh-repair-dialog{width:min(1380px,96vw);max-height:94vh;overflow:auto;box-sizing:border-box}#mesh-repair-dialog .mr-layout{display:grid;grid-template-columns:minmax(370px,1fr) minmax(420px,1.2fr);gap:20px}#mesh-repair-dialog .mr-table{max-height:320px;overflow:auto}#mesh-repair-dialog table{width:100%;font-size:12px}#mesh-repair-dialog td{padding:7px;vertical-align:top}#mesh-repair-dialog tr[data-highlight=true]{background:#36516a}#mr-canvas{width:100%;height:400px;background:#102334;touch-action:none;cursor:crosshair}#mesh-repair-dialog .mr-footer{display:flex;flex-wrap:wrap;align-items:end;gap:14px;margin-top:18px}#mr-status[data-error=true]{color:#ffb7a5}@media(max-width:900px){#mesh-repair-dialog .mr-layout{grid-template-columns:1fr}}';
+ style.textContent+='#mesh-repair-dialog:not([data-inventory="true"]) .mr-inventory-only,#mesh-repair-dialog[data-inventory="true"] .mr-repair-only{display:none}';
  document.head.append(style);document.body.append(dialog);
  const $r=id=>document.getElementById('mr-'+id),esc=x=>String(x??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
  let source=null,preview=null,pending=false,loadingSource=false,sourceEpoch=0,sourceChoices=[],selected=new Set(),highlight=null,page=0,dirty=false,yaw=-.7,pitch=.5,zoom=1,drag=null,screen=[];
  const fields=['extent','plane','angle','support','cloud'];
  function message(text,error=false){$r('status').textContent=text;$r('status').dataset.error=String(error);}
- function controls(){for(const id of [...fields,'inspect','name','hide','all','none'])$r(id).disabled=pending||loadingSource||!source||(['all','none'].includes(id)&&(!preview||dirty));$r('mesh').disabled=pending||!sourceChoices.length;$r('apply').disabled=pending||loadingSource||!source||!preview||dirty||!selected.size;$r('stop').hidden=!pending;$r('undo').disabled=pending||loadingSource||!preview?.last_apply;$r('close').disabled=pending;$r('prev').disabled=pending||loadingSource||!page;$r('next').disabled=pending||loadingSource||!preview||(page+1)*100>=preview.holes.length;}
+ function controls(){for(const id of [...fields,'inspect','name','hide','all','none'])$r(id).disabled=pending||loadingSource||!source||(['all','none'].includes(id)&&(!preview||dirty));$r('mesh').disabled=pending||!sourceChoices.length;$r('apply').disabled=pending||loadingSource||!source||source.inventory_only||!preview||dirty||!selected.size;$r('export').disabled=pending||loadingSource||!source?.inventory_only||!preview?.holes.length||dirty;$r('stop').hidden=!pending;$r('undo').disabled=pending||loadingSource||!preview?.last_apply;$r('close').disabled=pending;$r('prev').disabled=pending||loadingSource||!page;$r('next').disabled=pending||loadingSource||!preview||(page+1)*100>=preview.holes.length;}
  function settings(){for(const id of fields.slice(0,4))if(!$r(id).checkValidity())throw Error('Check '+$r(id).closest('label').textContent);return{max_extent_m:+$r('extent').value,max_plane_deviation_mm:+$r('plane').value,max_normal_angle_deg:+$r('angle').value,support_distance_m:+$r('support').value};}
- function invalidate(){dirty=true;selected.clear();message('Settings changed. Inspect openings again before repairing.');controls();draw();}
- function detail(row){highlight=row.id;const support=row.support_fraction==null?row.support_status:`${(row.support_fraction*100).toFixed(1)}% of ${row.support_samples} sampled patch locations have a nearby retained cloud point. The cap remains inferred.`;$r('detail').textContent=`${row.id}: ${row.reason} ${row.extent_m==null?'':`Overall extent ${row.extent_m.toFixed(4)} m. `}${row.width_m==null?'':`Narrow width ${row.width_m.toFixed(4)} m. `}${support}`;}
+ function invalidate(){dirty=true;selected.clear();message('Settings changed. Inspect openings again.');controls();draw();}
+ function detail(row){
+  highlight=row.id;
+  if(source.inventory_only){
+   const location=row.station_m==null?'':` · Local station ${row.station_m.toFixed(3)} m · Arc ${row.arc_angle_deg.toFixed(1)}°${row.arc_m==null?'':` (${row.arc_m.toFixed(3)} m)`}`;
+   $r('detail').textContent=`${row.id} · ${row.diameter_mm.toFixed(1)} mm diameter · ${row.reason}${location} · XYZ ${row.centre.map(x=>x.toFixed(3)).join(', ')} m`;
+   return;
+  }
+  const support=row.support_fraction==null?row.support_status:`${(row.support_fraction*100).toFixed(1)}% of ${row.support_samples} sampled patch locations have a nearby retained cloud point. The cap remains inferred.`;
+  $r('detail').textContent=`${row.id} · ${row.reason} ${row.extent_m==null?'':`Overall extent ${row.extent_m.toFixed(4)} m. `}${row.width_m==null?'':`Narrow width ${row.width_m.toFixed(4)} m. `}${support}`;
+ }
  function render(){
-  if(!preview){$r('holes').innerHTML='';$r('page').textContent='';$r('summary').textContent=source?'Inspect the mesh to see repairable, preserved and unfilled openings.':'Choose a mesh or CAD surface above.';$r('view-note').textContent='';controls();draw();return;}
+  const inventory=!!source?.inventory_only;
+  dialog.dataset.inventory=String(inventory);$r('size').textContent=inventory?'Diameter':'Extent';$r('location').textContent=inventory?'Panel':'Decision / reason';
+  if(!preview){$r('holes').innerHTML='';$r('page').textContent='';$r('summary').textContent=source?'Inspect the selected surface to show its openings.':'Choose a mesh or CAD surface above.';$r('view-note').textContent='';controls();draw();return;}
   const summary=preview.last_apply?.summary||preview.summary;
-  $r('summary').textContent=`${preview.holes.length} detected openings · ${preview.last_apply?summary.filled+' filled · ':''}${preview.summary.repairable} repairable · ${summary.preserved} preserved · ${summary.unfilled} unfilled · ${selected.size} selected.`;
+  $r('summary').textContent=inventory?`${summary.circular_rims} circular rims · ${summary.unassigned} unassigned · ${summary.other_boundaries} other boundaries preserved.${summary.layout_available?' Station is local to the lining fit.':' Detect segments on the mesh’s source scan to link rims to measured panels.'}`:`${preview.holes.length} detected openings · ${preview.last_apply?summary.filled+' filled · ':''}${preview.summary.repairable} repairable · ${summary.preserved} preserved · ${summary.unfilled} unfilled · ${selected.size} selected.`;
   $r('view-note').textContent=preview.context.note;
   const start=page*100,rows=preview.holes.slice(start,start+100);
-  $r('holes').innerHTML=rows.map(row=>`<tr data-hole="${esc(row.id)}" data-highlight="${row.id===highlight}"><td><input type="checkbox" data-repair="${esc(row.id)}" aria-label="Repair ${esc(row.id)}" ${selected.has(row.id)?'checked':''} ${row.status!=='repairable'||dirty?'disabled':''}></td><td>${esc(row.id)}</td><td>${row.extent_m==null?'—':row.extent_m.toFixed(3)+' m'}</td><td><b>${esc(row.status)}</b><br>${esc(row.reason)}</td></tr>`).join('');
-  $r('page').textContent=preview.holes.length?`${start+1}–${Math.min(start+100,preview.holes.length)} of ${preview.holes.length}`:'No open boundaries';
+  $r('holes').innerHTML=rows.map(row=>`<tr data-hole="${esc(row.id)}" data-highlight="${row.id===highlight}">${inventory?`<td>${esc(row.id)}</td><td>${row.diameter_mm.toFixed(1)} mm</td><td>${esc(row.reason)}${row.panel_observed_count==null?'':` · ${row.panel_observed_count} observed`}</td>`:`<td><input type="checkbox" data-repair="${esc(row.id)}" aria-label="Repair ${esc(row.id)}" ${selected.has(row.id)?'checked':''} ${row.status!=='repairable'||dirty?'disabled':''}></td><td>${esc(row.id)}</td><td>${row.extent_m==null?'—':row.extent_m.toFixed(3)+' m'}</td><td><b>${esc(row.status)}</b><br>${esc(row.reason)}</td>`}</tr>`).join('');
+  $r('page').textContent=preview.holes.length?`${start+1}–${Math.min(start+100,preview.holes.length)} of ${preview.holes.length}`:inventory?'No circular rims inventoried':'No open boundaries';
   controls();draw();
  }
  function resetSource(){source=null;preview=null;selected.clear();highlight=null;page=0;dirty=false;zoom=1;$r('source').textContent='';$r('name').value='';$r('detail').textContent='';render();}
@@ -49,7 +62,7 @@
    $r('source').textContent=source.name+' · '+source.units;$r('name').value=(source.name+' repaired').slice(0,120);
    $r('cloud').innerHTML='<option value="">No reference cloud</option>'+data.clouds.map(x=>`<option value="${esc(x.id)}">${esc(x.name)}</option>`).join('');
    const cfg=preview?.settings||data.defaults;[['extent','max_extent_m'],['plane','max_plane_deviation_mm'],['angle','max_normal_angle_deg'],['support','support_distance_m']].forEach(([key,value])=>$r(key).value=cfg[value]);
-   $r('cloud').value=preview?.reference?.id||'';message('Inspect this mesh, then select the openings to repair.');render();
+   $r('cloud').value=preview?.reference?.id||'';message(source.inventory_only?'Inspect the mesh to inventory circular rims.':'Inspect this CAD surface, then select openings to repair.');render();
   }catch(error){if(epoch===sourceEpoch&&dialog.open){resetSource();message(error.message,true);}}
   finally{if(epoch===sourceEpoch){loadingSource=false;controls();}}
  }
@@ -65,12 +78,12 @@
    const selectedSources=sourceChoices.filter(x=>chosen.has(x.id));
    const target=id?sourceChoices.find(x=>x.id===id):selectedSources.length===1?selectedSources[0]:!selectedSources.length&&sourceChoices.length===1?sourceChoices[0]:null;
    if(target){await loadSource(target.id);return;}
-   message(!sourceChoices.length?'No triangular meshes or CAD surfaces are available in this project. Import or create a mesh first.':id?'The requested object is unavailable for repair. Choose a source above.':selectedSources.length>1?'Several meshes are selected. Choose one source above.':'Choose the mesh or CAD surface to repair above.',!!id);render();
+   message(!sourceChoices.length?'No triangular meshes or CAD surfaces are available in this project. Import or create a mesh first.':id?'The requested object is unavailable. Choose a source above.':selectedSources.length>1?'Several meshes are selected. Choose one source above.':'Choose the mesh or CAD surface to inspect above.',!!id);render();
   }catch(error){if(epoch===sourceEpoch&&dialog.open)message(error.message,true);}
   finally{if(epoch===sourceEpoch){loadingSource=false;controls();}}
  }
  async function run(apply){
-  if(pending||busy||!source)return;
+  if(pending||busy||!source||(apply&&source.inventory_only))return;
   try{
    const cfg=settings();if(apply&&(!preview||dirty||!selected.size))throw Error('Inspect the mesh and select repairable openings first.');
    pending=true;controls();setBusy(true);message(apply?'Creating a repaired copy…':'Inspecting every mesh boundary…');
@@ -79,9 +92,9 @@
    if(job.cancelled)throw Error('Mesh repair cancelled. Original geometry is unchanged.');
    const data=await api('/api/mesh-repair?'+new URLSearchParams({source_id:source.id}));
    if(!data.preview)throw Error('The source changed. Reopen the repair tool and inspect again.');
-   preview=data.preview;dirty=false;page=0;if(!apply)selected.clear();
+   preview=data.preview;dirty=false;page=0;if(!apply){selected.clear();highlight=null;$r('detail').textContent='';}
    if(apply&&preview.last_apply){await window.JobUI.sync();window.JobUI.chooseItem(preview.last_apply.result_id);await window.JobUI.loadPreview();message(`${preview.last_apply.summary.filled} openings filled in a new mesh; ${preview.last_apply.summary.preserved} preserved and ${preview.last_apply.summary.unfilled} unfilled. Orange faces are inferred. Undo restores the previous scene.`);}
-   else message('Review the highlighted openings. Nothing is selected automatically.');
+   else message(source.inventory_only?'Select a rim to see its coordinates or export the inventory.':'Review the highlighted openings and select repairs.');
    render();
   }catch(error){message(error.message,true);}finally{pending=false;setBusy(false);controls();}
  }
@@ -93,6 +106,12 @@
  for(const id of fields)$r(id).addEventListener(id==='cloud'?'change':'input',invalidate);
  $r('mesh').onchange=()=>loadSource($r('mesh').value);
  $r('inspect').onclick=()=>run(false);$r('apply').onclick=()=>run(true);$r('undo').onclick=undo;$r('close').onclick=()=>dialog.close();
+ $r('export').onclick=()=>{
+  const header='Opening,Diameter (mm),X (m),Y (m),Z (m),Local station (m),Arc angle (deg),Nominal arc (m),Ring interval,Panel,Observed rims on panel';
+  const lines=preview.holes.map(row=>[row.id,row.diameter_mm,...row.centre,row.station_m,row.arc_angle_deg,row.arc_m,row.ring_interval,row.panel_number,row.panel_observed_count].join(','));
+  const url=URL.createObjectURL(new Blob([[header,...lines].join('\r\n')+'\r\n'],{type:'text/csv'}));
+  const link=document.createElement('a');link.href=url;link.download='circular-opening-inventory.csv';link.click();setTimeout(()=>URL.revokeObjectURL(url),1000);
+ };
  $r('stop').onclick=async()=>{try{await post('/api/cancel-operation',{});message('Stopping at the next geometry or cloud-read checkpoint…');}catch(error){message(error.message,true);}};
  dialog.addEventListener('cancel',event=>{if(pending)event.preventDefault();});
  dialog.addEventListener('close',()=>{if(!dialog.open){sourceEpoch++;loadingSource=false;}});
@@ -115,11 +134,6 @@
  canvas.addEventListener('pointermove',event=>{if(!drag)return;const dx=event.clientX-drag.x,dy=event.clientY-drag.y;if(Math.hypot(event.clientX-drag.start[0],event.clientY-drag.start[1])>4)drag.moved=true;if(drag.moved){yaw+=dx*.01;pitch=Math.max(-1.5,Math.min(1.5,pitch+dy*.01));draw();}drag.x=event.clientX;drag.y=event.clientY;});
  canvas.addEventListener('pointerup',event=>{const previous=drag;drag=null;if(!previous||previous.moved||pending)return;const rect=canvas.getBoundingClientRect(),q=[(event.clientX-rect.left)*canvas.width/rect.width,(event.clientY-rect.top)*canvas.height/rect.height];let closest=null,best=18;for(const row of screen)for(let i=0;i<row.points.length;i++){const a=row.points[i],b=row.ordered?row.points[(i+1)%row.points.length]:a,dx=b[0]-a[0],dy=b[1]-a[1],t=Math.max(0,Math.min(1,((q[0]-a[0])*dx+(q[1]-a[1])*dy)/(dx*dx+dy*dy||1))),distance=Math.hypot(q[0]-a[0]-t*dx,q[1]-a[1]-t*dy);if(distance<best){best=distance;closest=row.id;}}if(closest)pick(closest);});
  canvas.addEventListener('pointercancel',()=>drag=null);canvas.addEventListener('wheel',event=>{event.preventDefault();zoom=Math.max(.2,Math.min(8,zoom*Math.exp(-event.deltaY*.001)));draw();},{passive:false});
- // Existing repair buttons now open the same reviewable local-cap workflow.
- for(const button of document.querySelectorAll('[data-mesh-refine="fill_small"],[data-mesh-refine="watertight"]')){button.textContent='Preview / repair holes';button.onclick=()=>open();if(button.dataset.meshRefine==='watertight')button.hidden=true;}
- const legacySize=document.getElementById('mesh-refine-hole');if(legacySize)legacySize.closest('label').hidden=true;
- const size=document.getElementById('mesh-hole-size');if(size){size.max='5';size.title='Maximum overall extent in metres: largest 3D distance between boundary vertices. Portals and unsupported large gaps are preserved.';const label=size.closest('label');if(label?.firstChild?.nodeType===3)label.firstChild.textContent='Maximum hole extent · m';}
- const handling=document.getElementById('mesh-hole-handling');if(handling){const option=[...handling.options].find(x=>x.value==='watertight');if(option)option.textContent='Conservative local caps · preserve portals';}
- const engine=document.getElementById('mesh-engine');if(engine&&handling)engine.addEventListener('change',()=>{if(engine.value==='watertight_tunnel')handling.value='fill_small';});
+ const inspect=document.getElementById('mesh-inspect-openings');if(inspect)inspect.onclick=()=>open();
  window.MeshRepairUI={open};
 })();
