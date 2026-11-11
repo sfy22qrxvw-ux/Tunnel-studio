@@ -69,6 +69,182 @@ def matrix(raw=None):
     f = frame(raw)
     return np.asarray(f['origin']), np.asarray([f['x'], f['y'], f['z']]).T
 
+def segment(a, b, radius=0):
+    a=np.asarray(a,float);b=np.asarray(b,float);d=b-a;length=float(np.linalg.norm(d));r=float(radius)
+    if not np.isfinite([*a,*b,r]).all() or length<1e-8:
+        raise ValueError('Consecutive plan/profile points must be finite and different.')
+    if abs(r)<1e-10:
+        return length,lambda f:a+f*d,lambda f:d/length
+    R=abs(r)
+    if 2*R<length-1e-8:
+        raise ValueError(f'Arc radius {R:g} m is too small for its {length:g} m chord; use at least {length/2:g} m.')
+    sign=1 if r>0 else -1
+    centre=(a+b)/2+sign*np.array([-d[1],d[0]])/length*math.sqrt(max(0,R*R-length*length/4))
+    angle=math.atan2(a[1]-centre[1],a[0]-centre[0]);sweep=sign*2*math.asin(min(1,length/(2*R)))
+    def position(f):return centre+R*np.array([math.cos(angle+f*sweep),math.sin(angle+f*sweep)])
+    def tangent(f):return sign*np.array([-math.sin(angle+f*sweep),math.cos(angle+f*sweep)])
+    return abs(sweep)*R,position,tangent
+
+def plane_coordinates(vertices, working_frame):
+    origin,basis=matrix(working_frame)
+    local=(np.asarray(vertices,float)-origin)@basis
+    if np.max(np.abs(local[:,2]))>1e-6:
+        raise ValueError('Keep the geometry in the profile’s X/Y plane.')
+    return local[:,:2]
+
+def curve_nodes(obj, working_frame):
+    """Return unsampled vertices and signed outgoing radii in a fixed plane."""
+    spec=obj.get('definition') or {}
+    vertices=obj['vertices']
+    radii=np.zeros(len(vertices))
+    transform=np.asarray(obj.get('transform',np.eye(4)))
+    A=transform[:3,:3]
+    _,basis=matrix(working_frame)
+    if spec.get('kind') in ('circle','arc') or 'radii' in spec:
+        source_origin,src=matrix(spec.get('frame'))
+        sign=np.sign(np.dot(np.cross(A@src[:,0],A@src[:,1]),basis[:,2]))
+        scale=np.linalg.norm(A@src[:,0])
+        if spec['kind'] in ('circle','arc'):
+            closed=spec['kind']=='circle'
+            start=float(spec.get('start_angle',0))
+            span=360 if closed else float(spec.get('end_angle',360))-start
+            count=max(1,math.ceil(abs(span)/90))
+            angles=np.radians(np.linspace(start,start+span,count if closed else count+1,endpoint=not closed))
+            radius=float(spec['radius'])
+            p=np.asarray(spec.get('centre',source_origin))+radius*(np.cos(angles)[:,None]*src[:,0]+np.sin(angles)[:,None]*src[:,1])
+            radii=np.full(len(p),math.copysign(radius,span)*scale*sign)
+            if not closed:radii[-1]=0
+        else:
+            p=np.asarray(spec['points']);radii=np.asarray(spec['radii'])*scale*sign
+        vertices=p@A.T+transform[:3,3]
+    return np.column_stack([plane_coordinates(vertices,working_frame),radii])
+
+def planar_curve(nodes, working_frame, closed):
+    rows=np.asarray(nodes,float)
+    origin,basis=matrix(working_frame)
+    return build(dict(kind='polyline',points=(rows[:,:2]@basis[:,:2].T+origin).tolist(),
+                      radii=rows[:,2].tolist(),frame=working_frame,closed=closed))
+
+def circle_edge(a,b,radius):
+    length,_,tangent=segment(a,b,radius)
+    tx,ty=tangent(0)
+    centre=a+radius*np.array([-ty,tx])
+    angle=math.atan2(a[1]-centre[1],a[0]-centre[0])
+    return centre,angle,length/radius
+
+def curve_parameter(a,b,radius,q):
+    if abs(radius)<1e-10:
+        d=b-a
+        return float(np.clip((q-a)@d/(d@d),0,1))
+    centre,angle,sweep=circle_edge(a,b,radius)
+    bearing=math.atan2(q[1]-centre[1],q[0]-centre[0])
+    turn=(math.copysign(1,sweep)*(bearing-angle))%(2*math.pi)
+    if turn<=abs(sweep):return turn/abs(sweep)
+    return float(np.linalg.norm(q-b)<np.linalg.norm(q-a))
+
+def curve_edges(rows,closed):
+    return zip(rows if closed else rows[:-1],np.roll(rows,-1,axis=0))
+
+def curve_paths(rows,closed,split,*,wrap):
+    """Divide signed-radius edges at exact curve parameters."""
+    chunks=[[np.r_[rows[0,:2],0.]]]
+    for i,(a,b) in enumerate(curve_edges(rows,closed)):
+        radius=a[2];_,position,_=segment(a[:2],b[:2],radius)
+        parameters=sorted({float(t) for t in split.get(i,[]) if 1e-9<t<=1})
+        end_split=bool(parameters and parameters[-1]>=1-1e-9)
+        for t in [v for v in parameters if v<1-1e-9]+[1.]:
+            point=b[:2] if t==1. else position(t)
+            chunks[-1][-1][2]=radius
+            chunks[-1].append(np.r_[point,0.])
+            if t<1. or end_split:
+                chunks.append([np.r_[point,0.]])
+    if closed and wrap and len(chunks)>1:
+        chunks[0]=chunks[-1][:-1]+chunks[0]
+        chunks.pop()
+    return [np.asarray(path) for path in chunks if len(path)>=2]
+
+def break_planar_curve(obj,point,working_frame):
+    rows=curve_nodes(obj,working_frame);q=plane_coordinates([vector(point)],working_frame)[0]
+    candidates=[]
+    for i,(a,b) in enumerate(curve_edges(rows,obj['closed'])):
+        t=curve_parameter(a[:2],b[:2],a[2],q)
+        _,position,_=segment(a[:2],b[:2],a[2])
+        candidates.append((np.linalg.norm(position(t)-q),i,t))
+    if not candidates:raise ValueError('Select a line or curve to break.')
+    _,i,t=min(candidates)
+    if t<1e-9 and i>0:i-=1;t=1.
+    chunks=curve_paths(rows,obj['closed'],{i:[t]},wrap=False)
+    if len(chunks)!=2:raise ValueError('Choose a break point inside the curve, away from its ends.')
+    return [planar_curve(path,working_frame,False) for path in chunks]
+
+def arc_boundary_turns(a,b,radius,q,normal):
+    centre,angle,sweep=circle_edge(a,b,radius)
+    distance=(centre-q)@normal
+    h=radius*radius-distance*distance
+    if h < -EPS:return [],centre,sweep
+    foot=centre-distance*normal
+    delta=np.sqrt(max(0.,h))*np.array([-normal[1],normal[0]])
+    turns=[]
+    for point in (foot+delta,foot-delta):
+        bearing=math.atan2(point[1]-centre[1],point[0]-centre[0])
+        turns.append((math.copysign(1,sweep)*(bearing-angle))%(2*math.pi))
+    return turns,centre,sweep
+
+def trim_planar_curve(obj,boundary,working_frame,extend,end,keep):
+    rows=curve_nodes(obj,working_frame)
+    if len(rows)<2:raise ValueError('Select a line or curve to trim or extend.')
+    line=plane_coordinates(boundary,working_frame)
+    q=line[0];d=line[1]-q;normal=np.array([d[1],-d[0]])/np.linalg.norm(d)
+    closed=obj['closed']
+    if extend:
+        if closed:raise ValueError('Extend requires an open line or polyline.')
+        if end=='start':
+            rows=rows[::-1].copy()
+            rows[:,2]=np.r_[-rows[1:,2],0.]
+        a,b=rows[-2:];radius=a[2]
+        if abs(radius)<1e-10:
+            direction=b[:2]-a[:2];den=direction@normal
+            if abs(den)<EPS:raise ValueError('The endpoint direction is parallel to this boundary.')
+            t=(q-b[:2])@normal/den
+            if t<=EPS:raise ValueError('This boundary lies behind the selected endpoint. Choose the other end or Trim.')
+            rows[-1,:2]+=t*direction
+        else:
+            turns,centre,sweep=arc_boundary_turns(a[:2],b[:2],radius,q,normal)
+            valid=[t for t in turns if abs(sweep)+1e-9<t<2*math.pi-1e-9]
+            if not valid:raise ValueError('This boundary does not intersect the forward continuation of the arc.')
+            travel=min(valid)-abs(sweep)
+            count=math.ceil(travel/(math.pi/2))
+            angles=math.atan2(b[1]-centre[1],b[0]-centre[0])+math.copysign(1,sweep)*np.linspace(0,travel,count+1)[1:]
+            points=centre+abs(radius)*np.column_stack([np.cos(angles),np.sin(angles)])
+            rows[-1,2]=radius;rows=np.vstack([rows,np.column_stack([points,np.full(count,radius)])])
+            rows[-1,2]=0.
+        if end=='start':
+            rows=rows[::-1].copy()
+            rows[:,2]=np.r_[-rows[1:,2],0.]
+        return planar_curve(rows,working_frame,False)
+    if keep is None:raise ValueError('Pick a point on the portion to keep after trimming.')
+    hits={}
+    for i,(a,b) in enumerate(curve_edges(rows,closed)):
+        radius=a[2]
+        if abs(radius)<1e-10:
+            den=(b[:2]-a[:2])@normal
+            if abs(den)>EPS:hits[i]=[(q-a[:2])@normal/den]
+        else:
+            turns,_,sweep=arc_boundary_turns(a[:2],b[:2],radius,q,normal)
+            if len(turns)==2 and abs(turns[0]-turns[1])>1e-9:
+                hits[i]=[min(1.,t/abs(sweep)) for t in turns if t<=abs(sweep)+1e-9]
+    paths=curve_paths(rows,closed,hits,wrap=True)
+    if len(paths)<2:raise ValueError('The straight boundary does not divide this curve.')
+    pick=plane_coordinates([vector(keep)],working_frame)[0]
+    def distance(path):
+        errors=[]
+        for a,b in curve_edges(path,False):
+            t=curve_parameter(a[:2],b[:2],a[2],pick)
+            _,position,_=segment(a[:2],b[:2],a[2])
+            errors.append(np.linalg.norm(position(t)-pick))
+        return min(errors)
+    return planar_curve(min(paths,key=distance),working_frame,False)
+
 def plane(p, fallback=None):
     p = points(p, 2); origin = p[0]; d = p - origin
     x = unit(next((q for q in d[1:] if np.linalg.norm(q) > EPS), [0, 0, 0]), 'Profile edge')
@@ -294,6 +470,18 @@ def build(raw, resolve=lambda ident:None):
         if len(p)>1 and np.any(np.linalg.norm(np.diff(p,axis=0),axis=1)<EPS):raise ValueError('Consecutive vertices must be different.')
         if kind=='point' and len(p)!=1 or kind=='line' and len(p)!=2:raise ValueError('Point needs one vertex; line needs two.')
         if closed and len(p)<3:raise ValueError('A closed profile needs at least three distinct vertices.')
+        if 'radii' in spec:
+            radii=np.asarray(spec['radii'],float)
+            if kind!='polyline' or radii.shape!=(len(p),) or not np.isfinite(radii).all():
+                raise ValueError('Provide one signed radius per curve vertex.')
+            uv=plane_coordinates(p,f);rendered=[]
+            for i in range(len(p) if closed else len(p)-1):
+                radius=radii[i];length,position,_=segment(uv[i],uv[(i+1)%len(p)],radius)
+                count=max(1,math.ceil(math.degrees(length/abs(radius))/3.75)) if abs(radius)>=1e-10 else 1
+                rendered.extend(position(t) for t in np.linspace(0,1,count,endpoint=False))
+            if not closed:rendered.append(uv[-1])
+            spec['points']=p.tolist();spec['frame']=f
+            p=np.asarray(rendered)@B[:,:2].T+origin
         out=geometry(p,closed=closed)
     elif kind=='plane':
         centre=vector(spec.get('origin',origin),'Plane centre');normal=unit(spec.get('normal',B[:,2]),'Plane normal')
@@ -344,6 +532,37 @@ def build(raw, resolve=lambda ident:None):
     else:raise ValueError('Unknown drawing or solid command: '+kind)
     out['shape']=kind;out['definition']=spec
     return out
+
+def curve_grip(obj, working_frame, index, grip, point):
+    """Edit an analytic control point or segment on the CAD work plane."""
+    q=plane_coordinates([vector(point)],working_frame)[0]
+    origin,basis=matrix(working_frame)
+    if obj['shape']=='circle' and grip in ('centre','radius'):
+        centre=plane_coordinates([obj['centre']],working_frame)[0]
+        radius=obj['radius']
+        if grip=='centre':centre=q
+        else:radius=float(np.linalg.norm(q-centre))
+        return build(dict(kind='circle',centre=(origin+basis[:,:2]@centre).tolist(),
+                          radius=radius,frame=working_frame,segments=96))
+    rows=curve_nodes(obj,working_frame);closed=obj['closed']
+    if not 0<=index<len(rows) or grip in ('edge','arc') and index==len(rows)-1 and not closed:
+        raise ValueError('Choose a valid curve grip.')
+    if grip=='node':
+        if len(rows)==1:
+            return build(dict(kind='point',points=[point],frame=working_frame))
+        rows[index,:2]=q
+    elif grip in ('edge','arc'):
+        j=(index+1)%len(rows);a,b=rows[[index,j],:2];d=b-a
+        length=float(np.linalg.norm(d));mid=(a+b)/2
+        if grip=='edge':
+            _,position,_=segment(a,b,rows[index,2])
+            rows[[index,j],:2]+=q-position(.5)
+        else:
+            sag=float(np.dot(q-mid,[-d[1],d[0]])/length)
+            sag=float(np.clip(sag,-length/2,length/2))
+            rows[index,2]=-(length*length/(8*sag)+sag/2) if abs(sag)>1e-8 else 0.
+    else:raise ValueError('Choose a node, edge or circle grip.')
+    return planar_curve(rows,working_frame,closed)
 
 def transformed(obj, operation, values):
     p=np.asarray(obj['vertices']);base=vector(values.get('base',[0,0,0])); A=np.eye(3); offset=np.zeros(3)
@@ -437,8 +656,21 @@ def join(objects):
     return geometry(out[:-1] if closed else out,closed=closed,shape='polyline')
 
 def offset(obj, distance, working_frame=None):
-    _,sh=engines();p,closed=profile(obj);origin,B,uv=plane(p,working_frame);distance=number(distance,'Offset')
+    distance=number(distance,'Offset')
     if abs(distance)<EPS:raise ValueError('Offset must be non-zero.')
+    if obj.get('shape')=='circle' and obj.get('radius') is not None:
+        f=closed_profile_frame(obj)
+        return [build(dict(kind='circle',centre=obj['centre'],radius=obj['radius']+distance,frame=f,
+                           segments=(obj.get('definition') or {}).get('segments',64)))]
+    if working_frame and obj.get('shape')=='arc' and obj.get('definition',{}).get('kind')=='arc':
+        rows=curve_nodes(obj,working_frame)
+        radius=rows[0,2];centre,_,_=circle_edge(rows[0,:2],rows[1,:2],radius)
+        new_radius=abs(radius)-math.copysign(1,radius)*distance
+        if new_radius<=EPS:raise ValueError('The offset collapses this arc. Reduce the distance.')
+        rows[:,:2]=centre+(rows[:,:2]-centre)*new_radius/abs(radius)
+        rows[:-1,2]=math.copysign(new_radius,radius)
+        return [planar_curve(rows,working_frame,False)]
+    _,sh=engines();p,closed=profile(obj);origin,B,uv=plane(p,working_frame)
     shape=sh.Polygon(uv) if closed else sh.LineString(uv)
     if not shape.is_valid:raise ValueError('Repair the profile before offsetting.')
     value=shape.buffer(distance,join_style='mitre') if closed else sh.offset_curve(shape,distance,join_style='mitre')

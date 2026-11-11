@@ -4,24 +4,39 @@
  const el=id=>document.getElementById('circle-'+id),count=n=>Number(n||0).toLocaleString('en-GB');
  const escape=s=>String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
  const panel=document.createElement('section');panel.id='tab-circle-clean';panel.className='tab feature-panel';
- panel.innerHTML=`<header class="feature-heading"><span class="feature-eyebrow">WHOLE REGISTERED CLOUD</span><h2>Local-circle cleaning</h2><p class="feature-hint">Fit circles in sections perpendicular to a curved centreline. Keep a band around each local circle and review inward/outward departures. Windows overlap and blend to avoid hard section cuts.</p></header>
+ panel.innerHTML=`<header class="feature-heading"><h2>Local-circle cleaning</h2><p class="feature-hint">Fit circles in sections perpendicular to a curved centreline. Keep a band around each local circle and review inward/outward departures. Windows overlap and blend to avoid hard section cuts.</p></header>
  <section class="feature-step"><h3><span>1</span> Source and section length</h3><label>Registered scan<select id="circle-source"></select></label><label>Centreline guide<select id="circle-axis"><option value="auto">Estimate from this scan</option><option value="project">Loaded project alignment</option></select><small>The guide is refined for this cleaning reference. Project alignment and original points are not changed.</small></label>
  <label>Fitting window length · m<input id="circle-length" type="number" min="0.5" max="50" step="0.5" value="5"><small>5 m by default, with 50% overlap. Each circle uses the local perpendicular direction, rather than one fixed tunnel direction.</small></label>
- <p class="feature-hint"><b>Whole retained cloud · no point-count cap.</b> Original observations are read in bounded blocks.</p><label class="feature-check"><input id="circle-filters" type="checkbox">Restrict to current limit box / view filters</label></section>
+ <label>Processing area<select id="circle-scope"></select></label><p id="circle-scope-note" class="feature-hint"></p></section>
  <section class="feature-step"><h3><span>2</span> Choose the keep band</h3><label>Keep this far inward from the circle · mm<input id="circle-inward" type="number" min="1" max="2000" step="1" value="20"><small>Points closer to the tunnel centre than this are inward candidates, such as services.</small></label>
  <label>Keep this far outward from the circle · mm<input id="circle-outward" type="number" min="1" max="2000" step="1" value="20"><small>Points beyond the outside of this band are outward candidates, such as recesses.</small></label>
  <p class="feature-hint">Poorly supported or poorly circular sections remain unselected. If earlier cleaning removed good lining, restore it with Undo or Deleted points before fitting.</p>
- <div class="feature-actions"><button id="circle-run" class="primary">Preview local circles across whole cloud</button><button id="circle-stop" hidden>Stop</button></div><p id="circle-status" role="status" aria-live="polite"></p></section>
- <section id="circle-review" class="feature-step" hidden><h3><span>3</span> Inspect circles and candidates</h3><p id="circle-summary"></p><p class="feature-hint"><b>Green:</b> within band. <b>Yellow:</b> insufficient reference. <b>Cyan:</b> candidate. <b>Orange:</b> selected for an edit.</p><div id="circle-warnings" class="feature-warnings"></div>
- <details id="circle-fit-details"><summary>Inspect fitted circles along the centreline</summary><p class="feature-hint">View looks along the local tunnel axis and shows the circle outline. Reverse view looks from the other end. RMS describes residuals of fitted support points, not survey accuracy.</p><div class="feature-actions"><button id="circle-fit-prev">Previous fits</button><button id="circle-fit-next">Next fits</button><button id="circle-reverse">Reverse view</button><button id="circle-clear-guide">Hide circle</button><button id="circle-whole">Whole-cloud review</button></div><div id="circle-fits" class="feature-group-list"></div><p id="circle-fit-page" class="feature-hint"></p></details>
- <div class="feature-actions"><button id="circle-inward-select">Select inward across cloud</button><button id="circle-outward-select">Select outward across cloud</button><button id="circle-both">Select both sides across cloud</button><button id="circle-none">Clear selection</button></div><div id="circle-groups" class="feature-group-list"></div><p id="circle-page" class="feature-hint"></p><div class="feature-actions"><button id="circle-previous">Previous groups</button><button id="circle-next">Next groups</button></div>
+ <div class="feature-actions"><button id="circle-run" class="primary">Preview circles</button><button id="circle-stop" hidden>Stop</button></div><p id="circle-status" role="status" aria-live="polite"></p></section>
+ <section id="circle-review" class="feature-step" hidden><h3><span>3</span> Inspect circles and candidates</h3><p id="circle-extent"></p><p id="circle-summary"></p><p class="feature-hint"><b>Green:</b> within band. <b>Yellow:</b> insufficient reference. <b>Cyan:</b> candidate. <b>Orange:</b> selected for an edit.</p><div id="circle-warnings" class="feature-warnings"></div>
+ <details id="circle-fit-details"><summary>Inspect fitted circles along the centreline</summary><p class="feature-hint">View looks along the local tunnel axis and shows the circle outline. Reverse view looks from the other end. RMS describes residuals of fitted support points, not survey accuracy.</p><div class="feature-actions"><button id="circle-fit-prev">Previous fits</button><button id="circle-fit-next">Next fits</button><button id="circle-reverse">Reverse view</button><button id="circle-clear-guide">Hide circle</button><button id="circle-whole">Review processed area</button></div><div id="circle-fits" class="feature-group-list"></div><p id="circle-fit-page" class="feature-hint"></p></details>
+ <div class="feature-actions"><button id="circle-inward-select">Select inward</button><button id="circle-outward-select">Select outward</button><button id="circle-both">Select both sides</button><button id="circle-none">Clear selection</button></div><div id="circle-groups" class="feature-group-list"></div><p id="circle-page" class="feature-hint"></p><div class="feature-actions"><button id="circle-previous">Previous groups</button><button id="circle-next">Next groups</button></div>
 
  <div class="feature-actions"><button id="circle-remove" class="danger">Remove selected points</button><button id="circle-separate">Separate selected to new scan</button><button id="circle-normal">Restore normal view</button></div><p class="feature-hint">Preview alone changes no scan points. Reviewed edits preserve original coordinates and support Undo. A fitted circle is not a design surface and does not recreate missing lining.</p></section>`;
  document.querySelector('.view-shell').append(panel);
- let result=null,running=false,dirty=true,fitPage=0,viewIndex=null,reverse=false;
+ let result=null,running=false,dirty=true,fitPage=0,viewIndex=null,reverse=false,captured=null;
  const status=(text,error=false)=>{el('status').textContent=text;el('status').style.color=error?'var(--danger,#b64c45)':'';};
+ const source=()=>window.JobUI.scanItems().find(scan=>scan.id===el('source').value);
+ const hasLimit=scan=>!!scan?.limit_box;
+ const hasFilters=scan=>scan?.isolated||scan?.hidden_regions>0;
+ const selectedArea=()=>captured?.source===el('source').value?captured.selection:null;
+ function setScopes(){
+  const scan=source(),options=[];
+  if(selectedArea())options.push(new Option('Selected points','selection'));
+  if(hasLimit(scan))options.push(new Option('Saved limit box','limit'));
+  else if(hasFilters(scan))options.push(new Option('Current view filters','view'));
+  options.push(new Option('Whole retained cloud','whole'));
+  el('scope').replaceChildren(...options);
+ }
  function controls(){const lock=running||!!busy;
-  for(const button of el('fits').querySelectorAll('button'))button.disabled=lock;for(const id of ['source','axis','length','inward','outward','filters'])el(id).disabled=lock;
+  for(const button of el('fits').querySelectorAll('button'))button.disabled=lock;for(const id of ['source','axis','length','inward','outward','scope'])el(id).disabled=lock;
+  const scope=el('scope').value;
+  el('run').textContent=scope==='selection'?'Preview selected points':scope==='limit'?'Preview inside limit box':scope==='view'?'Preview with view filters':'Preview whole cloud';
+  el('scope-note').textContent=scope==='selection'?'Uses the highlighted points within the saved limit box if present.':scope==='limit'?'Uses the saved box even when the whole scan is visible.':scope==='view'?'Uses retained points inside the active view restrictions.':'Processes all retained points in the scan.';
   el('run').disabled=lock||!el('source').value;el('stop').hidden=!running;
   for(const id of ['inward-select','outward-select','both','none'])el(id).disabled=lock||!result||dirty||result.stale||!result.statistics.candidate_points;
   el('remove').disabled=el('separate').disabled=lock||dirty||!result||result.stale||!result.statistics.selected_points;
@@ -31,7 +46,11 @@
  }
  function changed(){dirty=true;controls();if(result)status('Settings changed. Preview again before applying an edit.');}
  function render(){el('review').hidden=!result;if(!result){controls();return;}const s=result.statistics;
-  el('summary').textContent=`${count(s.input_points)} original points checked · ${count(s.within_points)} within band · ${count(s.inward_points)} inward · ${count(s.outward_points)} outward · ${count(s.unassessed_points)} unassessed and retained. ${count(s.supported_windows)}/${count(s.fit_windows)} fitting windows supported. ${count(s.selected_points)} points selected.`;
+  const area={selection:'Selected points',limit_box:'Limit box',view:'Filtered view',whole:'Whole cloud'}[result.search_area]||'Processed area';
+  const total=s.source_points?` of ${count(s.source_points)} source rows`:'';
+  const extent=window.AnalysisArea.extent(s.effective_bounds);
+  el('extent').textContent=`${area} · ${count(s.input_points)} retained points${total}${extent?' · '+extent:''}`;
+  el('summary').textContent=`${count(s.within_points)} within band · ${count(s.inward_points)} inward · ${count(s.outward_points)} outward · ${count(s.unassessed_points)} unassessed and retained. ${count(s.supported_windows)}/${count(s.fit_windows)} fitting windows supported. ${count(s.selected_points)} points selected.`;
   el('warnings').innerHTML=[...(result.stale?['Source changed. Preview again before further edits.']:[]),...result.warnings].map(x=>`<p>${escape(x)}</p>`).join('');
   el('groups').innerHTML=result.groups.map(g=>`<label class="feature-group"><input type="checkbox" data-circle-group="${g.id}" ${g.selected?'checked':''}><span><strong>${escape(g.name)}</strong><small>${count(g.points)} original points${g.partial?' · '+count(g.selected_points)+' selected':''}</small></span></label>`).join('');
   for(const input of el('groups').querySelectorAll('input'))input.indeterminate=!!result.groups.find(g=>g.id===+input.dataset.circleGroup)?.partial;
@@ -43,12 +62,29 @@
  function show(){if(!result||result.stale)return;let p=result.preview;const q=viewIndex===null?null:result.circle_sections[viewIndex];if(q&&p.stations){const points=p.points.filter((_,i)=>Math.abs(p.stations[i]-q.station_m)<=result.settings.section_m/2);p={...p,points,preview_count:points.length};}window.JobUI.analysisPreview({...p,result_id:result.id,sample_count:p.preview_count,used:result.statistics.input_points},'circle');$('job-preview-info').textContent=`LOCAL-CIRCLE REVIEW · ${count(result.statistics.input_points)} checked · ${count(result.statistics.selected_points)} selected · green within band / yellow uncertain / cyan candidate / orange selected.`;}
  function viewCircle(index){if(!result)return;const q=result.circle_sections[index];if(!q)return;viewIndex=index;show();const normal=q.normal.map(x=>x*(reverse?-1:1)),scene=window.JobUI.cadScene(),origin=window.JobUI.cadOrigin();scene.target=q.centre.map((x,j)=>x-origin[j]);scene.yaw=Math.atan2(normal[0],normal[1]);scene.pitch=Math.asin(Math.max(-1,Math.min(1,normal[2])));scene.scale=q.radius_m*2.1;const rows=Array.from({length:129},(_,i)=>{const a=i*2*Math.PI/128;return [i,...q.centre.map((x,j)=>x+q.radius_m*(Math.cos(a)*q.right[j]+Math.sin(a)*q.up[j])),q.radius_m];});window.JobUI.geometryOverlay(rows);scene.draw();}
  async function refresh(page=0){const next=await api('/api/shape-selection?'+new URLSearchParams({page}));result=next.result?.mode==='circle'?next.result:null;render();}
- function settings(){for(const id of ['length','inward','outward'])if(!el(id).checkValidity())throw Error('Check '+el(id).closest('label').textContent.trim());return {section_m:+el('length').value,inward_mm:+el('inward').value,outward_mm:+el('outward').value,axis_source:el('axis').value,respect_view:el('filters').checked};}
- async function run(action,extra={}){if(running||busy)return;try{let body;if(action==='preview'){viewIndex=null;fitPage=0;body={action,mode:'circle',source_id:el('source').value,settings:settings()};}else{if(!result||dirty||result.stale)throw Error('Preview the current source and settings again.');body={action,preview_id:result.id,revision:result.revision,...extra};}
+ function settings(){for(const id of ['length','inward','outward'])if(!el(id).checkValidity())throw Error('Check '+el(id).closest('label').textContent.trim());return {section_m:+el('length').value,inward_mm:+el('inward').value,outward_mm:+el('outward').value,axis_source:el('axis').value,respect_view:el('scope').value!=='whole'};}
+ async function run(action,extra={}){if(running||busy)return;try{let body;
+  if(action==='preview'){
+   const scope=el('scope').value,selection=scope==='selection'?selectedArea():null;
+   if(scope==='selection'&&!selection)throw Error('Select points and reopen Local circles.');
+   if(scope==='limit'&&!hasLimit(source()))throw Error('Set a limit box and reopen Local circles.');
+   if(scope==='view'&&!hasFilters(source()))throw Error('Set a limit box or choose Whole retained cloud.');
+   viewIndex=null;fitPage=0;body={action,mode:'circle',source_id:el('source').value,scope,settings:settings(),selection};
+  }else{if(!result||dirty||result.stale)throw Error('Preview the current source and settings again.');body={action,preview_id:result.id,revision:result.revision,...extra};}
   running=true;setBusy(true);controls();status('Working on full-density original points…');await post('/api/shape-selection',body);const job=await window.JobUI.waitReady(value=>status(value.message||'Working…'));if(job.cancelled)throw Error('Stopped. Source points and the previous completed review are unchanged.');await refresh(action==='preview'?0:result?.page||0);dirty=false;
   if(['delete','separate'].includes(action)){window.JobUI.geometryOverlay([]);window.JobUI.clearCleaningPreview('circle');await window.JobUI.loadPreview();status(`${count(result?.last_edit?.count)} points ${action==='separate'?'separated':'removed'}. Undo reverses the edit.`);}else{show();status('Inspect the circles and the proposed departures. No candidates are selected automatically.');}
  }catch(error){status(error.message,true);}finally{running=false;setBusy(false);render();}}
- async function open(){if(running||busy)return;const scans=window.JobUI.scanItems().filter(x=>x.visible!==false),selected=window.JobUI.selectedItem();el('source').innerHTML=scans.map(x=>`<option value="${escape(x.id)}">${escape(x.name)}</option>`).join('');if(selected?.kind==='scan')el('source').value=selected.id;result=null;dirty=true;fitPage=0;viewIndex=null;reverse=false;window.JobUI.clearCleaningPreview();window.TunnelRibbon.view('circle-clean');try{const data=await api('/api/shape-selection');el('axis').querySelector('[value=project]').disabled=!data.axis_available;}catch{}status('Choose section length and keep band, then preview the whole retained cloud.');render();}
+ async function open(){
+  if(running||busy)return;
+  const scans=window.JobUI.scanItems().filter(x=>x.visible!==false),selected=window.JobUI.selectedItem();
+  const selection=window.JobUI.currentSelection();
+  captured=selected?.kind==='scan'&&selection?{source:selected.id,selection}:null;
+  el('source').replaceChildren(...scans.map(scan=>new Option(scan.name,scan.id)));
+  if(selected?.kind==='scan')el('source').value=selected.id;
+  setScopes();result=null;dirty=true;fitPage=0;viewIndex=null;reverse=false;
+  window.JobUI.clearCleaningPreview();window.TunnelRibbon.view('circle-clean');status('');render();
+  try{const data=await api('/api/shape-selection');el('axis').querySelector('[value=project]').disabled=!data.axis_available;}catch{}
+ }
  el('run').onclick=()=>run('preview');el('stop').onclick=async()=>{status('Stopping at the next fitting or source-read checkpoint…');try{await post('/api/cancel-operation',{});}catch(e){status(e.message,true);}};
  el('both').onclick=()=>run('select',{operation:'all'});el('none').onclick=()=>run('select',{operation:'none'});for(const side of ['inward','outward'])el(side+'-select').onclick=()=>run('select',{operation:'side',side});
  el('groups').onchange=e=>{if(e.target.dataset.circleGroup)run('select',{operation:'toggle',group_ids:[+e.target.dataset.circleGroup],selected:e.target.checked});};
@@ -59,6 +95,6 @@
  
  el('remove').onclick=()=>{if(!el('remove').disabled)showTunnelMessage('Remove reviewed circle departures',`Remove ${count(result.statistics.selected_points)} selected original points? Inspect fitted circles first. Undo remains available.`,true,'Remove selected points',()=>run('delete',{confirmed:true}));};
  el('separate').onclick=()=>{if(!el('separate').disabled)run('separate',{confirmed:true});};el('normal').onclick=()=>{window.JobUI.geometryOverlay([]);window.JobUI.clearCleaningPreview('circle');};
- for(const id of ['length','inward','outward','axis','filters'])el(id).addEventListener('input',changed);el('source').onchange=()=>{result=null;dirty=true;render();};
+ for(const id of ['length','inward','outward','axis','scope'])el(id).addEventListener('input',changed);el('source').onchange=()=>{setScopes();result=null;dirty=true;status('');render();};
  window.CircleCleanUI={open,busy:controls,result:()=>result,removeSelected:()=>el('remove').click(),removableCount:()=>!dirty&&!result?.stale?result?.statistics.selected_points||0:0,onToolClose:()=>{if(!running){window.JobUI.geometryOverlay([]);window.JobUI.clearCleaningPreview('circle');}}};
 })();

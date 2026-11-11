@@ -19,6 +19,7 @@ import numpy as np
 from scipy.interpolate import CubicSpline
 from scipy.optimize import least_squares
 from scipy.spatial import cKDTree
+from scipy.spatial.transform import Rotation
 import compute_runtime,shape_matching,scan_geometry,tunnel_lining
 from combined_denoising import sample_originals
 
@@ -60,10 +61,14 @@ class Curve:
         if np.any(speed<.1):raise ValueError('The centreline folds or stops. Review its nodes before circle cleaning.')
         tangent/=speed[:,None];rights=np.empty_like(tangent)
         ref=np.eye(3)[np.argmin(abs(tangent[0]))];rights[0]=np.cross(ref,tangent[0]);rights[0]/=np.linalg.norm(rights[0])
-        for i in range(1,len(tangent)):
-            a,b=tangent[i-1:i+1];v=np.cross(a,b);c=float(a@b)
-            if c<.5:raise ValueError('The centreline has an abrupt turn. Use a reviewed alignment or one tunnel branch.')
-            r=rights[i-1]+np.cross(v,rights[i-1])+np.cross(v,np.cross(v,rights[i-1]))/(1+c)
+        before,after=tangent[:-1],tangent[1:]
+        dot=np.einsum('ij,ij->i',before,after)
+        if (dot<.5).any():raise ValueError('The centreline has an abrupt turn. Use a reviewed alignment or one tunnel branch.')
+        # The quaternion (a × b, 1 + a · b) represents the same minimum
+        # rotation from a to b. Build all step rotations before transporting.
+        rotations=Rotation.from_quat(np.c_[np.cross(before,after),1+dot]).as_matrix()
+        for i,(rotation,b) in enumerate(zip(rotations,after),1):
+            r=rotation@rights[i-1]
             r-=b*(r@b);rights[i]=r/np.linalg.norm(r)
         self.rights=rights;self.tree=cKDTree(xyz)
 
@@ -114,9 +119,22 @@ class Samples:
                 self.db.execute('DELETE FROM p WHERE b=? AND (h,k,a,c)>(?,?,?,?)',(int(b),*row))
         self.db.commit()
 
-    def near(self,s):
-        b=int(math.floor(s/self.length))
-        return np.asarray(self.db.execute('SELECT x,y,z FROM p WHERE b BETWEEN ? AND ? ORDER BY b,k,a,c',(b-2,b+2)).fetchall(),float).reshape(-1,3)
+    def projected_window(self,station,length,guide,projected):
+        first=int(math.floor(station/self.length))-2
+        for b in tuple(projected):
+            if b<first:del projected[b]
+        window=[]
+        for b in range(first,first+5):
+            if b not in projected:
+                rows=self.db.execute('SELECT x,y,z FROM p WHERE b=? ORDER BY k,a,c',(b,)).fetchall()
+                if rows:
+                    s,uv,valid=guide.project(np.asarray(rows,float))
+                    projected[b]=(s[valid],uv[valid])
+                else:
+                    projected[b]=(np.empty(0),np.empty((0,2)))
+            s,uv=projected[b]
+            window.append(uv[abs(s-station)<=length/2+1e-9])
+        return np.concatenate(window)
 
     def close(self):self.db.close()
 
@@ -149,22 +167,27 @@ def circle(q,radius_hint,band,rng):
     return dict(offset=centre,radius=radius,rms_mm=rms*1000,coverage_deg=coverage,support_points=int(shell.sum()),calibration_points=len(q),inlier_fraction=float(shell.mean()),supported=bool(supported),reason=reason)
 
 
+def merge_stations(base,extra):
+    # A fit station and a guide node can differ by floating-point roundoff.
+    # Keep the original knot when both describe the same physical location.
+    right=np.clip(np.searchsorted(base,extra),1,len(base)-1)
+    clear=(abs(extra-base[right-1])>1e-6)&(abs(extra-base[right])>1e-6)
+    return np.sort(np.r_[base,extra[clear]])
+
+
 def fit(samples,guide,stations,cfg,progress,cancel,radius_hint):
     rng=np.random.default_rng(215);length=cfg['section_m'];band=min(cfg['inward_mm'],cfg['outward_mm'])/1000
     quality=[]
     # Refinement affects the reference only, never the measured coordinates.
     for iteration in range(4):
-        quality=[];new=[];usable=[]
-        working=stations if iteration==3 else np.unique(np.r_[stations,np.arange(stations[0],stations[-1],min(1.,length/2))])
+        quality=[];new=[];usable=[];projected={}
+        working=stations if iteration==3 else merge_stations(stations,np.arange(stations[0],stations[-1],min(1.,length/2)))
         support_length=length if iteration==3 else min(1.,length)
         for i,station in enumerate(working):
             emit(progress,cancel,f'Fitting local circles · pass {iteration+1}/4 · window {i+1}/{len(working)}')
-            p=samples.near(station);c,n,r,u=guide.at(station)
-            uv=np.empty((0,2))
-            if len(p):
-                s,uv,valid=guide.project(p);uv=uv[valid&(abs(s-station)<=support_length/2+1e-9)]
-                info=circle(uv,radius_hint,band,rng)
-            else:info=None
+            c,n,r,u=guide.at(station)
+            uv=samples.projected_window(station,support_length,guide,projected)
+            info=circle(uv,radius_hint,band,rng)
             if info is None:info=dict(offset=np.zeros(2),radius=radius_hint,rms_mm=None,coverage_deg=0.,support_points=0,calibration_points=0,inlier_fraction=0.,supported=False,reason='Insufficient circular wall evidence')
             info['station_m']=float(station);quality.append(info)
             seed_ok=info['coverage_deg']>=200 and info['inlier_fraction']>=.45 and info['rms_mm'] is not None and info['rms_mm']<40
@@ -184,9 +207,12 @@ def fit(samples,guide,stations,cfg,progress,cancel,radius_hint):
             # Preserve the guide's finer bend geometry. Replacing it with
             # widely spaced fit centres would flatten the first/last bend and
             # create false millimetre departures near a window boundary.
-            knots=np.unique(np.r_[guide.s,working]);old=guide.at(knots)[0]
+            knots=merge_stations(guide.s,working);old=guide.at(knots)[0]
             delta=np.asarray(new)-guide.at(working)[0]
-            correction=CubicSpline(working,delta,axis=0,bc_type='natural')(knots)
+            # A local fit has no evidence for extrapolating a displacement
+            # along unmeasured alignment. Hold the end corrections constant.
+            local=np.clip(knots,working[0],working[-1])
+            correction=CubicSpline(working,delta,axis=0,bc_type='natural')(local)
             guide=Curve(old+correction,knots)
     offsets=np.array([q['offset'] for q in quality]);radii=np.array([q['radius'] for q in quality]);supported=np.array([q['supported'] for q in quality],bool)
     for q in quality:
@@ -207,16 +233,25 @@ def classify(p,model,cfg):
 
 def run(batches,folder,cfg,progress=lambda _:None,cancel=lambda:False,axis_rows=None,prepared_guide=None):
     cfg=settings(cfg);folder=Path(folder);started=time.monotonic();source=lambda:shape_matching.pieces(batches)
-    emit(progress,cancel,'Learning a centreline guide; every retained source point is streamed')
-    sample,total=sample_originals(source,.04,180000,progress,cancel)
-    if total<100:raise ValueError('Include a tunnel branch with both walls and crown before local-circle cleaning.')
-    if prepared_guide is not None:guide=prepared_guide;hint=None
-    elif cfg['axis_source']=='project':
+    guide=prepared_guide;hint=None
+    if guide is None and cfg['axis_source']=='project':
         a=np.asarray(axis_rows,float)
         if a.ndim!=2 or a.shape[1]<4 or len(a)<2:raise ValueError('Load a project alignment, or choose Scan-derived centreline.')
         guide=Curve(a[:,1:4]);hint=float(np.median(a[:,4])) if a.shape[1]>4 else None
-    else:
-        estimate=scan_geometry.estimate({'name':'Selected registered cloud'},None,interval=min(1.,cfg['section_m']/2),smoothing=1,progress=lambda m:emit(progress,cancel,m),prepared=(sample,total))
+    bounds=np.array([[np.inf]*3,[-np.inf]*3])
+    def measure_area():
+        for part in source():
+            p=part[1]
+            bounds[0]=np.minimum(bounds[0],p.min(axis=0))
+            bounds[1]=np.maximum(bounds[1],p.max(axis=0))
+            yield part
+    emit(progress,cancel,'1/3 Preparing the processing area for local circles')
+    sample,total=sample_originals(measure_area,.04,180000,lambda _:None,cancel)
+    if total<100:raise ValueError(f'Only {total:,} retained points are in the processing area. Include at least 100 measured points on the tunnel lining.')
+    emit(progress,cancel,f'2/3 Fitting the lining · {total:,} retained points in area')
+    if guide is None:
+        estimate=scan_geometry.estimate({'name':'Selected registered cloud'},None,interval=min(1.,cfg['section_m']/2),smoothing=1,
+            progress=lambda m:emit(progress,cancel,'2/3 '+m),prepared=(sample,total))
         a=np.asarray(estimate['rows']);p=a[:,1:4];hint=float(np.median(a[:,4]))
         # Extrapolation is only an initial guide; unsupported end fits stay
         # unselected. Real observations determine all final circle references.
@@ -227,7 +262,7 @@ def run(batches,folder,cfg,progress=lambda _:None,cancel=lambda:False,axis_rows=
     cache=Samples(folder/'circle_samples.sqlite',cfg['section_m']);low=np.inf;high=-np.inf;read=0
     try:
         for ids,p,_ in source():
-            emit(progress,cancel,f'Collecting bounded local fitting windows · {read+len(p):,}/{total:,} source points')
+            emit(progress,cancel,f'2/3 Collecting local fitting windows · {read+len(p):,}/{total:,} area points')
             s,uv,valid=guide.project(p)
             if valid.any():cache.add(p[valid],s[valid],uv[valid]);low=min(low,float(s[valid].min()));high=max(high,float(s[valid].max()))
             read+=len(p)
@@ -237,7 +272,7 @@ def run(batches,folder,cfg,progress=lambda _:None,cancel=lambda:False,axis_rows=
         stations=np.arange(math.floor(low/step)*step,math.ceil(high/step)*step+step*.1,step)
         stations=np.unique(np.clip(stations,guide.s[0],guide.s[-1]))
         if len(stations)<2:raise ValueError('Too few local windows along the centreline.')
-        model=fit(cache,guide,stations,cfg,progress,cancel,hint)
+        model=fit(cache,guide,stations,cfg,lambda m:progress('2/3 '+m),cancel,hint)
         ids_path=folder/'candidate_ids.bin';labels_path=folder/'candidate_labels.bin';flags_path=folder/'selected.bin';db_path=folder/'review.sqlite'
         db=sqlite3.connect(db_path);db.execute(shape_matching.MATCH_SCHEMA);groups={};counts=np.zeros(4,np.int64);read=matched=0
         # The preview is bounded, whereas exact candidate identities are streamed.
@@ -245,7 +280,7 @@ def run(batches,folder,cfg,progress=lambda _:None,cancel=lambda:False,axis_rows=
         try:
             with ids_path.open('wb') as out,labels_path.open('wb') as lab,flags_path.open('wb') as flags:
                 for ids,p,_ in source():
-                    emit(progress,cancel,f'Checking each original point against local circles · {read+len(p):,}/{total:,}')
+                    emit(progress,cancel,f'3/3 Checking each original point against local circles · {read+len(p):,}/{total:,} area points')
                     label,s,_=classify(p,model,cfg);counts+=np.bincount(label,minlength=4);take=np.flatnonzero((label==1)|(label==2))
                     section=np.maximum(0,np.floor((s[take]-low)/cfg['section_m']).astype(np.int64));gid=(section*2+label[take]).astype('<i4')
                     np.asarray(ids[take],'<i8').tofile(out);gid.tofile(lab);np.zeros(len(take),'u1').tofile(flags)
@@ -271,11 +306,14 @@ def run(batches,folder,cfg,progress=lambda _:None,cancel=lambda:False,axis_rows=
         warnings=['The reference follows local best-fit circles, not a design surface or survey control. Real departures, joints and non-circular lining can be candidates; review them before removal.',
                   'Fitting windows overlap by 50% and their circle centres/radii are blended. Points outside poorly supported windows remain unselected.',
                   'Restore good lining removed by earlier cleaning before fitting. This operation does not reconstruct missing measurements.']
+        if high-low<2*cfg['section_m']:
+            warnings.append(f'Measured lining spans {high-low:.2f} m along the guide with {cfg["section_m"]:g} m fitting windows. These fits share much of the same data. Review their coverage and RMS. Classification requires two supported neighbouring fits.')
         if counts[1]+counts[2]>total*.25:warnings.append('More than a quarter of the retained scan lies outside the requested band. Inspect the circles and tolerances before selecting any candidates.')
         if good<len(sections):warnings.append(f'{len(sections)-good} fitting windows failed circularity, coverage or residual checks; affected points remain unselected.')
         if not good:warnings.append('No local circle meets the chosen band and wall-coverage checks. Restore missing lining, widen the tolerance, or review the centreline. All source points remain unselected.')
         return dict(count=matched,point_ids_file=str(ids_path),labels_file=str(labels_path),selected_file=str(flags_path),review_file=str(db_path),preview_file=str(folder/'preview.npz'),circle_sections=sections,
-                    statistics=dict(input_points=total,candidate_points=matched,selected_points=0,inward_points=int(counts[1]),outward_points=int(counts[2]),within_points=int(counts[0]),unassessed_points=int(counts[3]),section_length_m=cfg['section_m'],overlap_percent=50,fit_windows=len(sections),supported_windows=good,calibration_points=len(sample),seconds=round(time.monotonic()-started,3)),
+                    statistics=dict(input_points=total,effective_bounds=bounds.tolist(),guide_range_m=[low,high],
+                        candidate_points=matched,selected_points=0,inward_points=int(counts[1]),outward_points=int(counts[2]),within_points=int(counts[0]),unassessed_points=int(counts[3]),section_length_m=cfg['section_m'],overlap_percent=50,fit_windows=len(sections),supported_windows=good,calibration_points=len(sample),seconds=round(time.monotonic()-started,3)),
                     warnings=warnings,method='Overlapping local best-fit circles in moving perpendicular centreline frames',research_dois=[])
     finally:
         cache.close()

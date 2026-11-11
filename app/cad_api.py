@@ -20,6 +20,11 @@ def context(s):
         s._cad_context_key=key;s._cad_context_token=uuid.uuid4().hex
     return s._cad_context_token
 
+def workspace(s):
+    edit=getattr(s,'PROFILE_CAD_EDIT',None)
+    if edit is not None and edit.base==(context(s),current(s)['revision']):return edit
+    return s
+
 def check(s,body):
     if body.get('context')!=context(s) or body.get('revision')!=current(s)['revision']:
         raise ValueError('The modelling workspace changed. Refresh the command and try again.')
@@ -42,6 +47,11 @@ def state(s):
     axis=s.STATE.get('axis');data['alignment']={'name':axis.name,'start':float(axis.a[0,0]),'end':float(axis.a[-1,0])} if axis is not None else None
     try:g.engines();data['engine_ready']=True
     except ValueError:data['engine_ready']=False
+    if getattr(s,'base',None) and getattr(s,'frame',None):
+        import workspace_history
+        data['profile_edit']=dict(id=s.id,name=s.name,frame=s.frame,history=workspace_history.status(s))
+        for obj in data['objects']:
+            obj['profile_nodes']=g.curve_nodes(obj,s.frame).tolist()
     return data
 
 def object_record(geometry,body,index=0):
@@ -55,7 +65,7 @@ def replace_geometry(obj,value):
     for key in GEOMETRY_KEYS:obj.pop(key,None)
     obj.update(value)
 
-def execute(data,body,progress=lambda message:None):
+def execute(data,body,progress=lambda message:None,*,profile_frame=None):
     """Compute in an isolated CAD snapshot. Caller commits only after success."""
     action=body.get('action');ids=list(dict.fromkeys(body.get('ids',[])))
     selected=[get_object(data,i) for i in ids];created=[];progress('Modelling · validating input…')
@@ -73,6 +83,11 @@ def execute(data,body,progress=lambda message:None):
     elif action=='parameters':
         if len(selected)!=1:raise ValueError('Select one model to edit its construction parameters.')
         replace_geometry(selected[0],g.update_parameters(selected[0],body.get('values',{})));created=ids
+    elif action=='curve_grip':
+        if not profile_frame or len(selected)!=1 or selected[0].get('faces'):
+            raise ValueError('Select one curve on the profile plane.')
+        value=g.curve_grip(selected[0],profile_frame,int(body.get('index',-1)),body.get('grip'),body.get('point'))
+        replace_geometry(selected[0],value);created=ids
     elif action=='vertex':
         if len(selected)!=1 or selected[0].get('faces'):raise ValueError('Select one drawn curve or point to edit its vertices.')
         o=selected[0];p=copy.deepcopy(o['vertices']);index=int(body.get('index',-1))
@@ -95,15 +110,28 @@ def execute(data,body,progress=lambda message:None):
         if not selected:raise ValueError('Select model geometry first.')
         o=selected[0]
         if action=='cut':values=g.cut(o,body.get('point'),body.get('normal'),body.get('both',True))
-        elif action=='break':values=g.break_curve(o,body.get('point'))
+        elif action=='break':
+            values=(g.break_planar_curve(o,body.get('point'),profile_frame) if profile_frame
+                    else g.break_curve(o,body.get('point')))
         elif action=='offset':values=g.offset(o,body.get('distance'),body.get('frame'))
         else:
             if len(selected)!=2:raise ValueError('Select the target first, then Ctrl-select the straight boundary line.')
-            values=[g.trim_extend(o,selected[1],body.get('frame'),action=='extend',body.get('end','end'),body.get('keep'))]
+            if profile_frame:
+                boundary=selected[1]['vertices']
+                if len(boundary)!=2 or selected[1].get('closed'):
+                    raise ValueError('Choose a straight two-point line as the cutting boundary.')
+                values=[g.trim_planar_curve(o,boundary,profile_frame,action=='extend',body.get('end','end'),body.get('keep'))]
+            else:values=[g.trim_extend(o,selected[1],body.get('frame'),action=='extend',body.get('end','end'),body.get('keep'))]
         for value in values:add(value,o['name']+' '+action)
         if action!='offset':o['visible']=False
     elif action=='join':
-        add(g.join(selected))
+        if profile_frame:
+            from tunnel_designer import join_drawing_curves
+            if len(selected)<2 or any(o['closed'] for o in selected):
+                raise ValueError('Select two or more connected open curves to join.')
+            path=join_drawing_curves([{'nodes':g.curve_nodes(o,profile_frame)} for o in selected],require_closed=False)
+            add(g.planar_curve(path['nodes'],profile_frame,path['kind']=='custom'))
+        else:add(g.join(selected))
         for o in selected:o['visible']=False
     elif action in ('remove','visibility','properties'):
         if not selected:raise ValueError('Select model geometry first.')
@@ -131,6 +159,10 @@ def execute(data,body,progress=lambda message:None):
         if row is None:data['layers'].append(dict(name=name,visible=bool(body.get('visible',True))))
         else:row['visible']=bool(body.get('visible',True))
     else:raise ValueError('Unknown modelling action.')
+    if profile_frame:
+        for obj in data['objects']:
+            if obj.get('faces'):raise ValueError('Use planar points and curves while editing a tunnel profile.')
+            g.plane_coordinates(obj['vertices'],profile_frame)
     if sum(len(o['vertices']) for o in data['objects'])>MAX_PROJECT_VERTICES:
         raise ValueError('This model exceeds the 300,000 editable-vertex budget. Reduce curve detail or split the model into projects.')
     for o in data['objects']:
@@ -305,6 +337,7 @@ def import_dxf(path,scale=1.,progress=lambda message:None):
     return out,skipped,doc.units
 
 def get(s,h,path,args):
+    s=workspace(s)
     if path=='/api/cad':h.send(state(s));return True
     if path=='/api/cad-pick':h.send(getattr(s,'_cad_pick',{}));return True
     if path=='/api/cad-download':
@@ -316,8 +349,12 @@ def get(s,h,path,args):
 
 def post(s,h,path,body):
     if path not in ('/api/cad-action','/api/cad-preview','/api/cad-export','/api/cad-import','/api/cad-pick'):return False
+    project=s;s=workspace(s)
+    profile_frame=s.frame if s is not project else None
     check(s,body)
     if s.JOB['busy']:raise ValueError('Wait for the current operation, or cancel it first.')
+    if profile_frame and path not in ('/api/cad-action','/api/cad-preview'):
+        raise ValueError('Finish the profile to return to project import, export or cloud snapping.')
     kind=body.get('spec',{}).get('kind')
     if kind in ('alignment_profile','alignment_loft','alignment_trace'):
         axis=s.STATE.get('axis')
@@ -355,7 +392,7 @@ def post(s,h,path,body):
         h.send(dict(token=token,filename='Tunnel_Model.'+fmt,bytes=len(value),saved=bool(destination),objects=len(objects)));return True
     captured=current(s)['revision'];captured_context=context(s)
     def run():
-        progress=lambda msg:s.progress(msg)
+        progress=project.progress
         if path=='/api/cad-pick':
             value=snap_cloud(s,body,progress)
             if context(s)!=captured_context:raise ValueError('Workspace changed while snapping.')
@@ -374,9 +411,10 @@ def post(s,h,path,body):
             data['last_import']=dict(name=file.name,skipped=skipped,source_units=units,scale=1 if suffix=='.json' else body.get('scale',1),objects=len(values),bundle_id=destination)
             for o in values:
                 if not any(x['name']==o['layer'] for x in data['layers']):data['layers'].append(dict(name=o['layer'],visible=True))
-        else:data=execute(data,body,progress)
+        else:data=execute(data,body,progress,profile_frame=profile_frame)
         progress('Modelling · saving geometry…')
-        if current(s)['revision']!=captured or context(s)!=captured_context:raise ValueError('The workspace changed during modelling. Result was not applied.')
+        if workspace(project) is not s or current(s)['revision']!=captured or context(s)!=captured_context:
+            raise ValueError('The workspace changed during modelling. Result was not applied.')
         commit(s,data)
     if path=='/api/cad-pick':s._cad_pick={}
-    s.start_job(run,kind='modelling');h.send(dict(started=True));return True
+    project.start_job(run,kind='modelling');h.send(dict(started=True));return True

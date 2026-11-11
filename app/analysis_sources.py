@@ -1,8 +1,8 @@
 """Read-only whole-project/bundle inputs for full-density analysis.
 
-An analysis collection is metadata only. It streams each current setup once,
-applies its virtual registration pose and deletion mask, and never builds a
-second XYZ cloud. Global indices remain reversible through source_ranges.
+An analysis collection streams the retained rows of each current setup in its
+registered frame. Scoped reads skip blocks outside the processing area. Global
+indices remain reversible through source_ranges.
 """
 from pathlib import Path
 from contextlib import ExitStack
@@ -111,13 +111,61 @@ def overlap(a, b):
     return any(str(Path(row['meta']['file']).resolve()) in aa for row in parts(b))
 
 
-def blocks(meta, counters=None, progress=lambda message: None, cancel=lambda: False, block=BLOCK):
+def scan_ids(source):
+    return [row.get('id') or source['id'] for row in parts(source['meta'])]
+
+def saved_boxes(s,source):
+    scans={x['id']:x.get('limit_box') for x in s.STATE.get('job_items',[]) if x.get('kind')=='scan'}
+    return [scans.get(ident) for ident in scan_ids(source)]
+
+def processing_scope(s,source,mode='auto',selection=None):
+    """Resolve a world-space area against the actual scans in this source."""
+    if mode not in ('auto','selection','limit','whole'):
+        raise ValueError('Choose highlighted points, saved limit boxes or the whole source.')
+    if source['kind']!='scan' or mode=='whole':return None
+    boxes=saved_boxes(s,source)
+    limits=[jobdata.selection_spec({'mode':'box',**box,'invert':False}) if box else None for box in boxes]
+    if selection is not None and mode in ('auto','selection'):
+        return dict(mode='selection',selection=jobdata.selection_spec(selection),limits=limits)
+    if mode=='selection':raise ValueError('Highlight points in the main 3D view first.')
+    if any(limits):return dict(mode='limit',selection=None,limits=limits)
+    if mode=='limit':raise ValueError('The saved limit box changed. Set the box again or choose another processing area.')
+    return None
+
+def scope_label(scope):
+    if scope:return 'Highlighted points' if scope['mode']=='selection' else 'Saved limit box'
+    return 'Whole retained source'
+
+def check_scope(s,source,scope):
+    if scope and processing_scope(s,source,scope['mode'],scope['selection'])!=scope:
+        raise ValueError('The saved processing area changed.')
+
+def blocks(meta, counters=None, progress=lambda message: None, cancel=lambda: False, block=BLOCK, *, scope=None):
     """Yield global original indices and retained finite world XYZ in owned blocks."""
     block = max(1, min(BLOCK, int(block)))
     offset = 0
     total = int(meta['count'])
-    for row in parts(meta):
+    for index,row in enumerate(parts(meta)):
         m = row['meta']; n = int(m['count'])
+        if scope:
+            limit=scope['limits'][index]
+            spec=scope['selection'] or limit
+            if spec is not None:
+                visible=dict(limit_box=limit) if scope['selection'] and limit else None
+                label=scope_label(scope);included=0
+                def report(message):
+                    if cancel():raise jobdata.Cancelled('Analysis cancelled. The previous result is unchanged.')
+                    progress(f'{label} · {message}')
+                for ids,q in jobdata.selection_rows(m,spec,report,visibility=visible):
+                    ids=ids.astype(np.uint64)+offset
+                    for start in range(0,len(ids),block):
+                        stop=min(start+block,len(ids));p=q[start:stop];batch=ids[start:stop]
+                        if counters is not None:counters['retained_points']+=len(batch)
+                        included+=len(batch)
+                        progress(f'{label} · {row["name"]} · {included:,} retained points in area')
+                        yield batch,p
+            offset+=n
+            continue
         source = Path(m['file']); mask_path = Path(m['mask_file']) if m.get('mask_file') else None
         if n < 0 or not source.is_file() or source.stat().st_size != n * 24:
             raise ValueError('An analysis source coordinate cache is missing or incomplete.')

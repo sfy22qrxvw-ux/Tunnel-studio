@@ -73,9 +73,18 @@ def progress_summary(data, elapsed):
     message=str(data.get('message') or 'Working…')
     activity,_,detail=message.partition(' · ')
     if data.get('busy'):
-        percent=percentage(message)
-        remaining=duration(elapsed*(100-percent)/percent) if percent is not None and percent>1 else 'Estimating…'
-        return 'IN PROGRESS',TITLES.get(data.get('kind'),'Processing survey data'),activity,detail,percent,remaining
+        state='IN PROGRESS'
+        if data.get('kind')=='local-circle cleaning':
+            stage=re.match(r'([1-3])/3\s',message)
+            work=re.search(r'([\d,]+)/([\d,]+) (?:source rows read|area points)',message)
+            total=int(work[2].replace(',','')) if work else 0
+            percent=min(100,int(100*int(work[1].replace(',',''))/total)) if stage and total else None
+            if stage:state=f'IN PROGRESS · STAGE {stage[1]} OF 3'
+            remaining='—'
+        else:
+            percent=percentage(message)
+            remaining=duration(elapsed*(100-percent)/percent) if percent is not None and percent>1 else 'Estimating…'
+        return state,TITLES.get(data.get('kind'),'Processing survey data'),activity,detail,percent,remaining
     if data.get('error'):
         return 'STOPPED','Operation stopped',str(data['error']),'',0,'—'
     if data.get('cancelled'):

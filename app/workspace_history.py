@@ -73,7 +73,12 @@ def configure(path,body):
     if not ctx:return
     action=body.get('action','');ctx['reset']=path=='/api/job-action' and action in ('compact_points','compact_points_batch') or path=='/api/project-action' and action in ('new','open') or path=='/api/load' and body.get('kind')=='project'
     group=body.get('history_group');ctx['group']=str(group)[:100] if group else None
-    if path in ('/api/project-browser','/api/project-folder-copy','/api/open-data-folder','/api/storage-cleanup','/api/workspace-folders','/api/measure-plane','/api/surface-preview','/api/explorer-delete-review','/api/geometry-preview','/api/geometry-discard','/api/measure-preview','/api/measure-export','/api/tunnel-design-preview','/api/cad-preview','/api/cad-export','/api/cad-pick','/api/history','/api/cancel-operation','/api/export','/api/backup-project','/api/project-action','/api/select') or action=='cancel' or path=='/api/job-action' and action in ('surface','register') or path=='/api/scan-registration' and action=='release_merge':
+    if path=='/api/cad-action':
+        import cad_api
+        ctx['server']=cad_api.workspace(ctx['server'])
+    if path=='/api/tunnel-design-action' and action in ('profile_begin','profile_finish','profile_cancel'):
+        ctx['label']=None
+    elif path in ('/api/project-browser','/api/project-folder-copy','/api/open-data-folder','/api/storage-cleanup','/api/workspace-folders','/api/measure-plane','/api/surface-preview','/api/explorer-delete-review','/api/geometry-preview','/api/geometry-discard','/api/measure-preview','/api/measure-export','/api/tunnel-design-preview','/api/cad-preview','/api/cad-export','/api/cad-pick','/api/history','/api/cancel-operation','/api/export','/api/backup-project','/api/project-action','/api/select') or action=='cancel' or path=='/api/job-action' and action in ('surface','register') or path=='/api/scan-registration' and action=='release_merge':
         ctx['label']=None
     elif path=='/api/scan-registration' and action in ('activate_setup','visual_preview','cloud_refine','cloud_status','vis_inspect','vis_preview','bundle_inspect','bundle_preview','bundle_status','bundle_control_status','bundle_control_solve','preview_link_targets'):ctx['label']=None
     elif path in ('/api/setup-camera','/api/setup-photos') and action=='open':ctx['label']=None
@@ -111,6 +116,7 @@ def request(s,path):
     try:yield
     finally:
         LOCAL.context=old
+        s=ctx['server']
         if not ctx['queued'] and ctx['before'] is not None:
             if ctx['reset']:
                 if not equal(ctx['before'],snapshot(s)):_history(s).update(undo=[],redo=[])
@@ -119,6 +125,7 @@ def request(s,path):
 def background(s,action):
     ctx=getattr(LOCAL,'context',None)
     if not ctx:return action
+    s=ctx['server']
     ctx['queued']=True
     def run():
         try:return action()

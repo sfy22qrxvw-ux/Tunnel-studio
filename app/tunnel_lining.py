@@ -41,21 +41,39 @@ def basis(axis):
 
 def coverage(q,centre):
     angle=np.mod(np.arctan2(q[:,1]-centre[1],q[:,0]-centre[0]),2*np.pi)
-    return len(np.unique(np.floor(angle/(2*np.pi)*36).astype(int)))/36
+    bins=np.floor(angle/(2*np.pi)*36).astype(int)
+    return np.count_nonzero(np.bincount(bins))/36
 
 
 def circle_seed(q,tolerance,rng):
     if len(q)>5000:q=q[rng.choice(len(q),5000,replace=False)]
-    lo,hi=np.quantile(q,[.01,.99],axis=0);span=hi-lo;best=None;score=-1
-    for _ in range(260):
-        a,b,c=q[rng.choice(len(q),3,replace=False)];m=2*np.array([b-a,c-a])
-        if abs(np.linalg.det(m))<1e-7:continue
-        centre=np.linalg.solve(m,np.array([b@b-a@a,c@c-a@a]));radius=float(np.linalg.norm(a-centre))
-        if not .2<=radius<=min(50.,max(span)*1.5) or ((centre<lo-span*.25)|(centre>hi+span*.25)).any():continue
-        residual=np.abs(np.linalg.norm(q-centre,axis=1)-radius);use=residual<tolerance
-        if use.sum()<30:continue
-        occupied=coverage(q[use],centre);value=occupied*math.sqrt(float(use.mean()))
-        if value>score:score=value;best=(centre,radius,occupied,float(use.mean()))
+    lo,hi=np.quantile(q,[.01,.99],axis=0);span=hi-lo
+    # Keep the same trials and order. Solve and score small arrays of trials
+    # together to avoid repeating per-trial NumPy setup in each fitting window.
+    trials=[rng.choice(len(q),3,replace=False) for _ in range(260)]
+    a,b,c=q[trials].transpose(1,0,2)
+    m=2*np.stack([b-a,c-a],axis=1)
+    valid=np.abs(np.linalg.det(m))>=1e-7
+    a,b,c=a[valid],b[valid],c[valid]
+    base=np.sum(a*a,axis=1)
+    rhs=np.column_stack((np.sum(b*b,axis=1)-base,np.sum(c*c,axis=1)-base))
+    centres=np.linalg.solve(m[valid],rhs[...,None])[...,0]
+    radii=np.linalg.norm(a-centres,axis=1)
+    plausible=(radii>=.2)&(radii<=min(50.,max(span)*1.5))
+    plausible&=((centres>=lo-span*.25)&(centres<=hi+span*.25)).all(1)
+    centres,radii=centres[plausible],radii[plausible]
+    best=None;score=-1
+    for start in range(0,len(radii),32):
+        centre_batch=centres[start:start+32]
+        radius_batch=radii[start:start+32]
+        dx=q[:,0]-centre_batch[:,0,None]
+        dy=q[:,1]-centre_batch[:,1,None]
+        use=np.abs(np.sqrt(dx*dx+dy*dy)-radius_batch[:,None])<tolerance
+        counts=use.sum(1)
+        for i in np.flatnonzero(counts>=30):
+            centre=centre_batch[i];fraction=float(counts[i])/len(q)
+            occupied=coverage(q[use[i]],centre);value=occupied*math.sqrt(fraction)
+            if value>score:score=value;best=(centre,float(radius_batch[i]),occupied,fraction)
     if best is None:raise ValueError('No supported tunnel outline was found. Select one branch with both walls and the crown visible, or use Remove stray points for a small wall patch.')
     return best,score
 

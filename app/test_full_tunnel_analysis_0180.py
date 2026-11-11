@@ -34,6 +34,14 @@ class FullTunnelTests(unittest.TestCase):
     def bundle(self,a,b):
         self.s.STATE['scan_links']=[dict(id='link',a=a['id'],b=b['id'],status='accepted')]
         return next(x for x in analysis_sources.collections(self.s) if x['id'].startswith(analysis_sources.BUNDLE_PREFIX))
+    def test_section_navigation_uses_the_scan_extent_on_a_long_alignment(self):
+        self.s.STATE['axis']=Alignment([dict(chainage=i,e=self.origin[0],n=self.origin[1]+i,h=self.origin[2],radius=3.5)
+            for i in range(0,5001,10)])
+        world=np.vstack([self.ring(n=36)+[0.,v,0.] for v in np.linspace(2102.,2107.,21)])
+        source=self.scan('short',world,.6)
+        path=scan_geometry.section_overview(source,self.s)['paths']['alignment']
+        self.assertEqual([path['stations'][0],path['stations'][-1]],[0.,5000.])
+        np.testing.assert_allclose(path['view_range'],[2107.,2112.],rtol=0,atol=1e-5)
     def test_full_bundle_design_includes_poses_masks_and_reversible_indices(self):
         world=self.ring();mask=np.zeros(len(world),'u1');mask[0]=1
         a=self.scan('a',world,mask=mask);b=self.scan('b',world,.6,mask)

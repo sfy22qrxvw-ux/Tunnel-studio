@@ -1,6 +1,7 @@
 """Local-circle cleaning on independently constructed curved tunnel surfaces."""
 from pathlib import Path
 import tempfile,unittest
+from types import SimpleNamespace
 from unittest import mock
 import numpy as np
 import section_circle as sc
@@ -80,6 +81,20 @@ class SectionCircleTests(unittest.TestCase):
             ids=np.fromfile(r['point_ids_file'],'<i8');self.assertFalse(((s[ids]>12)&(s[ids]<19)).any())
             self.assertGreater(r['statistics']['unassessed_points'],0);self.assertTrue(any(not q['supported'] for q in r['circle_sections']))
 
+    def test_short_crop_on_long_project_alignment_keeps_supported_lining(self):
+        s,a=np.meshgrid(np.arange(3100.04,3106.,.08),np.arange(90)*2*np.pi/90,indexing='ij')
+        offset=.018*np.sin((s-3100.)*.5)
+        p=np.column_stack((s.ravel(),(offset+2.5*np.cos(a)).ravel(),(2.5*np.sin(a)).ravel()))
+        for chainage in (np.arange(0.,5805.,5.),np.array([0.,5800.])):
+            with self.subTest(alignment_nodes=len(chainage)),tempfile.TemporaryDirectory() as tmp:
+                rows=np.column_stack((chainage,chainage,np.zeros((len(chainage),2)),np.full(len(chainage),2.5)))
+                result=sc.run(stream(p),tmp,{'axis_source':'project'},axis_rows=rows)
+                self.assertEqual(result['statistics']['input_points'],len(p))
+                self.assertGreater(result['statistics']['supported_windows'],2)
+                self.assertEqual(result['statistics']['candidate_points'],0)
+                np.testing.assert_array_equal(result['statistics']['effective_bounds'],[p.min(0),p.max(0)])
+                self.assertTrue(any('These fits share much of the same data' in text for text in result['warnings']))
+
     def test_oval_tunnel_is_not_forced_into_a_circular_deletion(self):
         s,a=np.meshgrid(np.arange(0,15,.1),np.arange(160)*2*np.pi/160,indexing='ij')
         p=np.c_[s.ravel(),(2.5*np.cos(a)).ravel(),(2.8*np.sin(a)).ravel()]
@@ -115,6 +130,55 @@ class SectionCircleTests(unittest.TestCase):
 
 
 class CircleReviewTests(unittest.TestCase):
+    def test_restricted_preview_reads_exact_rows_once_and_reuses_the_index(self):
+        import preview_index
+        import registration_pose
+
+        with tempfile.TemporaryDirectory() as tmp:
+            root=Path(tmp);path=root/'merged.xyz64';mask=root/'merged.mask'
+            step=preview_index.BLOCK;n=3*step
+            p=np.column_stack((np.arange(n),np.zeros((n,2)))).astype('<f8')
+            p.tofile(path)
+            deleted=np.zeros(n,'u1');deleted[step+25]=1;deleted.tofile(mask)
+            meta=dict(name='Registered cloud',file=str(path),count=n,mask_file=str(mask),
+                      minimum=p.min(0).tolist(),maximum=p.max(0).tolist())
+            rotation=np.array([[0.,-1.,0.],[1.,0.,0.],[0.,0.,1.]])
+            registration_pose.set_pose(meta,rotation,[100000.,400000.,0.])
+            station=400000.+step
+            selection=dict(mode='box',minimum=[99999.,station+10,-1.],maximum=[100001.,station+200,1.])
+            limit=dict(minimum=[99999.,station+20,-1.],maximum=[100001.,station+150,1.])
+            item=dict(id='merged',kind='scan',meta=meta,name=meta['name'],limit_box=limit)
+            messages=[]
+            s=SimpleNamespace(STATE={'job_items':[item]},WORK=root,progress=messages.append)
+            expected=np.arange(step+20,step+151);expected=expected[deleted[expected]==0]
+            world=registration_pose.points(meta,p[expected])
+
+            def review(batches,*args,**kwargs):
+                for _ in range(3):
+                    parts=list(batches())
+                    np.testing.assert_array_equal(np.concatenate([ids for ids,_,_ in parts]),expected)
+                    np.testing.assert_array_equal(np.concatenate([xyz for _,xyz,_ in parts]),world)
+                return {}
+
+            reads=[];read=np.fromfile
+            def observe(file,*args,**kwargs):
+                out=read(file,*args,**kwargs)
+                if getattr(file,'name',None)==str(path):reads.append(out.size//3)
+                return out
+
+            request=dict(mode='circle',source_id='merged',selection=selection,settings={'respect_view':True})
+            with mock.patch.object(sc,'run',side_effect=review), mock.patch.object(np,'fromfile',side_effect=observe),mock.patch.object(ss,'CIRCLE_SCOPE_CACHE_BYTES',1):
+                row=ss.preview(s,request)
+                self.assertEqual(row['search_area'],'selection')
+                self.assertEqual(sum(reads),n)
+                self.assertTrue(Path(str(path)+'.viewindex.npz').is_file())
+                reads.clear()
+                request.pop('selection')
+                row=ss.preview(s,request)
+                self.assertEqual(row['search_area'],'limit_box')
+                self.assertEqual(reads,[step])
+                self.assertTrue(any(f'{step:,}/{step:,} source rows read · {len(expected):,} retained' in text for text in messages))
+
     def test_separate_inward_outward_selection_and_one_step_undo_use_original_ids(self):
         fx=shape_fixture.ShapeReviewTests();fx.setUp();self.addCleanup(fx.doCleanups);row=fx.row;row['mode']='circle';row['settings']=sc.settings()
         ss.choose(fx.s,fx.body('select',operation='side',side='inward'))

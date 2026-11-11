@@ -16,11 +16,12 @@
  const panel = document.createElement('section');
  panel.id='tab-inspection';panel.className='tab inspection-panel';
  panel.innerHTML=`
-  <div class="inspection-heading"><span class="inspection-eyebrow">COMPARE / INSPECT</span><h2>Compare objects</h2><p>Choose a scan, whole registered bundle or whole project, then its comparison reference. Every retained source point is evaluated; only the 3D preview is sampled.</p></div>
+  <div class="inspection-heading"><span class="inspection-eyebrow">COMPARE / INSPECT</span><h2>Compare objects</h2><p>Choose an object and its comparison reference. Cloud comparisons use full-density retained points in the processing area.</p></div>
   <div class="inspection-form">
    <label class="inspection-wide">Comparison<select id="inspection-mode">${Object.entries(modes).map(([id,m])=>`<option value="${id}">${m.label}</option>`).join('')}</select></label>
    <p id="inspection-mode-help" class="inspection-help inspection-wide"></p>
    <label class="inspection-wide"><span>Object to inspect</span><select id="inspection-source" title="The cloud or mesh whose deviations will be measured. Comparisons run from this object towards the reference."></select><small id="inspection-source-info"></small></label>
+   <label class="inspection-wide" id="inspection-area-label">Processing area<select id="inspection-area"></select></label>
    <label class="inspection-wide"><span>Reference · compare against</span><select id="inspection-reference" title="The object treated as the reference. This comparison does not move or register either object."></select><small id="inspection-reference-info"></small></label>
    <label>Tolerance <span class="inspection-unit">mm</span><input id="inspection-tolerance" type="number" min="0.001" step="1" value="25" title="Distances within this value count as within tolerance. This changes the assessment threshold, not the measured coordinates or scan accuracy."><small>Accepted distance from the reference.</small></label>
    <label>Distance direction<select id="inspection-sign" title="Unsigned reports the size of the gap. Oriented distance also reports its direction along the reference surface normals; check the orientation before interpreting the sign."><option value="unsigned">Unsigned · gap size</option><option value="oriented">Oriented · reference normals</option></select><small id="inspection-sign-info"></small></label>
@@ -45,7 +46,7 @@
  const legend=document.createElement('div');legend.id='inspection-legend';legend.className='inspection-legend';legend.hidden=true;legend.setAttribute('aria-label','Comparison colour legend');
  byId('job-canvas').parentElement.append(legend);
  let options={sources:[],references:[]},result=null,preview=null,displayedId=null,running=false,stopping=false,loading=null,showing=false,preferredSource=null,lastResultId=null;
- const controls=['inspection-mode','inspection-source','inspection-reference','inspection-tolerance','inspection-sign','inspection-spacing','inspection-band'];
+ const controls=['inspection-mode','inspection-source','inspection-area','inspection-reference','inspection-tolerance','inspection-sign','inspection-spacing','inspection-band'];
  const isBusy=()=>running||!!(typeof busy!=='undefined'&&busy);
  const mode=()=>byId('inspection-mode').value;
  const meshSource=()=>mode().startsWith('mesh_');
@@ -102,6 +103,8 @@
   fill('inspection-reference',options.references.filter(x=>matching(x)&&String(x.id)!==byId('inspection-source').value&&!(mode()==='cloud_cloud'&&(x.source_scan_ids||[]).some(id=>(source()?.source_scan_ids||[]).includes(id)))),'No compatible reference available');
   byId('inspection-mode-help').textContent=definition.help;
   byId('inspection-source-info').textContent=description(source());
+  byId('inspection-area-label').hidden=meshSource();
+  if(!meshSource())window.AnalysisArea.configure('inspection-area',source());
   byId('inspection-reference-info').textContent=description(reference());
   byId('inspection-spacing-label').hidden=!meshSource();
   const oriented=reference()?.signed_supported===true;
@@ -116,12 +119,13 @@
   if(!Number.isFinite(value.tolerance_mm)||value.tolerance_mm<=0)throw Error('Enter a positive tolerance in millimetres.');
   if(!Number.isFinite(value.band_m)||value.band_m<0)throw Error('Enter a non-negative exclusion distance; use 0 for no exclusion.');
   if(meshSource()&&(!Number.isFinite(value.spacing_m)||value.spacing_m<=0))throw Error('Enter a positive mesh sampling spacing.');
-  if(!meshSource())value.spacing_m=.05;
+  if(!meshSource())Object.assign(value,{spacing_m:.05},window.AnalysisArea.request('inspection-area',source()));
   return value;
  }
  function changedFromResult(){
   if(!result)return false;
   let r;try{r=request();}catch(_){return true;}
+  if(!meshSource()&&(result.processing_scope?.mode||'whole')!==(r.scope==='auto'?'whole':r.scope))return true;
   return ['mode','source_id','reference_id','signed','tolerance_mm','band_m',...(meshSource()?['spacing_m']:[])].some(key=>result[key]!==undefined&&String(result[key])!==String(r[key]));
  }
  function render(){
@@ -153,6 +157,11 @@
    ['Smallest / largest',number(result.min_mm,3)+' / '+number(result.max_mm,3)+' mm'],['95% within this absolute distance',number(result.p95_absolute_mm,3)+' mm']
   ];
   if((result.mode||'').startsWith('mesh_'))rows.splice(5,0,['Surface area evaluated',number(result.evaluated_area_m2,4)+' m²'],['Surface area included',number(result.included_area_m2,4)+' m²'],['Surface area within tolerance',number(result.within_area_m2,4)+' m²']);
+  else{
+   rows[0][1]+=' of '+number(result.source_count)+' source rows';
+   rows.unshift(['Processing area',result.processing_area||'Whole retained source']);
+   if(result.effective_bounds)rows.splice(1,0,['Measured extent',window.AnalysisArea.extent(result.effective_bounds)]);
+  }
   byId('inspection-summary').innerHTML='<dl class="inspection-statistics">'+rows.map(([label,value])=>`<div><dt>${escape(label)}</dt><dd>${escape(value)}</dd></div>`).join('')+'</dl>';
   const notes=[result.note,result.statistics_note,result.sampling_note,result.quantiles_note];
   let summary=(result.mode||'').startsWith('mesh_')?'Mesh statistics describe area-weighted surface samples'+(Number.isFinite(result.spacing_m)?' at '+number(result.spacing_m*1000,2)+' mm spacing':'')+'. They do not establish the exact maximum over the continuous surface.':'Statistics use retained source points with valid included distances. The 3D preview can show fewer points.';
@@ -245,7 +254,7 @@
  byId('inspection-mode').onchange=()=>{choices();render();};
  byId('inspection-source').onchange=()=>{choices();render();};
  byId('inspection-reference').onchange=()=>{choices();render();};
- for(const id of ['inspection-tolerance','inspection-sign','inspection-spacing','inspection-band'])byId(id).onchange=render;
+ for(const id of ['inspection-area','inspection-tolerance','inspection-sign','inspection-spacing','inspection-band'])byId(id).onchange=render;
  byId('inspection-run').onclick=run;
  byId('inspection-cancel').onclick=async()=>{if(!running||stopping)return;stopping=true;render();try{await post('/api/cancel-operation',{});status('Stopping the current operation…');}catch(error){stopping=false;status('Could not request cancellation: '+error.message,true);render();}};
  byId('inspection-show').onclick=show;byId('inspection-restore').onclick=restore;

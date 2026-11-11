@@ -53,6 +53,21 @@
   return add(last,toWorld(d,f,true));
  }
  function segmentClosest(p,a,b){const d=sub(b,a),n=dot(d,d),t=n?Math.max(0,Math.min(1,dot(sub(p,a),d)/n)):0;return add(a,mul(d,t));}
+ function profileSegment(a,b,radius){
+  const dx=b[0]-a[0],dy=b[1]-a[1],length=Math.hypot(dx,dy),r=Math.abs(radius),sign=Math.sign(radius);
+  if(r<1e-10||length<1e-8||length>2*r+1e-8)return null;
+  const h=sign*Math.sqrt(Math.max(0,r*r-length*length/4))/length;
+  const centre=[(a[0]+b[0])/2-h*dy,(a[1]+b[1])/2+h*dx];
+  const angle=Math.atan2(a[1]-centre[1],a[0]-centre[0]),sweep=sign*2*Math.asin(Math.min(1,length/(2*r)));
+  const at=t=>[centre[0]+r*Math.cos(angle+sweep*t),centre[1]+r*Math.sin(angle+sweep*t)];
+  const tau=2*Math.PI,atAngle=t=>{
+   const delta=((sign*(t-angle)%tau)+tau)%tau;
+   return delta<=Math.abs(sweep)+1e-9?at(delta/Math.abs(sweep)):null;
+  };
+  const closest=p=>atAngle(Math.atan2(p[1]-centre[1],p[0]-centre[0]))||
+   (Math.hypot(p[0]-a[0],p[1]-a[1])<Math.hypot(p[0]-b[0],p[1]-b[1])?a.slice(0,2):b.slice(0,2));
+  return {centre,at,atAngle,closest,sweep};
+ }
  function segmentPixel(pixel,a,b){const dx=b[0]-a[0],dy=b[1]-a[1],n=dx*dx+dy*dy,t=n?Math.max(0,Math.min(1,((pixel[0]-a[0])*dx+(pixel[1]-a[1])*dy)/n)):0;return {t,d:Math.hypot(pixel[0]-a[0]-t*dx,pixel[1]-a[1]-t*dy)};}
  function intersection(a,b,c,d){
   const u=sub(b,a),v=sub(d,c),w=sub(a,c),uu=dot(u,u),vv=dot(v,v),uv=dot(u,v),den=uu*vv-uv*uv;
@@ -103,6 +118,6 @@
   }
   return [...found.values()].filter(row=>row.count===1||row.crease).map(row=>row.edge);
  }
- const exports={add,sub,mul,dot,cross,norm,unit,worldFrame,toWorld,toLocal,parse,planePoint,visiblePlaneGrid,constrain,segmentClosest,segmentPixel,intersection,rayTriangle,frameFromPoints,midpoint,commonFaceFrame,edges};
+ const exports={add,sub,mul,dot,cross,norm,unit,worldFrame,toWorld,toLocal,parse,planePoint,visiblePlaneGrid,constrain,segmentClosest,segmentPixel,profileSegment,intersection,rayTriangle,frameFromPoints,midpoint,commonFaceFrame,edges};
  if(typeof module!=='undefined')module.exports=exports;else window.CadMath=exports;
 })();

@@ -102,7 +102,7 @@ class MeshDesign:
         return distance,np.full(len(points),np.nan),np.isfinite(distance)
 
 
-def run(source,work,mode='alignment',axis_rows=None,reference=None,tolerance_mm=25,band_m=.5,progress=lambda s:None,cancel=lambda:False):
+def run(source,work,mode='alignment',axis_rows=None,reference=None,tolerance_mm=25,band_m=.5,progress=lambda s:None,cancel=lambda:False,*,scope=None):
     tolerance=float(tolerance_mm)/1000;band=float(band_m)
     if not np.isfinite([tolerance,band]).all() or tolerance<=0 or band<0 or (band and band<tolerance):raise ValueError('Tolerance must be positive. Comparison band must be zero (off) or at least the tolerance.')
     if mode=='alignment':design=CircularDesign(axis_rows);signed=True;design_name='Circular alignment radial deviation'
@@ -116,17 +116,24 @@ def run(source,work,mode='alignment',axis_rows=None,reference=None,tolerance_mm=
     from inspection import Quantiles, STAT_RECORD
     from project_data_layout import folder
     n=int(source['count']);work=folder(work,'analysis');work.mkdir(parents=True,exist_ok=True)
-    jobdata.room(work,n*(RECORD.itemsize+STAT_RECORD.itemsize))
+    row_bytes=RECORD.itemsize+STAT_RECORD.itemsize
+    if scope is None:jobdata.room(work,n*row_bytes)
+    area_label=analysis_sources.scope_label(scope)
     ident=uuid.uuid4().hex;path=work/(ident+'.design-results')
     temporary=work/(ident+'.design-results.tmp');statsfile=work/(ident+'.design-stats.tmp')
     used=excluded=outside=negative=positive=within=0;total=total2=0.;count=0
     minimum=math.inf;maximum=-math.inf
+    bounds=np.array([[np.inf]*3,[-np.inf]*3])
     counters=dict(retained_points=0,deleted_points=0,invalid_points=0)
     source_revision=fingerprint(source);reference_revision=fingerprint(reference) if reference else None
     try:
         with temporary.open('xb') as output,statsfile.open('xb') as stats:
-            for ids,p in analysis_sources.blocks(source,counters,progress,cancel,25000):
+            for ids,p in analysis_sources.blocks(source,counters,progress,cancel,25000,scope=scope):
                 if cancel():raise jobdata.Cancelled('Design comparison cancelled.')
+                if scope:
+                    jobdata.room(work,len(p)*row_bytes)
+                    bounds[0]=np.minimum(bounds[0],p.min(axis=0))
+                    bounds[1]=np.maximum(bounds[1],p.max(axis=0))
                 d,ch,valid=design.evaluate(p);valid&=np.isfinite(d);admitted=valid & ((np.abs(d)<=band+1e-9) if band else True)
                 record=np.empty(len(p),dtype=RECORD);record['point_id']=ids;record['xyz']=p;record['deviation_m']=d;record['chainage_m']=ch;record['status']=np.where(~valid,2,np.where(admitted,0,1));record.tofile(output);count+=len(p)
                 values=d[admitted]
@@ -134,7 +141,9 @@ def run(source,work,mode='alignment',axis_rows=None,reference=None,tolerance_mm=
                 used+=len(values);outside+=int((~valid).sum());excluded+=int((valid&~admitted).sum())
                 total+=float(values.sum());total2+=float(np.dot(values,values));within+=int((np.abs(values)<=tolerance+1e-9).sum());negative+=int((values < -tolerance-1e-9).sum());positive+=int((values > tolerance+1e-9).sum())
                 if len(values):minimum=min(minimum,float(values.min()));maximum=max(maximum,float(values.max()))
-                progress(f'Cloud vs Design: {counters["retained_points"]+counters["deleted_points"]:,} / {n:,} source points · {used:,} included')
+                if scope:progress(f'Cloud vs Design · {area_label} · {count:,} evaluated · {used:,} included')
+                else:progress(f'Cloud vs Design: {counters["retained_points"]+counters["deleted_points"]:,} / {n:,} source points · {used:,} included')
+        if scope and not count:raise ValueError('The processing area contains no retained points. Adjust the saved limit box or highlight.')
         if not used:raise ValueError('No retained points fall within this design comparison. Check units, positioning, alignment extent and comparison band.')
         quantiles=Quantiles(statsfile,used,used,minimum,maximum,False,progress,cancel)
         median=quantiles.percentile(50);p95=quantiles.percentile(95);p95abs=quantiles.percentile(95,absolute=True)
@@ -143,7 +152,9 @@ def run(source,work,mode='alignment',axis_rows=None,reference=None,tolerance_mm=
             raise ValueError('An input changed during the comparison. Run it again.')
         temporary.replace(path)
         return dict(id=ident,mode=mode,mode_label=design_name,results_file=str(path),record_count=count,source_count=n,
-            source_ranges=analysis_sources.source_ranges(source),**counters,used=used,excluded_by_band=excluded,outside_design_or_ambiguous=outside,
+            source_ranges=analysis_sources.source_ranges(source),processing_scope=scope,processing_area=area_label,
+            effective_bounds=bounds.tolist() if scope else None,
+            **counters,used=used,excluded_by_band=excluded,outside_design_or_ambiguous=outside,
             within_tolerance=within,within_percent=100*within/used,below_tolerance=negative,above_tolerance=positive,
             min_mm=minimum*1000,median_mm=median*1000,p95_mm=p95*1000,max_mm=maximum*1000,
             mean_mm=total/used*1000,rms_mm=math.sqrt(max(0.,total2/used))*1000,p95_absolute_mm=p95abs*1000,
@@ -152,7 +163,7 @@ def run(source,work,mode='alignment',axis_rows=None,reference=None,tolerance_mm=
             axis_fingerprint=axis_fingerprint(axis_rows) if mode=='alignment' else None,
             note=('Positive outside / negative inside the circular design. Nearest 3D centreline-segment radial deviation, not shortest distance to a curved or tapered surface.' if mode=='alignment' else
                   'Sign follows nearest triangle winding; flip inconsistent normals before use. Open-edge tangential signs are excluded.' if signed else 'Unsigned nearest distance to the full triangle design. No inside/outside classification.'),
-            statistics_note='Every retained finite original source point is evaluated in its registered position. Explicit comparison-band exclusions are counted. Only the 3D display is sampled; no merged cloud is created for a registered bundle.')
+            statistics_note='Every retained point in the processing area is evaluated in its registered position. The 3D display uses a sample.')
     except BaseException:
         path.unlink(missing_ok=True);raise
     finally:
@@ -190,7 +201,8 @@ def preview(result, packed=False):
     origin=(q['xyz'].min(0)+q['xyz'].max(0))/2;dev=q['deviation_m']*1000;t=result['tolerance_mm']
     colours=np.tile([.27,.8,.53],(len(q),1));colours[dev>t+1e-6]=[.96,.28,.2];colours[dev < -t-1e-6]=[.22,.53,1.]
     points=np.column_stack([q['xyz']-origin,colours])
-    return dict(origin=origin.tolist(),points=points.astype('<f4') if packed else points.tolist(),sample_count=len(q),used=result['used'],signed=result['signed'],tolerance_mm=t,deviations_mm=dev if packed else dev.tolist(),result_id=result['id'],reference_label=result.get('reference_label','Design reference'),reference_name=result.get('reference_name',''))
+    return dict(origin=origin.tolist(),points=points.astype('<f4') if packed else points.tolist(),sample_count=len(q),used=result['used'],signed=result['signed'],tolerance_mm=t,deviations_mm=dev if packed else dev.tolist(),result_id=result['id'],reference_label=result.get('reference_label','Design reference'),reference_name=result.get('reference_name',''),
+                processing_area=result.get('processing_area'),effective_bounds=result.get('effective_bounds'),record_count=result['record_count'],source_count=result.get('source_count'))
 
 
 def export_csv(result,destination):

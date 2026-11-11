@@ -60,9 +60,9 @@ def fingerprint(value):
     return hashlib.sha256(data.encode('utf8')).hexdigest()
 
 
-def cloud_batches(meta, counters, progress, cancel):
+def cloud_batches(meta, counters, progress, cancel, scope=None):
     import analysis_sources
-    for ids, q in analysis_sources.blocks(meta, counters, progress, cancel, BLOCK):
+    for ids, q in analysis_sources.blocks(meta, counters, progress, cancel, BLOCK,scope=scope):
         yield ids, q, np.ones(len(ids), dtype=np.float64)
 
 
@@ -202,10 +202,12 @@ class Quantiles:
 
 def run(source, reference, work, mode, tolerance_mm=25, band_m=0,
         signed=False, spacing_m=.05, progress=lambda message: None,
-        cancel=lambda: False):
+        cancel=lambda: False, *, scope=None):
     if mode not in MODES:
         raise ValueError('Choose a supported Cloud or Mesh comparison.')
     label, source_kind, _ = MODES[mode]
+    import analysis_sources
+    area_label=analysis_sources.scope_label(scope) if source_kind=='scan' else 'Whole source surface'
     if source.get('kind') != source_kind:
         raise ValueError(f'{label} needs a {"cloud" if source_kind == "scan" else "mesh"} to inspect.')
     tolerance, band, spacing = float(tolerance_mm) / 1000., float(band_m), float(spacing_m)
@@ -233,6 +235,7 @@ def run(source, reference, work, mode, tolerance_mm=25, band_m=0,
     total_weight = within_weight = below_weight = above_weight = evaluated_weight = 0.
     total = total2 = 0.
     minimum, maximum = math.inf, -math.inf
+    bounds=np.array([[np.inf]*3,[-np.inf]*3])
     evaluator = None
     started = time.monotonic()
     evaluating = False
@@ -258,8 +261,8 @@ def run(source, reference, work, mode, tolerance_mm=25, band_m=0,
             raise ValueError('This reference does not support the requested signed distance.')
         if source_kind == 'scan':
             source_count = int(source['meta']['count'])
-            jobdata.room(work, source_count * (RECORD.itemsize + STAT_RECORD.itemsize))
-            batches = cloud_batches(source['meta'], counters, progress, cancel)
+            if scope is None:jobdata.room(work, source_count * (RECORD.itemsize + STAT_RECORD.itemsize))
+            batches = cloud_batches(source['meta'], counters, progress, cancel, scope)
         else:
             from inspection_geometry import mesh_surface_batches
             source_count = int(source['meta'].get('triangles', 0))
@@ -278,6 +281,10 @@ def run(source, reference, work, mode, tolerance_mm=25, band_m=0,
                     raise ValueError('Inspection samples must be finite with positive weights.')
                 if not len(p):
                     continue
+                if scope:
+                    jobdata.room(work,len(p)*(RECORD.itemsize+STAT_RECORD.itemsize))
+                    bounds[0]=np.minimum(bounds[0],p.min(axis=0))
+                    bounds[1]=np.maximum(bounds[1],p.max(axis=0))
                 evaluating = True
                 try:
                     distances, valid = evaluator.evaluate(p)
@@ -317,11 +324,15 @@ def run(source, reference, work, mode, tolerance_mm=25, band_m=0,
                 evaluated_weight += float(w.sum())
                 if source_kind == 'mesh':
                     progress(f'{label} · {evaluated:,} surface samples · {used:,} included')
+                elif scope:
+                    progress(f'{label} · {area_label} · {evaluated:,} evaluated · {used:,} included')
                 else:
                     checked = counters['retained_points'] + counters['deleted_points']
                     progress(f'{label} · {checked:,} / {source_count:,} input points · {used:,} included')
                 if evaluated % (BLOCK * 8) < len(p):
                     jobdata.room(work, 4 * BLOCK * (RECORD.itemsize + STAT_RECORD.itemsize))
+        if scope and not evaluated:
+            raise ValueError('The processing area contains no retained points. Adjust the saved limit box or highlight.')
         if used == 0 or total_weight <= 0:
             raise ValueError('No valid distances remain. Check the reference, coordinates and comparison band.')
         if fingerprint(source) != initial_source or fingerprint(reference) != initial_reference:
@@ -334,7 +345,7 @@ def run(source, reference, work, mode, tolerance_mm=25, band_m=0,
         check_cancel(cancel)
         temporary.replace(final)
         sampling_note = (
-            'Every retained finite source point was evaluated; only the 3D display is sampled.'
+            'Every retained finite point in the processing area was evaluated. The 3D display uses a sample.'
             if source_kind == 'scan' else
             f'Triangle-interior surface samples at maximum spacing {spacing:g} m. '
             'Statistics and tolerance percentages are area weighted. Maximum deviation is the '
@@ -346,7 +357,8 @@ def run(source, reference, work, mode, tolerance_mm=25, band_m=0,
             reference_kind=reference.get('kind'), reference_label=label,
             reference_representation=getattr(evaluator, 'representation', 'retained measured points'),
             results_file=str(final), record_count=evaluated, source_count=source_count,
-            source_ranges=__import__('analysis_sources').source_ranges(source['meta']) if source_kind == 'scan' else [],
+            source_ranges=analysis_sources.source_ranges(source['meta']) if source_kind == 'scan' else [],
+            processing_scope=scope,processing_area=area_label,effective_bounds=bounds.tolist() if scope else None,
             evaluated=evaluated, used=used, excluded_by_band=excluded,
             outside_design_or_ambiguous=ambiguous, **counters,
             within_tolerance=within, within_percent=100. * within_weight / total_weight,
@@ -365,9 +377,9 @@ def run(source, reference, work, mode, tolerance_mm=25, band_m=0,
             note=getattr(evaluator, 'note', ''),
             sampling_note=sampling_note,
             statistics_note=('Area-weighted mesh surface samples.' if source_kind == 'mesh'
-                             else 'Full retained finite source points.') +
+                             else 'Full-density retained points in the processing area.') +
                             ' The explicit comparison band excludes points/samples from statistics. '
-                            'No automatic registration. Hidden display regions do not alter the calculation.',
+                            'Source positions are read from the project.',
             quantiles_note=('Weighted empirical-CDF quantiles of evaluated surface samples.'
                             if source_kind == 'mesh' else 'Exact linear-interpolated point percentiles.'),
             elapsed_seconds=time.monotonic() - started,

@@ -9,14 +9,16 @@ the existing atomic scan-edit and workspace Undo path. Geometric matches are
 not a trained semantic classifier, survey control or reconstructed lining.
 """
 from bisect import bisect_left
-from contextlib import ExitStack, closing
+from contextlib import ExitStack, closing, contextmanager
 from pathlib import Path
 import copy
+import errno
 import hashlib
 import json
 import math
 import shutil
 import sqlite3
+import tempfile
 import uuid
 
 import numpy as np
@@ -29,6 +31,8 @@ import scan_edits
 import shape_matching
 
 PAGE_SIZE=40
+CIRCLE_SCOPE_CACHE_BYTES=64*1024**2
+CIRCLE_INPUT=np.dtype([('id','<i8'),('xyz','<f8',(3,))])
 
 
 def review_view(row,region,sort):
@@ -112,6 +116,75 @@ def batches(item, cfg, progress, cancel=lambda:False):
             if len(ids):yield ids,p[keep],{'mode':'full'}
 
 
+@contextmanager
+def circle_source(item,cfg,selection,limit,folder,progress,cancel):
+    """Read the scoped source once, with bounded RAM and a temporary spill file."""
+    visibility=dict(item) if cfg['respect_view'] else {}
+    visibility.update(limit_box=limit if selection else None,limit_hide_outside=True)
+    area=selection or limit or visibility.get('isolate_box')
+    if area is None:
+        yield lambda:batches(item,cfg,progress,cancel)
+        return
+    cached=[]
+    cache_bytes=0
+    complete=False
+    spool=None
+    lengths=[]
+    pass_number=0
+    scope='selected points' if selection else 'saved limit box' if limit else 'filtered view'
+
+    def report(message):
+        shape_matching.emit(progress,cancel,f'{pass_number}/3 Local circles · {scope} · {message}')
+
+    with ExitStack() as files:
+        def write(ids,points):
+            rows=np.empty(len(ids),CIRCLE_INPUT)
+            rows['id'],rows['xyz']=ids,points
+            rows.tofile(spool)
+            lengths.append(len(ids))
+
+        def remember(part):
+            nonlocal cached,cache_bytes,spool
+            ids,points,_=part
+            size=len(ids)*CIRCLE_INPUT.itemsize
+            if spool is None and cache_bytes+size<=CIRCLE_SCOPE_CACHE_BYTES:
+                cached.append(part);cache_bytes+=size
+                return
+            needed=size+(cache_bytes if spool is None else 0)
+            try:
+                jobdata.room(folder,needed)
+                if spool is None:
+                    spool=files.enter_context(tempfile.TemporaryFile(dir=folder))
+                    for old_ids,old_points,_ in cached:write(old_ids,old_points)
+                    cached.clear()
+                write(ids,points)
+            except (ValueError,OSError) as error:
+                if isinstance(error,OSError) and error.errno!=errno.ENOSPC:raise
+                if spool is not None:spool.close()
+                cached=None;spool=None;lengths.clear()
+                report('Temporary space limited · subsequent stages will read the indexed area')
+
+        def read():
+            nonlocal complete,pass_number
+            pass_number+=1
+            if complete:
+                if spool is None:
+                    yield from cached
+                else:
+                    spool.seek(0)
+                    for count in lengths:
+                        rows=np.fromfile(spool,CIRCLE_INPUT,count=count)
+                        if len(rows)!=count:raise ValueError('The temporary local-circle input cache is incomplete. Preview the area again.')
+                        yield rows['id'],rows['xyz'],{'mode':'full'}
+                return
+            for ids,points in jobdata.selection_rows(item['meta'],area,report,visibility=visibility):
+                part=ids,points,{'mode':'full'}
+                if cached is not None:remember(part)
+                yield part
+            complete=cached is not None
+        yield read
+
+
 def discard(row):
     if row and row.get('folder'):shutil.rmtree(row['folder'],ignore_errors=True)
 
@@ -141,9 +214,21 @@ def review_scope(item,cfg):
 def preview(s, body):
     item=source(s,body.get('source_id'));mode=body.get('mode','shape')
     if mode not in ('shape','circle'):raise ValueError('Choose example matching or local-circle cleaning.')
+    selection=None
     if mode=='circle':
         import section_circle
         cfg=section_circle.settings(body.get('settings'));example=None
+        scope=body.get('scope','auto')
+        if scope not in ('auto','selection','limit','view','whole'):raise ValueError('Choose a local-circle processing area.')
+        if scope=='whole':cfg['respect_view']=False
+        selection=jobdata.selection_spec(body['selection']) if scope in ('auto','selection') and body.get('selection') is not None else None
+        limit=item.get('limit_box') if scope!='whole' else None
+        if limit:limit=jobdata.selection_spec({'mode':'box',**limit,'invert':False})
+        if scope=='limit' and not limit:raise ValueError('The saved limit box changed. Set the box and preview again.')
+        if scope=='selection' and selection is None:raise ValueError('Select points and reopen Local circles.')
+        if scope in ('selection','limit','view'):cfg['respect_view']=True
+        if scope=='view' and not (limit or item.get('isolate_box') or item.get('hidden_boxes')):
+            raise ValueError('The view restrictions changed. Choose the processing area again.')
     else:
         cfg=shape_matching.settings(body.get('settings'));bank=None
         if body.get('class_id'):
@@ -164,12 +249,17 @@ def preview(s, body):
     try:
         if mode=='circle':
             axis=s.STATE.get('axis');rows=np.array(axis.a,copy=True) if axis is not None else None
-            result=section_circle.run(lambda:batches(item,cfg,s.progress,cancelled),folder,cfg,s.progress,cancelled,axis_rows=rows)
+            with circle_source(item,cfg,selection,limit,folder,s.progress,cancelled) as read:
+                result=section_circle.run(read,folder,cfg,s.progress,cancelled,axis_rows=rows)
+            if 'statistics' in result:result['statistics']['source_points']=int(item['meta']['count'])
         else:result=shape_matching.run(lambda:batches(item,cfg,s.progress,cancelled),example,folder,cfg,s.progress,cancelled,
                                       bank=bank,reviewed=reviewed)
         if feature_selection.fingerprint(source(s,item['id']))!=before:
             raise ValueError('The source changed during shape matching. The previous preview is unchanged.')
-        area='limit_box' if search_limit(item,cfg) else 'view' if cfg['respect_view'] else 'whole'
+        area='whole'
+        if selection is not None:area='selection'
+        elif (limit if mode=='circle' else search_limit(item,cfg)):area='limit_box'
+        elif cfg['respect_view']:area='view'
         shape_matching.emit(s.progress,cancelled,'Local-circle candidates ready for review' if mode=='circle' else 'Shape candidates ready for review')
         row={**result,'id':uuid.uuid4().hex,'revision':uuid.uuid4().hex,'source_id':item['id'],'source_name':item['name'],
              'source_fingerprint':before,'settings':cfg,'example':example,'folder':str(folder),'mode':mode,

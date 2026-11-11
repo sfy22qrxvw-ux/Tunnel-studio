@@ -1,4 +1,15 @@
 /* Copyright (c) 2026 Damian Gulczynski. */
+.cad-profile-bar{display:flex;flex-wrap:wrap;align-items:center;gap:8px;padding:7px 10px;flex-shrink:0;background:var(--ts-theme-surface,#f1f6f8);border-bottom:1px solid var(--ts-theme-border,#cbdce1);color:var(--ts-theme-text,#244151)}
+.cad-profile-bar[hidden]{display:none}
+.cad-profile-bar>span{margin-right:auto;font-size:12px}
+.cad-profile-bar label{display:flex;align-items:center;gap:5px}
+.single-workspace.cad-profile-edit .cad-toolbar{display:flex!important}
+.single-workspace.cad-profile-edit .cad-modebar,
+.cad-profile-edit :is(.cad-tools-group:nth-child(2),.cad-tools-group:last-child,[data-cad-command="cut"],#cad-frame-button,#cad-view-lock,#cad-plane-at-view),
+.cad-profile-edit .job-cad-nav button:not([data-job-nav="pan"]):not([data-job-nav="fit"]),
+.cad-profile-edit .job-table tbody>tr:not([data-cad-row]),
+.cad-profile-edit #ribbon{display:none!important}
+.cad-profile-edit .cad-options label:has(:is(#cad-space,#cad-plane,#cad-cloud-snap)){display:none}
 .cad-modebar{display:flex;align-items:center;gap:5px;flex-shrink:0;padding:7px 10px;background:#edf3f6;border-bottom:1px solid #ccdae1;font:12px system-ui;color:#244151;min-height:38px;box-sizing:border-box}
 .cad-modebar>span{font-size:10px;letter-spacing:.1em;font-weight:700;color:#66818e;margin-right:7px}.cad-modebar button,.cad-toolbar button,.cad-toolbar select{font:12px system-ui;border:1px solid transparent;border-radius:5px;background:transparent;color:#254759;padding:6px 10px;cursor:pointer}.cad-modebar button:hover,.cad-toolbar button:hover{background:#d9e8ef}.cad-modebar button[aria-pressed=true]{background:#164e66;color:#fff;border-color:#164e66}.cad-modebar .cad-frame-button{margin-left:auto;background:#fff;border-color:#c2d3dc;max-width:220px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
 .cad-toolbar{display:flex;flex-wrap:wrap;align-items:center;gap:4px;padding:6px 8px;background:#fff;border-bottom:1px solid #d1dfe6;overflow-x:auto;flex-shrink:0}.cad-toolbar[hidden],.cad-console[hidden],#cad-properties[hidden],#cad-panel-tabs[hidden]{display:none!important}.cad-tools-group{display:flex;gap:3px;align-items:center;padding:0 8px;border-right:1px solid #dbe5e9;white-space:nowrap}.cad-tools-group:last-child{border-right:0}.cad-tools-group>span{font-size:9px;text-transform:uppercase;letter-spacing:.07em;color:#6b8391;writing-mode:vertical-rl;transform:rotate(180deg);margin-right:2px}.cad-toolbar button{padding:6px 7px}.cad-toolbar button[data-cad-command=extrude]{background:#e0f2f0;color:#075f61;font-weight:650}.cad-toolbar select{max-width:125px;border-color:#ccdae0;font-size:11px}

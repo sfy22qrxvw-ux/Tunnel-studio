@@ -6,6 +6,7 @@ import unittest
 
 import numpy as np
 import jobdata
+import preview_index
 import projects
 import registration_pose
 import registration_workspace as rw
@@ -45,6 +46,9 @@ class SelectedMerge0221Tests(unittest.TestCase):
         merged=rw.build_merge(self.s,'a',lambda _:None,source_ids=['a','b'])
         self.assertEqual(merged['meta']['count'],5)
         np.testing.assert_array_equal(np.fromfile(merged['meta']['file'],'<f8').reshape(-1,3)[:2],self.q[[0,2]])
+        meta=merged['meta']
+        self.assertTrue(Path(meta['file']+'.viewindex.npz').is_file())
+        np.testing.assert_array_equal(preview_index.cached_bounds(meta),[[self.q.min(0),self.q.max(0)]])
 
     def test_save_failure_restores_previous_scene(self):
         before=copy.deepcopy(self.s.STATE)

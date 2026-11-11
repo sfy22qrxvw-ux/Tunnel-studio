@@ -127,7 +127,9 @@ def snapshot(s):
             'rgb_available':bool(len(counts)>=4 and min(counts[1:4])>0),'intensity_available':bool(counts and counts[0]>0),
             'hidden_regions':len(x.get('hidden_boxes',[])),'isolated':bool(x.get('isolate_box')),'edit_count':len(x.get('edit_history',[])),'redo_count':len(x.get('redo_history',[])),
             'minimum':props.get('minimum'),'maximum':props.get('maximum'),'mesh_summary':m.get('mesh_summary')})
-    return {'cad_revision':__import__('cad_api').current(s)['revision'],'cad_context':__import__('cad_api').context(s),'bundles':workspace_tools.inventory(s),'items':entries,'objects':scene_objects.public(s),'cache_bytes':size,'free_bytes':shutil.disk_usage(s.WORK).free,'active_scan':s.STATE.get('active_job_scan'),'active_registration':s.STATE.get('active_job_registration'),'scan_count':sum(i['kind']=='scan' for i in entries),'mesh_count':sum(i['kind']=='mesh' for i in entries),'source_bytes':sum(i['source_bytes'] or 0 for i in entries),'data_folder':str(s.WORK)}
+    import cad_api
+    cad_workspace=cad_api.workspace(s)
+    return {'cad_revision':cad_api.current(cad_workspace)['revision'],'cad_context':cad_api.context(cad_workspace),'bundles':workspace_tools.inventory(s),'items':entries,'objects':scene_objects.public(s),'cache_bytes':size,'free_bytes':shutil.disk_usage(s.WORK).free,'active_scan':s.STATE.get('active_job_scan'),'active_registration':s.STATE.get('active_job_registration'),'scan_count':sum(i['kind']=='scan' for i in entries),'mesh_count':sum(i['kind']=='mesh' for i in entries),'source_bytes':sum(i['source_bytes'] or 0 for i in entries),'data_folder':str(s.WORK)}
 
 def _valid_selection(body):
     raw=body.get('selection',body.get('box'))

@@ -30,11 +30,22 @@ function durationText(seconds){seconds=Math.max(0,Math.round(seconds||0));const 
 function updateOperationProgress(job){
  const wrap=$('operation-progress'),bar=$('operation-progress-bar'),text=$('operation-progress-text'),stop=$('operation-cancel');if(!wrap||!bar||!text)return;
  if(!job?.busy){wrap.hidden=true;wrap.classList.remove('indeterminate');bar.style.width='0%';if(stop){stop.disabled=false;stop.textContent='Stop';}return;}
- wrap.hidden=false;const msg=String(job.message||'Working…');let percent=null,m=msg.match(/([\d,]+)\s*\/\s*([\d,]+)(?:\s+(?:source\s+)?points|\s*points|\b)/i);if(m){const a=+m[1].replace(/,/g,''),b=+m[2].replace(/,/g,'');if(b>0)percent=Math.max(.1,Math.min(100,a/b*100));}if(percent===null){m=msg.match(/(\d+(?:\.\d+)?)\s*%/);if(m)percent=Math.max(.1,Math.min(100,+m[1]));}
+ wrap.hidden=false;const msg=String(job.message||'Working…'),localCircles=job.kind==='local-circle cleaning';let percent=null;
+ if(localCircles){
+  const stage=msg.match(/^([1-3])\/3\s/),work=msg.match(/([\d,]+)\/([\d,]+) (?:source rows read|area points)/);
+  const total=work?Number(work[2].replace(/,/g,'')):0;
+  if(stage&&total)percent=Math.max(.1,Math.min(100,Number(work[1].replace(/,/g,''))/total*100));
+ }else{
+  let m=msg.match(/([\d,]+)\s*\/\s*([\d,]+)(?:\s+(?:source\s+)?points|\s*points|\b)/i);
+  if(m){const a=+m[1].replace(/,/g,''),b=+m[2].replace(/,/g,'');if(b>0)percent=Math.max(.1,Math.min(100,a/b*100));}
+  if(percent===null){m=msg.match(/(\d+(?:\.\d+)?)\s*%/);if(m)percent=Math.max(.1,Math.min(100,+m[1]));}
+ }
  const elapsed=job.started_at?Math.max(0,Date.now()/1000-job.started_at):0;let timing=elapsed?` · ${durationText(elapsed)} elapsed`:'';
- if(percent!==null&&percent>1&&elapsed>2){const remain=elapsed*(100-percent)/percent;if(Number.isFinite(remain)&&remain>0)timing+=` · about ${durationText(remain)} remaining`;}
- else if(elapsed>2)timing+=' · estimating time remaining…';
- if(percent===null){wrap.classList.add('indeterminate');bar.style.width='28%';text.textContent=`${msg}${timing}`;}else{wrap.classList.remove('indeterminate');bar.style.left='0';bar.style.width=percent.toFixed(1)+'%';text.textContent=`${Math.round(percent)}% · ${msg}${timing}`;}
+ if(!localCircles&&elapsed>2){
+  if(percent!==null&&percent>1){const remain=elapsed*(100-percent)/percent;if(Number.isFinite(remain)&&remain>0)timing+=` · about ${durationText(remain)} remaining`;}
+  else timing+=' · estimating time remaining…';
+ }
+ if(percent===null){wrap.classList.add('indeterminate');bar.style.width='28%';text.textContent=`${msg}${timing}`;}else{wrap.classList.remove('indeterminate');bar.style.left='0';bar.style.width=percent.toFixed(1)+'%';text.textContent=`${Math.round(percent)}%${localCircles?' of stage':''} · ${msg}${timing}`;}
  if(stop){stop.disabled=false;stop.textContent='Stop';}
 }
 async function poll(){
@@ -206,7 +217,18 @@ class CloudScene{
   for(const p of this.data.points){if(Math.abs(p[3])>band||!visiblePoint(p))continue;const t=Math.min(1,Math.abs(p[3])/tol),base=[.32,.70,.66],end=p[3]>0?[.96,.56,.34]:[.36,.63,.96];values.push(p[0],p[1],p[2],...(selectSpec&&insideBox(p,selectSpec)?[1,.9,.25]:base.map((v,i)=>v+(end[i]-v)*t)));}
   this.upload(this.buffer,values);this.pointCount=values.length/6;this.draw();
  }
- reset(){if(!this.data)return;const a=this.data.axis;let lo=[Infinity,Infinity,Infinity],hi=[-Infinity,-Infinity,-Infinity];for(const p of a)for(let i=0;i<3;i++){lo[i]=Math.min(lo[i],p[i]-p[4]);hi[i]=Math.max(hi[i],p[i]+p[4]);}this.target=lo.map((v,i)=>(v+hi[i])/2);this.scale=Math.max(...hi.map((v,i)=>v-lo[i]))*.63;this.yaw=-.85;this.pitch=.37;this.draw();}
+ reset(fullAlignment=false){
+  if(!this.data)return;
+  const lo=[Infinity,Infinity,Infinity],hi=[-Infinity,-Infinity,-Infinity];
+  const include=(p,r=0)=>{for(let i=0;i<3;i++){lo[i]=Math.min(lo[i],p[i]-r);hi[i]=Math.max(hi[i],p[i]+r);}};
+  if(!fullAlignment)for(const p of this.data.points)if(p.slice(0,3).every(Number.isFinite)&&visiblePoint(p))include(p);
+  if(!lo.every(Number.isFinite))for(const p of this.data.axis)include(p,p[4]);
+  if(!lo.every(Number.isFinite))return;
+  this.target=lo.map((v,i)=>(v+hi[i])/2);this.yaw=-.85;this.pitch=.37;
+  const {right,up}=this.basis(),half=hi.map((v,i)=>(v-lo[i])/2),aspect=this.c.clientWidth/Math.max(1,this.c.clientHeight);
+  const extent=axis=>half.reduce((sum,v,i)=>sum+v*Math.abs(axis[i]),0);
+  this.scale=Math.max(.25,extent(right),aspect*extent(up))*1.25;this.draw();
+ }
  section(r){this.sectionData=r;if(!this.gl||!this.data)return;const centre=r.centre.map((v,i)=>v-this.data.origin[i]),right=r.right,up=r.up,R=r.radius+Math.min(r.band,.5),colour=[.86,1,.48];let values=[];
   for(let k=0;k<96;k++)for(const t of [k/96*2*Math.PI,(k+1)/96*2*Math.PI])values.push(...centre.map((v,i)=>v+R*(Math.cos(t)*right[i]+Math.sin(t)*up[i])),...colour);
   for(const vec of [right,up])for(const sign of [-1,1])values.push(...centre.map((v,i)=>v+R*vec[i]*sign),...colour);
@@ -285,7 +307,7 @@ $('analyse').onclick=analyse;$('apply').onclick=()=>{scene.recolour();renderRing
 $('station').onchange=()=>{const v=+$('station').value;if(Number.isFinite(v)){setStation(v);analyse();}};
 let sliderTimer;$('chainage-slider').oninput=()=>{setStation(+$('chainage-slider').value);clearTimeout(sliderTimer);sliderTimer=setTimeout(analyse,220);};
 $('previous').onclick=()=>{setStation(+$('station').value-.25);analyse();};$('next').onclick=()=>{setStation(+$('station').value+.25);analyse();};
-$('exaggerate').onchange=renderProfile;$('creep-limit').onchange=renderRings;$('reset-view').onclick=()=>scene.reset();$('focus-view').onclick=()=>scene.focus();
+$('exaggerate').onchange=renderProfile;$('creep-limit').onchange=renderRings;$('reset-view').onclick=()=>scene.reset();$('reset-view-all').onclick=()=>scene.reset(true);$('focus-view').onclick=()=>scene.focus();
 $('export-section').onclick=()=>{if(result&&!busy)location.href='/api/export-section?'+reportParams();};$('export-report').onclick=()=>{if(result&&!busy)location.href='/api/report?'+reportParams();};$('export-rings').onclick=()=>{if(state?.rings.length&&!busy)location.href='/api/export-rings';};
 $('print').onclick=()=>document.querySelector('[data-tab=reports]').click();
 $('detect-joints').onclick=async()=>{try{setBusy(true);await post('/api/detect-joints',{scan_id:$('joint-source')?.value||null,start:+$('joint-start').value,end:+$('joint-end').value,pitch:+$('joint-pitch').value,bin_width:+$('joint-bin').value,threshold_mm:+$('joint-threshold').value,band:+$('joint-band').value,auto_range:$('joint-auto-range').checked,minimum_sectors:+$('joint-coverage').value});poll();}catch(e){setBusy(false);notice(e.message,true);}};

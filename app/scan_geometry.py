@@ -27,12 +27,12 @@ def section_item(s,ident):
 
 
 def chunks(meta, selection=None, clip=None):
-    import analysis_sources
-    for ids,q in analysis_sources.blocks(meta,block=pointio.CHUNK):
-        use=np.ones(len(q),dtype=bool)
-        if selection:use&=jobdata.selection_mask(q,selection)
-        if clip:use&=jobdata.selection_mask(q,{'mode':'box',**clip})
-        yield ids[use],q[use]
+    scope=None
+    if selection or clip:
+        limit=jobdata.selection_spec({'mode':'box',**clip}) if clip else None
+        scope=dict(mode='selection' if selection else 'limit',selection=selection,
+                   limits=[limit]*len(analysis_sources.parts(meta)))
+    yield from analysis_sources.blocks(meta,block=pointio.CHUNK,scope=scope)
 
 
 def sample(meta, selection=None, cap=180000, progress=lambda _: None):
@@ -148,23 +148,30 @@ def section_overview(item,s=None,selection=None):
     else:packed=jobdata._item_sample(source,40000,origin,[.3,.8,.7])
     packed=packed[np.isfinite(packed[:,:3]).all(1)]
     if len(packed)<3:raise ValueError('Too few overview points. Use the position controls or enlarge the limit box.')
-    centre,normal,_=direction(np.asarray(packed[:,:3],float)+origin)
+    world=np.asarray(packed[:,:3],float)+origin
+    centre,normal,_=direction(world)
     out=dict(source_id=item['id'],source_name=item['name'],origin=origin.tolist(),points=packed.tolist(),sample_count=len(packed),section_origin=centre.tolist(),normal=normal.tolist())
     if s is not None:
         import section_path
         token=section_revision(s,item,selection);cached=SECTION_PATHS.get(token)
         if cached is None:
             paths={};error=''
-            try:paths['tunnel']=section_path.estimate(np.asarray(packed[:,:3],float)+origin)
+            try:paths['tunnel']=section_path.estimate(world)
             except (ValueError,np.linalg.LinAlgError) as e:error=str(e)
             axis=s.STATE.get('axis')
             if axis is not None:
-                try:paths['alignment']=section_path.model(axis.a,False,'Active alignment · '+axis.name)
+                try:
+                    path=section_path.model(axis.a,False,'Active alignment · '+axis.name)
+                    chainages=axis.project(world)[:,0]
+                    chainages=chainages[np.isfinite(chainages)]
+                    if len(chainages) and (lo_ch:=float(chainages.min()))<(hi_ch:=float(chainages.max())):
+                        path['view_range']=[lo_ch,hi_ch]
+                    paths['alignment']=path
                 except ValueError:pass
             ring_error='Select points around one narrow ring, then enable Use current 3D selection.'
             if selection:
                 import section_shape
-                try:paths['ring']=section_shape.ring_path(np.asarray(packed[:,:3],float)+origin);ring_error=''
+                try:paths['ring']=section_shape.ring_path(world);ring_error=''
                 except (ValueError,np.linalg.LinAlgError) as e:ring_error=str(e)
             cached=dict(paths=paths,path_error=error,ring_error=ring_error,path_token=token)
             SECTION_PATHS[token]=cached

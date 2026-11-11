@@ -12,6 +12,7 @@ def current(s):
     try:
         source=analysis_sources.resolve(s,result['source_id'])
         if compare.fingerprint(source['meta'])!=result['source_fingerprint']:raise ValueError('Source scan changed.')
+        analysis_sources.check_scope(s,source,result.get('processing_scope'))
         if result['mode']=='alignment':
             axis=s.STATE.get('axis')
             if axis is None or compare.axis_fingerprint(axis.a)!=result['axis_fingerprint']:raise ValueError('Reference alignment changed.')
@@ -36,7 +37,8 @@ def get(s,h,path,args):
     if s.JOB['busy']:raise ValueError('Wait for the current operation to finish.')
     if path=='/api/design-sources':
         sources=analysis_sources.collections(s)+[x for x in s.STATE.get('job_items',[]) if x.get('kind')=='scan' and not x.get('merge_archived') and not x.get('merge_stale')]
-        return h.send({'sources':[dict(id=x['id'],name=x['name'],count=x['meta']['count']) for x in sources]}) or True
+        return h.send({'sources':[dict(id=x['id'],name=x['name'],count=x['meta']['count'],
+            source_scan_ids=analysis_sources.scan_ids(x),has_limit_box=any(analysis_sources.saved_boxes(s,x))) for x in sources]}) or True
     r=current(s)
     if path=='/api/design-comparison':return h.send({'result':public(r)}) or True
     if not r or r.get('stale'):raise ValueError(r.get('stale_reason') if r else 'Run Cloud vs Design first.')
@@ -60,6 +62,7 @@ def post(s,h,path,body):
     def run():
         source=analysis_sources.resolve(s,body.get('source_id'))
         if source['kind']!='scan':raise ValueError('Choose a source scan.')
+        scope=analysis_sources.processing_scope(s,source,body.get('scope','auto'),body.get('selection'))
         mode=body.get('mode','alignment');axis=s.STATE.get('axis');reference=None
         if mode=='alignment':
             if axis is None:raise ValueError('Import the circular design alignment, or choose an imported design mesh.')
@@ -70,7 +73,7 @@ def post(s,h,path,body):
         previous=s.STATE.get('design_comparison')
         result=compare.run(source['meta'],s.WORK,mode,axis.a if axis is not None else None,
             reference['meta'] if reference else None,body.get('tolerance_mm',25),body.get('band_m',.5),s.progress,
-            lambda:bool(getattr(s,'JOB_CANCEL_FILE',None) and s.JOB_CANCEL_FILE.exists()))
+            lambda:bool(getattr(s,'JOB_CANCEL_FILE',None) and s.JOB_CANCEL_FILE.exists()),scope=scope)
         result.update(source_id=source['id'],source_name=source['name'],reference_id=reference['id'] if reference else None,
                       reference_name=reference['name'] if reference else axis.name)
         estimated=mode=='alignment' and s.STATE.get('axis_provenance',{}).get('kind')=='scan_estimate'

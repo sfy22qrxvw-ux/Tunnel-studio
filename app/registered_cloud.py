@@ -4,6 +4,7 @@ from pathlib import Path
 import uuid
 import numpy as np
 import jobdata, registration_pose
+from preview_index import StreamingBoundsBuilder
 
 
 def source_state(item):
@@ -158,6 +159,7 @@ def build(s, sources, registration_id, progress=lambda message: None):
     alo = np.full(4, np.inf); ahi = -alo
     counts = np.zeros(4, dtype=np.int64)
     ranges = []
+    spatial = StreamingBoundsBuilder()
     meta = dict(name='Registered cloud', file=str(xyz), attributes_file=str(attrs))
     if any(x['meta'].get('experimental_reconstruction') for x in sources):
         from rtc360_optics import NOTICE
@@ -184,6 +186,7 @@ def build(s, sources, registration_id, progress=lambda message: None):
                         if not np.isfinite(q).all(): raise ValueError('A setup contains non-finite coordinates. The merge was not saved.')
                         a = values[start:stop][use] if values is not None else np.full((len(q), 4), np.nan, dtype='<f4')
                         q.astype('<f8', copy=False).tofile(pf); a.astype('<f4', copy=False).tofile(af)
+                        spatial.add(count, q)
                         count += len(q); lo = np.minimum(lo, q.min(0)); hi = np.maximum(hi, q.max(0))
                         finite = np.isfinite(a); counts += finite.sum(0)
                         alo = np.minimum(alo, np.where(finite, a, np.inf).min(0))
@@ -196,6 +199,7 @@ def build(s, sources, registration_id, progress=lambda message: None):
         meta.update(count=count, minimum=lo.tolist(), maximum=hi.tolist(), source_format='registered_merge',
                     attribute_counts=counts.tolist(), attribute_min=[float(v) if np.isfinite(v) else None for v in alo],
                     attribute_max=[float(v) if np.isfinite(v) else None for v in ahi], invalid_points_skipped=0)
+        spatial.finish(meta)
         jobdata.preview_cache(meta, xyz.parent, progress)
         progress(f'Merge ready · {len(sources)} setups · {count:,} full-density points')
         return dict(id=ident, kind='scan', name=meta['name'], meta=meta, visible=True, source_bytes=0,

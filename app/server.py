@@ -64,20 +64,23 @@ def restore():
     except (OSError,ValueError,KeyError,TypeError): pass
 
 _LAST_PROGRESS_WRITE=0.0
+_LAST_CIRCLE_STAGE=None
 
 def _write_job_status(throttle=False):
-    global _LAST_PROGRESS_WRITE
+    global _LAST_PROGRESS_WRITE,_LAST_CIRCLE_STAGE
     now=time.monotonic()
     # UI/native windows refresh at human rates; inner point loops can report
     # thousands of checkpoints per second. Cancellation is still checked on
     # every progress() call, and start/stop/error writes are never throttled.
-    if throttle and now-_LAST_PROGRESS_WRITE<.2:return
+    stage=JOB['message'][:3] if JOB.get('busy') and JOB.get('kind')=='local-circle cleaning' else None
+    if throttle and stage==_LAST_CIRCLE_STAGE and now-_LAST_PROGRESS_WRITE<.2:return
     try:
         payload={**JOB,'updated_at':time.time(),'pid':os.getpid()}
         temp=JOB_STATUS_FILE.with_suffix('.tmp')
         temp.write_text(json.dumps(payload,separators=(',',':')),encoding='utf8')
         os.replace(temp,JOB_STATUS_FILE)
         _LAST_PROGRESS_WRITE=now
+        _LAST_CIRCLE_STAGE=stage
     except Exception:
         pass
 
@@ -213,7 +216,7 @@ def ready(require_cloud=False):
 def status(job=None):
     a=STATE['axis']; c=STATE['cloud']
     coverage=__import__('scan_edits').analysis_range(c,STATE['derived']) if a is not None else None
-    return {'history':workspace_history.status(sys.modules[__name__]),'job_item_count':len(STATE.get('job_items',[])),'project_id':STATE.get('project_id'),'project_title':STATE.get('project_title','Untitled project'),'saved_at':STATE.get('saved_at'),'ui':STATE.get('ui',{}),'registration_ready':bool(STATE.get('registration',{}).get('cloud')),'export_ready':{k:v for k,v in (STATE.get('export_ready') or {}).items() if k!='file'},'job':JOB.copy() if job is None else job,'demo':STATE['demo'],'axis':None if a is None else {'name':a.name,'start':float(a.a[0,0]),'end':float(a.a[-1,0]),'nodes':len(a.a),'estimated':STATE.get('axis_provenance',{}).get('kind')=='scan_estimate'},
+    return {'history':workspace_history.status(cad_api.workspace(sys.modules[__name__])),'job_item_count':len(STATE.get('job_items',[])),'project_id':STATE.get('project_id'),'project_title':STATE.get('project_title','Untitled project'),'saved_at':STATE.get('saved_at'),'ui':STATE.get('ui',{}),'registration_ready':bool(STATE.get('registration',{}).get('cloud')),'export_ready':{k:v for k,v in (STATE.get('export_ready') or {}).items() if k!='file'},'job':JOB.copy() if job is None else job,'demo':STATE['demo'],'axis':None if a is None else {'name':a.name,'start':float(a.a[0,0]),'end':float(a.a[-1,0]),'nodes':len(a.a),'estimated':STATE.get('axis_provenance',{}).get('kind')=='scan_estimate'},
         'cloud':None if c is None else {k:v for k,v in c.items() if k not in ('file','mask_file','attributes_file')},'valid_points':STATE['valid_points'],'analysis_range':coverage,'active_job_scan':STATE.get('active_job_scan'),'rings':STATE['rings'],'joints':STATE.get('joints'),
         'last_backup':STATE.get('last_backup'),'structures':STATE.get('structures',[]),'selection_count':SELECTION['count'] if SELECTION else 0,'edit_count':len(STATE.get('edits',[])),'redo_count':len(STATE.get('redo',[])),'removed_points':sum(e['count'] for e in STATE.get('edits',[])), 'report_ready':STATE.get('report_ready',False),'clean_ready':STATE.get('clean_ready',False),'report_settings':STATE.get('report_settings',{}),'copyright':COPYRIGHT,'version':VERSION,'formats':['E57','LAS','LAZ','PLY','PTS','XYZ','TXT','CSV'],'mesh_capabilities':meshing.capabilities(),'analysis_tool_result':STATE.get('analysis_tool_result')}
 
@@ -394,7 +397,7 @@ class Handler(BaseHTTPRequestHandler):
             workspace_history.configure(parsed.path,body)
             if parsed.path=='/api/history':
                 if body.get('action') not in ('undo','redo'):raise ValueError('Choose Undo or Redo.')
-                with LOCK:return self.send(workspace_history.apply(sys.modules[__name__],body['action']=='redo'))
+                with LOCK:return self.send(workspace_history.apply(cad_api.workspace(sys.modules[__name__]),body['action']=='redo'))
             if parsed.path=='/api/cancel-operation':
                 if not JOB.get('busy'):raise ValueError('No long operation is currently running.')
                 JOB_CANCEL_FILE.write_text('cancel',encoding='utf8')
@@ -404,6 +407,10 @@ class Handler(BaseHTTPRequestHandler):
                 except Exception:pass
                 JOB['message']='Cancellation requested — stopping at the next safe checkpoint…';_write_job_status()
                 return self.send({'cancelling':True})
+            if parsed.path=='/api/tunnel-design-action' and body.get('action') in ('profile_begin','profile_finish','profile_cancel'):
+                with LOCK:
+                    __import__('tunnel_designer').post(sys.modules[__name__],self,parsed.path,body)
+                return
             if parsed.path.startswith('/api/tunnel-design-') and __import__('tunnel_designer').post(sys.modules[__name__],self,parsed.path,body):return
             if parsed.path=='/api/mesh-repair' and __import__('mesh_repair').post(sys.modules[__name__],self,parsed.path,body):return
             if __import__('geometry_tools').post(sys.modules[__name__],self,parsed.path,body):return

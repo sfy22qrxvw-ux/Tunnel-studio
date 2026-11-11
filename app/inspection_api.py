@@ -96,7 +96,9 @@ def options(s):
             continue
         resolved = resolve(s, item['id'])
         modes = [name for name, spec in inspection.MODES.items() if spec[1] == item['kind']]
-        sources.append(_row(resolved, modes))
+        row=_row(resolved,modes)
+        if resolved['kind']=='scan':row['has_limit_box']=any(analysis_sources.saved_boxes(s,resolved))
+        sources.append(row)
         row = _row(resolved, _reference_modes(resolved))
         if item['kind'] == 'mesh':
             row['note'] = 'Nearest distance to triangle interiors. Optional sign follows face winding.'
@@ -147,6 +149,7 @@ def current(s):
         source, reference = resolve(s, result['source_id']), resolve(s, result['reference_id'])
         if _fingerprint(s, source) != result['source_fingerprint']:
             raise ValueError('The inspected object changed.')
+        analysis_sources.check_scope(s,source,result.get('processing_scope'))
         if _fingerprint(s, reference) != result['reference_fingerprint']:
             raise ValueError('The comparison reference changed.')
         inspection.validate_result(result)
@@ -242,6 +245,7 @@ def post(s, h, path, body):
         raise ValueError('The reference type does not match the chosen comparison.')
     if mode == 'cloud_cloud' and analysis_sources.overlap(source['meta'], reference['meta']):
         raise ValueError('Source and reference contain the same scan. Choose separate scans or disjoint registered bundles.')
+    scope=analysis_sources.processing_scope(s,source,body.get('scope','auto'),body.get('selection'))
     # Snapshots hold file-backed input metadata only. Native CAD definitions
     # are already in the project and must not be duplicated into its manifest.
     snapshots = {role: copy.deepcopy(item) for role, item in
@@ -255,7 +259,7 @@ def post(s, h, path, body):
                 tolerance_mm=body.get('tolerance_mm', 25),
                 band_m=body.get('band_m', 0), signed=body.get('signed', False),
                 spacing_m=body.get('spacing_m', .05),
-                progress=s.progress, cancel=lambda: _cancelled(s))
+                progress=s.progress, cancel=lambda: _cancelled(s),scope=scope)
             result['input_snapshots'] = snapshots
             s.STATE['inspection_result'] = result
             s.save()

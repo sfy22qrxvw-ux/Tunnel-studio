@@ -2,8 +2,13 @@
 'use strict';
 (()=>{
  const dot=(a,b)=>a.reduce((sum,x,i)=>sum+x*b[i],0);
+ function pathSegment(stations,position){
+  let lo=0,hi=stations.length-1;
+  while(hi-lo>1){const mid=(lo+hi)>>1;if(stations[mid]<=position)lo=mid;else hi=mid;}
+  return lo;
+ }
  function pathFrame(path,position){
-  const s=path.stations,p=path.points;position=Math.max(s[0],Math.min(s.at(-1),position));let i=0;while(i<s.length-2&&s[i+1]<=position)i++;
+  const s=path.stations,p=path.points;position=Math.max(s[0],Math.min(s.at(-1),position));const i=pathSegment(s,position);
   const h=s[i+1]-s[i],t=(position-s[i])/h,delta=p[i].map((v,j)=>p[i+1][j]-v);let centre,normal;
   if(path.smooth){const a=path.slopes[i].map(v=>h*v),b=path.slopes[i+1].map(v=>h*v);centre=p[i].map((v,j)=>v+(-2*t**3+3*t*t)*delta[j]+(t**3-2*t*t+t)*a[j]+(t**3-t*t)*b[j]);normal=delta.map((v,j)=>((-6*t*t+6*t)*v+(3*t*t-4*t+1)*a[j]+(3*t*t-2*t)*b[j])/h);}
   else{centre=p[i].map((v,j)=>v+t*delta[j]);normal=delta.map(v=>v/h);}
@@ -28,13 +33,23 @@
    this.path=path;this.cut=path?pathFrame(path,position):null;if(this.cut)normal=this.cut.normal;
    const length=Math.hypot(...normal);if(!Number.isFinite(length)||length<1e-8){this.clear('Enter a valid cutting-plane normal.');return null;}
    const n=normal.map(v=>v/length),axes=Math.hypot(n[0],n[1])<.2?[0,2]:[0,1];
-   const key=JSON.stringify([origin,path||n,axes]);this.frame={origin:[...origin],normal:n,axes};this.position=position;this.width=width;
-   if(key!==this.key){this.key=key;this.prepare();}this.draw();return {limits:this.limits,view:axes[1]===1?'Top view · E / N':'Side view · E / H',normal:n};
+   const key=JSON.stringify([origin,path?null:n,axes]);this.frame={origin:[...origin],normal:n,axes};this.position=position;this.width=width;
+   if(key!==this.key||path!==this.fittedPath){this.key=key;this.fittedPath=path;this.prepare();}this.draw();return {limits:this.limits,view:axes[1]===1?'Top view · E / N':'Side view · E / H',normal:n};
   }
   prepare(){
    const {origin,normal,axes}=this.frame;const low=[Infinity,Infinity],high=[-Infinity,-Infinity];this.limits=[Infinity,-Infinity];
    this.points=this.data.points.map(p=>{const d=[0,1,2].map(i=>p[i]+this.data.origin[i]-origin[i]),value=dot(d,normal),xy=axes.map(i=>d[i]);this.limits=[Math.min(this.limits[0],value),Math.max(this.limits[1],value)];xy.forEach((v,i)=>{low[i]=Math.min(low[i],v);high[i]=Math.max(high[i],v);});return [...xy,...p.slice(3,6)];});
-   this.pathSamples=[];if(this.path){this.limits=[this.path.stations[0],this.path.stations.at(-1)];for(let i=0;i<this.path.stations.length-1;i++)for(let j=0;j<12;j++){const s=this.path.stations[i]+(this.path.stations[i+1]-this.path.stations[i])*j/12;this.pathSamples.push([s,...axes.map(k=>pathFrame(this.path,s).centre[k]-origin[k])]);}this.pathSamples.push([this.path.stations.at(-1),...axes.map(k=>this.path.points.at(-1)[k]-origin[k])]);}
+   this.pathSamples=[];
+   if(this.path){
+    const stations=this.path.stations;
+    this.limits=this.path.view_range||[stations[0],stations.at(-1)];
+    const add=s=>{const {centre}=pathFrame(this.path,s);this.pathSamples.push([s,...axes.map(k=>centre[k]-origin[k])]);};
+    for(let i=pathSegment(stations,this.limits[0]);i<stations.length-1&&stations[i]<this.limits[1];i++){
+     const start=Math.max(stations[i],this.limits[0]),end=Math.min(stations[i+1],this.limits[1]),steps=this.path.smooth?12:1;
+     for(let j=0;j<steps;j++)add(start+(end-start)*j/steps);
+    }
+    add(this.limits[1]);
+   }
    this.mid=low.map((v,i)=>(v+high[i])/2);this.scale=Math.min((this.canvas.width-80)/Math.max(.1,high[0]-low[0]),(this.canvas.height-90)/Math.max(.1,high[1]-low[1]));
    this.fitMid=this.mid.slice();this.fitScale=this.scale;this.backgroundDraw();
   }

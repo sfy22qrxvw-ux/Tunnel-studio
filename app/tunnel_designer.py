@@ -43,17 +43,7 @@ def distinct_stations(values):
     if len(kept)>1:kept[-1]=float(values[-1])
     return np.asarray(kept)
 
-def segment(a,b,radius=0):
-    a=np.asarray(a,float);b=np.asarray(b,float);d=b-a;length=float(np.linalg.norm(d));r=float(radius)
-    if not np.isfinite([*a,*b,r]).all() or length<1e-8:raise ValueError('Consecutive plan/profile points must be finite and different.')
-    if abs(r)<1e-10:return length,lambda f:a+f*d,lambda f:d/length
-    R=abs(r)
-    if 2*R<length-1e-8:raise ValueError(f'Arc radius {R:g} m is too small for its {length:g} m chord; use at least {length/2:g} m.')
-    sign=1 if r>0 else -1;centre=(a+b)/2+sign*np.array([-d[1],d[0]])/length*math.sqrt(max(0,R*R-length*length/4))
-    angle=math.atan2(a[1]-centre[1],a[0]-centre[0]);sweep=sign*2*math.asin(min(1,length/(2*R)))
-    def position(f):return centre+R*np.array([math.cos(angle+f*sweep),math.sin(angle+f*sweep)])
-    def tangent(f):return sign*np.array([-math.sin(angle+f*sweep),math.cos(angle+f*sweep)])
-    return abs(sweep)*R,position,tangent
+segment=g.segment
 
 def alignment(design):
     plan=np.asarray(design.get('plan'),float);vertical=np.asarray(design.get('vertical'),float)
@@ -82,7 +72,7 @@ def alignment(design):
     return stations,vertical,slopes,at
 
 
-def join_drawing_curves(parts):
+def join_drawing_curves(parts, require_closed=True):
     """Join snapped endpoints while retaining the signed radius of each edge."""
     remaining = []
     for part in parts:
@@ -118,9 +108,10 @@ def join_drawing_curves(parts):
             break
         else:
             raise ValueError('Snap the selected curve endpoints together before making a profile.')
-    if len(path) < 4 or not touches(path[0], path[-1]):
+    closed=len(path)>=4 and touches(path[0],path[-1])
+    if require_closed and not closed:
         raise ValueError('The selected lines and polylines must meet in one closed loop.')
-    return dict(kind='custom', nodes=path[:-1].tolist())
+    return dict(kind='custom' if closed else 'polyline',nodes=(path[:-1] if closed else path).tolist())
 
 
 def with_drawing_parts(profile, drawings):
@@ -159,9 +150,9 @@ def outline(profile,step_deg=5):
         points=np.array(points)
     elif kind=='cad':
         obj=profile.get('geometry')
-        if not obj:raise ValueError('Choose an existing closed CAD profile.')
-        origin,basis=g.matrix(g.closed_profile_frame(obj))
-        points=(np.asarray(obj['vertices'])-origin)@basis[:,:2]
+        if not obj or not obj.get('closed') or obj.get('faces'):raise ValueError('Choose an existing closed CAD profile.')
+        working_frame=profile.get('profile_frame') or g.closed_profile_frame(obj)
+        points=g.plane_coordinates(obj['vertices'],working_frame)
     elif kind == 'composite':
         parts = profile.get('parts') or []
         if not parts:
@@ -503,32 +494,44 @@ def get(s,h,path,args):
 def available_vertices(data, replacing=None):
     return g.MAX_PROJECT_VERTICES - sum(len(obj['vertices']) for obj in data['objects'] if obj['id'] != replacing)
 
+def preview_profiles(design):
+    profiles=[];first_error=None;error_id=None
+    for profile in design.get('profiles',[]):
+        try:
+            points=outline(with_drawing_parts(profile,design.get('drawing_objects',[])),curve_step(design.get('detail')))
+        except ValueError as exc:
+            if first_error is None:
+                first_error=f'Profile “{profile.get("name") or "Unnamed"}” · {exc}'
+                error_id=profile.get('id')
+            continue
+        profiles.append(dict(id=profile.get('id'),name=profile.get('name'),points=points.tolist()))
+    return dict(profiles=profiles,profile_error=first_error,profile_error_id=error_id)
 
 def post(s,h,path,body):
     if path not in ('/api/tunnel-design-preview','/api/tunnel-design-action'):return False
     if s.JOB.get('busy'):raise ValueError('Wait for the current operation.')
     import cad_api
+    action=body.get('action')
+    if path.endswith('action') and action in ('profile_begin','profile_finish','profile_cancel'):
+        import profile_cad
+        h.send(profile_cad.edit(s,body));return True
     if path.endswith('preview'):
         if 'operation' in body:
             h.send(profile_operation(s,body));return True
         design=body.get('design',{})
         resolved=resolve_profiles(s, design, allow_incomplete=True)
+        if body.get('profile_only') is True:
+            h.send(dict(profile_only=True,**preview_profiles(resolved)));return True
         try:
             budget = available_vertices(cad_api.current(s), body.get('model_id'))
             _,_,info=prepare(resolved, vertex_budget=budget, preview=True)
         except ValueError as exc:
             # Profiles can be edited independently of the loft range or budget.
             info=alignment_preview(design)
-            profiles=[]
-            for profile in resolved.get('profiles', []):
-                try:
-                    points=outline(with_drawing_parts(profile, resolved.get('drawing_objects', [])), curve_step(resolved.get('detail')))
-                except ValueError:
-                    continue
-                profiles.append(dict(id=profile.get('id'),name=profile.get('name'),points=points.tolist()))
+            info.update(preview_profiles(resolved))
             info.update(model_error=str(exc),range_limited=isinstance(exc,ModelRangeError),
                         profile_error_id=getattr(exc, 'profile_id', None),
-                        profiles=profiles,rings=[],centres=[])
+                        rings=[],centres=[])
         h.send(info);return True
     design=resolve_profiles(s, body.get('design',{}), allow_incomplete=True)
     cad_api.check(s,body)

@@ -323,6 +323,17 @@ def _selection_mask_validated(q,spec):
 
 def selection_ids(meta,spec,progress=lambda _:None,*,visibility=None):
     """Yield retained full-density point ids inside the exact 3D/screen selection."""
+    for ids,_,_ in _selection_batches(meta,spec,progress,visibility):
+        yield ids
+
+
+def selection_rows(meta,spec,progress=lambda _:None,*,visibility=None):
+    """Yield the same original IDs together with their positioned XYZ rows."""
+    for ids,world,keep in _selection_batches(meta,spec,progress,visibility):
+        yield ids,world[keep]
+
+
+def _selection_batches(meta,spec,progress,visibility):
     from contextlib import ExitStack
     import preview_index,registration_pose
     spec=selection_spec(spec);total=int(meta['count']);block=max(1,min(pointio.CHUNK,100000))
@@ -330,7 +341,8 @@ def selection_ids(meta,spec,progress=lambda _:None,*,visibility=None):
     limited=selection_spec({'mode':'box',**visible['limit_box']}) if visible.get('limit_box') and visible.get('limit_hide_outside',True) else None
     isolated=selection_spec(visible['isolate_box']) if visible.get('isolate_box') else None
     hidden=[selection_spec(area) for area in visible.get('hidden_boxes',[])]
-    if not preview_index.selection_possible(meta,spec):return
+    areas=[area for area in (spec,limited,isolated) if area is not None]
+    if any(not preview_index.selection_possible(meta,area) for area in areas):return
     R,t=registration_pose.get(meta);positioned=not registration_pose.is_identity(meta)
     # Use cached conservative block boxes when available. A first selection
     # builds those boxes during its exact full-density scan, avoiding the old
@@ -339,26 +351,37 @@ def selection_ids(meta,spec,progress=lambda _:None,*,visibility=None):
     boxes=preview_index.cached_bounds(meta,source_key)
     if boxes is not None:boxes=preview_index.world_boxes(meta,boxes)
     builder=preview_index.BoundsBuilder(meta,source_key) if boxes is None else None
+    def possible(bounds):
+        keep=preview_index.selection_box_mask(bounds,spec)
+        for area in areas[1:]:
+            keep&=preview_index.selection_box_mask(bounds,area)
+        return keep
     def spans():
         if boxes is None:
             yield 0,total
             return
         first=last=None
-        for start,stop in preview_index.selection_blocks(meta,spec,boxes=boxes):
+        for index in np.flatnonzero(possible(boxes)):
+            start=int(index)*preview_index.BLOCK
+            stop=min(total,start+preview_index.BLOCK)
             if last==start:last=stop
             else:
                 if first is not None:yield first,last
                 first,last=start,stop
         if first is not None:yield first,last
+    ranges=list(spans())
+    read_total=sum(stop-start for start,stop in ranges)
+    read=selected=0
+    label='Building spatial index' if builder else 'Reading indexed source blocks'
     with ExitStack() as stack:
         source=stack.enter_context(Path(meta['file']).open('rb'))
         mask=stack.enter_context(Path(meta['mask_file']).open('rb')) if meta.get('mask_file') else None
-        progress('Selecting retained points · '+('building reusable index in the same pass' if builder else 'using cached spatial index'))
-        for start,stop in spans():
+        progress(label+f' · 0/{read_total:,} source rows read · 0 retained in area')
+        for start,stop in ranges:
             for offset in range(start,stop,block):
                 count=min(block,stop-offset);source.seek(offset*24);q=np.fromfile(source,'<f8',count=count*3)
                 if q.size!=count*3:raise ValueError('The source coordinate cache is incomplete.')
-                q=q.reshape(count,3)
+                q=q.reshape(count,3);read+=count
                 if builder is not None:
                     builder.add(offset,q)
                     # Newly collected boxes include every point in this chunk
@@ -366,8 +389,8 @@ def selection_ids(meta,spec,progress=lambda _:None,*,visibility=None):
                     # may conservatively skip an entirely distant chunk before
                     # expensive lasso/brush predicates or a mask read.
                     first=offset//preview_index.BLOCK;last=(offset+count+preview_index.BLOCK-1)//preview_index.BLOCK
-                    if not preview_index.selection_box_mask(preview_index.world_boxes(meta,builder.boxes[first:last]),spec).any():
-                        progress(f'Selecting retained points: {offset+count:,} / {total:,}')
+                    if not possible(preview_index.world_boxes(meta,builder.boxes[first:last])).any():
+                        progress(f'{label} · {read:,}/{read_total:,} source rows read · {selected:,} retained in area')
                         continue
                 world=q@R.T+t if positioned else q
                 use=_selection_mask_validated(world,spec)
@@ -379,8 +402,9 @@ def selection_ids(meta,spec,progress=lambda _:None,*,visibility=None):
                     if len(kept)!=count:raise ValueError('The source exclusion mask is incomplete.')
                     use&=kept==0
                 ids=np.flatnonzero(use).astype('<i8')+offset
-                progress(f'Selecting retained points: {offset+count:,} / {total:,}')
-                if len(ids):yield ids
+                selected+=len(ids)
+                progress(f'{label} · {read:,}/{read_total:,} source rows read · {selected:,} retained in area')
+                if len(ids):yield ids,world,use
     if builder is not None:
         builder.finish()
     elif preview_index._key(meta)!=source_key:

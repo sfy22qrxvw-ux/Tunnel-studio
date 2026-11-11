@@ -3,7 +3,7 @@
 from project_data_layout import folder as asset_folder
 from pathlib import Path
 from dataclasses import asdict
-import copy, csv, html, io, json, threading, time, uuid, tempfile, hashlib
+import copy, csv, html, io, json, shutil, threading, time, uuid, tempfile, hashlib
 import numpy as np
 import editing, pointio, jobdata, registration_pose
 from surface_extraction import Settings, extract
@@ -24,6 +24,10 @@ def source(s, key):
 def same_geometry(a, b):
     return bool(a and b and all(a.get(k) == b.get(k) for k in ('file','count','mask_file'))
                 and registration_pose.revision(a)==registration_pose.revision(b))
+
+def source_item(s,key):
+    ident=s.STATE.get('surface_source_item') if key=='separate' else s.STATE.get('active_job_scan') if key=='survey' else None
+    return next((x for x in s.STATE.get('job_items',[]) if x['id']==ident and x['kind']=='scan'),None)
 
 
 def result_source_changed(s, r):
@@ -135,6 +139,8 @@ def status(s):
         row={'key':key,'label':label,'name':m['name'],'count':m['count'],
              'minimum':lo.tolist(),'maximum':hi.tolist(),
              'synthetic':bool(m.get('synthetic_surface_demo'))}
+        item=source_item(s,key)
+        row['has_limit_box']=bool(item and item.get('limit_box'))
         sources.append(row); seen.append((row,m))
     return {'sources':sources,'defaults':asdict(Settings()),'result':public_result(s,s.STATE.get('surface_result')),'job_selection':copy.deepcopy(s.STATE.get('surface_job_selection'))}
 
@@ -305,28 +311,36 @@ def _merge_block_result(r,offset,block_index):
 
 def run(s, body):
     body=copy.deepcopy(body)
-    key=body.get('source','survey');item_id=s.STATE.get('surface_source_item') if key=='separate' else s.STATE.get('active_job_scan') if key=='survey' else None
-    item=next((x for x in s.STATE.get('job_items',[]) if x['id']==item_id),None)
-    if item and item.get('limit_box') and item.get('limit_hide_outside',True):
-        limit=item['limit_box'];area=body.get('selection') or {'mode':'full'}
-        if area.get('mode')=='full':area={'mode':'box',**limit}
+    key=body.get('source','survey');item=source_item(s,key)
+    area=body.get('selection') or {'mode':'full'}
+    mode=area.get('mode','full')
+    limit=item.get('limit_box') if item else None
+    if mode=='limit_box' and not limit:
+        raise ValueError('The saved limit box changed. Set it again or choose another processing area.')
+    if limit and not (mode=='full' and body.get('ignore_limit_box') is True):
+        if mode in ('full','limit_box'):area={'mode':'box',**limit}
         else:area['clip_box']=limit
-        body['selection']=area
+    body['selection']=area
     # Small selections are collected once; later passes never rescan the source.
     mode=(body.get('selection') or {'mode':'full'}).get('mode','full')
     if mode=='full':return _run(s,body)
     key=body.get('source','survey');meta=source(s,key)
     if not meta:raise ValueError('Import or choose a source scan first.')
-    if int(meta['count'])*32>min(2*1024**3,__import__('shutil').disk_usage(s.WORK).free//5):return _run(s,body)
+    free=shutil.disk_usage(s.WORK).free
+    cache_bytes=max(0,min(2*1024**3,free//5,free-jobdata.RESERVE))
     with tempfile.TemporaryDirectory(prefix='tunnel_area_',dir=s.WORK) as folder:
-        ids_path=Path(folder)/'selected.ids';points_path=Path(folder)/'selected.xyz64';count=0;spec=None
+        ids_path=Path(folder)/'selected.ids';points_path=Path(folder)/'selected.xyz64';count=0;spec=None;cached=None
         area_batches=__import__('surface_streaming').batches if (body.get('settings') or {}).get('method')=='lining_features' else _area_batches
         with ids_path.open('wb') as idout,points_path.open('wb') as pointout:
             for ids,points,area in area_batches(s,meta,key,body['selection'],150000,CANCEL.is_set):
+                if (count+len(ids))*32>cache_bytes:break
                 jobdata.room(s.WORK,len(ids)*32);ids.astype('<i8').tofile(idout);points.astype('<f8').tofile(pointout);count+=len(ids);spec=area
                 if (body.get('settings') or {}).get('method')=='smrg':_smrg_guard(count,partial=True)
-        if count<50:raise ValueError('The selected area contains fewer than 50 retained points.')
-        return _run(s,body,(ids_path,points_path,count,spec))
+            else:
+                if count<50:raise ValueError('The selected area contains fewer than 50 retained points.')
+                cached=(ids_path,points_path,count,spec)
+        if cached:return _run(s,body,cached)
+    return _run(s,body)
 
 
 def _cached_area_batches(cached, block, cancelled):
