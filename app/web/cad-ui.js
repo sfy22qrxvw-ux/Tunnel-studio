@@ -17,6 +17,14 @@
  toolbar.innerHTML='<div class="cad-tools-group"><span>Draw</span>'+buttons([['point','Point'],['line','Line'],['polyline','Polyline'],['circle','Circle'],['arc','Arc'],['rectangle','Rectangle']])+'</div><div class="cad-tools-group"><span>3D</span>'+buttons([['extrude','Extrude'],['sweep','Sweep'],['loft','Loft'],['alignment','Along alignment']])+'<button id="cad-solid-tool" aria-label="Create a solid" title="Create a solid" aria-haspopup="menu">'+icon('cube')+'<span class="ts-tool-label">Solids ▾</span></button></div><div class="cad-tools-group"><span>Modify</span>'+buttons([['move','Move'],['cut','Cut'],['trim','Trim']])+'<button id="cad-modify-tool" aria-label="More modify tools" title="More modify tools" aria-haspopup="menu">'+icon('settings')+'<span class="ts-tool-label">More ▾</span></button></div><div class="cad-tools-group"><span>Project</span>'+buttons([['tunnel_designer','Tunnel designer'],['alignment_setup','Create / add alignment'],['ucs','Origin / axes'],['fit','Fit models'],['import','Import editable model'],['export','Export']])+'</div>';
  modebar.after(toolbar);
  const referenceToggle=el('label','cad-reference-toggle','<input id="cad-cloud-reference" type="checkbox">Cloud reference');referenceToggle.title='Show point clouds and reference meshes in Model space';referenceToggle.hidden=true;modebar.append(referenceToggle);
+ const cloudSnap=el('label','cad-reference-toggle','<input id="cad-cloud-snap" type="checkbox">Snap to cloud');
+ cloudSnap.hidden=true;cloudSnap.title='Recover a retained measured point on click when no geometry snap takes priority.';
+ modebar.append(cloudSnap);
+ const planeLock=el('button',null,'Lock to plane');
+ planeLock.id='cad-view-lock';planeLock.type='button';planeLock.hidden=true;
+ planeLock.title='Face the working plane. Drag to pan, scroll to zoom.';
+ planeLock.setAttribute('aria-pressed','false');
+ document.querySelector('.job-cad-nav').append(planeLock);
  const consoleBar=el('div','cad-console');consoleBar.hidden=true;
  consoleBar.innerHTML='<div class="cad-statusrow"><strong id="cad-active-command">MODEL</strong><span id="cad-prompt" role="status">Choose a tool or enter a command.</span><button id="cad-finish">Finish ↵</button><button id="cad-cancel">Cancel Esc</button><button id="cad-console-toggle" title="Collapse command bar" aria-expanded="true">⌄</button></div><div class="cad-inputrow"><span>Command ›</span><input id="cad-command-input" autocomplete="off" spellcheck="false" aria-label="CAD command or coordinates" placeholder="LINE · 0,0,0 · @2,0,1 · #420000,285000,100"><button id="cad-command-enter">Enter</button></div><div class="cad-options"><label>Coordinates <select id="cad-space"><option value="local">Working frame</option><option value="world">World E/N/H</option></select></label><label>Plane <select id="cad-plane"><option>XY</option><option>XZ</option><option>YZ</option></select></label><label>Lock <select id="cad-axis"><option value="">Free</option><option value="x">X</option><option value="y">Y</option><option value="z">Z</option><option value="xy">XY</option><option value="xz">XZ</option><option value="yz">YZ</option></select></label><label><input id="cad-ortho" type="checkbox">Ortho</label><label><input id="cad-snap" type="checkbox" checked>Snap</label><label title="Pause over two geometry points, then click their midpoint"><input id="cad-track" type="checkbox" checked>Track midpoint</label><button id="cad-snap-options">Snap settings</button><label><input id="cad-grid" type="checkbox">Grid</label><label>Step <input id="cad-grid-step" type="number" min="0.0001" value="1" step="0.1"> m</label><button id="cad-history-toggle">History</button><button id="cad-help">Help</button><span id="cad-coordinate-readout"></span></div><pre id="cad-history" hidden></pre>';
  document.querySelector('.job-view').after(consoleBar);
@@ -32,6 +40,17 @@
  function activeFrame(){return $c('cad-space').value==='world'?M.worldFrame():model.active_frame||M.worldFrame();}
  function drawingPlane(){return command&&(command.lockPlane||['circle','arc','rectangle'].includes(command.kind))?command.frame:workPlane();}
  function workPlane(){const f=activeFrame();return $c('cad-plane').value==='XZ'?{...f,x:f.x,y:f.z,z:M.mul(f.y,-1)}:$c('cad-plane').value==='YZ'?{...f,x:f.y,y:f.z,z:f.x}:f;}
+ function releaseViewLock(){
+  planeLock.setAttribute('aria-pressed','false');
+  if(J()?.cadScene())J().cadScene().workPlaneView=null;
+ }
+ function syncPlaneView(scene){
+  if(mode!=='Model'||planeLock.getAttribute('aria-pressed')!=='true'){
+   scene.workPlaneView=null;return;
+  }
+  const f=drawingPlane();
+  scene.workPlaneView={right:f.x,up:f.y,forward:M.mul(f.z,-1)};
+ }
  function view(){const scene=J().cadScene();return {scene,basis:scene.basis(),screenPoint:J().cadScreenPoint};}
  function say(message,error=false){$c('cad-prompt').textContent=message;$c('cad-prompt').classList.toggle('cad-error',error);}
  function log(message){history.push(message);history=history.slice(-60);$c('cad-history').textContent=history.join('\n');$c('cad-history').scrollTop=1e6;}
@@ -43,7 +62,8 @@
   if(command&&next!==mode){say('Finish the active command or press Escape before changing mode.',true);return false;}
   const previous=mode,scene=J().cadScene(),saveView=()=>({target:M.add(scene.target,J().cadOrigin()),scale:scene.scale,yaw:scene.yaw,pitch:scene.pitch});
   if(previous!==next){if(previous==='Model')modelView=saveView();else if(next==='Model'&&!J().setupCamera())cloudView=saveView();}
-  mode=next;referenceToggle.hidden=next!=='Model';document.body.classList.toggle('cad-model-mode',next==='Model');toolbar.hidden=consoleBar.hidden=tabs.hidden=next!=='Model';
+  mode=next;referenceToggle.hidden=cloudSnap.hidden=planeLock.hidden=next!=='Model';
+  if(next!=='Model')releaseViewLock();document.body.classList.toggle('cad-model-mode',next==='Model');toolbar.hidden=consoleBar.hidden=tabs.hidden=next!=='Model';
   modebar.querySelectorAll('[data-cad-mode]').forEach(b=>b.setAttribute('aria-pressed',b.dataset.cadMode===next));
   if(next==='Model'){
    if(J().setupCamera())window.SetupCameraUI?.exit(false);
@@ -98,13 +118,13 @@
   for(const [key,buffer] of [['Faces',faces],['Lines',lines],...(!previewMode?[['Points',dots]]:[])]){const b=prefix+key+'Buffer';if(!scene[b])scene[b]=scene.gl.createBuffer();scene.upload(scene[b],new Float32Array(buffer));scene[prefix+key+'Count']=buffer.length/6;}
   if(previewMode&&dots.length){const q=dots.slice(0,3),c=dots.slice(3,6),r=Math.max(.005,scene.scale*.006);const cross=[];for(let i=0;i<3;i++){const a=q.slice(),b=q.slice();a[i]-=r;b[i]+=r;cross.push(...a,...c,...b,...c);}scene.upload(scene.cadPreviewLinesBuffer,new Float32Array([...lines,...cross]));scene.cadPreviewLinesCount=(lines.length+cross.length)/6;}
  }
- function beforeDraw(){const scene=J().cadScene();scene.cadHidden=mode!=='Model';scene.modelOnly=mode==='Model'&&!$c('cad-cloud-reference').checked;document.body.classList.toggle('cad-model-only',scene.modelOnly);if(!scene.gl)return;if(mode==='Model')$c('job-empty').hidden=true;
+ function beforeDraw(){const scene=J().cadScene();syncPlaneView(scene);scene.cadHidden=mode!=='Model';scene.modelOnly=mode==='Model'&&!$c('cad-cloud-reference').checked;document.body.classList.toggle('cad-model-only',scene.modelOnly);if(!scene.gl)return;if(mode==='Model')$c('job-empty').hidden=true;
   if(dirty){const first=objects().find(effectiveVisible)?.vertices[0]||preview?.vertices?.[0]||model.active_frame?.origin||[0,0,0];if(M.norm(M.sub(first,renderOrigin))>1000){renderOrigin=first.slice();previewDirty=true;}pack(null,objects());dirty=false;}
   scene.cadTarget=M.sub(M.add(scene.target,J().cadOrigin()),renderOrigin);
   if(previewDirty){pack(null,preview?[preview]:[],true);previewDirty=false;}
  }
  function setPreview(value){preview=value;previewDirty=true;if(!objects().length&&value?.vertices?.length&&M.norm(M.sub(value.vertices[0],renderOrigin))>1000){renderOrigin=value.vertices[0].slice();dirty=true;}J().draw();}
- function screenKey(){const s=J().cadScene();return JSON.stringify([s.target,s.scale,s.yaw,s.pitch,J().cadOrigin(),canvas.clientWidth,canvas.clientHeight,model.revision]);}
+ function screenKey(){const s=J().cadScene();return JSON.stringify([s.target,s.scale,s.yaw,s.pitch,s.workPlaneView,J().cadOrigin(),canvas.clientWidth,canvas.clientHeight,model.revision]);}
  function index(){const key=screenKey();if(snapCache?.key===key)return snapCache;const grid=new Map(),edges=[];const put=(x,y,row)=>{const k=Math.floor(x/24)+','+Math.floor(y/24);if(!grid.has(k))grid.set(k,[]);grid.get(k).push(row);};
   for(const o of objects().filter(effectiveVisible)){
    const p=o.vertices,pp=p.map(J().projectWorld);for(let i=0;i<p.length;i++){const q=pp[i];if(q&&q[0]>=-24&&q[1]>=-24&&q[0]<=canvas.clientWidth+24&&q[1]<=canvas.clientHeight+24)put(q[0],q[1],{point:p[i],pixel:q,type:'endpoint',object:o});}
@@ -212,7 +232,7 @@
   }catch(e){say(e.message,true);log('! '+e.message);}
  }
  async function clickPoint(pixel){snapHit=snapped(pixel);if(!$c('cad-snap').checked||!snapSettings.cloud||snapHit){const p=currentPoint(pixel);if(!p){say('The view is edge-on to the work plane. Rotate the view or enter coordinates.',true);return;}adoptTrackedPlane();await acceptPoint(p);return;}
-  const sample=$c('cad-cloud-reference').checked?J().cadCloudPoint(pixel):null;if(!sample){const p=currentPoint(pixel);if(p)await acceptPoint(p);else say('No point on this plane. Rotate the view or enter coordinates.',true);return;}
+  const sample=$c('cad-cloud-reference').checked?J().cadCloudPoint(pixel):null;if(!sample){say('No displayed cloud point near the cursor. Zoom in, pick a point, or turn off Snap to cloud to draw on the plane.',true);return;}
   const capture=command;try{setBusy(true);await post('/api/cad-pick',{...sample,revision:model.revision,context:model.context});const result=await J().waitReady(null,{skipSync:true});if(result.cancelled)return;const found=await api('/api/cad-pick');if(command!==capture)return;if(!found.point)throw Error('No retained measured point was recovered.');log('Measured cloud point · '+found.source_id+' · index '+found.index);await acceptPoint(found.point);}catch(e){say(e.message,true);}finally{setBusy(false);}
  }
  function beginPick(count,prompt,callback){if(dialog.open)dialog.close();start('pick',{count,prompt:n=>prompt[n]||prompt[0],callback});}
@@ -250,7 +270,43 @@
   $c('cad-active-command').textContent='EXTRUDE';say('Pull the gold handle or highlighted face. Release to review; Apply keeps the extrusion; Escape cancels.');
  }
  function closeDialog(){if(!command)$c('cad-active-command').textContent='MODEL';clearTimeout(previewTimer);handleDrag=null;extrusion=null;dialog.close();dialogSpec=null;dialogPreview=null;dialogSubmit=null;previewSequence++;setPreview(null);}
- function alignmentDialog(){const alignment=model.alignment;if(!alignment)return window.AlignmentHub?.open();const profiles=objects().filter(o=>!o.faces.length&&o.vertices.length>=2);const options='<option value="design_circle">Alignment design circle</option>'+profiles.map(o=>`<option value="${esc(o.id)}">${esc(o.name)}</option>`).join('');const read=()=>({kind:$c('cad-al-output').value,profile:$c('cad-al-profile').value,end_profile:$c('cad-al-end-profile').value||null,start:scalarValue('cad-al-start'),end:scalarValue('cad-al-end'),step:scalarValue('cad-al-step'),horizontal:scalarValue('cad-al-horizontal'),vertical:scalarValue('cad-al-vertical'),rotation:scalarValue('cad-al-rotation')});openDialog('Profiles along alignment',alignment.name+' · follows the supplied alignment including grade and bends. Drawn profiles use their saved drawing frame origin; imported profiles use their centre.','<label>Create<select id="cad-al-output"><option value="alignment_loft">3D model between profiles</option><option value="alignment_profile">Profile at start chainage</option></select></label><label>Start profile<select id="cad-al-profile">'+options+'</select></label><label>End profile / transition<select id="cad-al-end-profile"><option value="">Same as start</option>'+options+'</select></label>'+scalarField('cad-al-start','Start chainage (m)',alignment.start)+scalarField('cad-al-end','End chainage (m)',Math.min(alignment.end,alignment.start+20))+scalarField('cad-al-step','Profile spacing (m)',1)+scalarField('cad-al-horizontal','Horizontal offset (m)',0)+scalarField('cad-al-vertical','Vertical offset (m)',0)+scalarField('cad-al-rotation','Profile rotation (degrees)',0)+'<p class="tiny">Choose a different end profile for a gradual transition. Place additional profiles at chosen chainages, then Ctrl-select them in order and use Loft for multiple transitions.</p>',async()=>{if(await run({action:'create',spec:read(),...defaults()}))closeDialog();},{preview:()=>previewSpec(read()),applyLabel:'Create'});if(chosen().length===1&&profiles.some(o=>o.id===chosen()[0].id)){$c('cad-al-profile').value=chosen()[0].id;dialogPreview().catch(showDialogError);}}
+ function alignmentDialog(){
+  const alignment=model.alignment;
+  if(!alignment)return window.AlignmentHub?.open();
+  const profiles=objects().filter(o=>!o.faces.length&&o.vertices.length>=2);
+  const options='<option value="design_circle">Alignment design circle</option>'+profiles.map(o=>`<option value="${esc(o.id)}">${esc(o.name)}</option>`).join('');
+  const output=()=>$c('cad-al-output').value;
+  const trace=()=>['plan','3d'].includes(output());
+  const read=()=>{
+   const kind=output(),start=scalarValue('cad-al-start');
+   if(trace())return {kind:'alignment_trace',projection:kind,start,end:scalarValue('cad-al-end')};
+   return {kind,profile:$c('cad-al-profile').value,end_profile:kind==='alignment_loft'?$c('cad-al-end-profile').value||null:null,
+    start,end:kind==='alignment_profile'?start:scalarValue('cad-al-end'),step:scalarValue('cad-al-step'),
+    horizontal:scalarValue('cad-al-horizontal'),vertical:scalarValue('cad-al-vertical'),rotation:scalarValue('cad-al-rotation')};
+  };
+  const fields='<label>Create<select id="cad-al-output"><option value="alignment_loft">3D model between profiles</option><option value="alignment_profile">CAD profile at chainage</option><option value="plan">Plan centreline · editable copy</option><option value="3d">3D centreline · editable copy</option></select></label>'+
+   scalarField('cad-al-start','Start chainage (m)',alignment.start)+
+   '<div id="cad-al-end-wrap">'+scalarField('cad-al-end','End chainage (m)',Math.min(alignment.end,alignment.start+20))+'</div>'+
+   '<div id="cad-al-profiles"><label>Start profile<select id="cad-al-profile">'+options+'</select></label>'+
+   '<div id="cad-al-loft"><label>End profile / transition<select id="cad-al-end-profile"><option value="">Same as start</option>'+options+'</select></label>'+
+   scalarField('cad-al-step','Profile spacing (m)',1)+'</div>'+
+   scalarField('cad-al-horizontal','Horizontal offset (m)',0)+scalarField('cad-al-vertical','Vertical offset (m)',0)+scalarField('cad-al-rotation','Profile rotation (degrees)',0)+'</div>'+
+   '<p id="cad-al-trace-help" class="tiny" hidden>CAD traces use the stored alignment segments. Plan places the copy at H = 0 for XY tools. 3D keeps the supplied heights.</p>';
+  openDialog('Along alignment',alignment.name,fields,async()=>{
+   if(await run({action:'create',spec:read(),...defaults()}))closeDialog();
+  },{preview:()=>previewSpec(read()),applyLabel:'Create'});
+  const update=()=>{
+   $c('cad-al-end-wrap').hidden=output()==='alignment_profile';
+   $c('cad-al-profiles').hidden=trace();
+   $c('cad-al-loft').hidden=output()!=='alignment_loft';
+   $c('cad-al-trace-help').hidden=!trace();
+  };
+  $c('cad-al-output').addEventListener('change',update);
+  update();
+  if(chosen().length===1&&profiles.some(o=>o.id===chosen()[0].id)){
+   $c('cad-al-profile').value=chosen()[0].id;dialogPreview().catch(showDialogError);
+  }
+ }
  function primitiveDialog(kind,origin=null){const f=activeFrame(),base=origin||f.origin;const read=()=>({kind,origin:vectorValue('cad-primitive-origin'),frame:f,...(kind==='box'?{size:vectorValue('cad-primitive-size')}:{radius:scalarValue('cad-primitive-radius'),segments:96,...(kind==='cylinder'?{height:scalarValue('cad-primitive-height')}:{})})});
   openDialog(nameMap[kind],'Origin is in world E/N/H. Dimensions follow the current working axes.',vectorField('cad-primitive-origin','World origin (m)',base)+(kind==='box'?vectorField('cad-primitive-size','Size along working X / Y / Z (m)',[1,1,1]):scalarField('cad-primitive-radius','Radius (m)',1)+(kind==='cylinder'?scalarField('cad-primitive-height','Height (m)',2):'')),async()=>{if(await run({action:'create',spec:read(),...defaults()}))closeDialog();},{preview:()=>previewSpec(read()),pick:()=>beginPick(1,['Pick the solid origin.'],p=>primitiveDialog(kind,p[0]))});
  }
@@ -284,7 +340,12 @@
    const r=await post('/api/cad-export',{ids,format:fmt,path,revision:model.revision,context:model.context});if(!path){const a=document.createElement('a');a.href='/api/cad-download?token='+encodeURIComponent(r.token);a.download=r.filename;a.click();}log('Exported '+r.objects+' model objects · '+fmt.toUpperCase());closeDialog();say(path?'Saved '+path:'Model export downloaded.');
   },{applyLabel:'Save as…'});}
  function importDialog(path='',bundle=null){if(mode!=='Model'&&!enter('Model'))return;const target=bundle||defaults().bundle_id;openDialog('Import editable model','Add geometry to this project, then continue in Model space.',textField('cad-import-path','DXF or Tunnel Studio model JSON path on this PC',path)+'<button id="cad-import-browse">Browse…</button><label>Destination bundle<select id="cad-import-bundle">'+([{id:'',name:'Project'},...(J().inventory().bundles||[])]).map(b=>`<option value="${esc(b.id)}" ${b.id===target?'selected':''}>${esc(b.name)}</option>`).join('')+'</select></label><label>DXF source units<select id="cad-import-scale"><option value="1">Metres</option><option value="0.001">Millimetres</option><option value="0.01">Centimetres</option><option value="0.3048">Feet</option></select></label><p class="cad-help">Model JSON keeps exact world coordinates, layers and construction parameters; it is always in metres. DXF supports points, lines, polylines, circles, arcs and 3D faces. Unsupported entities are reported. Clouds and OBJ reference meshes use the main Import button. Turn on Cloud reference to see them in Model space.</p>',async()=>{const dest=$c('cad-import-bundle').value;if(await run({...defaults(),path:$c('cad-import-path').value,scale:Number($c('cad-import-scale').value),bundle_id:dest},'/api/cad-import')){const r=model.last_import;window.WorkspaceUI?.setActiveBundle?.(dest);closeDialog();say('Imported '+r.objects+' editable objects.'+(Object.keys(r.skipped).length?' Skipped: '+JSON.stringify(r.skipped):''));fitSelected();}},{applyLabel:'Import'});$c('cad-import-browse').onclick=async()=>{if(!window.pywebview?.api?.choose_large_file){showDialogError('Paste a local DXF or model JSON file path in browser mode.');return;}const paths=await window.pywebview.api.choose_large_file('cad',false);if(paths?.length)$c('cad-import-path').value=Array.isArray(paths)?paths[0]:paths;};}
- function snapDialog(){openDialog('Snapping','Geometry snaps show a marker before placing a point. Cloud snapping recovers a measured source point on click.',Object.entries(snapSettings).map(([k,v])=>`<label class="cad-check"><input type="checkbox" data-cad-snap-setting="${k}" ${v?'checked':''}>${k==='cloud'?'Measured cloud point · on click':k[0].toUpperCase()+k.slice(1)}</label>`).join(''),()=>{dialog.querySelectorAll('[data-cad-snap-setting]').forEach(e=>snapSettings[e.dataset.cadSnapSetting]=e.checked);closeDialog();});}
+ function setCloudSnap(enabled){
+  snapSettings.cloud=enabled;$c('cad-cloud-snap').checked=enabled;
+  if(enabled){$c('cad-cloud-reference').checked=true;$c('cad-snap').checked=true;}
+  resetTracking();snapHit=null;J().draw();
+ }
+ function snapDialog(){openDialog('Snapping','Geometry snaps show a marker before placing a point. Cloud snapping recovers a measured source point on click.',Object.entries(snapSettings).map(([k,v])=>`<label class="cad-check"><input type="checkbox" data-cad-snap-setting="${k}" ${v?'checked':''}>${k==='cloud'?'Measured cloud point · on click':k[0].toUpperCase()+k.slice(1)}</label>`).join(''),()=>{dialog.querySelectorAll('[data-cad-snap-setting]').forEach(e=>{const key=e.dataset.cadSnapSetting;if(key==='cloud')setCloudSnap(e.checked);else snapSettings[key]=e.checked;});closeDialog();});}
  function help(){openDialog('Model command reference','Precise geometry in Model space. Enable Cloud reference to model against a scan.','<p><b>Coordinates:</b> X,Y,Z in the chosen frame; <b>@dX,dY,dZ</b> relative to the last point; <b>#E,N,H</b> absolute world coordinates. <b>@distance&lt;angle&lt;elevation</b> uses degrees.</p><p><b>Drawing:</b> POINT, LINE (L), POLYLINE (PL), CIRCLE (C), ARC (A), RECTANGLE (REC). Enter finishes a polyline; C closes it.</p><p><b>Midpoint tracking:</b> with Snap and Track midpoint enabled, pause over two opposite corners until each is numbered. Click the Centre marker, then choose a radius or type it. A common model face sets and locks the circle/arc/rectangle plane; the highlighted face and status show it before placement. Two standalone points alone do not define a plane: the current work plane is used when no shared face exists. Hover a third point to replace the oldest, or cancel to reset.</p><p><b>3D:</b> EXTRUDE (EX), SWEEP, LOFT, BOX, CYLINDER, SPHERE. Select profile then path for Sweep; select profiles in order for Loft.</p><p><b>Modify:</b> MOVE, COPY, ROTATE, SCALE, MIRROR, CUT, TRIM, EXTEND, OFFSET, BREAK, JOIN, ALIGN, UNION, SUBTRACT, INTERSECT.</p><p><b>Selection:</b> click models or their Project rows; Ctrl-click adds/removes. Select the subtraction base first. Trim uses the selected straight line as boundary and asks which portion to keep.</p><p><b>Navigation:</b> during a command, Shift/right-drag pans, Alt-drag orbits and the wheel zooms. Hold Ctrl while rotating for one-tenth speed. Escape cancels. Ctrl+Z / Ctrl+Y undo/redo outside text fields.</p><p><b>Origin / axes:</b> UCS changes the working frame without moving stored geometry. Faces and solids use a tessellated representation; curve detail is editable in Parameters.</p>',null);}
  async function tool(kind){if(window.TunnelDesigner?.isPicking()&&!['fit','tunnel_designer'].includes(kind))throw Error('Finish or cancel section picking first.');if(kind==='tunnel_designer')return window.TunnelDesigner.open();if(dialog.open)closeDialog();if(command){say('Finish or cancel the current command first.',true);return;}if(pending||busy)return;
   if(['point','line','polyline','circle','arc','rectangle'].includes(kind))return start(kind);
@@ -294,7 +355,7 @@ if(kind==='alignment_setup')return window.AlignmentHub?.open();if(kind==='alignm
   if(kind==='loft'){const list=selectProfiles();if(list.length<2)throw Error('Ctrl-select at least two profiles in loft order.');return run({action:'create',spec:{kind,profiles:list.map(o=>o.id)},...defaults()});}
   if(['move','copy'].includes(kind))return moveCopy(kind);if(['rotate','scale','mirror'].includes(kind))return transformDialog(kind);if(kind==='cut')return cutDialog();
   if(['union','subtract','intersect','join'].includes(kind))return run({action:kind,ids:[...selected],...defaults()});
-  if(kind==='trim'){if(selected.size!==2)throw Error('Select the target first, then Ctrl-select the straight boundary line.');const ids=[...selected],f=workPlane();return start('trim',{count:1,prompt:()=> 'Pick or type a point on the portion you want to KEEP.',callback:p=>run({action:kind,ids,keep:p[0],frame:f,...defaults()})});}
+  if(kind==='trim'){if(selected.size!==2)throw Error('Select the target first, then Ctrl-select a straight two-point boundary line in the same plane.');const ids=[...selected],f=workPlane();return start('trim',{count:1,prompt:()=> 'Pick or type a point on the portion to keep. The straight boundary is extended both ways.',callback:p=>run({action:kind,ids,keep:p[0],frame:f,...defaults()})});}
   if(kind==='extend'){if(selected.size!==2)throw Error('Select target first, then the straight boundary line.');const ids=[...selected],f=workPlane();return openDialog('Extend to boundary','The boundary is treated as an infinite straight line in the work plane.','<label>Endpoint<select id="cad-extend-end"><option value="end">Last vertex</option><option value="start">First vertex</option></select></label>',async()=>{if(await run({action:kind,ids,frame:f,end:$c('cad-extend-end').value,...defaults()}))closeDialog();});}
   if(kind==='break'){if(selected.size!==1)throw Error('Select one line or polyline.');const ids=[...selected];return start('break',{count:1,prompt:()=> 'Pick the break location on the selected curve.',callback:p=>run({action:kind,ids,point:p[0],...defaults()})});}
   if(kind==='offset'){if(selected.size!==1)throw Error('Select one profile.');return openDialog('Offset profile','Positive expands a closed profile; positive offsets an open curve to its left.',scalarField('cad-offset-distance','Distance (m)',.1),async()=>{if(await run({action:kind,ids:[...selected],distance:scalarValue('cad-offset-distance'),frame:workPlane(),...defaults()}))closeDialog();});}
@@ -325,7 +386,7 @@ if(kind==='alignment_setup')return window.AlignmentHub?.open();if(kind==='alignm
  $c('cad-workspace-import').onclick=()=>window.TunnelRibbon?.openImport('scan');
  $c('cad-workspace-export').onclick=e=>window.WorkspaceUI?.exportMenu(e);
  for(const [id,key,label] of [['cad-finish','check','Finish command (Enter)'],['cad-cancel','close','Cancel command (Escape)'],['cad-command-enter','enter','Submit command (Enter)'],['cad-snap-options','target','Snap settings'],['cad-history-toggle','history','Command history'],['cad-help','help','Model command help']])window.ToolIcons.paint($c(id),key,label,({'cad-finish':'Finish','cad-cancel':'Cancel','cad-snap-options':'Snap settings','cad-history-toggle':'History','cad-help':'Help'})[id]);
- document.querySelectorAll('[data-job-nav]').forEach(b=>window.ToolIcons.paint(b,({iso:'cube'})[b.dataset.jobNav]||b.dataset.jobNav,b.title||b.textContent,({iso:'Iso',fit:'Fit',top:'Top',front:'Front',right:'Right',orbit:'Orbit',pan:'Pan'})[b.dataset.jobNav]));
+ document.querySelectorAll('[data-job-nav]').forEach(b=>window.ToolIcons.paint(b,({iso:'cube'})[b.dataset.jobNav]||b.dataset.jobNav,b.title||b.textContent,({iso:'Iso',fit:'Fit',top:'Plan',front:'Front',right:'Side',orbit:'Orbit',pan:'Pan'})[b.dataset.jobNav]));
  tabs.querySelectorAll('button').forEach(b=>b.onclick=()=>setPanel(b.dataset.cadTab==='properties'));
  $c('cad-frame-button').onclick=()=>guard(()=>{if(mode!=='Model')enter('Model');frameDialog();});$c('cad-command-enter').onclick=()=>guard(input);$c('cad-finish').onclick=()=>guard(()=>finish());$c('cad-cancel').onclick=()=>cancel();
  const shortCommandWindow=matchMedia('(max-height:650px)');let commandBarChoice=null;
@@ -333,8 +394,17 @@ if(kind==='alignment_setup')return window.AlignmentHub?.open();if(kind==='alignm
  const fitCommandBar=()=>{if(commandBarChoice===null)setCommandBarCollapsed(shortCommandWindow.matches);};
  $c('cad-console-toggle').onclick=()=>{commandBarChoice=!consoleBar.classList.contains('collapsed');setCommandBarCollapsed(commandBarChoice);};
  shortCommandWindow.addEventListener('change',fitCommandBar);fitCommandBar();
- $c('cad-cloud-reference').onchange=()=>{stopHover();J().draw();say($c('cad-cloud-reference').checked?'Cloud reference visible in Model space.':'Model space · clouds and reference meshes hidden.');};
- for(const id of ['cad-track','cad-snap'])$c(id).onchange=()=>{resetTracking();snapHit=null;J().draw();};
+ planeLock.onclick=()=>{
+  if(planeLock.getAttribute('aria-pressed')==='true')releaseViewLock();
+  else{
+   const f=drawingPlane();
+   J().faceWorkPlane(f.z);planeLock.setAttribute('aria-pressed','true');
+  }
+  snapHit=null;J().draw();
+ };
+ $c('cad-cloud-snap').onchange=e=>setCloudSnap(e.target.checked);
+ $c('cad-cloud-reference').onchange=()=>{if(!$c('cad-cloud-reference').checked)setCloudSnap(false);stopHover();J().draw();say($c('cad-cloud-reference').checked?'Cloud reference visible in Model space.':'Model space · clouds and reference meshes hidden.');};
+ for(const id of ['cad-track','cad-snap'])$c(id).onchange=()=>{if(id==='cad-snap'&&!$c(id).checked)setCloudSnap(false);resetTracking();snapHit=null;J().draw();};
  $c('cad-history-toggle').onclick=()=>$c('cad-history').hidden=!$c('cad-history').hidden;$c('cad-snap-options').onclick=snapDialog;$c('cad-help').onclick=help;
  $c('cad-command-input').onkeydown=e=>{if(e.key==='Enter'){e.preventDefault();e.stopPropagation();guard(input);}if(e.key==='Escape'){e.preventDefault();cancel();}if(e.key==='ArrowUp'&&!command){e.preventDefault();e.target.value=lastCommand;}};
  for(const id of ['cad-space','cad-plane'])$c(id).onchange=()=>{if(command){$c(id).value=command[id==='cad-space'?'space':'plane']|| (id==='cad-space'?'local':'XY');say('Finish or cancel the command before changing its coordinate frame.',true);}else{snapHit=null;J().draw();}};
@@ -346,6 +416,6 @@ if(kind==='alignment_setup')return window.AlignmentHub?.open();if(kind==='alignm
  titleBar.addEventListener('pointerdown',e=>{if(e.button!==0||dialog.classList.contains('detached-source'))return;const r=dialog.getBoundingClientRect();dialogDrag={x:e.clientX-r.left,y:e.clientY-r.top};titleBar.setPointerCapture(e.pointerId);e.preventDefault();});
  titleBar.addEventListener('pointermove',e=>{if(!dialogDrag)return;dialog.style.position='fixed';dialog.style.margin='0';dialog.style.left=Math.max(0,Math.min(innerWidth-dialog.offsetWidth,e.clientX-dialogDrag.x))+'px';dialog.style.top=Math.max(0,Math.min(innerHeight-50,e.clientY-dialogDrag.y))+'px';});
  for(const type of ['pointerup','pointercancel','lostpointercapture'])titleBar.addEventListener(type,()=>dialogDrag=null);
- window.CadUI={drawPolyline:options=>start('polyline',options),finishDrawing:()=>guard(()=>finish()),workPlane:()=>workPlane(),showCloudReference:(options={})=>{if(mode!=='Model'&&!enter('Model',options))return false;$c('cad-cloud-reference').checked=true;J().draw();return true;},modelSpace:()=>mode==='Model',cloudReference:()=>mode!=='Model'||$c('cad-cloud-reference').checked,visibleBounds:()=>mode==='Model'?objects().filter(effectiveVisible).flatMap(boundsCorners):[],enter,observe,load,beforeDraw,afterDraw,select,selectedIds:(options={})=>mode==='Model'||options.includeInactive?[...selected]:[],clearSelected,properties,pick,menu,exportDialog,importDialog,refreshDestination:frameLabel,renderTree,remove,tool,command:()=>command,model:()=>model,cancel,preview:()=>preview};
+ window.CadUI={releaseViewLock,drawPolyline:options=>start('polyline',options),finishDrawing:()=>guard(()=>finish()),workPlane:()=>workPlane(),showCloudReference:(options={})=>{if(mode!=='Model'&&!enter('Model',options))return false;$c('cad-cloud-reference').checked=true;J().draw();return true;},modelSpace:()=>mode==='Model',cloudReference:()=>mode!=='Model'||$c('cad-cloud-reference').checked,visibleBounds:()=>mode==='Model'?objects().filter(effectiveVisible).flatMap(boundsCorners):[],enter,observe,load,beforeDraw,afterDraw,select,selectedIds:(options={})=>mode==='Model'||options.includeInactive?[...selected]:[],clearSelected,properties,pick,menu,exportDialog,importDialog,refreshDestination:frameLabel,renderTree,remove,tool,command:()=>command,model:()=>model,cancel,preview:()=>preview};
  load();
 })();

@@ -160,7 +160,7 @@ class CloudScene{
    if(!drag.moved&&Math.hypot(e.clientX-drag.start[0],e.clientY-drag.start[1])>VIEW_CLICK_THRESHOLD){drag.moved=true;this.onNavigationStart?.();}
    if(!drag.moved)return;
    const dx=e.clientX-drag.last[0],dy=e.clientY-drag.last[1];drag.last=[e.clientX,e.clientY];
-   if(drag.pan){
+   if(drag.pan||this.workPlaneView){
     canvas.style.cursor='grabbing';
     const {right,up}=this.basis(),k=this.scale*2/canvas.clientWidth;
     this.target=this.target.map((v,i)=>v-dx*k*right[i]+dy*k*up[i]);
@@ -172,7 +172,7 @@ class CloudScene{
  }
  navigationDraw(){this.onNavigate?.();this.navigationUntil=performance.now()+180;clearTimeout(this.navigationTimer);this.navigationTimer=setTimeout(()=>{this.navigationUntil=0;this.draw();},200);if(this.navigationFrame)return;this.navigationFrame=requestAnimationFrame(()=>{this.navigationFrame=null;this.draw();});}
  orbitHorizontal(dx){return -dx;}
- basis(){const f=[Math.sin(this.yaw)*Math.cos(this.pitch),Math.cos(this.yaw)*Math.cos(this.pitch),Math.sin(this.pitch)],right=[Math.cos(this.yaw),-Math.sin(this.yaw),0],up=[-Math.sin(this.yaw)*Math.sin(this.pitch),-Math.cos(this.yaw)*Math.sin(this.pitch),Math.cos(this.pitch)];const frame={forward:f,right,up};if(this.setupCamera){const R=this.setupCamera.orientation;for(const key of Object.keys(frame))frame[key]=R.map(row=>row.reduce((sum,v,i)=>sum+v*frame[key][i],0));}return frame;}
+ basis(){if(this.workPlaneView&&!this.setupCamera)return this.workPlaneView;const f=[Math.sin(this.yaw)*Math.cos(this.pitch),Math.cos(this.yaw)*Math.cos(this.pitch),Math.sin(this.pitch)],right=[Math.cos(this.yaw),-Math.sin(this.yaw),0],up=[-Math.sin(this.yaw)*Math.sin(this.pitch),-Math.cos(this.yaw)*Math.sin(this.pitch),Math.cos(this.pitch)];const frame={forward:f,right,up};if(this.setupCamera){const R=this.setupCamera.orientation;for(const key of Object.keys(frame))frame[key]=R.map(row=>row.reduce((sum,v,i)=>sum+v*frame[key][i],0));}return frame;}
  depthRange(){const t=this.cadTarget||this.target;return Math.max(1,Math.hypot(...t)+(this.geometryRadius||0)+Math.hypot(...this.target)+(this.cadRadius||0)+100);}
  projectLocal(point,b=this.basis()){
   const d=point.map((v,i)=>v-this.target[i]),dot=a=>d.reduce((sum,v,i)=>sum+v*a[i],0),z=dot(b.forward),aspect=this.c.clientWidth/Math.max(1,this.c.clientHeight);

@@ -6,6 +6,27 @@ import cad_geometry as g
 from core import Alignment
 
 
+
+def trace_spec(axis, spec):
+    """Copy the selected station range without changing the source alignment."""
+    start = g.number(spec.get('start'), 'Start chainage')
+    end = g.number(spec.get('end'), 'End chainage')
+    if start >= end:
+        raise ValueError('End chainage must be greater than start chainage.')
+    projection = spec.get('projection')
+    if projection not in ('plan', '3d'):
+        raise ValueError('Choose Plan or 3D centreline.')
+    first, last = axis.at(start)[0], axis.at(end)[0]
+    i, j = np.searchsorted(axis.a[:, 0], [start, end], side='right')
+    if j > i and axis.a[j-1, 0] == end:
+        j -= 1
+    if j - i + 2 > g.MAX_VERTICES:
+        raise ValueError('This trace has too many vertices. Choose a shorter chainage range.')
+    points = np.vstack((first, axis.a[i:j, 1:4], last))
+    if projection == 'plan':
+        points[:, 2] = 0
+    return dict(kind='polyline', points=points.tolist(), closed=False)
+
 def build(spec, resolve):
     rows=np.asarray(spec.get('alignment'),float)
     if rows.ndim!=2 or rows.shape[1]!=5 or len(rows)<2 or len(rows)>100000:
@@ -63,4 +84,9 @@ def build(spec, resolve):
         loops.append(dict(vertices=vertices.tolist(),closed=closed))
     spec['actual_profile_count']=len(stations)
     spec['actual_max_spacing']=float(np.max(np.diff(stations))) if len(stations)>1 else 0
-    return g.geometry(loops[0]['vertices'],closed=closed) if placing else g.loft(loops)
+    if placing:
+        centre_metadata = {}
+        if design:
+            centre_metadata['centre'] = (centre + horizontal * right + vertical * up).tolist()
+        return g.geometry(loops[0]['vertices'], closed=closed, **centre_metadata)
+    return g.loft(loops)

@@ -307,11 +307,18 @@ def get(s,h,path,args):
 def post(s,h,path,body):
     if path not in ('/api/cad-action','/api/cad-preview','/api/cad-export','/api/cad-import','/api/cad-pick'):return False
     check(s,body)
-    if body.get('spec',{}).get('kind') in ('alignment_profile','alignment_loft'):
-        axis=s.STATE.get('axis')
-        if axis is None:raise ValueError('Import an alignment for Along alignment. Free draw, Extrude, Sweep and Loft work without one.')
-        body=copy.deepcopy(body);body['spec']['alignment']=axis.a.tolist()
     if s.JOB['busy']:raise ValueError('Wait for the current operation, or cancel it first.')
+    kind=body.get('spec',{}).get('kind')
+    if kind in ('alignment_profile','alignment_loft','alignment_trace'):
+        axis=s.STATE.get('axis')
+        if axis is None:raise ValueError('Import an alignment to create alignment geometry.')
+        body=copy.deepcopy(body)
+        if kind=='alignment_trace':
+            from alignment_model import trace_spec
+            body['spec']=trace_spec(axis,body['spec'])
+            body.setdefault('name',str(axis.name)[:90]+' · CAD trace')
+        else:
+            body['spec']['alignment']=axis.a.tolist()
     if path=='/api/cad-preview':
         started=time.perf_counter();data=current(s);value=g.build(body.get('spec',{}),lambda ident:get_object(data,ident))
         h.send(dict(geometry=value,milliseconds=(time.perf_counter()-started)*1000,revision=data['revision']));return True

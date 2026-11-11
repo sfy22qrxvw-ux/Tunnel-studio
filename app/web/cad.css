@@ -46,3 +46,5 @@ body.cad-model-only #job-marker-labels,body.cad-model-only #job-selection-overla
  .cad-options{flex-wrap:nowrap;overflow-x:auto;padding-bottom:2px;gap:6px 9px}
  .cad-options>*{flex-shrink:0}
 }
+
+#cad-view-lock[aria-pressed="true"]{background:#216669;color:#e9ffff;border-color:#83ded7}
