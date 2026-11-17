@@ -170,7 +170,7 @@
   if(departure){$('surf-bolt-depth-label').textContent='Lining tolerance on both sides · ± mm';$('surf-bolt-kind-help').textContent='Every supported point farther than this distance above or below the fitted lining is a candidate. No bolt-size filter is used.';return;}
   const raised=$('surf-bolt-kind').value==='raised';
   $('surf-bolt-depth-label').textContent=raised?'Minimum height above the surrounding wall · mm':'Minimum pocket depth below the surrounding wall · mm';
-  $('surf-bolt-kind-help').textContent=raised?'Find compact bumps extending from the lining into the tunnel. Height is measured from nearby wall.':'Find compact dips behind the nearby wall, including recessed bolt pockets. Depth is measured into the pocket; the bolt head can remain below the wall.';
+  $('surf-bolt-kind-help').textContent=raised?'Find compact bumps extending from the lining into the tunnel. Height is measured from nearby wall.':'Depth is measured from the scanned lining around each recess. Candidates need measured returns inside and around the recess. Open voids with missing interiors stay unselected.';
  }
  function configureBolts(cfg){
   $('surf-lining-task').value=cfg.feature_kind==='departures'?'departures':'bolts';$('surf-method').value='lining_features';$('surf-bolt-kind').value=cfg.feature_kind==='departures'?'recess':cfg.feature_kind;

@@ -166,7 +166,7 @@ def deviations(points,model,with_radial=False):
     return d,supported
 
 
-def longitudinal_reference(sample,model):
+def longitudinal_reference(sample,model,*,support_band=.05):
     """Equal-weight sections stop dense local remnants becoming the reference.
 
     Retain the angular floor profile and fitted section centres. Used by optional reflection and interior review; standard extraction is unchanged.
@@ -185,7 +185,7 @@ def longitudinal_reference(sample,model):
     for j in range(na):
         values=cells[:,j];values=values[np.isfinite(values)]
         if len(values)>=3:profile[j]=np.median(values);valid[j]=True
-    model['target']=np.tile(profile,(nt,1));on=valid[ab]&(abs(offset-profile[ab])<=.05)
+    model['target']=np.tile(profile,(nt,1));on=valid[ab]&(abs(offset-profile[ab])<=support_band)
     count=np.bincount(keys[on],minlength=nt*na).reshape(nt,na)
     supported=count>=3;distance=distance_transform_edt(~np.tile(supported,(1,3)))
     model['supported']=(distance[:,na:2*na]<=2.5)&valid[None,:]

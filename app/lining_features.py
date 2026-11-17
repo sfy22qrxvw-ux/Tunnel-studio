@@ -42,6 +42,22 @@ def world(t,a,m):
 def ring_at(coef,a):return coef[0]+coef[1]*np.cos(a)+coef[2]*np.sin(a)
 def angular_delta(a,b):return (a-b+np.pi)%(2*np.pi)-np.pi
 
+
+def pocket_point_mask(features, ids, stations, angles, depths, radius):
+    """Apply the measured local depth gate to original points in pocket cells."""
+    keep=np.ones(len(ids),bool)
+    for ident in np.unique(ids):
+        wall=features[int(ident)].get('local_wall_reference')
+        if wall is None:continue
+        hit=ids==ident
+        x=stations[hit]-wall['station_m']
+        y=angular_delta(angles[hit],wall['angle_rad'])*radius
+        height,slope_x,slope_y=wall['plane']
+        residual=depths[hit]-(height+slope_x*x+slope_y*y)
+        keep[hit]=(residual>=wall['minimum_depth_m'])&(residual<=wall['maximum_depth_m'])
+    return keep
+
+
 def ridge_contrast(residual,band):
     """Candidate density on a seam compared with two parallel flank bands.
 
@@ -129,9 +145,22 @@ class Detector:
         self.geom=valid&(weight>.04)&(self.residual>self.threshold)
         self.bolt_sign=-1 if self.s.get('lining_bolt_kind','recess')=='raised' else 1
         feature_depth=self.residual*self.bolt_sign
-        self.bolt_geom=valid&(weight>.04)&(feature_depth>self.threshold)
+        task=self.s.get('lining_task','all')
+        if features and task in ('all','bolts') and self.bolt_sign==1:
+            # Let the wall follow measured offsets beyond ±20 mm. Downweight
+            # recess returns before estimating the local background again.
+            measured=gaussian_filter(self.depth*valid,sigma,mode=mode)/np.maximum(weight,1e-10)
+            background=valid&(self.depth-measured<=self.s.get('lining_depth_mm',12)/2000)
+            backing=gaussian_filter(background.astype(float),sigma,mode=mode)
+            local=gaussian_filter(self.depth*background,sigma,mode=mode)/np.maximum(backing,1e-10)
+            feature_depth=self.depth-local
+            weight_for_bolts=backing
+        else:
+            weight_for_bolts=weight
+        bolt_threshold=self.s.get('lining_depth_mm',12)/1000 if self.bolt_sign==1 else self.threshold
+        self.bolt_geom=valid&(weight_for_bolts>.04)&(feature_depth>bolt_threshold)
         maximum=self.s.get('lining_bolt_height_mm',0)/1000
-        if maximum:self.bolt_geom&=feature_depth<=maximum
+        if maximum and self.bolt_sign<0:self.bolt_geom&=feature_depth<=maximum
         # Shallow lining joints and deep bolt pockets are different features.
         # Keep their user thresholds separate; both retain the same measured
         # four-MAD noise gate and require local occupancy support.
@@ -162,7 +191,6 @@ class Detector:
             self.dark=iv&(iw>.04)&(diff < -3*scale)&(axial|around)
         self.intensity_used=bool(usable)
         if not features:return
-        task=self.s.get('lining_task','all')
         if task!='non_lining':
             if task in ('all','bolts'):self.bolts()
             if task in ('all','seams','segments'):self.seams(ring_only=ring_only)
@@ -176,6 +204,45 @@ class Detector:
             return bounded_bolts(self)
         ii,jj=np.where(np.tile(self.bolt_geom,(1,3)))
         self.bolt_components(ii,jj)
+
+    def pocket_reference(self, ti, aj, centre, width, height):
+        """Fit measured wall cells surrounding a compact projected footprint."""
+        t,s=centre
+        station=(ti+.5)*self.cell+self.t0
+        arc=(aj-self.na+.5)*self.arc
+        central=(abs(station-t)<=max(self.cell,width*.24))&(abs(arc-s)<=max(self.arc,height*.24))
+        # An annulus of sidewall returns around a missing centre is not a
+        # measured pocket. Do not assign labels to the rim of an open void.
+        if not central.any():return None
+        pad=max(.10,3*max(self.cell,self.arc))
+        rows=np.arange(max(0,ti.min()-int(np.ceil(pad/self.cell))),min(self.nt,ti.max()+1+int(np.ceil(pad/self.cell))))
+        cols=np.arange(aj.min()-int(np.ceil(pad/self.arc)),aj.max()+1+int(np.ceil(pad/self.arc)))
+        ii,jj=np.meshgrid(rows,cols,indexing='ij')
+        # Leave a grid-cell margin around the candidate walls.
+        outside=(ii<ti.min()-1)|(ii>ti.max()+1)|(jj<aj.min()-1)|(jj>aj.max()+1)
+        use=outside&(self.count[ii,jj%self.na]>0)
+        x=(ii[use]+.5)*self.cell+self.t0-t
+        y=(jj[use]-self.na+.5)*self.arc-s
+        zz=self.depth[ii[use],jj[use]%self.na]
+        xy=np.column_stack((np.ones(len(x)),x,y))
+        quadrants=(x>=0).astype(int)+2*(y>=0)
+        if np.min(np.bincount(quadrants,minlength=4))<3:return None
+        fit=np.linalg.lstsq(xy,zz,rcond=None)[0]
+        error=zz-xy@fit
+        mid=np.median(error);noise=1.4826*np.median(abs(error-mid))
+        good=abs(error-mid)<=max(.003,3*noise)
+        if np.min(np.bincount(quadrants[good],minlength=4))<3:return None
+        fit=np.linalg.lstsq(xy[good],zz[good],rcond=None)[0]
+        error=zz[good]-xy[good]@fit
+        minimum=max(self.s.get('lining_depth_mm',12)/1000,4*1.4826*np.median(abs(error-np.median(error))))
+        maximum=self.s.get('lining_bolt_height_mm',0)/1000 or bolt_allowances(self.s)[1]
+        depth=self.depth[ti,aj%self.na]-(fit[0]+fit[1]*(station-t)+fit[2]*(arc-s))
+        passed=(depth>=minimum)&(depth<=maximum)
+        if np.count_nonzero(passed)<3 or not np.any(central&passed):return None
+        wall=dict(station_m=float(t),angle_rad=float(s/self.radius%(2*np.pi)),plane=fit.tolist(),
+                  minimum_depth_m=float(minimum),maximum_depth_m=float(maximum))
+        return wall,passed,float(np.median(depth[passed]))
+
     def bolt_components(self,ii,jj,owner=None):
         if len(ii)<3:return
         q=np.c_[ii*self.cell,jj*self.arc];tree=cKDTree(q)
@@ -213,7 +280,19 @@ class Detector:
                 if not (ti0<=((c[0]-self.t0)/self.cell-.5)<ti1 and aj0<=c[1]/self.arc+self.na-.5<aj1):continue
             raised=self.s.get('lining_bolt_kind','recess')=='raised'
             kind='bolt_fitting' if raised else 'bolt_hole';label='Raised fitting' if raised else 'Bolt recess'
-            a=float(c[1]/self.radius%(2*np.pi));row=self.add(kind,f'{label} {sum(f['kind']==kind for f in self.features)+1}',station_m=float(c[0]),angle_deg=float(np.degrees(a)),width_m=float(width),height_m=float(height),depth_m=float(abs(np.median(self.residual[ti,aj%self.na]))),feature_side='raised' if raised else 'recess',support_cells=len(ti),centre=world(c[0],a,self.m).tolist(),centre_kind='Projected lining centre; point_centroid is the measured group centroid',evidence='Compact measured '+('bump towards the tunnel interior' if raised else 'pocket behind the surrounding lining')+'; density-connected measured cells; Gaussian mean-shift centre')
+            metadata={}
+            if raised:
+                depth=float(abs(np.median(self.residual[ti,aj%self.na])))
+                evidence='Compact measured bump towards the tunnel interior; density-connected measured cells'
+            else:
+                local=self.pocket_reference(ti,aj,c,width,height)
+                if local is None:continue
+                wall,passed,depth=local
+                ti,aj=ti[passed],aj[passed]
+                if self.count[ti,aj%self.na].sum()<self.s.get('lining_bolt_min_points',0):continue
+                metadata['local_wall_reference']=wall
+                evidence='Compact measured recess below the nearby scanned lining; measured interior and surrounding wall support'
+            a=float(c[1]/self.radius%(2*np.pi));row=self.add(kind,f'{label} {sum(f['kind']==kind for f in self.features)+1}',station_m=float(c[0]),angle_deg=float(np.degrees(a)),width_m=float(width),height_m=float(height),depth_m=depth,feature_side='raised' if raised else 'recess',support_cells=len(ti),centre=world(c[0],a,self.m).tolist(),centre_kind='Projected lining centre; point_centroid is the measured group centroid',evidence=evidence,**metadata)
             self.grid_labels[ti,aj%self.na]=row['id']
     def seams(self,*,ring_only=False):
         self.emit('4/5 Locating ring and between-segment seams')
@@ -315,7 +394,9 @@ class Detector:
             start=(first['arc_intercept_m']+first['arc_slope']*(t-first['station_m']))/self.radius
             end=(second['arc_intercept_m']+second['arc_slope']*(t-second['station_m']))/self.radius
             use=lining&(t>lo)&(t<hi)&((a-start)%(2*np.pi)<(end-start)%(2*np.pi));labels[use]=row['id']
-        feature=self.grid_labels[i,j];use=lining&(feature>0);labels[use]=feature[use]
+        feature=self.grid_labels[i,j];use=np.flatnonzero(lining&(feature>0))
+        use=use[pocket_point_mask(self.features_by_id,feature[use],t[use],a[use],d[use],self.radius)]
+        labels[use]=feature[use]
         return labels
 
 
@@ -325,7 +406,10 @@ def run_batches(batches,ids_path,labels_path,settings,progress,cancel,selected_t
     cfg=PRESETS[settings.get('lining_detail','detailed')];emit('1/5 Learning a supported lining reference')
     sample,_=sample_originals(batches,cfg['spacing'],cfg['cap'],progress,cancel)
     m=tunnel_lining.fit_model(sample,{**settings,'envelope_thickness':.04,'envelope_angle_deg':1.5,'resolution':.2},progress,cancel)
-    m=tunnel_lining.longitudinal_reference(sample,m)
+    # Permit measured wall departures up to 120 mm when establishing coarse
+    # support for a recess-only run. Final depth uses the nearby wall only.
+    recess_scan=settings.get('lining_task')=='bolts' and settings.get('lining_bolt_kind','recess')=='recess'
+    m=tunnel_lining.longitudinal_reference(sample,m,support_band=.12 if recess_scan else .05)
     if settings.get('lining_task')=='departures':
         result=__import__('lining_departures').run_batches(batches,ids_path,labels_path,settings,m,progress,cancel,selected_total)
         result['sampler_version']=SAMPLER_VERSION

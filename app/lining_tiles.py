@@ -296,7 +296,8 @@ class TiledDetector:
             tt,aa=t[ix],a[ix];start=(first['arc_intercept_m']+first['arc_slope']*(tt-first['station_m']))/self.radius;end=(second['arc_intercept_m']+second['arc_slope']*(tt-second['station_m']))/self.radius
             use=(labels[ix]==0)&(tt>lf.ring_at(left['coefficients'],aa))&(tt<lf.ring_at(right['coefficients'],aa))&((aa-start)%(2*np.pi)<(end-start)%(2*np.pi))
             labels[ix[use]]=row['id']
-        feature=self.labels.lookup(rows,cols);use=ok&(d>=-inward)&(d<=recess)&(feature>0)
+        feature=self.labels.lookup(rows,cols);use=np.flatnonzero(ok&(d>=-inward)&(d<=recess)&(feature>0))
+        use=use[lf.pocket_point_mask(self.features_by_id,feature[use],t[use],a[use],d[use],self.radius)]
         labels[use]=feature[use];return labels
 
 
