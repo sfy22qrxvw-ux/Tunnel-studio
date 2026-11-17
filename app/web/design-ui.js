@@ -18,9 +18,9 @@ window.AnalysisArea=(()=>{
   el.value=options.some(option=>option.value===old)?old:'auto';
  }
  function request(id,source){
-  const el=$(id),scope=el.value==='auto'?el.dataset.defaultMode||'auto':el.value;
+  const el=$(id),selection=highlight(source);
+  const scope=el.value==='auto'?(selection?'selection':source?.has_limit_box||source?.limit_box?'limit':'auto'):el.value;
   if(scope!=='selection')return {scope};
-  const selection=highlight(source);
   if(!selection)throw Error('Highlight the points again or choose another processing area.');
   return {scope,selection};
  }

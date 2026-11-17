@@ -152,7 +152,7 @@
   if(meshSource()&&(!Number.isFinite(value.spacing_m)||value.spacing_m<=0))throw Error('Enter a positive mesh sampling spacing.');
   if(!meshSource())Object.assign(value,{spacing_m:.05},window.AnalysisArea.request('inspection-area',source()));
   if(wallOnly()){
-   if(!['limit','selection'].includes(value.scope))throw Error('Set a saved limit box or highlight the scan area for tunnel wall review.');
+   if(!['limit','selection'].includes(value.scope))throw Error('Choose Highlighted points or Saved limit box for the source scan in Processing area.');
    Object.assign(value,{tunnel_wall_only:true,signed:true,band_m:0});
   }
   return value;
@@ -318,6 +318,7 @@
  async function run(){
   if(isBusy())return;
   let body;try{body=request();}catch(error){status(error.message,true);return;}
+  if(!meshSource())window.AnalysisArea.configure('inspection-area',source());
   const previousId=result?.id;
   running=true;stopping=false;byId('inspection-progress').removeAttribute('value');render();
   try{
