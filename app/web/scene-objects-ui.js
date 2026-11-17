@@ -30,13 +30,14 @@
 
  function pickMeasurement(pixel,project,event={}){const found=pickNear(pixel,project);if(found)select(found.id,event);return !!found;}
  function visible(id){return objects.find(o=>o.id===id)?.visible!==false;}
+ function pocketGuideHidden(o){return o.kind==='lining_feature'&&o.feature?.kind==='bolt_hole'&&window.SurfaceUI?.hidePocketGuides?.();}
  function draw(project,draft,boxId){
   const lines=[],inventory=window.JobUI?.inventory(),bundle=inventory?.bundles?.find(b=>b.id===window.WorkspaceUI?.selectedBundleId?.());
   const bundleIds=bundle?new Set(bundle.scan_ids):null,scans=bundle?new Map(inventory.items.map(x=>[x.id,x])):null;
   for(const o of objects){
    const setupIds=o.setup_ids||[o.connection?.a,o.connection?.b];
    const inBundle=o.kind==='scan_link'&&bundleIds&&setupIds.every(id=>bundleIds.has(id));
-   if((o.kind==='scan_link'&&bundleIds?!inBundle:!o.visible)||o.id===boxId||o.kind==='cad'||o.kind==='target'||o.kind==='ring_joint'||o.kind==='inspection')continue;let points=o.id===draft?.id?draft.points:o.points||[],edges=o.edges||[];
+   if(pocketGuideHidden(o)||(o.kind==='scan_link'&&bundleIds?!inBundle:!o.visible)||o.id===boxId||o.kind==='cad'||o.kind==='target'||o.kind==='ring_joint'||o.kind==='inspection')continue;let points=o.id===draft?.id?draft.points:o.points||[],edges=o.edges||[];
   if(inBundle){
    points=setupIds.map(id=>{
     const scan=scans.get(id);
@@ -51,7 +52,7 @@
   return lines.join('');
  }
  function setLinks(links,scans){const byId=new Map(scans.map(x=>[x.id,x]));liveLinks=links.map(l=>({id:'link:'+l.id,kind:'scan_link',name:(byId.get(l.a)?.name||l.a_name||l.a)+' ↔ '+(byId.get(l.b)?.name||l.b_name||l.b),link_id:l.id,setup_ids:[l.a,l.b],visible:!l.completed_merge_id,editable:true,removable:false,points:[byId.get(l.a)?.origin,byId.get(l.b)?.origin].filter(p=>Array.isArray(p)&&p.length===3),summary:(l.kind==='leica'&&!l.solution?'Imported Leica connection':'Target connection')+' · '+l.status}));render(objects);window.JobUI?.draw();}
- function pickNear(pixel,project){let found=null,best=12;for(const o of objects){if(!o.visible||['cad','target','scan_link','deviation','inspection'].includes(o.kind))continue;const p=o.points||[],edges=o.edges||[];for(const point of p){const q=project(point);if(!q)continue;const d=Math.hypot(pixel[0]-q[0],pixel[1]-q[1]);if(d<best){found=o;best=d;}}const segments=edges.concat(p.slice(1).map((v,i)=>[p[i],v]));for(const edge of segments){const a=project(edge[0]),b=project(edge[1]);if(!a||!b)continue;const dx=b[0]-a[0],dy=b[1]-a[1],n=dx*dx+dy*dy,t=n?Math.max(0,Math.min(1,((pixel[0]-a[0])*dx+(pixel[1]-a[1])*dy)/n)):0,d=Math.hypot(pixel[0]-a[0]-t*dx,pixel[1]-a[1]-t*dy);if(d<best){found=o;best=d;}}}return found;}
+ function pickNear(pixel,project){let found=null,best=12;for(const o of objects){if(!o.visible||pocketGuideHidden(o)||['cad','target','scan_link','deviation','inspection'].includes(o.kind))continue;const p=o.points||[],edges=o.edges||[];for(const point of p){const q=project(point);if(!q)continue;const d=Math.hypot(pixel[0]-q[0],pixel[1]-q[1]);if(d<best){found=o;best=d;}}const segments=edges.concat(p.slice(1).map((v,i)=>[p[i],v]));for(const edge of segments){const a=project(edge[0]),b=project(edge[1]);if(!a||!b)continue;const dx=b[0]-a[0],dy=b[1]-a[1],n=dx*dx+dy*dy,t=n?Math.max(0,Math.min(1,((pixel[0]-a[0])*dx+(pixel[1]-a[1])*dy)/n)):0,d=Math.hypot(pixel[0]-a[0]-t*dx,pixel[1]-a[1]-t*dy);if(d<best){found=o;best=d;}}}return found;}
  window.addEventListener('keydown',e=>{if(e.defaultPrevented||busy||!selection.size||e.target.closest?.('input,textarea,select,[contenteditable="true"],dialog[open]'))return;if((e.ctrlKey||e.metaKey)&&e.key.toLowerCase()==='a'){e.preventDefault();selectAll();}});
  window.SceneObjectsUI={pickNear,find:id=>objects.find(o=>o.id===id),get,focus,change,properties:()=>{details();const o=get();window.WorkspaceUI?.propertiesHTML(o?.name,$('job-item-details').innerHTML+'<details><summary>All metadata</summary><pre style="white-space:pre-wrap">'+esc(JSON.stringify(o,null,2))+'</pre></details>');$('scene-info-body')?.querySelector('.surface-actions')?.remove();},selectGroup,groups:geometryGroups,canRemove:()=>objects.some(o=>selection.has(o.id)&&o.removable),removeSelected,pickMeasurement,setLinks,render,draw,visible,has:id=>objects.some(o=>o.id===id),clearSelected:(preserveCad=false)=>{selected=null;selection.clear();anchor=null;if(!preserveCad)window.CadUI?.clearSelected();},selected:()=>selected,selectedIds:()=>[...selection],selectAll,select,open};window.JobUI?.sync();
 })();

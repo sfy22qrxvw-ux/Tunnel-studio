@@ -89,6 +89,9 @@
   $('surf-classification-key').textContent=colourMode()==='decisions'?'Green: kept. Red: exclusion candidates. Magenta: selected.':colourMode()==='rings'?'Categorical colours show supported rings. Select a group to inspect its ID. Grey: unresolved or retained boundary points. Red: excluded candidates. Magenta: selected.':'Categorical colours show lining clusters. Select a group to inspect its ID. Grey: unresolved or retained boundary points. Red: excluded candidates. Magenta: selected. Colours show geometric groups; cable and pipe types are not inferred.';
  }
  const kept=()=>new Set(data.result?.kept||[]);
+ function pockets(r){return r?.settings?.method==='lining_features'?r.clusters.filter(c=>c.feature_kind==='bolt_hole'&&c.points>0):[];}
+ function hidePocketGuides(){return reviewActive()&&data.result?.settings?.method==='lining_features'&&
+   (!!isolatedClusters||!$('surf-show-kept').checked);}
  let lowConfidenceIds=new Set();
  function panelResult(r){return r?.settings?.method==='lining_features'&&['segments','all'].includes(r.settings.lining_task);}
  function layoutFields(){
@@ -195,11 +198,22 @@
   for(const id of ['surf-view-tunnel','surf-view-noise','surf-view-both'])$(id).disabled=busy||loading||actionPending||!r;
   if(!r)return;
   const keep=kept(),pieces=clusters(),total=r.statistics.input_points,tunnel=r.reviewed_kept_points,noise=total-tunnel;
+  const found=pockets(r),pocketPoints=found.reduce((n,c)=>n+c.points,0);
+  const pocketReview=found.length>0||(r.settings?.method==='lining_features'&&r.settings.lining_task==='bolts'&&r.settings.lining_bolt_kind!=='raised');
+  $('surf-pocket-review').hidden=!pocketReview;
+  $('surf-pocket-count').textContent=`${fmt(found.length,0)} pocket ${found.length===1?'group':'groups'} · ${fmt(pocketPoints,0)} measured points detected`;
+  $('surf-view-pockets').disabled=busy||loading||actionPending||!found.length;
   $('surf-tunnel-count').textContent=`${fmt(tunnel,0)} points`;$('surf-noise-count').textContent=`${fmt(noise,0)} points`;
   for(const [id,n,part] of [['tunnel',tunnel,true],['noise',noise,false]])$(`surf-${id}-pieces`).textContent=`${pieces.filter(c=>keep.has(c.id)===part).length} pieces · ${fmt(total?n/total*100:0,1)}% of processed points`;
   const method=r.settings?.method||'smrg',irregular=method==='irregular';$('surf-keep-title').textContent=irregular?'Retained / unflagged':'Tunnel / keep';$('surf-remove-title').textContent=irregular?'Candidate irregularities':'Noise or unwanted / remove';$('surf-view-tunnel').textContent=irregular?'Show retained only':'Show tunnel only';$('surf-view-noise').textContent=irregular?'Show candidates only':'Show noise only';$('surf-keep-clusters').textContent=irregular?'Keep selected patches':'Keep as tunnel';$('surf-remove-clusters').textContent=irregular?'Exclude from cleaned copy':'Mark as noise / remove';$('surf-group-help').textContent=irregular?'Red = candidate irregular patches. Green = retained, including unassessed areas. Click a patch or its row, then Hide, Show or Delete selected patches. Hiding affects this review; deletion is reversible with Undo.':'Green points go into the tunnel output; red points stay out. Select a piece and choose Keep as tunnel or Mark as noise. Counts include hidden pieces.';
   $('surf-result-explanation').textContent=method==='ray_box'?'Ray/box extraction chooses an outer supported radial mode in each station/angle neighbourhood. Wall returns behind pipes can remain green while nearer objects are red. Unsupported boxes stay green. Inspect openings, recesses, junctions, reflections and rough lining before applying.':method==='reflection'?'Red points have several reflection cues and need review. Green includes real geometry, weak evidence and unassessed areas. The detector can miss reflections and can flag real recesses or objects. Check the evidence and data availability in the report; use Keep selected points to protect real features.':method==='combined_denoise'?'Combined denoising checks neighbour support and the fitted lining. Off-lining sparse points and surface departures are separate red groups. Sparse points matching the wall and uncertain areas stay green. Use Keep selected points or Keep as tunnel to preserve joints, recesses and other details you need.':irregular?'Find irregular surfaces compares points with the surrounding lining and checks local roughness. The named patches are review candidates; joints, equipment and noise can also be detected. It cannot confirm a defect or guarantee every irregularity.':method==='noise_clean'?'Remove stray points checks how well each point is supported by its neighbours. It does not identify all equipment or isolate the lining; choose Clean tunnel in Setup for that task.':method==='tunnel_envelope'?'Clean tunnel compares every original point with one supported lining model. Red groups distinguish interior objects and outside points. Areas with insufficient lining support stay green. Review the red points before creating the cleaned scan; keep any real features you need.':'Group surface patches (SMRG) joins nearby surface pieces and suggests a connected tunnel surface to keep. Detached pieces are suggested for removal; they can still contain real tunnel points.';
   if(method==='lining_features'){$('surf-keep-title').textContent='Retained geometry';$('surf-remove-title').textContent='Exclusion candidates';$('surf-view-tunnel').textContent='Show retained';$('surf-view-noise').textContent='Show excluded';$('surf-keep-clusters').textContent='Keep selected groups';$('surf-remove-clusters').textContent='Exclude selected groups';$('surf-group-help').textContent='Feature colours distinguish groups; magenta highlights your selection and red marks exclusions. Select named bolt, seam or segment rows to isolate or export their original points. Detection retains all groups by default; only Non-lining removal proposes exclusions.';$('surf-result-explanation').textContent=`${r.statistics.bolt_holes||0} bolt recesses · ${r.statistics.bolt_fittings||0} raised fittings · ${r.statistics.ring_seams||0} ring seams · ${r.statistics.longitudinal_seams||0} between-segment seams · ${r.statistics.segment_candidates||0} segment candidates. Inspect support and coordinates in CSV/JSON reports. Missing seams may leave merged segments; local station is not design chainage.`;}
+  if(pocketReview){
+   $('surf-remove-title').textContent='Marked for exclusion';
+   $('surf-group-help').textContent='Detected pockets are kept by default. Show pocket points loads the measured scan points for review. Exclude selected groups changes which points go into the cleaned output.';
+   if(r.settings.lining_task==='bolts'&&r.settings.lining_bolt_kind!=='raised')
+    $('surf-result-explanation').textContent='Pocket detection uses the measured lining around each recess.';
+  }
   if(method==='lining_features'&&r.settings.lining_task==='departures'){
    $('surf-result-explanation').textContent='Groups describe points within the fitted wall band, raised into the tunnel, recessed beyond the wall, and unassessed areas. They are lining departures, not detected bolt identities. Broad selected wall areas indicate a reference/tolerance mismatch: review before excluding. Selecting a row only highlights it; use Exclude selected groups to change the output.';
    $('surf-group-help').textContent='Selection (magenta) and Keep/Exclude are separate decisions. All groups are retained initially. With zero exclusions, output contains the same retained points; it does not remove pockets.';
@@ -215,7 +229,9 @@
   if(method==='tunnel_envelope'&&r.settings?.interior_cleanup==='thorough')$('surf-result-explanation').textContent+=' More thorough cleanup is on: inspect the separate Extra interior candidates group before excluding it.';
   const custom=hiddenClusters.size||isolatedClusters||($('surf-isolate').checked&&inspected!==null),green=$('surf-show-kept').checked,red=$('surf-show-other').checked&&$('surf-show-noise').checked;
   const view=custom?'custom':green&&red?'both':green&&!$('surf-show-other').checked&&!$('surf-show-noise').checked?'tunnel':!green&&red?'noise':'custom';
-  $('surf-group-view').textContent=({both:'Showing both groups',tunnel:'Showing tunnel / keep only',noise:'Showing noise / remove only',custom:'Custom view — some pieces are hidden'}[view]);
+  const pocketView=found.length>0&&isolatedClusters?.size===found.length&&found.every(c=>isolatedClusters.has(c.id));
+  $('surf-group-view').textContent=pocketView?(recessDetailLoading?'Loading measured pocket points…':'Showing pocket points'):
+   ({both:'Showing both groups',tunnel:'Showing tunnel / keep only',noise:'Showing noise / remove only',custom:'Custom view — some pieces are hidden'}[view]);
   for(const id of ['tunnel','noise','both'])$(`surf-view-${id}`).setAttribute('aria-pressed',String(view===id));
   $('surf-output-summary').textContent=`Create one scan named “Tunnel · ${r.source_name}” containing all ${fmt(tunnel,0)} kept points from the processed area. ${fmt(noise,0)} excluded points stay outside the new scan. It combines the kept pieces into one scan.`;
  }
@@ -225,6 +241,20 @@
   $('surf-show-kept').checked=group!=='noise';$('surf-show-other').checked=$('surf-show-noise').checked=group!=='tunnel';
   $('surf-group-filter').value=group==='both'?'all':group;$('surf-filter').value='';page=0;
   window.JobUI?.clearSelection?.();window.JobUI?.setMode?.('orbit');sceneSurface.recolour();showReview();table();
+ }
+ function showPocketPoints(){
+  if($('surf-view-pockets').disabled)return;
+  const ids=pockets(data.result).map(c=>c.id);
+  window.TunnelRibbon?.surfaceDrawerMode?.('review');
+  $('surf-filter').value='Bolt recess';$('surf-group-filter').value='all';page=0;
+  $('surf-isolate').checked=false;
+  const keep=kept();
+  $('surf-show-kept').checked=ids.some(id=>keep.has(id));
+  $('surf-show-other').checked=ids.some(id=>!keep.has(id));
+  $('surf-show-noise').checked=false;
+  for(const id of ids)hiddenClusters.delete(id);
+  isolatedClusters=new Set(ids);
+  selectClusters(ids);
  }
  function selectionInfo(){const list=clusters().filter(c=>selectedClusters.has(c.id)),detail=preview?.detail;const note=selectedRecesses().length&&recessDetailLoading?' · Loading measured recess points…':selectedRecesses().length&&detail&&recessDetailReady()?` · ${fmt(detail.displayed_points,0)} ${data.result?.settings?.lining_task==='departures'?'departure':'recess'} points displayed${detail.complete?' · full recess detail':' · display sample; deletion uses every selected original point'}`:'';$('surf-cluster-selection-info').textContent=`${list.length} selected ${list.length===1?'group':'groups'} · ${fmt(list.reduce((n,c)=>n+c.points,0),0)} original points · magenta in 3D${note}`;}
  function updateReviewControls(){
@@ -398,6 +428,7 @@
  for(const id of ['surf-show-kept','surf-show-other','surf-show-noise','surf-isolate'])$(id).onchange=()=>{sceneSurface.recolour();showReview();};
  $('surf-clear-inspect').onclick=()=>{selectedClusters.clear();isolatedClusters=null;inspected=null;$('surf-isolate').checked=false;visualSelection=null;sceneSurface.recolour();showReview();table();window.JobUI?.clearSelection?.();$('surf-inspected').textContent='Inspection and visible selection cleared. Click a cluster or coloured point to inspect it.';};$('surf-filter').oninput=()=>{page=0;table();};$('surf-prev').onclick=()=>{page--;table();};$('surf-next').onclick=()=>{page++;table();};
  for(const group of ['tunnel','noise','both'])$('surf-view-'+group).onclick=()=>showGroup(group);
+ $('surf-view-pockets').onclick=showPocketPoints;
  $('surf-group-filter').onchange=()=>{page=0;table();};
  $('surf-select-page').onclick=()=>selectClusters(filteredClusters().slice(page*pageSize,(page+1)*pageSize).map(c=>c.id));
  $('surf-clear-clusters').onclick=()=>selectClusters([]);
@@ -427,6 +458,6 @@
   for(const p of preview.points){if(!isVisible(p,keep))continue;const v=p.slice(0,3).map((n,i)=>n-sceneSurface.target[i]),dot=a=>v.reduce((n,nv,i)=>n+nv*a[i],0),px=(dot(b.right)/sceneSurface.scale+1)*box.width/2,py=(1-dot(b.up)*box.width/box.height/sceneSurface.scale)*box.height/2,d=(px-x)**2+(py-y)**2,z=dot(b.forward);if(d<dist-1||(Math.abs(d-dist)<=1&&z>depth)){best=p;dist=d;depth=z;}}
   if(best)inspect(best[3]);
  });
- window.SurfaceUI={drawSegmentOverlay:panelRenderer.draw,selectFeaturePoints,deleteSelectedGroups,exportHighlight:()=>{const r=data.result;if(!r)return null;const spec=window.JobUI?.currentSelection?.(),visible=[-1,...r.clusters.map(c=>c.id)].filter(id=>isVisible([0,0,0,id],kept()));return {ids:[r.source_item_id],review:{id:r.id,revision:r.revision,clusters:spec?[]:[...selectedClusters],visible_clusters:visible},selection:spec};},configureBolts,setMethod,selectionChanged,reviewActive,selectClusters,selectedClusters:()=>[...selectedClusters],inspect,markClusters,clusterView,continueToOutput,updateReviewControls,sync,busy:setBusySurface,draw:()=>sceneSurface.draw(),selectSource,useJobSelection,pickInterior,showReview,markSelection};
+ window.SurfaceUI={hidePocketGuides,drawSegmentOverlay:panelRenderer.draw,selectFeaturePoints,deleteSelectedGroups,exportHighlight:()=>{const r=data.result;if(!r)return null;const spec=window.JobUI?.currentSelection?.(),visible=[-1,...r.clusters.map(c=>c.id)].filter(id=>isVisible([0,0,0,id],kept()));return {ids:[r.source_item_id],review:{id:r.id,revision:r.revision,clusters:spec?[]:[...selectedClusters],visible_clusters:visible},selection:spec};},configureBolts,setMethod,selectionChanged,reviewActive,selectClusters,selectedClusters:()=>[...selectedClusters],inspect,markClusters,clusterView,continueToOutput,updateReviewControls,sync,busy:setBusySurface,draw:()=>sceneSurface.draw(),selectSource,useJobSelection,pickInterior,showReview,markSelection};
  sync().catch(e=>notice(e.message,true));
 })();
