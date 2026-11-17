@@ -13,6 +13,96 @@ import tunnel_designer as designer
 
 
 class TunnelDesignerPreviewTest(unittest.TestCase):
+    def test_independent_runs_fit_at_a_bend_without_moving_corner_heights(self):
+        design = designer.default()
+        bearing = np.deg2rad(40)
+        tangent = np.array([np.cos(bearing), np.sin(bearing)])
+        design.update(plan=[[0, 0, 0], [20, 0, 0], [20 + 100*tangent[0], 100*tangent[1], 0]],
+                      vertical=[[0, 0], [121, 0]])
+        design['profiles'] = [
+            dict(id='rectangle', kind='rectangle', width=1, height=1),
+            dict(id='circle', kind='circle', radius=1.5),
+        ]
+        design['sections'] = [
+            dict(start=0, end=20, first='rectangle'),
+            dict(start=20, end=120, first='circle'),
+        ]
+        with self.assertRaisesRegex(ValueError, 'Profiles change abruptly'):
+            designer.prepare(design)
+
+        entry, _ = designer.build(designer.run_design(design, 0))
+        main, _ = designer.build(designer.run_design(design, 1))
+        baseline = np.asarray(entry['vertices'])
+        entry_width = max(entry['faces'][0]) - 1
+        width = max(main['faces'][0]) - 1
+        np.testing.assert_allclose(baseline[-entry_width:, 0], 20, atol=1e-12)
+        np.testing.assert_allclose((np.array(main['vertices'][:width])[:, :2] - [20, 0]) @ tangent,
+                                   0, atol=1e-12)
+
+        fitted = designer.fit_run_end(entry, end='end', target=main)
+        fitted_vertices = np.asarray(fitted['vertices'])
+        np.testing.assert_allclose((fitted_vertices[-entry_width:, :2] - [20, 0]) @ tangent, 0, atol=1e-12)
+        np.testing.assert_array_equal(fitted_vertices[:, 2], baseline[:, 2])
+        self.assertLess(fitted_vertices[-entry_width:, 0].min(), 20)
+        self.assertGreater(fitted_vertices[-entry_width:, 0].max(), 20)
+        self.assertEqual(fitted['faces'], entry['faces'])
+
+        reversed_run = designer.run_design(design, 1)
+        reversed_run.update(plan=[design['plan'][2], design['plan'][1]], vertical=[[0, 0], [101, 0]],
+                            sections=[dict(start=0, end=100, first='circle')])
+        reversed_main, _ = designer.build(reversed_run)
+        fitted_to_end = designer.fit_run_end(entry, end='end', target=reversed_main, target_end='end')
+        np.testing.assert_allclose(fitted_to_end['vertices'], fitted_vertices, atol=1e-12)
+
+        adjusted = designer.fit_run_end(fitted, end='end', corner=1, distance=.15)
+        delta = np.asarray(adjusted['vertices']) - fitted_vertices
+        moved = len(delta) - entry_width + 1
+        np.testing.assert_allclose(delta[moved], [.15, 0, 0], atol=1e-12)
+        np.testing.assert_array_equal(np.delete(delta, moved, axis=0), 0)
+        np.testing.assert_allclose(g.update_parameters(adjusted, {})['vertices'], adjusted['vertices'],
+                                   atol=1e-12)
+        with self.assertRaisesRegex(ValueError, 'pass the next cross-section'):
+            designer.fit_run_end(entry, end='end', distance=-2)
+        with self.assertRaisesRegex(ValueError, 'folds or collapses a face'):
+            designer.build(entry['definition']['design'], end_offsets={'end': {'1': [0, -2, 0]}})
+        with self.assertRaisesRegex(ValueError, 'reverses solid winding'):
+            g.geometry(fitted_vertices, np.asarray(fitted['faces'])[:, ::-1],
+                       solid=True, normalize_winding=False)
+
+        design['sections'][1]['start'] = 0
+        replies = []
+        server = SimpleNamespace(STATE={}, JOB={}, save=lambda: None)
+        for index in (0, 1):
+            designer.post(server, SimpleNamespace(send=replies.append), '/api/tunnel-design-action',
+                          dict(action='build_run', design=design, section_index=index,
+                               context=cad_api.context(server), revision=cad_api.current(server)['revision']))
+        data = cad_api.current(server)
+        short, long = [cad_api.get_object(data, reply['run_id']) for reply in replies]
+        self.assertEqual(short['definition']['design']['sections'][0]['end'], 20)
+        self.assertEqual(long['definition']['design']['sections'][0]['start'], 0)
+        self.assertEqual(long['definition']['design']['sections'][0]['end'], 120)
+        self.assertEqual(len(server.STATE['tunnel_design']['design']['sections']), 2)
+
+        # Push one corner beyond the circular run's start while retaining real overlap.
+        data = cad_api.execute(data, dict(action='fit_run_end', ids=[short['id']],
+                                         end='start', corner=1, distance=.25))
+        edited = cad_api.get_object(data, short['id'])
+        common = g.boolean([edited, long], 'intersect')
+        union = g.boolean([edited, long], 'union')
+        self.assertGreater(common['volume_m3'], 0)
+        self.assertGreater(union['volume_m3'], long['volume_m3'])
+        self.assertAlmostEqual(union['volume_m3'],
+                               edited['volume_m3'] + long['volume_m3'] - common['volume_m3'])
+        parts = g.cut(edited, [10, 0, 0], [1, 0, 0])
+        self.assertEqual(len(parts), 2)
+        self.assertAlmostEqual(sum(part['volume_m3'] for part in parts), edited['volume_m3'])
+
+        # The rectangular cap just beyond the bend retains its collinear crown node.
+        design['sections'][0]['end'] = 21
+        through_bend, _ = designer.build(designer.run_design(design, 0))
+        self.assertTrue(through_bend['solid'])
+        self.assertEqual(len(through_bend['faces']), 2 * len(through_bend['vertices']) - 4)
+
     def test_profile_preview_survives_full_range_geometry_limit(self):
         design = designer.default()
         design['plan'] = [[station, 0, 0] for station in range(501)]

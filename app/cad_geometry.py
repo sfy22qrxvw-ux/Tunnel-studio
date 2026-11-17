@@ -272,13 +272,19 @@ def polygon(p):
     area2 = np.sum(uv[:, 0]*np.roll(uv[:, 1], -1) - uv[:, 1]*np.roll(uv[:, 0], -1))
     order = np.arange(len(p)) if area2 > 0 else np.arange(len(p)-1, -1, -1)
     triangles = order[np.asarray(m.triangulate([uv[order]]), dtype=np.int64)]
+    a, b, c = np.moveaxis(uv[triangles], 1, 0)
+    u, v = b - a, c - a
+    if np.any(np.abs(u[:, 0] * v[:, 1] - u[:, 1] * v[:, 0]) < 1e-14):
+        # The convex fast path can form a cap triangle along a straight edge
+        # with a crown midpoint. Keep the boundary vertex and retry triangulation.
+        triangles = order[np.asarray(m.triangulate([uv[order]], allow_convex=False), dtype=np.int64)]
     return origin, basis, uv, triangles
 
 def mesh_limits(solid):
     return (MAX_PROJECT_VERTICES, 2 * MAX_PROJECT_VERTICES) if solid else (MAX_VERTICES, MAX_FACES)
 
 
-def geometry(vertices, faces=None, closed=False, solid=False, **metadata):
+def geometry(vertices, faces=None, closed=False, solid=False, *, normalize_winding=True, **metadata):
     max_vertices, max_faces = mesh_limits(solid)
     p = points(vertices, 1, max_vertices)
     f = np.asarray(faces if faces is not None else [], dtype=np.int64).reshape(-1, 3)
@@ -290,7 +296,11 @@ def geometry(vertices, faces=None, closed=False, solid=False, **metadata):
         if np.any(np.linalg.norm(cross, axis=1) < 1e-14): raise ValueError('This operation produced a degenerate triangle. Adjust the input geometry.')
         area = float(np.linalg.norm(cross, axis=1).sum()/2)
         signed = float(np.einsum('ij,ij->i', triangles[:, 0], cross).sum()/6)
-        if solid and signed < 0: f = f[:, [0, 2, 1]]; signed = -signed
+        if solid and signed < 0:
+            if not normalize_winding:
+                raise ValueError('This operation reverses solid winding. Adjust the input geometry.')
+            f = f[:, [0, 2, 1]]
+            signed = -signed
     else: area = 0.; signed = 0.
     result = dict(vertices=p.tolist(), faces=f.tolist(), closed=bool(closed), solid=bool(solid),
                   minimum=p.min(0).tolist(), maximum=p.max(0).tolist(), area_m2=area,
@@ -462,7 +472,8 @@ def build(raw, resolve=lambda ident:None):
     if kind=='tunnel_design':
         return __import__('tunnel_designer').build(spec['design'],
             legacy_sampling='vertex_budget' not in spec,
-            vertex_budget=spec.get('vertex_budget', MAX_PROJECT_VERTICES))[0]
+            vertex_budget=spec.get('vertex_budget', MAX_PROJECT_VERTICES),
+            end_offsets=spec.get('end_offsets'))[0]
     if kind in ('point','line','polyline','rectangle'):
         p=points(spec.get('points'),1 if kind=='point' else 2)
         closed=kind=='rectangle' or bool(spec.get('closed'))

@@ -402,6 +402,21 @@
      svg.push(`<rect data-cad-grip="${grip.kind}" x="${p[0]-(edge?3:4)}" y="${p[1]-(edge?3:4)}" width="${edge?6:8}" height="${edge?6:8}" rx="${edge?3:1}" fill="${edge?'#ffd489':'#153645'}" stroke="#9ce8de" stroke-width="1.5"/>`);
     }
    }
+   const runRim=activeRunRim();
+   if(runRim.length){
+    const current=$c('cad-run-corner').value;
+    const target=get($c('cad-run-target').value);
+    const targetRim=target?endRim(target,$c('cad-run-target-end').value):[];
+    for(const [rim,colour] of [[runRim,'#ffdf80'],[targetRim,'#6ff6d1']]){
+     const projected=rim.map(p=>J().projectWorld(p));
+     if(projected.length&&projected.every(Boolean))svg.push(`<polygon points="${projected.map(p=>p.join(',')).join(' ')}" fill="none" stroke="${colour}" stroke-width="2"/>`);
+     if(rim===runRim)projected.forEach((p,i)=>{
+      if(!p||(projected.length>16&&current!==String(i)))return;
+      const selected=current===String(i);
+      svg.push(`<circle cx="${p[0]}" cy="${p[1]}" r="${selected?6:3}" fill="${colour}" stroke="#102d3c"/><text x="${p[0]+7}" y="${p[1]-7}" fill="${colour}" stroke="#102d3c" paint-order="stroke" stroke-width="3" font-size="12">${i+1}</text>`);
+     });
+    }
+   }
    if(snapHit?.pixel&&(command||gripDrag)){const p=snapHit.pixel;svg.push(`<rect x="${p[0]-5}" y="${p[1]-5}" width="10" height="10" fill="none" stroke="#a5f5cd" stroke-width="2"/><text x="${p[0]+12}" y="${p[1]-10}" fill="#b9ffe0" stroke="#102d3c" paint-order="stroke" stroke-width="3" font-size="11">${esc((snapHit.object?.reference?'Alignment · ':'')+snapHit.type)}</text>`);}
    if(extrusion?.profile){const h=extrudeHandle();if(h){const polygon=extrusion.profile.vertices.map(p=>J().projectWorld(M.add(p,M.mul(extrusion.vector,extrusion.symmetric?.5:1))));if(polygon.every(Boolean)&&extrusion.profile.closed)svg.push(`<polygon data-cad-extrude-face="true" points="${polygon.map(p=>p.join(',')).join(' ')}" fill="#6ce7cb30" stroke="#8ce8d6" stroke-width="2"/>`);svg.push(`<line x1="${h.a[0]}" y1="${h.a[1]}" x2="${h.b[0]}" y2="${h.b[1]}" stroke="#ffdf80" stroke-width="3"/><circle data-cad-extrude-handle="true" cx="${h.b[0]}" cy="${h.b[1]}" r="9" fill="#ffdf80" stroke="#1b414e" stroke-width="2"/><text x="${h.b[0]+14}" y="${h.b[1]-12}" fill="#fff0b2" stroke="#102d3c" paint-order="stroke" stroke-width="4" font-size="12">${M.norm(extrusion.vector).toFixed(3)} m</text>`);}}
 
@@ -564,8 +579,60 @@
   if(!selected.size)return false;
   return profileEdit()?safeRun({action:'remove',ids:[...selected]}):J().removeSelected();
  }
+ function isSeparateRun(o){return o?.definition?.kind==='tunnel_design'&&o.definition.design?.independent_run===true&&o.solid;}
+ function endRim(o,end){
+  const width=Math.max(...(o.faces[0]||[]))-1;
+  return width>=3&&width<=512&&o.vertices.length%width===0?
+   (end==='start'?o.vertices.slice(0,width):o.vertices.slice(-width)):[];
+ }
+ function activeRunRim(){
+  const source=dialog.open&&$c('cad-run-source');
+  const o=source&&get(source.value);
+  return o?endRim(o,$c('cad-run-end').value):[];
+ }
+ function pickRunCorner(p){
+  const rim=activeRunRim();
+  let nearest=-1,best=10;
+  rim.forEach((point,i)=>{
+   const q=J().projectWorld(point);
+   if(!q)return;
+   const d=Math.hypot(p[0]-q[0],p[1]-q[1]);
+   if(d<best){nearest=i;best=d;}
+  });
+  if(nearest<0)return false;
+  $c('cad-run-corner').value=String(nearest);
+  J().draw();
+  return true;
+ }
+ function editRunEnd(){
+  const [source,...rest]=chosen();
+  if(rest.length||!isSeparateRun(source))throw Error('Select one model built with Build as separate run.');
+  const rim=endRim(source,'end');
+  if(!rim.length)throw Error('The run needs its original Designer loft topology.');
+  const targets=objects().filter(o=>o.id!==source.id&&o.shape==='tunnel_design'&&isSeparateRun(o));
+  openDialog('Edit run end','Adjust the plan position of one corner or the whole end. Each corner keeps its height. Orbit to pick between corners that overlap in Plan.',
+   `<input type="hidden" id="cad-run-source" value="${esc(source.id)}">
+   <label>Run end<select id="cad-run-end"><option value="end">End</option><option value="start">Start</option></select></label>
+   <label>Corners<select id="cad-run-corner"><option value="">All corners</option>${rim.map((_,i)=>`<option value="${i}">Corner ${i+1}</option>`).join('')}</select></label>
+   <label>Placement<select id="cad-run-target"><option value="">Extend or shorten by distance</option>${targets.map(o=>`<option value="${esc(o.id)}">${esc(o.name)}</option>`).join('')}</select></label>
+   <div id="cad-run-target-row" hidden><label>Match target in plan<select id="cad-run-target-end"><option value="start">Target start</option><option value="end">Target end</option></select></label></div>
+   <div id="cad-run-distance-row">${scalarField('cad-run-distance','Distance in plan · m (positive extends)',0)}</div>`,
+   async()=>{
+    const targetId=$c('cad-run-target').value, corner=$c('cad-run-corner').value;
+    if(await run({action:'fit_run_end',ids:[source.id],end:$c('cad-run-end').value,
+     corner:corner===''?null:Number(corner),target_id:targetId||null,target_end:$c('cad-run-target-end').value,
+     distance:targetId?null:scalarValue('cad-run-distance')}))closeDialog();
+   });
+  $c('cad-dialog-fields').oninput=()=>{
+   const match=Boolean($c('cad-run-target').value);
+   $c('cad-run-target-row').hidden=!match;
+   $c('cad-run-distance-row').hidden=match;
+   J().draw();
+  };
+  J().draw();
+ }
  function menu(e,id){e.preventDefault();if(id){const face=faceAt(e,get(id));if(face)lastPickedFace=face;}if(id&&!selected.has(id))select(id);window.WorkspaceUI.showMenu(e,chosen()[0]?.name||'Model',[
-  ['Properties',()=>properties()],...(chosen()[0]?.definition?.kind==='tunnel_design'?[['Edit tunnel design…',()=>guard(parameters)]]:[]),['Fit selection',fitSelected],['Export highlighted…',()=>exportDialog()],['Move to bundle…',()=>window.WorkspaceUI.moveSelection(null,[...selected])],null,['Extrude…',()=>guard(extrudeDialog)],['Move',()=>guard(()=>moveCopy('move'))],['Copy',()=>guard(()=>moveCopy('copy'))],['Rotate…',()=>guard(()=>transformDialog('rotate'))],['Cut by plane…',()=>guard(cutDialog)],['Construction parameters…',()=>guard(parameters)],['Edit vertex…',()=>guard(vertexDialog)],null,['Hide selected',()=>safeRun({action:'visibility',ids:[...selected],visible:false})],['Show all models',()=>safeRun({action:'visibility',ids:objects().map(o=>o.id),visible:true})],['Delete selected…',remove,true]
+  ['Properties',()=>properties()],...(chosen()[0]?.definition?.kind==='tunnel_design'?[['Edit tunnel design…',()=>guard(parameters)]]:[]),...(isSeparateRun(chosen()[0])?[['Edit run end…',()=>guard(()=>tool('fit_run_end'))]]:[]),['Fit selection',fitSelected],['Export highlighted…',()=>exportDialog()],['Move to bundle…',()=>window.WorkspaceUI.moveSelection(null,[...selected])],null,['Extrude…',()=>guard(extrudeDialog)],['Move',()=>guard(()=>moveCopy('move'))],['Copy',()=>guard(()=>moveCopy('copy'))],['Rotate…',()=>guard(()=>transformDialog('rotate'))],['Cut by plane…',()=>guard(cutDialog)],['Construction parameters…',()=>guard(parameters)],['Edit vertex…',()=>guard(vertexDialog)],null,['Hide selected',()=>safeRun({action:'visibility',ids:[...selected],visible:false})],['Show all models',()=>safeRun({action:'visibility',ids:objects().map(o=>o.id),visible:true})],['Delete selected…',remove,true]
  ]);}
  async function exportDialog(requestedIds=null){const ids=Array.isArray(requestedIds)?requestedIds:[...selected];if(!ids.length){say('Select model objects to export.',true);return;}openDialog('Export highlighted models',ids.length+' selected objects · project/world coordinates · metres.','<label>Format<select id="cad-export-format"><option value="dxf">DXF · CAD geometry and 3D faces</option><option value="obj">OBJ · mesh, lines and points</option><option value="json">Model JSON · editable transfer to another project</option></select></label><p class="cad-help">Curved solid faces are tessellated. DXF preserves supported analytic circles/arcs. The exported file includes only these models. Choose Model JSON to import them into another Tunnel Studio project and keep construction parameters. DXF and OBJ exchange geometry with other 3D applications.</p>',async()=>{
    const fmt=$c('cad-export-format').value;let path=null;if(window.pywebview?.api?.choose_export_file){const choice=await window.pywebview.api.choose_export_file('Tunnel_Model.'+fmt,fmt);if(choice?.cancelled)return;if(choice?.error)throw Error(choice.error);if(!choice?.path)throw Error('No save destination selected.');path=choice.path;}
@@ -579,13 +646,14 @@
  }
  function snapDialog(){openDialog('Snapping','Snap markers show where the point will go. Cloud clicks recover the original measured XYZ.',Object.entries(snapSettings).map(([k,v])=>`<label class="cad-check"><input type="checkbox" data-cad-snap-setting="${k}" ${v?'checked':''}>${({cloud:'Cloud point · preview and measured click',alignment:'Visible alignments',nearest:'Nearest edge'})[k]||k[0].toUpperCase()+k.slice(1)}</label>`).join(''),()=>{dialog.querySelectorAll('[data-cad-snap-setting]').forEach(e=>{const key=e.dataset.cadSnapSetting;if(key==='cloud')setCloudSnap(e.checked);else snapSettings[key]=e.checked;});closeDialog();});}
  function help(){openDialog('Model command reference','Precise geometry in Model space. Enable Cloud reference to model against a scan.','<p><b>Coordinates:</b> X,Y,Z in the chosen frame; <b>@dX,dY,dZ</b> relative to the last point; <b>#E,N,H</b> absolute world coordinates. <b>@distance&lt;angle&lt;elevation</b> uses degrees.</p><p><b>Drawing:</b> POINT, LINE (L), POLYLINE (PL), CIRCLE (C), ARC (A), RECTANGLE (REC). Enter finishes a polyline; C closes it.</p><p><b>Midpoint tracking:</b> with Snap and Track midpoint enabled, pause over two opposite corners until each is numbered. Click the Centre marker, then choose a radius or type it. A common model face sets and locks the circle/arc/rectangle plane; the highlighted face and status show it before placement. Two standalone points alone do not define a plane: the current work plane is used when no shared face exists. Hover a third point to replace the oldest, or cancel to reset.</p><p><b>3D:</b> EXTRUDE (EX), SWEEP, LOFT, BOX, CYLINDER, SPHERE. Select profile then path for Sweep; select profiles in order for Loft.</p><p><b>Modify:</b> MOVE, COPY, ROTATE, SCALE, MIRROR, CUT, TRIM, EXTEND, OFFSET, BREAK, JOIN, ALIGN, UNION, SUBTRACT, INTERSECT.</p><p><b>Selection:</b> click models or their Project rows; Ctrl-click adds/removes. Select the subtraction base first. Trim uses the selected straight line as boundary and asks which portion to keep.</p><p><b>Navigation:</b> during a command, Shift/right-drag pans, Alt-drag orbits and the wheel zooms. Hold Ctrl while rotating for one-tenth speed. Escape cancels. Ctrl+Z / Ctrl+Y undo/redo outside text fields.</p><p><b>Origin / axes:</b> UCS changes the working frame without moving stored geometry. Faces and solids use a tessellated representation; curve detail is editable in Parameters.</p>',null);}
- async function tool(kind){if(profileEdit()&&['tunnel_designer','alignment_setup','alignment','extrude','sweep','loft','box','cylinder','sphere','union','subtract','intersect','ucs','import','export'].includes(kind))throw Error('Finish the profile to return to project modelling tools.');if(window.TunnelDesigner?.isPicking()&&!['fit','tunnel_designer'].includes(kind))throw Error('Finish or cancel section picking first.');if(kind==='tunnel_designer')return window.TunnelDesigner.open();if(dialog.open)closeDialog();if(command){say('Finish or cancel the current command first.',true);return;}if(pending||busy)return;
+ async function tool(kind){if(profileEdit()&&['tunnel_designer','fit_run_end','alignment_setup','alignment','extrude','sweep','loft','box','cylinder','sphere','union','subtract','intersect','ucs','import','export'].includes(kind))throw Error('Finish the profile to return to project modelling tools.');if(window.TunnelDesigner?.isPicking()&&!['fit','tunnel_designer'].includes(kind))throw Error('Finish or cancel section picking first.');if(kind==='tunnel_designer')return window.TunnelDesigner.open();if(dialog.open)closeDialog();if(command){say('Finish or cancel the current command first.',true);return;}if(pending||busy)return;
   if(['point','line','polyline','circle','arc','rectangle'].includes(kind))return start(kind);
   if(mode!=='Model'&&!enter('Model'))return;
 if(kind==='alignment_setup')return window.AlignmentHub?.open();if(kind==='alignment')return alignmentDialog();if(kind==='extrude')return extrudeDialog();if(['box','cylinder','sphere'].includes(kind))return primitiveDialog(kind);
   if(kind==='sweep'){const list=selectProfiles(2);return run({action:'create',spec:{kind,profile:list[0].id,path:list[1].id},...defaults()});}
   if(kind==='loft'){const list=selectProfiles();if(list.length<2)throw Error('Ctrl-select at least two profiles in loft order.');return run({action:'create',spec:{kind,profiles:list.map(o=>o.id)},...defaults()});}
   if(['move','copy'].includes(kind))return moveCopy(kind);if(['rotate','scale','mirror'].includes(kind))return transformDialog(kind);if(kind==='cut')return cutDialog();
+  if(kind==='fit_run_end')return editRunEnd();
   if(['union','subtract','intersect','join'].includes(kind))return run({action:kind,ids:[...selected],...defaults()});
   if(kind==='trim'){if(selected.size!==2)throw Error('Select the target first, then Ctrl-select a straight two-point boundary line in the same plane.');const ids=[...selected],f=workPlane();return start('trim',{count:1,prompt:()=> 'Pick or type a point on the portion to keep. The straight boundary is extended both ways.',callback:p=>run({action:kind,ids,keep:p[0],frame:f,...defaults()})});}
   if(kind==='extend'){if(selected.size!==2)throw Error('Select target first, then the straight boundary line.');const ids=[...selected],f=workPlane();return openDialog('Extend to boundary','The boundary is treated as an infinite straight line in the work plane.','<label>Endpoint<select id="cad-extend-end"><option value="end">Last vertex</option><option value="start">First vertex</option></select></label>',async()=>{if(await run({action:kind,ids,frame:f,end:$c('cad-extend-end').value,...defaults()}))closeDialog();});}
@@ -668,7 +736,7 @@ if(kind==='alignment_setup')return window.AlignmentHub?.open();if(kind==='alignm
  canvas.addEventListener('pointermove',e=>{if(mode!=='Model'||busy||pending)return;const p=pixel(e);if(gripDrag?.pointer===e.pointerId){e.preventDefault();e.stopImmediatePropagation();updateGrip(e);return;}if(handleDrag){e.preventDefault();e.stopImmediatePropagation();const drag=handleDrag;let vector;if(drag.axis){const a=J().projectWorld(drag.base),b=J().projectWorld(M.add(drag.base,drag.axis)),dx=b[0]-a[0],dy=b[1]-a[1],norm=dx*dx+dy*dy;let delta=norm>4?((p[0]-drag.start[0])*dx+(p[1]-drag.start[1])*dy)/norm:(drag.start[1]-p[1])*2*J().cadScene().scale/canvas.clientWidth;delta*=drag.symmetric?2:1;const length=M.dot(drag.vector,drag.axis)+delta;vector=M.mul(drag.axis,Math.abs(length)<1e-5?(length<0?-1e-5:1e-5):length);}else{const a=M.planePoint(drag.start,view(),{z:drag.normal,origin:drag.end},drag.end),b=M.planePoint(p,view(),{z:drag.normal,origin:drag.end},drag.end);if(a&&b)vector=M.add(drag.vector,M.mul(M.sub(b,a),drag.symmetric?2:1));}if(vector)updateDraggedExtrusion(vector);return;}if(gesture&&M.norm([p[0]-gesture.start[0],p[1]-gesture.start[1],0])>4)gesture.moved=true;if(!command||e.buttons||e.altKey||e.shiftKey){cloudPointer=null;stopHover();return;}
   updatePointer(p);
  },true);
- canvas.addEventListener('pointerup',e=>{if(window.TunnelDesigner?.isPicking()){gesture=null;return;}if(gripDrag?.pointer===e.pointerId){e.stopImmediatePropagation();endGrip(true);return;}if(handleDrag){handleDrag=null;gesture=null;e.stopImmediatePropagation();J().cadScene().cancelNavigation();if(canvas.hasPointerCapture?.(e.pointerId))canvas.releasePointerCapture(e.pointerId);dialogPreview?.().catch(showDialogError);return;}const g=gesture;gesture=null;if(mode!=='Model'||busy||pending||!g||g.id!==e.pointerId||g.moved||e.button!==0||e.altKey||e.shiftKey)return;const p=pixel(e);e.stopImmediatePropagation();J().cadScene().cancelNavigation();if(command?.kind==='extrude-face'){const wanted=command.sourceId?get(command.sourceId):null;let picked=faceAt(e,wanted);if(!picked){const o=pick(e)||objects().filter(v=>!v.faces.length&&v.closed&&effectiveVisible(v)).find(v=>{const pp=v.vertices.map(J().projectWorld);return pp.every(Boolean)&&insidePolygon(p,pp);});if(o&&(!wanted||o.id===wanted.id))picked={object:o};}if(picked){command=null;J().setMode('orbit');selected=new Set([picked.object.id]);guard(()=>extrudeDialog(null,picked));}return;}if(command)guard(()=>clickPoint(p));else{lastPickedFace=faceAt(e);const o=pick(e);if(o)select(o.id,e);else{clearSelected();if($c('cad-cloud-reference').checked&&window.SceneObjectsUI?.pickMeasurement(p,J().projectWorld,e))return;const item=$c('cad-cloud-reference').checked?J().pickedItem?.(e):null;if(item)J().activateItem(item);}}},true);
+ canvas.addEventListener('pointerup',e=>{if(window.TunnelDesigner?.isPicking()){gesture=null;return;}if(gripDrag?.pointer===e.pointerId){e.stopImmediatePropagation();endGrip(true);return;}if(handleDrag){handleDrag=null;gesture=null;e.stopImmediatePropagation();J().cadScene().cancelNavigation();if(canvas.hasPointerCapture?.(e.pointerId))canvas.releasePointerCapture(e.pointerId);dialogPreview?.().catch(showDialogError);return;}const g=gesture;gesture=null;if(mode!=='Model'||busy||pending||!g||g.id!==e.pointerId||g.moved||e.button!==0||e.altKey||e.shiftKey)return;const p=pixel(e);e.stopImmediatePropagation();J().cadScene().cancelNavigation();if(command?.kind==='extrude-face'){const wanted=command.sourceId?get(command.sourceId):null;let picked=faceAt(e,wanted);if(!picked){const o=pick(e)||objects().filter(v=>!v.faces.length&&v.closed&&effectiveVisible(v)).find(v=>{const pp=v.vertices.map(J().projectWorld);return pp.every(Boolean)&&insidePolygon(p,pp);});if(o&&(!wanted||o.id===wanted.id))picked={object:o};}if(picked){command=null;J().setMode('orbit');selected=new Set([picked.object.id]);guard(()=>extrudeDialog(null,picked));}return;}if(command)guard(()=>clickPoint(p));else if(!pickRunCorner(p)){lastPickedFace=faceAt(e);const o=pick(e);if(o)select(o.id,e);else{clearSelected();if($c('cad-cloud-reference').checked&&window.SceneObjectsUI?.pickMeasurement(p,J().projectWorld,e))return;const item=$c('cad-cloud-reference').checked?J().pickedItem?.(e):null;if(item)J().activateItem(item);}}},true);
  canvas.addEventListener('contextmenu',e=>{if(window.TunnelDesigner?.isPicking())return;if(mode!=='Model')return;if(J().cadScene().suppressContextMenu())return;e.preventDefault();e.stopImmediatePropagation();if(command)return window.WorkspaceUI.showMenu(e,'Active command',[['Finish',()=>guard(()=>finish())],['Cancel',()=>cancel()]]);const o=pick(e);if(o)return menu(e,o.id);if(window.WorkspaceUI.viewportMenu)return window.WorkspaceUI.viewportMenu(e);window.WorkspaceUI.showMenu(e,'Model workspace',[['Fit models',fitSelected],['Working origin / axes',frameDialog],['Command help',help]]);},true);
  for(const type of ['pointercancel','lostpointercapture'])canvas.addEventListener(type,()=>{gesture=null;handleDrag=null;if(gripDrag)endGrip(false);},true);
  canvas.addEventListener('pointerleave',()=>{cloudPointer=null;stopHover();if(command){cursor=null;snapHit=null;J().draw();}});window.addEventListener('blur',stopHover);
@@ -678,7 +746,7 @@ if(kind==='alignment_setup')return window.AlignmentHub?.open();if(kind==='alignm
   if(e.key==='Delete'&&selected.size&&!document.querySelector('dialog[open]')){e.preventDefault();e.stopImmediatePropagation();remove();}
  },true);
  modebar.querySelectorAll('[data-cad-mode]').forEach(b=>b.onclick=()=>enter(b.dataset.cadMode));toolbar.querySelectorAll('[data-cad-command]').forEach(b=>b.onclick=()=>guard(()=>tool(b.dataset.cadCommand)));
- for(const [id,title,items] of [['cad-solid-tool','Create a solid',[['box','Box'],['cylinder','Cylinder'],['sphere','Sphere']]],['cad-modify-tool','Modify model',[['copy','Copy'],['rotate','Rotate'],['scale','Scale'],['mirror','Mirror'],['offset','Offset'],['extend','Extend'],['break','Break'],['join','Join'],['align','Align 3 points'],['union','Union solids'],['subtract','Subtract solids'],['intersect','Intersect solids']]]])$c(id).onclick=()=>{const r=$c(id).getBoundingClientRect();window.WorkspaceUI.showMenu({clientX:r.left,clientY:r.bottom},title,items.map(([kind,label])=>[label,()=>guard(()=>tool(kind))]));};
+ for(const [id,title,items] of [['cad-solid-tool','Create a solid',[['box','Box'],['cylinder','Cylinder'],['sphere','Sphere']]],['cad-modify-tool','Modify model',[['copy','Copy'],['rotate','Rotate'],['scale','Scale'],['mirror','Mirror'],['offset','Offset'],['extend','Extend'],['break','Break'],['join','Join'],['align','Align 3 points'],['fit_run_end','Edit run end…'],['union','Union solids'],['subtract','Subtract solids'],['intersect','Intersect solids']]]])$c(id).onclick=()=>{const r=$c(id).getBoundingClientRect();window.WorkspaceUI.showMenu({clientX:r.left,clientY:r.bottom},title,items.map(([kind,label])=>[label,()=>guard(()=>tool(kind))]));};
  $c('cad-destination').onchange=e=>window.WorkspaceUI?.setActiveBundle(e.target.value);
  $c('cad-workspace-import').onclick=()=>window.TunnelRibbon?.openImport('scan');
  $c('cad-workspace-export').onclick=e=>window.WorkspaceUI?.exportMenu(e);

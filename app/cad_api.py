@@ -80,6 +80,17 @@ def execute(data,body,progress=lambda message:None,*,profile_frame=None):
             progress('Modelling · '+action+' '+o['name']);value=g.transformed(o,action,body)
             if action=='copy':add(value,o['name']+' copy')
             else:replace_geometry(o,value);created.append(o['id'])
+    elif action == 'fit_run_end':
+        if profile_frame or len(selected) != 1:
+            raise ValueError('Select one separate tunnel run to edit its end.')
+        from tunnel_designer import fit_run_end
+        target_id = body.get('target_id')
+        target = get_object(data, target_id) if target_id else None
+        value = fit_run_end(selected[0], end=body.get('end'), corner=body.get('corner'),
+                            distance=body.get('distance'), target=target,
+                            target_end=body.get('target_end', 'start'))
+        replace_geometry(selected[0], value)
+        created = ids
     elif action=='parameters':
         if len(selected)!=1:raise ValueError('Select one model to edit its construction parameters.')
         replace_geometry(selected[0],g.update_parameters(selected[0],body.get('values',{})));created=ids

@@ -55,15 +55,24 @@ def alignment(design):
         piece=segment(a[:2],b[:2],a[2]);pieces.append(piece);stations.append(stations[-1]+piece[0])
     stations=np.array(stations);end=float(stations[-1]);slopes=np.diff(vertical[:,1])/np.diff(vertical[:,0])
     if vertical[0,0]>start+1e-7 or vertical[-1,0]<end-1e-7:raise ValueError(f'Height rows must cover the alignment from {start:.3f} to {end:.3f} m. Add heights at both ends.')
-    def at(ch):
+    def at(ch, side=None):
         if not start-1e-7<=ch<=end+1e-7:raise ValueError('Section chainage falls outside the horizontal alignment.')
         i=max(0,min(len(pieces)-1,int(np.searchsorted(stations,ch,side='right')-1)));length,pos,tan=pieces[i];f=np.clip((ch-stations[i])/length,0,1)
         xy=pos(f);direction=tan(f)
-        if i and abs(ch-stations[i])<1e-7:
+        if side is not None:
+            node = min((i, i + 1), key=lambda idx: abs(stations[idx] - ch))
+            if 0 < node < len(pieces) and abs(stations[node] - ch) < 1e-7:
+                piece = pieces[node - 1] if side == 'incoming' else pieces[node]
+                direction = piece[2](1 if side == 'incoming' else 0)
+        elif i and abs(ch-stations[i])<1e-7:
             old=pieces[i-1][2](1);combined=direction+old
             if np.linalg.norm(combined)<1e-8:raise ValueError('The horizontal alignment reverses direction at a node.')
             direction=combined/np.linalg.norm(combined)
         j=max(0,min(len(slopes)-1,int(np.searchsorted(vertical[:,0],ch,side='right')-1)))
+        if side is not None:
+            grade_break = min((j, j + 1), key=lambda idx: abs(vertical[idx, 0] - ch))
+            if 0 < grade_break < len(slopes) and abs(vertical[grade_break, 0] - ch) < 1e-7:
+                j = grade_break - 1 if side == 'incoming' else grade_break
         centre=np.r_[xy,np.interp(ch,vertical[:,0],vertical[:,1])];right=np.array([direction[1],-direction[0],0.])
         if design.get('orientation','vertical')=='vertical':up=np.array([0.,0.,1.])
         else:
@@ -283,6 +292,7 @@ def prepare(design, *, vertex_budget=g.MAX_PROJECT_VERTICES, legacy_sampling=Fal
     sections = design.get('sections', [])
     if not sections or len(sections) > 1000:
         raise ValueError('Add at least one chainage section.')
+    independent = design.get('independent_run') is True and len(sections) == 1
     used = set()
     previous = None
     smooth_samples = []
@@ -303,8 +313,8 @@ def prepare(design, *, vertex_budget=g.MAX_PROJECT_VERTICES, legacy_sampling=Fal
         span = section['end'] - section['start']
         if span < 1e-6:
             raise ValueError('Every section or transition needs a positive length.')
-        at(section['start'])
-        at(section['end'])
+        at(section['start'], 'outgoing' if independent else None)
+        at(section['end'], 'incoming' if independent else None)
         if previous and abs(section['start'] - previous['end']) > 1e-6:
             raise ValueError('Consecutive sections must meet exactly, without a gap or overlap.')
         if section.get('interpolation') == 'smoothstep' and first != last:
@@ -391,7 +401,13 @@ def prepare(design, *, vertex_budget=g.MAX_PROJECT_VERTICES, legacy_sampling=Fal
                 g.polygon(np.column_stack([xy, np.zeros(count)]))
         if preview and index not in preview_ids:
             continue
-        centre, right, up = at(station)
+        side = None
+        if independent:
+            if index == 0:
+                side = 'outgoing'
+            elif index == len(samples) - 1:
+                side = 'incoming'
+        centre, right, up = at(station, side)
         points = centre + xy[:, 0, None] * right + xy[:, 1, None] * up
         centres.append(centre.tolist())
         if not preview:
@@ -407,15 +423,136 @@ def prepare(design, *, vertex_budget=g.MAX_PROJECT_VERTICES, legacy_sampling=Fal
     return design, loops, diagnostics
 
 
-def build(design, *, vertex_budget=g.MAX_PROJECT_VERTICES, legacy_sampling=False):
+def validate_end_faces(before, after, faces, on_rim):
+    """Reject a local face reversal before geometry can normalize global winding."""
+    indices = np.asarray(faces)
+    affected = indices[on_rim[indices].any(axis=1)]
+    old, new = before[affected], after[affected]
+    old_normals = np.cross(old[:, 1] - old[:, 0], old[:, 2] - old[:, 0])
+    new_normals = np.cross(new[:, 1] - new[:, 0], new[:, 2] - new[:, 0])
+    if np.any(np.einsum('ij,ij->i', old_normals, new_normals) <= 0):
+        raise ValueError('This end adjustment folds or collapses a face. Reduce the movement.')
+
+
+def build(design, *, vertex_budget=g.MAX_PROJECT_VERTICES, legacy_sampling=False, end_offsets=None):
     clean, loops, info = prepare(design, vertex_budget=vertex_budget, legacy_sampling=legacy_sampling)
     value = g.loft_rings([ring['vertices'] for ring in loops], shape='tunnel_design')
     definition = dict(kind='tunnel_design', design=clean)
     if not legacy_sampling:
         definition['vertex_budget'] = vertex_budget
+    if end_offsets:
+        if clean.get('independent_run') is not True or len(clean['sections']) != 1:
+            raise ValueError('End adjustments require a separate tunnel run.')
+        rings = np.array(value['vertices']).reshape(len(loops), -1, 3)
+        width = rings.shape[1]
+        if not isinstance(end_offsets, dict) or set(end_offsets) - {'start', 'end'}:
+            raise ValueError('Invalid tunnel run end adjustments.')
+        touched = np.zeros(rings.shape[:2], dtype=bool)
+        for end, offsets in end_offsets.items():
+            if not isinstance(offsets, dict) or set(offsets) - {str(i) for i in range(width)}:
+                raise ValueError('Invalid tunnel run corner adjustments.')
+            row = 0 if end == 'start' else -1
+            for corner, delta in offsets.items():
+                touched[row, int(corner)] = True
+                rings[row, int(corner)] += g.vector(delta, 'Corner adjustment')
+        points = rings.reshape(-1, 3)
+        validate_end_faces(np.asarray(value['vertices']), points, value['faces'], touched.ravel())
+        value = g.geometry(points, value['faces'], solid=True, normalize_winding=False, shape='tunnel_junction')
+        definition['end_offsets'] = end_offsets
     value.update(definition=definition, design_summary={k: v for k, v in info.items()
                  if k not in ('rings', 'centres', 'profiles', 'plan', 'plan_chainages')})
     return value, info
+
+
+def run_design(design, section_index):
+    sections = design.get('sections', [])
+    if type(section_index) is not int or not 0 <= section_index < len(sections):
+        raise ValueError('Choose the chainage range to build.')
+    section = sections[section_index]
+    name = str(design.get('name') or 'Tunnel design')
+    suffix = f" · {float(section['start']):g}–{float(section['end']):g} m" if all(
+        isinstance(section.get(key), (int, float)) for key in ('start', 'end')) else f' · Section {section_index + 1}'
+    return dict(design, name=name[:120 - len(suffix)] + suffix,
+                sections=[section], independent_run=True)
+
+
+def fit_run_end(source, *, end, corner=None, distance=None, target=None, target_end='start'):
+    def endpoint(design, label):
+        if label not in ('start', 'end'):
+            raise ValueError('Choose the start or end of the run.')
+        return alignment(design)[3](design['sections'][0][label],
+                                    'outgoing' if label == 'start' else 'incoming')
+
+    def run(obj):
+        definition = obj.get('definition', {})
+        design = definition.get('design', {})
+        if (definition.get('kind') != 'tunnel_design' or design.get('independent_run') is not True
+                or len(design.get('sections', [])) != 1 or not obj.get('solid')):
+            raise ValueError('Build the chainage range as a separate run first.')
+        return design
+
+    run(source)
+    if end not in ('start', 'end'):
+        raise ValueError('Choose the start or end of the run.')
+    # A Designer loft starts with triangle (0, 1, width + 1), up to winding.
+    # The same topology survives transforms and Model JSON round trips.
+    faces = source.get('faces', [])
+    width = max(faces[0]) - 1 if faces else 0
+    rows, remainder = divmod(len(source['vertices']), max(1, width))
+    if (not 3 <= width <= 512 or rows < 2 or remainder or
+            sorted(faces[0]) != [0, 1, width + 1] or len(faces) != 2 * len(source['vertices']) - 4):
+        raise ValueError('The run needs its original Designer loft topology.')
+    vertices = np.array(source['vertices'], dtype=float).reshape(rows, width, 3)
+    rim, adjacent = (vertices[0], vertices[1]) if end == 'start' else (vertices[-1], vertices[-2])
+    if corner is not None and (type(corner) is not int or not 0 <= corner < width):
+        raise ValueError('Choose a valid end corner.')
+    chosen = np.arange(width) if corner is None else [corner]
+    edge = rim[chosen, :2] - adjacent[chosen, :2]
+    span = np.linalg.norm(edge, axis=1)
+    if np.any(span < 1e-7):
+        raise ValueError('Every edited edge needs a direction in plan.')
+    forward = edge / span[:, None]
+    if target is not None:
+        target_design = run(target)
+        if target is source or target.get('shape') != 'tunnel_design':
+            raise ValueError('Choose a different, unadjusted run as the plan reference.')
+        centre, right, _ = endpoint(target_design, target_end)
+        transform = np.asarray(target.get('transform', np.eye(4)), dtype=float)
+        centre = (transform[:3, :3] @ centre + transform[:3, 3])[:2]
+        across = (transform[:3, :3] @ right)[:2]
+        length = np.linalg.norm(across)
+        if length < 1e-7:
+            raise ValueError('The target section needs a direction in plan.')
+        normal = np.array([-across[1], across[0]]) / length
+        denominator = forward @ normal
+        if np.any(np.abs(denominator) < 1e-6):
+            raise ValueError('An edited edge is parallel to the target line in plan.')
+        movement = ((centre - rim[chosen, :2]) @ normal) / denominator
+    else:
+        movement = finite(distance, 'End adjustment')
+    if np.any(span + movement <= 1e-6):
+        raise ValueError('The edit would pass the next cross-section. Shorten the range in the Designer first.')
+    displacement = np.column_stack([forward * np.asarray(movement)[..., None], np.zeros(len(chosen))])
+    rim[chosen] += displacement
+    definition = copy.deepcopy(source['definition'])
+    transform = np.asarray(source.get('transform', np.eye(4)), dtype=float)
+    offsets = definition.setdefault('end_offsets', {}).setdefault(end, {})
+    local_displacement = np.linalg.solve(transform[:3, :3], displacement.T).T
+    for i, local in zip(chosen, local_displacement):
+        offsets[str(i)] = (local + offsets.get(str(i), [0, 0, 0])).tolist()
+    baseline = np.asarray(source['vertices'], dtype=float).reshape(rows, width, 3)
+    touched = np.zeros((rows, width), dtype=bool)
+    for label, original_offsets in source['definition'].get('end_offsets', {}).items():
+        row = 0 if label == 'start' else -1
+        for i, delta in original_offsets.items():
+            baseline[row, int(i)] -= transform[:3, :3] @ delta
+            touched[row, int(i)] = True
+    touched[0 if end == 'start' else -1, chosen] = True
+    points = vertices.reshape(-1, 3)
+    validate_end_faces(baseline.reshape(-1, 3), points, faces, touched.ravel())
+    return g.geometry(points, faces, closed=source.get('closed', False), solid=True,
+                      normalize_winding=False, shape='tunnel_junction', definition=definition,
+                      transform=transform.tolist())
 
 
 def resolve_profiles(s,design, *, allow_incomplete=False):
@@ -536,12 +673,28 @@ def post(s,h,path,body):
     design=resolve_profiles(s, body.get('design',{}), allow_incomplete=True)
     cad_api.check(s,body)
     action=body.get('action');old=None;old_selection=getattr(s,'SELECTION',None)
+    run_id = None
     try:
         if action=='save':
             # Drafts may be incomplete while the user creates a CAD profile.
             import json
             json.dumps(design,allow_nan=False)
             model_id=body.get('model_id')
+        elif action == 'build_run':
+            current = cad_api.current(s)
+            model_id = body.get('model_id')
+            run = run_design(design, body.get('section_index'))
+            value, _ = build(run, vertex_budget=available_vertices(current, None))
+            data = copy.deepcopy(current)
+            if not any(layer['name'] == 'Model' for layer in data['layers']):
+                data['layers'].append(dict(name='Model', visible=True))
+            record = cad_api.object_record(value, dict(name=run['name'], layer='Model'))
+            run_id = record['id']
+            data['objects'].append(record)
+            cad_api.check(s, body)
+            old = copy.deepcopy(s.STATE)
+            data.update(revision=uuid.uuid4().hex, last_created=[run_id])
+            s.STATE['cad'] = data
         elif action=='build':
             current=cad_api.current(s);model_id=body.get('model_id')
             separate_copy=body.get('separate_copy',False)
@@ -588,4 +741,4 @@ def post(s,h,path,body):
     except Exception:
         if old is not None:s.STATE.clear();s.STATE.update(old);s.SELECTION=old_selection
         raise
-    h.send(dict(saved=True,model_id=model_id,action=action));return True
+    h.send(dict(saved=True,model_id=model_id,action=action,run_id=run_id));return True
