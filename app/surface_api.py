@@ -97,6 +97,24 @@ def kept_count(r):
     return sum(c['points'] for c in r['clusters'] if c['id'] in kept) + (r['statistics']['noise_points'] if -1 in kept else 0)
 
 
+def bolt_review_kind(r):
+    settings = r.get('settings', {})
+    if settings.get('method') == 'lining_features' and settings.get('lining_task') == 'bolts':
+        return 'bolt_fitting' if settings.get('lining_bolt_kind') == 'raised' else 'bolt_hole'
+    return None
+
+
+def review_exclusion_error(r, kept=None):
+    kind = bolt_review_kind(r)
+    if kind is None:
+        return None
+    kept = set(r['kept'] if kept is None else kept)
+    if ((r['statistics'].get('noise_points', 0) and -1 not in kept)
+            or any(c['id'] not in kept and c.get('feature_kind') != kind for c in r['clusters'])):
+        return 'Bolt review only excludes detected bolt groups. Choose Reset exclusions to restore the lining before continuing.'
+    return None
+
+
 def metrics(r):
     """Ground truth is used only to evaluate our synthetic demonstration, never to classify."""
     meta = r['source_meta']
@@ -119,6 +137,7 @@ def public_result(s, r):
     out['source_count'] = r['source_meta']['count']
     out['source_item_id'] = r.get('source_item_id')
     out['reviewed_kept_points'] = kept_count(r)
+    out['review_exclusion_error'] = review_exclusion_error(r)
     out['source_changed'] = result_source_changed(s, r)
     out['can_apply'] = r['source_kind'] == 'survey' and same_geometry(source(s, 'survey'), r['source_meta'])
     out['can_delete_patches'] = patch_source(s,r) is not None
@@ -509,6 +528,10 @@ def review_selection(s,body):
     if body.get('revision')!=r['revision']:raise ValueError('The result changed. Refresh it before reviewing points.')
     keep=body.get('keep')
     if type(keep) is not bool:raise ValueError('Choose whether to keep or remove the selected points.')
+    error=review_exclusion_error(r)
+    if error:raise ValueError(error)
+    kind=bolt_review_kind(r)
+    candidates=[c['id'] for c in r['clusters'] if c.get('feature_kind')==kind] if kind else []
     spec=jobdata.selection_spec(body.get('selection'))
     ids,labels=result_arrays(r)
     newpath=asset_folder(s.WORK,'analysis')/(uuid.uuid4().hex+'.surface_labels')
@@ -521,14 +544,19 @@ def review_selection(s,body):
                 q=jobdata._display_rows(r['source_meta']['file'],r['source_meta']['count'],ids[start:start+pointio.CHUNK])
                 q=registration_pose.points(r['source_meta'],q)
                 lab=np.array(labels[start:start+len(q)],copy=True)
-                chosen=jobdata.selection_mask(q,spec);changed+=int(chosen.sum());lab[chosen]=new_id
+                chosen=jobdata.selection_mask(q,spec)
+                if kind:chosen &= np.isin(lab,candidates)
+                changed+=int(chosen.sum());lab[chosen]=new_id
                 lab.astype('<i4').tofile(out)
                 for k in np.unique(lab):
                     use=lab==k;key=int(k);counts[key]=counts.get(key,0)+int(use.sum());sums[key]=sums.get(key,np.zeros(3))+q[use].sum(0)
-        if not changed:raise ValueError('No processed points are inside this 3D selection.')
+        if not changed:raise ValueError('No detected bolt points are inside this 3D selection.' if kind else 'No processed points are inside this 3D selection.')
         next_r=copy.deepcopy(r);by_id={c['id']:c for c in next_r['clusters']}
         by_id[new_id]=dict(id=new_id,name='Manually kept' if keep else 'Manually removed',supervoxels=0,
                           linearity=0.,planar_fraction=0.,overlap=0.,automatic_keep=False)
+        if kind:
+            name='Bolt recess' if kind=='bolt_hole' else 'Raised fitting'
+            by_id[new_id].update(feature_kind=kind,name=name+(' · manually kept' if keep else ' · manually excluded'))
         next_r['clusters']=[dict(by_id[k],points=n,centre=(sums[k]/n).tolist()) for k,n in counts.items() if k>=0]
         next_r['statistics']['noise_points']=counts.get(-1,0)
         next_r['statistics']['clusters']=len(next_r['clusters'])
@@ -667,6 +695,8 @@ def review(s, body):
     kept = body.get('kept')
     if not isinstance(kept,list) or any(type(k) is not int or k not in valid for k in kept): raise ValueError('Invalid cluster selection.')
     kept = sorted(set(kept)); previous = set(r['kept'])
+    error=review_exclusion_error(r,kept)
+    if error:raise ValueError(error)
     if previous == set(kept): return
     next_r = copy.deepcopy(r)
     next_r['review_log'].append({'time':time.time(),'added':sorted(set(kept)-previous),'excluded':sorted(previous-set(kept))})
@@ -733,6 +763,8 @@ def delete_patches(s,body):
 
 def filtered_cloud(s, included=True):
     r = result(s); key = 'surface' if included else 'other'; cached = r.get('outputs',{}).get(key)
+    error=review_exclusion_error(r)
+    if error:raise ValueError(error)
     if result_source_changed(s, r):
         raise ValueError('The source scan changed after cleaning. Run cleaning again before creating or exporting a cleaned scan.')
     output_name=('Tunnel · ' if included else 'Noise_removed · ')+r['source_meta']['name']
@@ -764,6 +796,8 @@ def filtered_cloud(s, included=True):
 def apply(s, body):
     r = result(s)
     if body.get('revision') != r['revision'] or body.get('reviewed') is not True: raise ValueError('Review the current result before applying it.')
+    error=review_exclusion_error(r)
+    if error:raise ValueError(error)
     if r['source_kind'] != 'survey' or not same_geometry(source(s,'survey'),r['source_meta']):
         raise ValueError('The active survey differs from this result. Run extraction on the current survey before applying; the saved result can still be exported.')
     rejected_count=r['statistics']['input_points']-kept_count(r)

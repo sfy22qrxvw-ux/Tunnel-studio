@@ -121,6 +121,39 @@ class SurfaceWorkflowTests(unittest.TestCase):
         ids,p,_=surface_api.select_area(self.s,self.meta,'survey',{'mode':'chainage','start':.25,'end':.5},1000)
         self.assertEqual(len(ids),100);self.assertTrue(((p[:,0]>=.25)&(p[:,0]<=.5)).all())
 
+    def test_pocket_review_protects_lining_and_resets_an_old_inverted_result(self):
+        r=self.crafted_result()
+        r['settings'].update(method='lining_features',lining_task='bolts',lining_bolt_kind='recess')
+        r['clusters'][1].update(feature_kind='bolt_hole',automatic_keep=True)
+        r['kept']=[0,1,-1]
+        surface_api.commit_result(self.s,r)
+        before=Path(r['labels_file']).read_bytes()
+        with self.assertRaisesRegex(ValueError,'Reset exclusions'):
+            surface_api.review(self.s,{'revision':r['revision'],'kept':[1,-1]})
+        self.assertIs(self.s.STATE['surface_result'],r)
+
+        r['kept']=[1,-1]  # Saved by the older app with its wall excluded.
+        self.assertIn('Reset exclusions',surface_api.public_result(self.s,r)['review_exclusion_error'])
+        with self.assertRaisesRegex(ValueError,'Reset exclusions'):
+            surface_api.filtered_cloud(self.s)
+        with self.assertRaisesRegex(ValueError,'Reset exclusions'):
+            surface_api.apply(self.s,{'revision':r['revision'],'reviewed':True})
+        surface_api.reset_review(self.s,{'revision':r['revision']})
+        restored=self.s.STATE['surface_result']
+        self.assertEqual(surface_api.kept_count(restored),100)
+        self.assertEqual(Path(restored['labels_file']).read_bytes(),before)
+
+        # A drawn box over the entire preview may affect only the pocket points.
+        surface_api.review_selection(self.s,{'revision':restored['revision'],'keep':False,
+                                            'selection':restored['selection']})
+        reviewed=self.s.STATE['surface_result']
+        self.assertIsNone(surface_api.review_exclusion_error(reviewed))
+        self.assertEqual(surface_api.kept_count(reviewed),50)
+        labels=np.fromfile(reviewed['labels_file'],'<i4')
+        rows=np.arange(100)
+        np.testing.assert_array_equal(~np.isin(labels,reviewed['kept']),(rows>=40)&(rows<90))
+        self.assertEqual(reviewed['review_log'][-1]['points'],50)
+
     def test_apply_only_roi_undo_and_stale_result_guard(self):
         r=self.crafted_result();before=(self.root/'scan.xyz64').read_bytes()
         surface_api.apply(self.s,{'revision':r['revision'],'reviewed':True})

@@ -89,6 +89,7 @@
   $('surf-classification-key').textContent=colourMode()==='decisions'?'Green: kept. Red: exclusion candidates. Magenta: selected.':colourMode()==='rings'?'Categorical colours show supported rings. Select a group to inspect its ID. Grey: unresolved or retained boundary points. Red: excluded candidates. Magenta: selected.':'Categorical colours show lining clusters. Select a group to inspect its ID. Grey: unresolved or retained boundary points. Red: excluded candidates. Magenta: selected. Colours show geometric groups; cable and pipe types are not inferred.';
  }
  const kept=()=>new Set(data.result?.kept||[]);
+ function boltReviewKind(r){const s=r?.settings;return s?.method==='lining_features'&&s.lining_task==='bolts'?(s.lining_bolt_kind==='raised'?'bolt_fitting':'bolt_hole'):null;}
  function pockets(r){return r?.settings?.method==='lining_features'?r.clusters.filter(c=>c.feature_kind==='bolt_hole'&&c.points>0):[];}
  function hidePocketGuides(){return reviewActive()&&data.result?.settings?.method==='lining_features'&&
    (!!isolatedClusters||!$('surf-show-kept').checked);}
@@ -198,11 +199,17 @@
   for(const id of ['surf-view-tunnel','surf-view-noise','surf-view-both'])$(id).disabled=busy||loading||actionPending||!r;
   if(!r)return;
   const keep=kept(),pieces=clusters(),total=r.statistics.input_points,tunnel=r.reviewed_kept_points,noise=total-tunnel;
-  const found=pockets(r),pocketPoints=found.reduce((n,c)=>n+c.points,0);
+  const found=pockets(r),pocketPoints=found.reduce((n,c)=>n+c.points,0),boltKind=boltReviewKind(r);
   const pocketReview=found.length>0||(r.settings?.method==='lining_features'&&r.settings.lining_task==='bolts'&&r.settings.lining_bolt_kind!=='raised');
   $('surf-pocket-review').hidden=!pocketReview;
   $('surf-pocket-count').textContent=`${fmt(found.length,0)} pocket ${found.length===1?'group':'groups'} · ${fmt(pocketPoints,0)} measured points detected`;
   $('surf-view-pockets').disabled=busy||loading||actionPending||!found.length;
+  $('surf-reset-pocket-exclusions').hidden=!boltKind;
+  $('surf-reset-pocket-exclusions').disabled=busy||loading||actionPending||!noise;
+  $('surf-output-review-error').hidden=!r.review_exclusion_error;
+  $('surf-output-review-message').textContent=r.review_exclusion_error||'';
+  $('surf-output-reset-exclusions').disabled=busy||loading||actionPending;
+  $('surf-point-review-help').textContent=boltKind?'Box or Lasso changes decisions only for detected bolt points inside the selection. Other lining stays kept.':'Draw a Box or Lasso in the main 3D preview. These decisions apply to every processed point inside that volume, including hidden clusters.';
   $('surf-tunnel-count').textContent=`${fmt(tunnel,0)} points`;$('surf-noise-count').textContent=`${fmt(noise,0)} points`;
   for(const [id,n,part] of [['tunnel',tunnel,true],['noise',noise,false]])$(`surf-${id}-pieces`).textContent=`${pieces.filter(c=>keep.has(c.id)===part).length} pieces · ${fmt(total?n/total*100:0,1)}% of processed points`;
   const method=r.settings?.method||'smrg',irregular=method==='irregular';$('surf-keep-title').textContent=irregular?'Retained / unflagged':'Tunnel / keep';$('surf-remove-title').textContent=irregular?'Candidate irregularities':'Noise or unwanted / remove';$('surf-view-tunnel').textContent=irregular?'Show retained only':'Show tunnel only';$('surf-view-noise').textContent=irregular?'Show candidates only':'Show noise only';$('surf-keep-clusters').textContent=irregular?'Keep selected patches':'Keep as tunnel';$('surf-remove-clusters').textContent=irregular?'Exclude from cleaned copy':'Mark as noise / remove';$('surf-group-help').textContent=irregular?'Red = candidate irregular patches. Green = retained, including unassessed areas. Click a patch or its row, then Hide, Show or Delete selected patches. Hiding affects this review; deletion is reversible with Undo.':'Green points go into the tunnel output; red points stay out. Select a piece and choose Keep as tunnel or Mark as noise. Counts include hidden pieces.';
@@ -210,7 +217,7 @@
   if(method==='lining_features'){$('surf-keep-title').textContent='Retained geometry';$('surf-remove-title').textContent='Exclusion candidates';$('surf-view-tunnel').textContent='Show retained';$('surf-view-noise').textContent='Show excluded';$('surf-keep-clusters').textContent='Keep selected groups';$('surf-remove-clusters').textContent='Exclude selected groups';$('surf-group-help').textContent='Feature colours distinguish groups; magenta highlights your selection and red marks exclusions. Select named bolt, seam or segment rows to isolate or export their original points. Detection retains all groups by default; only Non-lining removal proposes exclusions.';$('surf-result-explanation').textContent=`${r.statistics.bolt_holes||0} bolt recesses · ${r.statistics.bolt_fittings||0} raised fittings · ${r.statistics.ring_seams||0} ring seams · ${r.statistics.longitudinal_seams||0} between-segment seams · ${r.statistics.segment_candidates||0} segment candidates. Inspect support and coordinates in CSV/JSON reports. Missing seams may leave merged segments; local station is not design chainage.`;}
   if(pocketReview){
    $('surf-remove-title').textContent='Marked for exclusion';
-   $('surf-group-help').textContent='Detected pockets are kept by default. Show pocket points loads the measured scan points for review. Exclude selected groups changes which points go into the cleaned output.';
+   $('surf-group-help').textContent=r.review_exclusion_error||'Detected pockets are kept by default. Show pocket points loads the measured scan points for review. Exclude selected groups changes which points go into the cleaned output.';
    if(r.settings.lining_task==='bolts'&&r.settings.lining_bolt_kind!=='raised')
     $('surf-result-explanation').textContent='Pocket detection uses the measured lining around each recess.';
   }
@@ -261,15 +268,22 @@
   groupSummary();
   const blocked=busy||loading||actionPending,r=data.result,chosen=selectedClusters.size>0;const del=$('surf-delete-patches');del.hidden=!['irregular','lining_features'].includes(r?.settings?.method);del.textContent=r?.settings?.method==='lining_features'?(r.settings.lining_task==='departures'?'Delete selected departure points':'Delete selected bolt-feature points'):'Delete selected patches';$('surf-select-bolts').textContent=r?.settings?.lining_task==='departures'?'Select lining departures':'Select all bolt-feature candidates';$('surf-select-bolts').hidden=r?.settings?.method!=='lining_features';del.disabled=blocked||recessDetailLoading||!recessDetailReady()||!r?.can_delete_patches||!chosen||[...selectedClusters].some(id=>{const c=r.clusters.find(c=>c.id===id);return !c?.irregular_candidate&&!['bolt_hole','bolt_fitting','lining_departure'].includes(c?.feature_kind);});del.title=r?.can_delete_patches?'Delete only the selected candidate patches from the source scan. Undo restores them.':'Run detection on the current scan before deleting patches.';
   for(const id of ['surf-keep-clusters','surf-remove-clusters','surf-hide-clusters','surf-show-clusters','surf-isolate-clusters','surf-clear-clusters'])$(id).disabled=blocked||!r||!chosen;
+  const boltKind=boltReviewKind(r);
+  if(boltKind){
+   const rows=clusters().filter(c=>selectedClusters.has(c.id));
+   $('surf-remove-clusters').disabled||=!!r.review_exclusion_error||rows.some(c=>c.feature_kind!==boltKind);
+   $('surf-remove-clusters').textContent=boltKind==='bolt_hole'?'Exclude selected pocket groups':'Exclude selected fitting groups';
+  }
   $('surf-separate-patches').hidden=del.hidden;$('surf-separate-patches').disabled=del.disabled;
   if($('surf-segments-from-seams'))$('surf-segments-from-seams').disabled=blocked||!r;
   $('surf-select-page').disabled=blocked||!r||!filteredClusters().length;$('surf-show-all-clusters').disabled=blocked||!r;
   for(const id of ['surf-continue','surf-continue-quick'])if($(id)){$(id).disabled=blocked||!r?.reviewed_kept_points;$(id).title=blocked?'Wait for the current operation.':!r?'Run extraction first.':!r.reviewed_kept_points?'No points are kept. Keep a cluster or restore the automatic suggestion.':'Continue to review confirmation and create a cleaned scan.';}
   $('surf-prev').disabled=blocked||page===0;$('surf-next').disabled=blocked||(page+1)*pageSize>=filteredClusters().length;
-  for(const el of $('surf-table').querySelectorAll('input,button'))el.disabled=blocked;
+  for(const el of $('surf-table').querySelectorAll('input,button'))el.disabled=blocked||
+   (boltKind&&el.hasAttribute('data-cluster')&&r.clusters.find(c=>c.id===Number(el.dataset.cluster))?.feature_kind!==boltKind);
   const status=$('surf-review-status');status.hidden=$('tab-surface').dataset.drawerMode==='setup'||!r;
   const error=reviewError||state?.job?.error;status.classList.toggle('error',!!error);
-  status.textContent=error|| (blocked?(loading?'Loading review…':state?.job?.message||'Saving review…'):!r?'Run extraction first.':!r.reviewed_kept_points?'No points are kept. Keep a cluster or restore the automatic suggestion before continuing.':$('tab-surface').dataset.drawerMode==='output'?`${fmt(r.reviewed_kept_points,0)} points ready. Tick the review confirmation, then Create one tunnel scan.`:['lining_features','tmatch'].includes(r.settings?.method)?analysisSummary(r):r.settings?.method==='irregular'?`${fmt(r.statistics.irregular_patches,0)} candidate patches. Select rows to inspect, hide or delete from the source. Undo restores deleted points.`:`${fmt(r.reviewed_kept_points,0)} points kept for the tunnel. Inspect the excluded and uncertain groups, then Continue to Output.`);
+  status.textContent=error|| (blocked?(loading?'Loading review…':state?.job?.message||'Saving review…'):!r?'Run extraction first.':r.review_exclusion_error||(!r.reviewed_kept_points?'No points are kept. Keep a cluster or restore the automatic suggestion before continuing.':$('tab-surface').dataset.drawerMode==='output'?`${fmt(r.reviewed_kept_points,0)} points ready. Tick the review confirmation, then Create one tunnel scan.`:['lining_features','tmatch'].includes(r.settings?.method)?analysisSummary(r):r.settings?.method==='irregular'?`${fmt(r.statistics.irregular_patches,0)} candidate patches. Select rows to inspect, hide or delete from the source. Undo restores deleted points.`:`${fmt(r.reviewed_kept_points,0)} points kept for the tunnel. Inspect the excluded and uncertain groups, then Continue to Output.`));
  }
  function selectClusters(ids,additive=false){
   if(busy||loading||actionPending)return;const valid=new Set(clusters().map(c=>c.id));
@@ -294,6 +308,7 @@
  }
  async function markClusters(keep){
   if(!selectedClusters.size){showTunnelMessage('Select clusters first','Select cluster rows in Review, or draw a Box/Lasso to edit part of the result.',true);return false;}
+  if(!keep&&$('surf-remove-clusters').disabled)return false;
   const ids=kept();for(const id of selectedClusters)keep?ids.add(id):ids.delete(id);
   return saveReview(ids);
  }
@@ -373,9 +388,12 @@
   updateRunControls(v);
   $('surf-cancel').disabled=!(state?.job?.busy&&state?.job?.kind==='surface');
   const r=data.result;for(const id of ['surf-export','surf-export-other','surf-report','surf-json','surf-csv','surf-original','surf-keep-noise','surf-keep-selected','surf-remove-selected'])$(id).disabled=v||!r;
-  $('surf-export').disabled=v||!r||r.source_changed||!r.reviewed_kept_points;$('surf-export-other').disabled=v||!r||r.source_changed||r.reviewed_kept_points===r.statistics.input_points;
-  $('surf-add-clean').disabled=v||r?.source_changed||!r?.reviewed_kept_points||!$('surf-reviewed').checked;
-  $('surf-apply').disabled=v||!r?.can_apply||!$('surf-reviewed').checked||!r?.reviewed_kept_points||r.reviewed_kept_points===r.statistics.input_points;
+  const outputBlocked=v||!!r?.review_exclusion_error;
+  $('surf-export').disabled=outputBlocked||!r||r.source_changed||!r.reviewed_kept_points;$('surf-export-other').disabled=outputBlocked||!r||r.source_changed||r.reviewed_kept_points===r.statistics.input_points;
+  $('surf-add-clean').disabled=outputBlocked||r?.source_changed||!r?.reviewed_kept_points||!$('surf-reviewed').checked;
+  $('surf-apply').disabled=outputBlocked||!r?.can_apply||!$('surf-reviewed').checked||!r?.reviewed_kept_points||r.reviewed_kept_points===r.statistics.input_points;
+  $('surf-keep-noise').disabled||=!!boltReviewKind(r);
+  $('surf-reviewed').disabled||=!!r?.review_exclusion_error;
   for(const c of $('surf-table').querySelectorAll('input'))c.disabled=v;
   updateReviewControls();
   if(v)$('surf-progress').textContent=loading?'Loading cleaning sources and preview…':state?.job?.message||'Starting…';
@@ -443,6 +461,9 @@
  $('surf-continue').onclick=continueToOutput;
  $('surf-keep-noise').onchange=()=>{const ids=kept();$('surf-keep-noise').checked?ids.add(-1):ids.delete(-1);saveReview(ids);};
  $('surf-original').onclick=()=>data.result&&action({action:'reset_review',revision:data.result.revision});
+ for(const id of ['surf-reset-pocket-exclusions','surf-output-reset-exclusions'])$(id).onclick=async()=>{
+  if(await $('surf-original').onclick()){showGroup('both');window.TunnelRibbon?.surfaceDrawerMode?.('review');}
+ };
  $('surf-keep-selected').onclick=()=>markSelection(true);$('surf-remove-selected').onclick=()=>markSelection(false);$('surf-add-clean').onclick=()=>data.result&&action({action:'add_clean_scan',revision:data.result.revision,reviewed:$('surf-reviewed').checked,hide_source:$('surf-hide-source').checked});
  $('surf-reviewed').onchange=()=>setBusySurface(busy);
  $('surf-export').onclick=()=>window.TunnelRibbon.export('surface');$('surf-export-other').onclick=()=>window.TunnelRibbon.export('surface_other');
