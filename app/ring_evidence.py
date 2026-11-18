@@ -107,8 +107,11 @@ def fit(detector):
             better = score > best
             best[better] = score[better]
             tilts[better] = [b, c]
+    deferred = getattr(d, 'preserve_ring_alternatives', False)
+    # A gap retry must see competing nearby measured traces before testing
+    # uniqueness. Spacing suppression would otherwise manufacture certainty.
     peaks, _ = find_peaks(best, height=.05, prominence=.02,
-                         distance=max(1, round(.35/d.cell)))
+                         distance=1 if deferred else max(1, round(.35/d.cell)))
     X = np.c_[np.ones(len(a)), np.cos(a), np.sin(a)]
     full_angles = (np.arange(d.na)+.5)*2*np.pi/d.na
     valid = d.count > 0
@@ -135,7 +138,8 @@ def fit(detector):
         contrast = ridge_contrast(residual, band)
         if coverage < .25 or observed_fraction < .5 or column_fraction < .35 or contrast < 2.:
             continue
-        if any(abs(coef[0]-row['station_m']) < .35 for row in found):
+        if any((np.allclose(coef,row['coefficients'],rtol=0,atol=1e-8) if deferred
+                else abs(coef[0]-row['station_m']) < .35) for row in found):
             continue
         found.append(dict(coefficients=coef.tolist(), station_m=float(coef[0]),
                           coverage_fraction=coverage,

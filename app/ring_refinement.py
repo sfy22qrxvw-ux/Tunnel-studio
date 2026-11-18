@@ -25,6 +25,7 @@ def refine(detector, batches_for_box, intensity_for_ids=None):
         box=dict(mode='oriented_box',centre=centre.tolist(),axes=[np.asarray(m[k]).tolist() for k in ('axis','u','v')],half_size=[span/2+pad,*cross.tolist()])
         settings={**d.s,'lining_detail':'more_detailed','lining_task':'seams'}
         fine=lf.Detector(m,(lo-pad,hi+pad),settings,d.emit);fine.defer_ring_sequence=True
+        fine.preserve_ring_alternatives=True
         total=0
         for ids,p,_ in batches_for_box(box):
             d.emit('4/5 Rechecking an unresolved ring gap at 10 mm · measured points only')
@@ -33,7 +34,7 @@ def refine(detector, batches_for_box, intensity_for_ids=None):
             fine.accumulate(p,intensity_for_ids(ids) if intensity_for_ids else None)
         fine.analyse(ring_only=True)
         candidates=[q for q in fine.rings if lf.ring_width_matches(d.s,q['station_m']-lo) and lf.ring_width_matches(d.s,hi-q['station_m'])]
-        accepted=[]
+        accepted=[];preserved=assigned=0
         if len(candidates)==1:
             row=dict(candidates[0]);old=row.pop('id');row.pop('name',None);row.pop('status',None);row.pop('kind',None)
             row.update(evidence_cell_m=.01,automatic_refinement=True)
@@ -42,10 +43,21 @@ def refine(detector, batches_for_box, intensity_for_ids=None):
             d.rings.append(value);accepted.append(value['station_m'])
             ii,jj=np.where(fine.grid_labels==old)
             t=fine.t0+(ii+.5)*fine.cell;a=(jj+.5)*2*np.pi/fine.na
-            ri=((t-d.t0)/d.cell).astype(int);ci=np.minimum(d.na-1,(a*d.na/(2*np.pi)).astype(int));use=(ri>=0)&(ri<d.nt)
-            if hasattr(d,'labels'):d.labels.put(ri[use],ci[use],np.full(int(use.sum()),value['id'],dtype=np.int32))
-            else:d.grid_labels[ri[use],ci[use]]=value['id']
-        d.refinement_checks.append(dict(bounds_m=[lo,hi],input_points=total,accepted_stations_m=accepted,status='candidate' if accepted else 'unresolved',seconds=time.monotonic()-start))
+            ri=np.floor((t-d.t0)/d.cell).astype(int);ci=np.minimum(d.na-1,(a*d.na/(2*np.pi)).astype(int));use=(ri>=0)&(ri<d.nt)
+            # Several fine cells can map to one parent cell. Preserve every
+            # existing owner (including bolt pockets and other seam labels).
+            cells=np.unique(ri[use]*d.na+ci[use]);ri,ci=cells//d.na,cells%d.na
+            previous=d.labels.lookup(ri,ci) if hasattr(d,'labels') else d.grid_labels[ri,ci]
+            free=previous==0;preserved=int((~free).sum());assigned=int(free.sum())
+            if hasattr(d,'labels'):d.labels.put(ri[free],ci[free],np.full(assigned,value['id'],dtype=np.int32))
+            else:d.grid_labels[ri[free],ci[free]]=value['id']
+        reason=('Unique measured trace supported by both neighbours' if accepted else
+                'Multiple measured traces fit both neighbours; joint remains unresolved' if len(candidates)>1 else
+                'No measured trace fits both neighbours')
+        d.refinement_checks.append(dict(bounds_m=[lo,hi],input_points=total,accepted_stations_m=accepted,
+            candidate_stations_m=[q['station_m'] for q in candidates],reason=reason,
+            preserved_label_cells=preserved,assigned_label_cells=assigned,
+            status='candidate' if accepted else 'unresolved',seconds=time.monotonic()-start))
         del fine
     d.rings.sort(key=lambda q:q['station_m'])
     for i,row in enumerate(d.rings,1):row['name']=f'Ring seam {i}'

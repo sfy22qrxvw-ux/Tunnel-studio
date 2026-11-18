@@ -125,6 +125,12 @@ def detection_summary(detector,task,occupied=None):
     else:result.update(status='review',summary='Review lining support and non-lining candidates before applying exclusions.')
     if unresolved:
         result['summary'] += f' {len(unresolved)} additional joint traces remain unresolved and are not used as ring boundaries.'
+    refinement = getattr(detector, 'refinement_checks', [])
+    result['automatic_refinement'] = refinement
+    unresolved_gaps = sum(check['status']=='unresolved' for check in refinement)
+    result['unresolved_refinement_gaps'] = unresolved_gaps
+    if unresolved_gaps:
+        result['summary'] += f' {unresolved_gaps} gap(s) remain unresolved after finer measured review; no joint was added there.'
     return result
 
 class Detector:

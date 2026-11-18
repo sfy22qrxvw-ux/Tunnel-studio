@@ -1,0 +1,25 @@
+SAFE RING REFINEMENT - 18 NOVEMBER 2026
+
+Candidate only. Existing project and installed zoom app unchanged. No ring update installed.
+Two regressions reproduced before the fix: nearby plausible fine traces were suppressed before uniqueness checking; refined labels overwrote occupied parent cells (both RAM and disk-backed paths).
+The 10 mm retry now checks independently supported alternatives before spacing suppression. Only identical fitted hypotheses are deduplicated. If multiple traces fit both observed neighbours, the gap stays unresolved.
+Fine labels are transferred only to unassigned parent cells. Bolt pockets, existing seams and every other nonzero owner are preserved. Reports explicitly count unresolved fine-review gaps and give candidate stations/reasons.
+
+FULL CLEANED SCAN
+All 918,833,727 source rows read; 915,963,158 retained points analysed. Existing measured reference and source caches reused.
+74 ring candidates remain; all 74 coefficients exactly match the previous actual-scan run. All 73 pre-refinement anchors remain unchanged. One isolated end trace remains unresolved.
+The known gap has one uniquely supported measured trace at local station -59.23524726976649 m (not design chainage). The extra check read 19,292,218 retained points from 138,117,120 indexed source rows.
+Full run 246.572 s, including 18.140 s for the fine check. Prior run 261.125 s; cache/load conditions differ, so this is not a controlled speed comparison.
+All 67,535 existing parent seam-label cells survived refinement exactly. Temporary evidence/labels: 334,950,120 bytes; removed when finished. Existing compact maps hard-linked, not copied; no duplicate full cloud.
+
+MEASURED BOLT-POCKET CHECK
+Same gap region, 19,292,218 original retained points, bolt detection enabled: 82 measured bolt-pocket candidates, 2,984 bolt cells, 4,511 total occupied cells. Zero occupied labels changed. 26.508 s.
+The actual gap has no bolt/joint overlap; overlapping-label protection is exercised separately by positive in-memory and disk-backed regression fixtures that failed before this fix.
+33 focused ring, bolt-scope and segment tests passed. Two wider legacy mesh tests expecting fill_bolt_gaps fail against the unchanged preserve-openings policy; not introduced or repaired here.
+
+LIMITS / REVIEW
+No full-tunnel per-point label export was generated; detector evidence and label-map preservation were checked. Ambiguity and occupied-cell collisions were reproduced with synthetic measured-point fixtures; actual-scan results are reported separately.
+Coarse detection thresholds and ordinary tile deduplication are unchanged. The ambiguity correction targets the bounded fine-gap retry. Existing pipe/ventilation/setup gaps are not filled.
+The perpendicular limit-box and prior guide-alignment checks are unchanged. The design remains a pipe, not a detailed ring-position reference. Compare 911efe7 for separate measured/fitted review controls.
+Original project SHA256: dd37e5d79b2e6b385d7fd34baa55e1f11d41d97ec323f5721eefee6f454f2ac2
+Evidence: central project Documentation/Full scan ring audit/Safe refinement.
