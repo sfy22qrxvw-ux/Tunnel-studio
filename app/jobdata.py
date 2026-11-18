@@ -37,6 +37,12 @@ def preview_cache(meta,work,progress=lambda s:None):
     if 'count' in meta:
         progress('Preparing reusable colour and intensity overview…')
         _source_overview(meta,build=True,progress=progress)
+        if n >= 20000000:
+            import priority_view_cache
+            try:
+                priority_view_cache.build(meta,progress=progress)
+            except (OSError, ValueError):
+                progress('Exact zoom cache unavailable; full measured detail remains available.')
     return meta
 
 def _worker_python():

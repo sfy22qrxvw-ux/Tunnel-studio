@@ -1,0 +1,39 @@
+EXACT ZOOM CACHE - WINDOWS TEST RECORD, 18 NOVEMBER 2026
+
+Candidate based on c375ad9, branch full-scan-ring-evidence; separate normal Windows launcher, not recovery mode.
+Existing survey unchanged; no installation. Full cleaned source: 918,833,727 rows / 915,963,158 retained.
+
+NORMAL APP - SAME CAMERAS, EXISTING 35% DETAIL SETTING
+Scale 12.698665: 33.446 s before -> 2.008 s after; 193,355 total display points.
+Scale 4.671578: 9.859 s before -> 1.290 s after; 193,355 total display points.
+Scale 4.671578: 7.681 s before -> 1.323 s after; 193,355 total display points.
+Scale 3.460790: 5.087 s before -> 1.944 s after; 193,355 total display points.
+Scale 2.563816: 2.633 s before -> 1.799 s after; 193,355 total display points.
+Times are backend request durations, not precise end-to-end frame-presentation timings. Existing points stay visible during refinement.
+Packed camera-result caches were moved aside before the normal app runs. OS caches were not flushed; these are observed laptop timings, not controlled cold-disk benchmarks.
+
+EXACTNESS AND BOTTLENECK
+The original wide view read 5,570,309,120 bytes via 49,385 fromfile calls, plus sparse attribute mappings; a repeat profiled at 16.764 s.
+The final wide-view sample matches all 177,355 original IDs and all packed float32 positions/colours byte-for-byte. SHA256: 7644798d8b67437e6d864b7a7bdf4495ca78c62f0d0738858f7ce9a434d8ebf2
+Four additional close-up/pan samples likewise match exact original IDs, coordinates and colours. Eligible retained points: 40,200,890, 29,964,790, 15,164,505, 8,311,709.
+Each normal-app request draws 177,355 detail points plus 16,000 overview points. No density or point-size setting was reduced.
+The tight patch receives [8550, 31981, 49148, 96975, 177355] detail points across the wide/closer/panned/fine/tight samples (includes the existing 15% viewport margin; overview contribution excluded).
+This proves measured detail increases as the same patch is approached; the sampler creates no synthetic wall points or scan-line substitution.
+
+CACHE AND STORAGE
+Two exact hash-threshold levels store original float64 XYZ, float32 attributes and int64 IDs. First level is read alone when sufficient; second is read only if needed.
+Final preparation: 47.040 s; 1,152,125,760 bytes (1.15 GB) for both levels. Hard cap: 1,296,000,000 bytes, plus small metadata; one pair per source.
+Cache preparation streams the existing XYZ/attribute files once. No duplicate full cloud. It is independent of pose and deletion edits; current masks and Hide/Isolate are applied on every read.
+Revision validation rejects stale geometry/attributes. Cancellation is checked between bounded blocks. Cache files have source ownership and are included in scan cleanup.
+Large newly prepared scans build this accelerator during preview preparation. Existing scans need one preparation pass; it was performed in the separate test workspace here. No installer migration is applied to the original survey.
+An initial 384 MB-only experiment retained exactness but fell back too slowly at the tightest views; it was replaced, not accumulated. A temporary-filename collision during initial preparation was fixed before the final run.
+
+VALIDATION AND LIMITS
+55 Python tests passed: exact selection/colour equivalence, second-level use, insufficient-cache fallback, current masks, pose, Hide/Isolate, source changes, truncated cache, cancellation, ownership, preview and deletion regressions. JavaScript navigation cancellation test passed.
+Insufficient cache coverage (e.g. much tighter views or higher display budgets) still falls back to the complete reader; quality is preserved but the same speed is not guaranteed there.
+Initial overview opening is separate from refinement. One earlier cache-miss overview took 8.26 s; this change targets repeated viewport refinement, not all project opening work.
+Ring fitting is unchanged in this zoom patch. The existing perpendicular test box and guide-review status remain as recorded in RING_REFINEMENT_REVIEW.md. Reported ambiguous-refinement/bolt-label issues from the separate review have not been verified or fixed in this zoom task.
+Compare 911efe7: its measured-scan/fitted-guide review controls remain a separate integration item. Keep PR draft; no main merge or installation.
+Original project SHA256: dd37e5d79b2e6b385d7fd34baa55e1f11d41d97ec323f5721eefee6f454f2ac2
+Local evidence: Documentation/Full scan ring audit/Exact zoom cache (under the central RTC360 Registration 2026-11-18 project).
+Test app: Candidate update/Full scan validation/TunnelStudio.exe. Separate project: Documentation/Full scan ring audit/Aligned review workspace.

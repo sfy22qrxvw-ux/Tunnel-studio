@@ -193,6 +193,15 @@ def sample(item, budget, origin, fallback, mode, z_range, view, quick=False, can
     if quick:
         packed = _quick_sample(item, budget, origin, fallback, mode, z_range, view,cancel=cancel)
     else:
+        if not interactive and not navigation:
+            import priority_view_cache
+            accelerated = priority_view_cache.sample(item, budget, origin, fallback, mode, z_range, view, cancel, decorate)
+            if accelerated is not None:
+                if cache is not None:
+                    if cache != preview_store.cache_path(item, budget, origin, fallback, mode, z_range, quick, view=view):
+                        raise ValueError('The scan changed while loading detail. Refresh the view.')
+                    preview_store.write(cache, accelerated)
+                return accelerated
         m = item['meta']; n = int(m['count'])
         included, hidden = jobdata.view_selections(item)
         source_key = preview_index._key(m)
