@@ -63,6 +63,32 @@ class SavedLimitBoxTests(unittest.TestCase):
             with self.assertRaisesRegex(ValueError,'saved limit box changed'):
                 shape_selection.preview(self.s,dict(source_id='merged',mode='circle',scope='limit'))
 
+    def test_circle_view_scope_skips_hidden_blocks_and_reuses_visible_rows(self):
+        self.item['limit_box'] = None
+        cut = 2 * self.block
+        self.item['hidden_boxes'] = [dict(mode='box',
+            minimum=[99999, 399999, -1],
+            maximum=[100001, 400000 + cut - .5, 1])]
+        read = np.fromfile
+        spans = []
+
+        def observe(file, *args, **kwargs):
+            start = file.tell()
+            rows = read(file, *args, **kwargs)
+            if file.name == self.meta['file']:
+                spans.append((start // 24, rows.size // 3))
+            return rows
+
+        settings = section_circle.settings({'respect_view': True})
+        expected = np.arange(cut, self.meta['count'])
+        with patch.object(np, 'fromfile', side_effect=observe):
+            with shape_selection.circle_source(self.item, settings, None, None, self.s.WORK,
+                                               self.s.progress, lambda: False) as batches:
+                for _ in range(2):
+                    ids = np.concatenate([ids for ids, _, _ in batches()])
+                    np.testing.assert_array_equal(ids, expected)
+        self.assertEqual(spans, [(cut, self.block)])
+
     def test_surface_reads_one_index_block_and_reuses_exact_rows(self):
         read=np.fromfile
         reads=[]

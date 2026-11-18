@@ -321,14 +321,33 @@ def _selection_mask_validated(q,spec):
     return use
 
 
+def view_selections(item):
+    """Return the validated include and hide regions for the measured view."""
+    item = item or {}
+    included = []
+    if item.get('limit_box') and item.get('limit_hide_outside', True):
+        included.append(selection_spec({'mode': 'box', **item['limit_box']}))
+    if item.get('isolate_box') is not None:
+        included.append(selection_spec(item['isolate_box']))
+    return included, [selection_spec(area) for area in item.get('hidden_boxes', [])]
+
+
+def apply_view_selections(points, keep, included, hidden):
+    for spec in included:
+        keep &= _selection_mask_validated(points, spec)
+    for spec in hidden:
+        keep &= ~_selection_mask_validated(points, spec)
+
+
 def selection_ids(meta,spec,progress=lambda _:None,*,visibility=None):
     """Yield retained full-density point ids inside the exact 3D/screen selection."""
-    for ids,_,_ in _selection_batches(meta,spec,progress,visibility):
+    for ids,_,_ in _selection_batches(meta,selection_spec(spec),progress,visibility):
         yield ids
 
 
 def selection_rows(meta,spec,progress=lambda _:None,*,visibility=None):
-    """Yield the same original IDs together with their positioned XYZ rows."""
+    """Yield original IDs and world XYZ, applying an optional selection and view."""
+    if spec is not None:spec=selection_spec(spec)
     for ids,world,keep in _selection_batches(meta,spec,progress,visibility):
         yield ids,world[keep]
 
@@ -336,13 +355,10 @@ def selection_rows(meta,spec,progress=lambda _:None,*,visibility=None):
 def _selection_batches(meta,spec,progress,visibility):
     from contextlib import ExitStack
     import preview_index,registration_pose
-    spec=selection_spec(spec);total=int(meta['count']);block=max(1,min(pointio.CHUNK,100000))
-    visible=visibility or {}
-    limited=selection_spec({'mode':'box',**visible['limit_box']}) if visible.get('limit_box') and visible.get('limit_hide_outside',True) else None
-    isolated=selection_spec(visible['isolate_box']) if visible.get('isolate_box') else None
-    hidden=[selection_spec(area) for area in visible.get('hidden_boxes',[])]
-    areas=[area for area in (spec,limited,isolated) if area is not None]
-    if any(not preview_index.selection_possible(meta,area) for area in areas):return
+    total=int(meta['count']);block=max(1,min(pointio.CHUNK,100000))
+    included,hidden=view_selections(visibility)
+    if spec is not None:included.insert(0,spec)
+    if any(not preview_index.selection_possible(meta,area) for area in included):return
     R,t=registration_pose.get(meta);positioned=not registration_pose.is_identity(meta)
     # Use cached conservative block boxes when available. A first selection
     # builds those boxes during its exact full-density scan, avoiding the old
@@ -351,17 +367,12 @@ def _selection_batches(meta,spec,progress,visibility):
     boxes=preview_index.cached_bounds(meta,source_key)
     if boxes is not None:boxes=preview_index.world_boxes(meta,boxes)
     builder=preview_index.BoundsBuilder(meta,source_key) if boxes is None else None
-    def possible(bounds):
-        keep=preview_index.selection_box_mask(bounds,spec)
-        for area in areas[1:]:
-            keep&=preview_index.selection_box_mask(bounds,area)
-        return keep
     def spans():
         if boxes is None:
             yield 0,total
             return
         first=last=None
-        for index in np.flatnonzero(possible(boxes)):
+        for index in np.flatnonzero(preview_index.visible_box_mask(boxes,included,hidden)):
             start=int(index)*preview_index.BLOCK
             stop=min(total,start+preview_index.BLOCK)
             if last==start:last=stop
@@ -389,14 +400,13 @@ def _selection_batches(meta,spec,progress,visibility):
                     # may conservatively skip an entirely distant chunk before
                     # expensive lasso/brush predicates or a mask read.
                     first=offset//preview_index.BLOCK;last=(offset+count+preview_index.BLOCK-1)//preview_index.BLOCK
-                    if not possible(preview_index.world_boxes(meta,builder.boxes[first:last])).any():
+                    local_boxes=preview_index.world_boxes(meta,builder.boxes[first:last])
+                    if not preview_index.visible_box_mask(local_boxes,included,hidden).any():
                         progress(f'{label} · {read:,}/{read_total:,} source rows read · {selected:,} retained in area')
                         continue
                 world=q@R.T+t if positioned else q
-                use=_selection_mask_validated(world,spec)
-                if limited is not None:use&=_selection_mask_validated(world,limited)
-                if isolated is not None:use&=_selection_mask_validated(world,isolated)
-                for area in hidden:use&=~_selection_mask_validated(world,area)
+                use=np.ones(count,bool) if included else np.isfinite(world).all(1)
+                apply_view_selections(world,use,included,hidden)
                 if mask is not None:
                     mask.seek(offset);kept=np.fromfile(mask,'u1',count=count)
                     if len(kept)!=count:raise ValueError('The source exclusion mask is incomplete.')
@@ -416,8 +426,8 @@ def box_ids(meta,box,include_hidden=True):
     yield from selection_ids(meta,{'mode':'box',**box})
 
 
-def selection_count(meta,spec):
-    return sum(len(ids) for ids in selection_ids(meta,spec))
+def selection_count(meta,spec,*,visibility=None):
+    return sum(len(ids) for ids in selection_ids(meta,spec,visibility=visibility))
 
 
 def selection_file(meta,spec,destination,progress=lambda s:None):
@@ -429,10 +439,10 @@ def selection_file(meta,spec,destination,progress=lambda s:None):
     return {'file':str(destination),'count':total,'spec':{'job_selection':spec}}
 
 
-def extract_selection(meta,spec,work,name,progress=lambda s:None):
+def extract_selection(meta,spec,work,name,progress=lambda s:None,*,visibility=None):
     """Create an independent disk-backed scan from an exact selection."""
-    spec=selection_spec(spec);count=selection_count(meta,spec)
-    return extract_ids(meta,selection_ids(meta,spec),count,work,name,progress)
+    spec=selection_spec(spec);count=selection_count(meta,spec,visibility=visibility)
+    return extract_ids(meta,selection_ids(meta,spec,progress,visibility=visibility),count,work,name,progress)
 
 
 def extract_ids(meta,batches,count,work,name,progress=lambda s:None):
@@ -672,11 +682,7 @@ def _item_sample_uncached(item,per,origin,colour,mode='rgb',z_range=None,quick=F
         use=np.ones(len(ids),bool)
         if m.get('mask_file'):
             use&=_gather_display_rows(m['mask_file'],n,ids,1,'u1',cancel=cancel).ravel()==0
-        if item.get('limit_box') and item.get('limit_hide_outside',True):use&=selection_mask(q,{'mode':'box',**item['limit_box']})
-        isolated=item.get('isolate_box')
-        if isolated is not None:use&=selection_mask(q,isolated)
-        for hidden in item.get('hidden_boxes',[]):
-            use&=~selection_mask(q,hidden)
+        apply_view_selections(q,use,*view_selections(item))
         ids=ids[use];q=q[use]
         if attrs is not None:attrs=attrs[use]
         elif quick and m.get('attributes_file'):
@@ -735,7 +741,10 @@ def preview_binary(items,detail=25,mode='rgb',view=None,owners=False,quick=False
         elif view is not None and item['kind']=='scan':
             from detail_preview import sample
             base=max(1,per//5)
-            if base:chunks.append(_item_sample(item,base,origin,fallback,mode,(float(low[2]),float(high[2])),quick=quick,cancel=cancel))
+            # Temporary view edits only need a lightweight overview for context.
+            # The detail reader fills in visible original rows from the index.
+            edited_view=bool(item.get('hidden_boxes') or item.get('isolate_box'))
+            if base:chunks.append(_item_sample(item,base,origin,fallback,mode,(float(low[2]),float(high[2])),quick=quick or edited_view,cancel=cancel))
             chunks.append(sample(item,per-base,origin,fallback,mode,(float(low[2]),float(high[2])),view,quick=quick,cancel=cancel))
         elif item['kind']=='mesh':
             # Vertices support fitting/picking only; triangle-preview statuses

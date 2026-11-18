@@ -352,7 +352,7 @@ def post(s,h,path,body):
                 if op=='restore_deleted' and scan_edits.record(x,body.get('group_id')).get('archive'):
                     scan_edits.restore_archive(s,x,scan_edits.record(x,body.get('group_id')),lambda msg:progress(s,msg));return
                 if op=='copy_selection':
-                    newmeta=jobdata.extract_selection(m,selection,s.WORK,x['name']+' · copy',lambda msg:progress(s,msg))
+                    newmeta=jobdata.extract_selection(m,selection,s.WORK,x['name']+' · copy',lambda msg:progress(s,msg),visibility=x)
                     old=copy.deepcopy(s.STATE)
                     try:append(s,'scan',newmeta)
                     except Exception:s.STATE.clear();s.STATE.update(old);jobdata.remove_assets(newmeta);raise

@@ -7,6 +7,10 @@ const start=source.indexOf(' async function loadBinary(){');
 const end=source.indexOf(' async function sync(options={})',start);
 assert(start>=0&&end>start);
 const fn=source.slice(start,end);
+const actionStart=source.indexOf(' async function action(body');
+const actionEnd=source.indexOf(' async function ensureRegistrationSource()',actionStart);
+assert(actionStart>=0&&actionEnd>actionStart);
+const action=source.slice(actionStart,actionEnd);
 function environment(fetch){
  const shown=[],status=[],nodes={};
  const context={AbortController,URLSearchParams,Map,Promise,JSON,Float32Array,DataView,
@@ -23,7 +27,7 @@ function environment(fetch){
   showMeshCache:()=>true,visibleMeshes:()=>[],publishMeshPreview:()=>{},
   $:id=>nodes[id]??=( {} ),window:{},jobScene:{},
  };
- vm.createContext(context);vm.runInContext(fn+'\nthis.load=loadBinary;',context);
+ vm.createContext(context);vm.runInContext(fn+action+'\nthis.load=loadBinary;this.runAction=action;',context);
  return {context,shown,status};
 }
 function reply(id){
@@ -58,6 +62,18 @@ async function run(){
  const loading=env.context.load();await pending;env.context.key='geometry-2';complete(reply('obsolete'));
  await loading;assert.equal(env.context.previewRefreshPending,true);
  assert(!env.shown.some(([id])=>id==='obsolete'));
- console.log('Progressive preview: retry, complete-cache reuse and stale-response checks passed.');
+
+ calls=[];
+ env=environment(async url=>{calls.push(new URLSearchParams(url.split('?')[1]));return reply('visible area');});
+ const frame={target:[50,20,5],right:[1,0,0],up:[0,1,0],forward:[0,0,1],scale:3,aspect:1};
+ Object.assign(env.context,{
+  jobScene:{initialised:true},uploading:false,viewportFrame:()=>frame,
+  clearPreviewCaches:()=>{},current:()=>env.context.data.items[0],
+  post:async()=>{},setBusy:()=>{},signature:'before edit',waitReady:async()=>{await env.context.load();return {};}
+ });
+ assert(await env.context.runAction({action:'hide_selection'}));
+ assert.equal(calls.length,2);
+ for(const query of calls)assert.deepEqual(JSON.parse(query.get('view')),frame);
+ console.log('Progressive preview: retry, reuse, stale responses and hide-selection camera checks passed.');
 }
 run().catch(error=>{console.error(error);process.exitCode=1;});

@@ -822,11 +822,11 @@ def apply(s, item, action, selection=None, group_id=None, reason='Selected point
                                 yield selected
                         finally:_close_arrays(points,ids)
                     batches=selected_batches()
-                else: batches = jobdata.selection_ids(meta, selection, progress, visibility=item if action=='delete_selection' else None)
+                else: batches = jobdata.selection_ids(meta, selection, progress, visibility=item)
                 if action == 'separate_selection':
                     if selected_file:
                         newmeta=jobdata.extract_ids(meta,__import__('deleted_points').id_batches({'ids_file':selected_file['file'],'count':selected_file['count']}),selected_file['count'],s.WORK,item['name']+' · separated',progress)
-                    else:newmeta=jobdata.extract_selection(meta,selection,s.WORK,item['name']+' · separated',progress)
+                    else:newmeta=jobdata.extract_selection(meta,selection,s.WORK,item['name']+' · separated',progress,visibility=item)
                     created.extend(Path(newmeta[k]) for k in ('file','attributes_file','preview_file') if newmeta.get(k))
                 after, count = update_mask(meta, batches, s.WORK, 1, progress, created,derived,valid_points,derived_revision); signed_count = count
                 group = dict(id=uuid.uuid4().hex, kind='move' if newmeta else 'delete', name=reason, count=count, before_mask=before, after_mask=after, active=True, created=time.time())

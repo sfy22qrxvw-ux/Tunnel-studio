@@ -163,6 +163,7 @@ def sample(item, budget, origin, fallback, mode, z_range, view, quick=False, can
         packed = _quick_sample(item, budget, origin, fallback, mode, z_range, view,cancel=cancel)
     else:
         m = item['meta']; n = int(m['count'])
+        included, hidden = jobdata.view_selections(item)
         source_key = preview_index._key(m)
         local_view = registration_pose.local_view(m, view)
         boxes = preview_index.cached_bounds(m, source_key)
@@ -171,7 +172,7 @@ def sample(item, budget, origin, fallback, mode, z_range, view, quick=False, can
             ranges = ((start, min(n, start+READ_POINTS)) for start in range(0, n, READ_POINTS))
         else:
             ranges = _coalesced_ranges(preview_index.candidate_blocks(
-                m, local_view, validate_view(local_view), boxes=boxes))
+                m, local_view, validate_view(local_view), boxes=boxes, included=included, hidden=hidden))
         chosen = _PrioritySample(budget)
         with ExitStack() as files:
             source = files.enter_context(Path(m['file']).open('rb'))
@@ -187,19 +188,21 @@ def sample(item, budget, origin, fallback, mode, z_range, view, quick=False, can
                 local = local.reshape(count, 3)
                 if builder is not None:
                     builder.add(start, local)
+                    if included or hidden:
+                        blocks = builder.boxes[start // preview_index.BLOCK:
+                                               (stop + preview_index.BLOCK - 1) // preview_index.BLOCK]
+                        if not preview_index.visible_box_mask(preview_index.world_boxes(m, blocks), included, hidden).any():
+                            continue
                 q = registration_pose.points(m, local)
                 use = _view_mask(q, view, frame)
+                jobdata.apply_view_selections(q, use, included, hidden)
+                if not use.any():
+                    continue
                 if excluded is not None:
                     excluded.seek(start); flags = np.fromfile(excluded, 'u1', count=count)
                     if len(flags) != count:
                         raise ValueError('The point deletion mask changed while loading detail.')
                     use &= flags == 0
-                if item.get('limit_box') and item.get('limit_hide_outside', True):
-                    use &= jobdata.selection_mask(q, {'mode':'box', **item['limit_box']})
-                if item.get('isolate_box') is not None:
-                    use &= jobdata.selection_mask(q, item['isolate_box'])
-                for hidden in item.get('hidden_boxes', []):
-                    use &= ~jobdata.selection_mask(q, hidden)
                 chosen.add(np.flatnonzero(use) + start)
         _check_cancel(cancel)
         if builder is not None:

@@ -128,6 +128,57 @@ class RenderLoading0186Tests(unittest.TestCase):
         np.testing.assert_array_equal(self.sample(),self.oracle(17000)[0])
         self.assertEqual(self.hashes(),self.before)
 
+    def test_screen_hide_skips_indexed_rows_in_detail_and_exact_selection(self):
+        size = preview_index.BLOCK
+        cut = 14 * size + size // 2
+        rotation = np.array([[0., -1., 0.], [1., 0., 0.], [0., 0., 1.]])
+        registration_pose.set_pose(self.meta, rotation, [100000., 400000., 50.])
+        world = registration_pose.points(self.meta, self.xyz)
+        self.origin = (world.min(0) + world.max(0)) / 2
+        self.view.update(target=self.origin.tolist(), right=[0, 1, 0], up=[0, 0, 1], forward=[1, 0, 0])
+        x = (world[cut-1:cut+1, 1].mean() - self.origin[1]) / self.view['scale']
+        self.item['hidden_boxes'] = [dict(self.view, mode='screen_polygon',
+                                         polygon=[[-1, -1], [x, -1], [x, 1], [-1, 1]],
+                                         depth_min=-10, depth_max=10)]
+        preview_index.bounds(self.meta)
+        read = np.fromfile
+        spans = []
+
+        def observe(file, *args, **kwargs):
+            start = file.tell()
+            rows = read(file, *args, **kwargs)
+            if file.name == self.meta['file']:
+                spans.append((start // 24, rows.size // 3))
+            return rows
+
+        budget = 17000
+        with patch.object(np, 'fromfile', side_effect=observe):
+            displayed = self.sample(budget)
+            self.assertEqual(spans, [(14 * size, len(world) - 14 * size)])
+            spans.clear()
+            selected = np.concatenate([ids for ids, _ in jobdata.selection_rows(
+                self.meta, None, visibility=self.item)])
+            self.assertEqual(spans, [(14 * size, len(world) - 14 * size)])
+        np.testing.assert_array_equal(selected, np.arange(cut, len(world)))
+        shown = np.sort(selected[np.argpartition(priority_keys(selected), budget - 1)[:budget]])
+        np.testing.assert_array_equal(displayed[:, :3], (world[shown] - self.origin).astype('<f4'))
+        np.testing.assert_allclose(displayed[:, 3:], self.attrs[shown, 1:] / 255., rtol=0, atol=1e-7)
+
+    def test_lasso_block_pruning_preserves_concave_edges_and_depth(self):
+        lasso = jobdata.selection_spec(dict(mode='screen_polygon', target=[0, 0, 0],
+            right=[1, 0, 0], up=[0, 1, 0], forward=[0, 0, 1], scale=1, aspect=1,
+            polygon=[[-3, -3], [3, -3], [3, 3], [1, 3], [1, 0], [-1, 0], [-1, 3], [-3, 3]],
+            depth_min=-1, depth_max=1))
+        boxes = np.array([[[-2, -2, -.5], [2, 2, .5]],
+                          [[-2, -2, -.5], [2, -1, .5]],
+                          [[-2, -2, .5], [2, -1, 1.5]],
+                          [[4, 4, -.5], [5, 5, .5]]])
+        np.testing.assert_array_equal(preview_index.visible_box_mask(boxes, [], [lasso]),
+                                      [True, False, True, True])
+        inverted = dict(lasso, invert=True)
+        np.testing.assert_array_equal(preview_index.visible_box_mask(boxes, [], [inverted]),
+                                      [True, True, True, False])
+
     def test_mask_edit_invalidates_the_cached_detail(self):
         flags=np.zeros(len(self.xyz),'u1');flags.tofile(self.work/'edited.mask')
         self.meta['mask_file']=str(self.work/'edited.mask')

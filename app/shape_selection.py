@@ -86,32 +86,30 @@ def batches(item, cfg, progress, cancel=lambda:False):
     """Stream exact retained rows from the chosen area in original ID order."""
     meta=item['meta']; n=int(meta['count'])
     limit=search_limit(item,cfg)
-    isolate=item.get('isolate_box') if cfg['respect_view'] else None
-    isolate=jobdata.selection_spec(isolate) if isolate is not None else None
-    area=limit or isolate
-    if area and n:
+    visibility=dict(item) if cfg['respect_view'] else {}
+    visibility.update(limit_box=limit,limit_hide_outside=True)
+    included,hidden=jobdata.view_selections(visibility)
+    if n and (included or hidden):
         import preview_index
         def indexing(message):
             shape_matching.emit(progress,cancel,message.replace('Preparing spatial index','Preparing spatial index for the restricted search'))
-        ranges=list(preview_index.indexed_selection_blocks(meta,area,indexing))
+        area=included[0] if included else None
+        ranges=list(preview_index.indexed_selection_blocks(meta,area,indexing,hidden=hidden))
         read_total=sum(end-start for start,end in ranges)
     else:
         ranges=((start,min(n,start+shape_matching.BLOCK)) for start in range(0,n,shape_matching.BLOCK))
         read_total=n
-    label='active limit box' if limit else 'current view filters' if cfg['respect_view'] else 'whole retained cloud'
+    label='saved limit box' if limit else 'current view filters' if included or hidden else 'whole retained cloud'
     read=checked=0
     with ExitStack() as stack:
         xyz=stack.enter_context(RowFile(meta['file'],'<f8',n,3))
         mask=stack.enter_context(RowFile(meta['mask_file'],'u1',n)) if meta.get('mask_file') else None
         for start,end in ranges:
             shape_matching.emit(progress,cancel,f'Reading {label} · {read:,}/{read_total:,} source rows read · {checked:,} in search area')
-            count=end-start; p=registration_pose.points(meta,xyz.read(start,count))
+            count=end-start;p=registration_pose.points(meta,xyz.read(start,count))
             keep=np.isfinite(p).all(1)
             if mask is not None:keep&=mask.read(start,count)==0
-            if limit:keep&=jobdata._selection_mask_validated(p,limit)
-            if isolate:keep&=jobdata._selection_mask_validated(p,isolate)
-            if cfg['respect_view']:
-                for box in item.get('hidden_boxes',[]):keep&=~jobdata.selection_mask(p,box)
+            jobdata.apply_view_selections(p,keep,included,hidden)
             ids=np.flatnonzero(keep).astype('<i8')+start; checked+=len(ids);read+=count
             if len(ids):yield ids,p[keep],{'mode':'full'}
 
@@ -120,9 +118,8 @@ def batches(item, cfg, progress, cancel=lambda:False):
 def circle_source(item,cfg,selection,limit,folder,progress,cancel):
     """Read the scoped source once, with bounded RAM and a temporary spill file."""
     visibility=dict(item) if cfg['respect_view'] else {}
-    visibility.update(limit_box=limit if selection else None,limit_hide_outside=True)
-    area=selection or limit or visibility.get('isolate_box')
-    if area is None:
+    visibility.update(limit_box=limit,limit_hide_outside=True)
+    if not (selection or limit or visibility.get('isolate_box') or visibility.get('hidden_boxes')):
         yield lambda:batches(item,cfg,progress,cancel)
         return
     cached=[]
@@ -177,7 +174,7 @@ def circle_source(item,cfg,selection,limit,folder,progress,cancel):
                         if len(rows)!=count:raise ValueError('The temporary local-circle input cache is incomplete. Preview the area again.')
                         yield rows['id'],rows['xyz'],{'mode':'full'}
                 return
-            for ids,points in jobdata.selection_rows(item['meta'],area,report,visibility=visibility):
+            for ids,points in jobdata.selection_rows(item['meta'],selection,report,visibility=visibility):
                 part=ids,points,{'mode':'full'}
                 if cached is not None:remember(part)
                 yield part

@@ -567,7 +567,11 @@
  async function action(body,after=null,options={}){
   if(busy||uploading)return false;
   if(!['register','analyse','surface','rename','delete_selection_many'].includes(body.action)){
-   clearPreviewCaches();detailView=null;signature='';previewRequest?.controller.abort();
+   const viewEdit=['hide_box','hide_selection','isolate_box','isolate_selection'].includes(body.action);
+   clearPreviewCaches();
+   if(viewEdit&&jobScene.initialised&&!setupState)detailView=viewportFrame();
+   else if(!viewEdit)detailView=null;
+   signature='';previewRequest?.controller.abort();
   }
   const preparing=body.action==='analyse',name=current()?.name||'Scan';
   if(preparing){
