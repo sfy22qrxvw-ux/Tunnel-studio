@@ -18,11 +18,14 @@ EVIDENCE = np.dtype([('count','<i8'),('depth','<f8'),('isum','<f8'),('icount','<
 # Working window budget; no selected-point count or tunnel length cap.
 WINDOW_CELLS = 1000000
 INTERVAL_CELLS = 2000000
-MAP_BYTES = 8 * 1024 * 1024
+# Two bounded mappings per cache. Small 8 MiB mappings repeatedly flushed
+# interleaved scan lines during the full-scan audit. 160 MiB lets a typical
+# tunnel evidence map stay in two mappings without creating a cloud copy.
+MAP_BYTES = 160 * 1024 * 1024
 
 
 class DiskRows:
-    """At most two 8 MiB mappings, explicitly closed before file removal."""
+    """At most two MAP_BYTES mappings, explicitly closed before file removal."""
     def __init__(self, path, rows, columns, dtype):
         self.path=Path(path);self.rows=rows;self.columns=columns;self.dtype=np.dtype(dtype)
         self.step=max(1,MAP_BYTES//(columns*self.dtype.itemsize));self.maps=OrderedDict()
@@ -116,6 +119,7 @@ class TiledDetector:
     def window(self, start, end, *, features=False):
         self.emit(f'3/5 Analysing overlapping section · {self.t0+start*self.cell:.2f} to {self.t0+end*self.cell:.2f} m')
         detector=lf.Detector(self.m,(0,1),self.s,self.emit,grid=(self.t0+start*self.cell,end-start,self.na))
+        detector.defer_ring_sequence=True
         evidence=self.evidence.read(start,end)
         for key in EVIDENCE.names:setattr(detector,key,evidence[key].copy())
         del evidence
@@ -156,9 +160,21 @@ class TiledDetector:
             self.copy_labels(detector,start,mapping)
             del detector
         self.rings.sort(key=lambda r:r['station_m'])
+        from ring_evidence import supported_sequence
+        self.rings,self.unresolved_ring_candidates=supported_sequence(self.rings,self.s)
+        rejected={row['id'] for row in self.unresolved_ring_candidates}
+        if rejected:
+            self.features=[row for row in self.features if row['id'] not in rejected]
+            for ident in rejected:self.features_by_id.pop(ident,None)
+            for number in range((self.nt+self.labels.step-1)//self.labels.step):
+                self.emit('4/5 Retaining ambiguous joint traces as unresolved')
+                block=self.labels.block(number)
+                block[np.isin(block,list(rejected))]=0
         for i,row in enumerate(self.rings,1):row['name']=f'Ring seam {i}'
+        if getattr(self,'refine_rings',None):self.refine_rings(self)
         if task in ('all','segments','seams'):
             for interval,(left,right) in enumerate(zip(self.rings[:-1],self.rings[1:]),1):
+                if not lf.ring_width_matches(self.s, right['station_m']-left['station_m']):continue
                 lo=left['station_m']-np.linalg.norm(left['coefficients'][1:])
                 hi=right['station_m']+np.linalg.norm(right['coefficients'][1:])
                 start=max(0,math.floor((lo-self.t0)/self.cell)-self.halo)

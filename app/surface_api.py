@@ -500,7 +500,9 @@ def _run(s, body, cached=None):
             elif settings['method']=='lining_features':
                 import lining_features
                 intensity=(lambda ids:jobdata._display_rows(meta['attributes_file'],meta['count'],ids,4,'<f4')[:,0]) if meta.get('attributes_file') else None
-                r=lining_features.run_batches(batches,idpath,labelpath,settings,progress,CANCEL.is_set,selected_total,intensity_for_ids=intensity)
+                import surface_streaming
+                refinement=lambda box:surface_streaming.batches(s,meta,key,selection,block,CANCEL.is_set,refinement_box=box)
+                r=lining_features.run_batches(batches,idpath,labelpath,settings,progress,CANCEL.is_set,selected_total,intensity_for_ids=intensity,refinement_batches=refinement)
                 method='Lining features: supported unwrapping, compact pockets / fittings, intensity valleys, robust seams and bounded segments'
             elif settings['method']=='reflection':
                 import reflection_cleaning

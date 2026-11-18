@@ -8,14 +8,16 @@ import pointio,jobdata,preview_index,registration_pose
 def index_box(spec):
     return spec.get('clip_box') or (spec if spec['mode'] in ('box','oriented_box') and not spec.get('invert') else None)
 
-def batches(s,meta,key,selection,block,cancelled=lambda:False):
+def batches(s,meta,key,selection,block,cancelled=lambda:False,*,refinement_box=None):
     from surface_api import _area_batches,_selection_spec
     spec,_,_,start,end=_selection_spec(s,meta,key,selection)
     if spec['mode']=='visible':
-        yield from _area_batches(s,meta,key,spec,block,cancelled)
+        for ids,p,area in _area_batches(s,meta,key,spec,block,cancelled):
+            use=jobdata.selection_mask(p,refinement_box) if refinement_box else np.ones(len(p),bool)
+            if use.any():yield ids[use],p[use],area
         return
     total=meta['count'];pending_ids=[];pending_points=[];pending_count=selected=0
-    area=index_box(spec)
+    area=refinement_box or index_box(spec)
 
     def checkpoint(message=None):
         if cancelled():raise ValueError('Surface extraction cancelled. The previous result is unchanged.')
@@ -55,6 +57,7 @@ def batches(s,meta,key,selection,block,cancelled=lambda:False):
                 if len(d)!=n*4:raise ValueError('Incomplete analysis cache.')
                 ch=d.reshape(n,4)[:,0];use&=np.isfinite(ch)&(ch>=start)&(ch<=end)
             if spec['mode'] in ('full','chainage') and spec.get('clip_box'):use&=jobdata.selection_mask(q,spec['clip_box'])
+            if refinement_box:use&=jobdata.selection_mask(q,refinement_box)
             ids=np.flatnonzero(use).astype('<i8')+i
             if len(ids):pending_ids.append(ids);pending_points.append(q[use]);pending_count+=len(ids);selected+=len(ids)
             read+=n
