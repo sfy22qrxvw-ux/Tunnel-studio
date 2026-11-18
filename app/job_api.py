@@ -179,11 +179,22 @@ def get(s,h,path,args):
         import detail_preview
         if view is not None:detail_preview.validate_view(view)
         quick=args.get('quick',['0'])[0]=='1'
+        import time
+        preview_started=time.perf_counter();preview_stats={};preview_status='error'
         try:
-            blob,_=jobdata.preview_binary(preview_items,args.get('detail',[25])[0],args.get('mode',['rgb'])[0],view,owners=args.get('owners',['0'])[0]=='1',quick=quick,cancel=lambda:detail_preview.request_cancelled(h),setup=bool(args.get('setup_id')),interactive=args.get('interactive',['0'])[0]=='1')
+            blob,preview_stats=jobdata.preview_binary(preview_items,args.get('detail',[25])[0],args.get('mode',['rgb'])[0],view,owners=args.get('owners',['0'])[0]=='1',quick=quick,cancel=lambda:detail_preview.request_cancelled(h),setup=bool(args.get('setup_id')),interactive=args.get('interactive',['0'])[0]=='1')
+            preview_status='complete'
         except InterruptedError:
+            preview_status='cancelled'
             h.close_connection=True
             return True
+        finally:
+            import os
+            metrics=os.environ.get('TUNNEL_PREVIEW_METRICS')
+            if metrics:
+                try:
+                    with open(metrics,'a',encoding='utf-8') as out:out.write(json.dumps(dict(time=time.time(),seconds=time.perf_counter()-preview_started,status=preview_status,quick=quick,view=view,**preview_stats))+'\n')
+                except OSError:pass
         return h.send(blob,'application/octet-stream') or True
     return False
 

@@ -288,9 +288,33 @@ def get(s,h,path,args):
     return False
 
 
+def alignment_limit_box(axis, value):
+    """Orient the draft at the nearest station on the active 3D alignment."""
+    if axis is None:
+        raise ValueError('Activate a design or scan-derived alignment to align the box.')
+    box = jobdata.selection_spec(value)
+    if box['mode'] == 'box':
+        lo, hi = np.asarray(box['minimum']), np.asarray(box['maximum'])
+        centre, half = (lo / 2 + hi / 2).tolist(), (hi / 2 - lo / 2).tolist()
+    elif box['mode'] == 'oriented_box':
+        centre, half = box['centre'], box['half_size']
+    else:
+        raise ValueError('Draw or enter a 3D limit box first.')
+    from section_path import model, nearest
+    station = nearest(model(axis.a), centre)
+    _, tangent, right, up, _ = axis.at(station)
+    axes = [tangent.tolist(), (-right).tolist(), up.tolist()]
+    return dict(box=dict(mode='oriented_box', centre=centre, half_size=half, axes=axes),
+                chainage=station, alignment=axis.name)
+
+
 def post(s,h,path,body):
     if path!='/api/scan-geometry':return False
     if s.JOB['busy']:raise ValueError('Wait for the current operation to finish.')
+    if body.get('action') == 'align_limit_box':
+        axis = None if s.STATE.get('demo') else s.STATE.get('axis')
+        h.send(alignment_limit_box(axis, body.get('box')))
+        return True
     import job_api
     job_api.sync_active(s);job_api.CANCEL.clear()
     def progress(message):job_api.progress(s,message)

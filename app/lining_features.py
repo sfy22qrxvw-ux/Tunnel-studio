@@ -13,6 +13,7 @@ from scipy.sparse import coo_matrix
 from scipy.sparse.csgraph import connected_components
 import tunnel_lining
 from combined_denoising import SAMPLER_VERSION, sample_originals
+from segment_panels import ring_width_matches
 
 PRESETS={'fast':dict(cell=.04,cap=80000,spacing=.04,trials=80),
          'detailed':dict(cell=.02,cap=160000,spacing=.02,trials=180),
@@ -86,10 +87,26 @@ def detection_summary(detector,task,occupied=None):
     result=dict(task=task,unoccupied_panel_sectors=unoccupied,segment_confidence_counts=bands,ring_boundaries=rings,longitudinal_boundaries=joints,segment_candidates=panels,
                 bolt_recess_candidates=pockets,raised_fitting_candidates=fittings,observed_ring_intervals=intervals,
                 intervals_with_segments=supported,ambiguous_segment_boundaries=ambiguous)
+    unresolved = getattr(detector, 'unresolved_ring_candidates', [])
+    result['unresolved_ring_candidates'] = unresolved
+    result['unresolved_ring_count'] = len(unresolved)
+    outside_width = 0
+    expected = detector.s.get('lining_ring_width_m', 0.)
+    if expected and task in ('all', 'seams', 'segments'):
+        checks = []
+        for interval, (left, right) in enumerate(zip(detector.rings, detector.rings[1:]), 1):
+            width = right['station_m'] - left['station_m']
+            matches = ring_width_matches(detector.s, width)
+            outside_width += int(not matches)
+            checks.append(dict(ring_interval=interval, width_m=width, within_tolerance=matches))
+        result.update(expected_ring_width_m=expected,
+                      ring_width_tolerance_mm=detector.s.get('lining_ring_tolerance_mm', 100.),
+                      ring_width_checks=checks)
     if task in ('all','segments'):
         if not panels:
             reason=('The proposed sectors contain no classified lining points.' if unoccupied else
                     'At least two supported ring boundaries are needed.' if rings<2 else
+                    'All observed gaps fall outside the specified ring width tolerance.' if outside_width==intervals else
                     'No between-segment boundaries passed the evidence checks.' if not joints else
                     'The detected boundaries do not enclose unambiguous panels.')
             result.update(status='no_segments',summary=f'No supported segment layout: {rings} ring-boundary and {joints} between-segment candidates. {reason} Original points remain available for review.')
@@ -106,6 +123,14 @@ def detection_summary(detector,task,occupied=None):
     elif task=='seams':
         result.update(status='candidates' if rings or joints else 'no_candidates',summary=f'{rings} ring-boundary and {joints} between-segment candidates. Missing or insufficiently supported joints remain undetected.')
     else:result.update(status='review',summary='Review lining support and non-lining candidates before applying exclusions.')
+    if unresolved:
+        result['summary'] += f' {len(unresolved)} additional joint traces remain unresolved and are not used as ring boundaries.'
+    refinement = getattr(detector, 'refinement_checks', [])
+    result['automatic_refinement'] = refinement
+    unresolved_gaps = sum(check['status']=='unresolved' for check in refinement)
+    result['unresolved_refinement_gaps'] = unresolved_gaps
+    if unresolved_gaps:
+        result['summary'] += f' {unresolved_gaps} gap(s) remain unresolved after finer measured review; no joint was added there.'
     return result
 
 class Detector:
@@ -182,13 +207,19 @@ class Detector:
         scale=max(float(scale),span/200.,numerical) if usable else 0.
         # Require measured neighbours on BOTH sides of a dark feature. Missing
         # cells and occlusions never become seam evidence.
-        self.dark=np.zeros(self.shape,bool)
+        self.dark=np.zeros(self.shape,bool);self.ring_dark=np.zeros(self.shape,bool)
+        self.ring_bright=np.zeros(self.shape,bool)
         if usable:
             step=max(2,round(.10/self.cell));astep=max(2,round(.10/self.arc))
             axial=np.zeros(self.shape,bool)
             if self.nt>2*step:axial[step:-step]=iv[:-2*step]&iv[2*step:]&(intensity[step:-step]<intensity[:-2*step]-3*scale)&(intensity[step:-step]<intensity[2*step:]-3*scale)
             around=np.roll(iv,astep,1)&np.roll(iv,-astep,1)&(intensity<np.roll(intensity,astep,1)-3*scale)&(intensity<np.roll(intensity,-astep,1)-3*scale)
             self.dark=iv&(iw>.04)&(diff < -3*scale)&(axial|around)
+            self.ring_dark=self.dark&axial
+            bright=np.zeros(self.shape,bool)
+            if self.nt>2*step:
+                bright[step:-step]=iv[:-2*step]&iv[2*step:]&(intensity[step:-step]>intensity[:-2*step]+3*scale)&(intensity[step:-step]>intensity[2*step:]+3*scale)
+            self.ring_bright=iv&(iw>.04)&(diff>3*scale)&bright
         self.intensity_used=bool(usable)
         if not features:return
         if task!='non_lining':
@@ -296,54 +327,31 @@ class Detector:
             self.grid_labels[ti,aj%self.na]=row['id']
     def seams(self,*,ring_only=False):
         self.emit('4/5 Locating ring and between-segment seams')
-        candidate=(self.seam_geom|self.dark)&(self.grid_labels==0);ii,jj=np.where(candidate)
+        candidate=(self.seam_geom|self.dark|self.ring_bright)&(self.grid_labels==0);ii,jj=np.where(candidate)
         if len(ii)<12:return
         t=self.t0+(ii+.5)*self.cell;a=(jj+.5)*2*np.pi/self.na
-        # Each angular sector contributes at most one vote per station bin.
-        coarse=36;sector=np.minimum(coarse-1,(a*coarse/(2*np.pi)).astype(int))
-        votes=np.zeros((self.nt,coarse),bool);votes[ii,sector]=True
-        score=convolve(votes.astype(float),np.ones((max(1,round(.08/self.cell)),1)),mode='constant').clip(0,1).sum(1)/coarse
-        peaks,_=find_peaks(score,height=.25,distance=max(1,int(.35/self.cell)),prominence=.10)
+        from ring_evidence import fit
         rng=np.random.default_rng(143);band=max(.025,1.5*self.cell)
-        for ix in peaks[np.argsort(score[peaks])[::-1]]:
-            self.emit('4/5 Fitting supported circumferential seam')
-            seed=self.t0+(ix+.5)*self.cell;use=abs(t-seed)<.35
-            tt=t[use];aa=a[use]
-            if len(tt)<12:continue
-            # t = c + b cos(theta) + d sin(theta): tilted ring plane in cylinder frame.
-            X=np.c_[np.ones(len(aa)),np.cos(aa),np.sin(aa)];best=None;bestscore=0
-            for _ in range(self.preset['trials']):
-                take=rng.choice(len(tt),3,replace=False)
-                if np.linalg.cond(X[take])>100:continue
-                coef=np.linalg.solve(X[take],tt[take])
-                if np.linalg.norm(coef[1:])>.45:continue
-                residual=tt-X@coef;inside=abs(residual)<=band;coverage=len(np.unique((aa[inside]*coarse/(2*np.pi)).astype(int)))/coarse
-                if ridge_contrast(residual,band)<2.:continue
-                value=coverage+min(1,inside.sum()/max(1,len(tt)))*.1
-                if coverage>=.40 and value>bestscore:bestscore=value;best=(coef,inside,coverage)
-            if best is None:continue
-            coef,inside,coverage=best;coef=np.linalg.lstsq(X[inside],tt[inside],rcond=None)[0]
-            residual=tt-X@coef;inside=abs(residual)<=band
-            coverage=len(np.unique((aa[inside]*coarse/(2*np.pi)).astype(int)))/coarse
-            contrast=ridge_contrast(residual,band)
-            if np.linalg.norm(coef[1:])>.45 or coverage<.40 or inside.sum()<12 or contrast<2.:continue
-            if any(abs(coef[0]-r['coefficients'][0])<.35 for r in self.rings):continue
-            residual=residual[inside]
-            row=self.add('ring_seam',f'Ring seam {len(self.rings)+1}',coefficients=coef.tolist(),station_m=float(coef[0]),coverage_fraction=float(coverage),fit_rms_m=float(np.sqrt(np.mean(residual**2))),support_cells=int(inside.sum()),ridge_contrast=float(contrast),evidence='Measured recess / local intensity valley across circumference; robust tilted-plane fit with evidence above adjacent flanks')
-            angles=np.linspace(0,2*np.pi,129);row['points']=world(ring_at(coef,angles),angles,self.m).tolist();self.rings.append(row)
+        for evidence in fit(self):
+            row=self.add('ring_seam',f'Ring seam {len(self.rings)+1}',**evidence,
+                         evidence='Measured axial recess or bright/dark intensity line with wall support on both sides; circumferential trace fit, continuous visible-support and adjacent-flank checks')
+            coef=row['coefficients'];angles=np.linspace(0,2*np.pi,129)
+            row['points']=world(ring_at(coef,angles),angles,self.m).tolist();self.rings.append(row)
             chosen=abs(t-ring_at(coef,a))<=band;self.grid_labels[ii[chosen],jj[chosen]]=row['id']
-        self.rings.sort(key=lambda r:r['station_m'])
-        for number,r in enumerate(self.rings,1):r['name']=f'Ring seam {number}'
-        if not ring_only:self.between_seams(ii,jj,t,a,rng,band)
+        if not ring_only:
+            if getattr(self,'refine_rings',None):self.refine_rings(self)
+            self.between_seams()
     def between_seams(self,ii=None,jj=None,t=None,a=None,rng=None,band=None):
         if ii is None:
             ii,jj=np.where((self.seam_geom|self.dark)&(self.grid_labels==0))
             t=self.t0+(ii+.5)*self.cell;a=(jj+.5)*2*np.pi/self.na
             rng=np.random.default_rng(143);band=max(.025,1.5*self.cell)
         for rindex,(left,right) in enumerate(zip(self.rings[:-1],self.rings[1:]),1):
+            span=right['station_m']-left['station_m']
+            if not ring_width_matches(self.s,span):continue
             lo=ring_at(left['coefficients'],a);hi=ring_at(right['coefficients'],a)
             use=(t>lo+band*2)&(t<hi-band*2)&(self.grid_labels[ii,jj]==0)
-            ix=np.flatnonzero(use);span=right['station_m']-left['station_m'];mid=(right['station_m']+left['station_m'])/2
+            ix=np.flatnonzero(use);mid=(right['station_m']+left['station_m'])/2
             if span<.4 or len(ix)<10:continue
             pool_t=t[ix].copy();pool_a=a[ix].copy()
             # Bounded RANSAC on periodically unwrapped arc coordinates detects
@@ -400,7 +408,7 @@ class Detector:
         return labels
 
 
-def run_batches(batches,ids_path,labels_path,settings,progress,cancel,selected_total,intensity_for_ids=None):
+def run_batches(batches,ids_path,labels_path,settings,progress,cancel,selected_total,intensity_for_ids=None,refinement_batches=None):
     started=time.monotonic()
     def emit(msg):tunnel_lining._emit(progress,cancel,msg)
     cfg=PRESETS[settings.get('lining_detail','detailed')];emit('1/5 Learning a supported lining reference')
@@ -430,6 +438,8 @@ def run_batches(batches,ids_path,labels_path,settings,progress,cancel,selected_t
         for ids,p,_ in batches():
             for start in range(0,len(ids),25000):
                 emit('2/5 Unwrapping all original points');ix=ids[start:start+25000];detector.accumulate(p[start:start+25000],intensity_for_ids(ix) if intensity_for_ids else None)
+        from ring_refinement import refine
+        detector.refine_rings=lambda d:refine(d,refinement_batches or (lambda box:batches()),intensity_for_ids)
         detector.analyse();n=detector.next_id;counts=np.zeros(n,np.int64);sums=np.zeros((n,3));reps={i:[] for i in range(n)};remaining_reps=np.full(n,16,np.int32);written=0
         with open(ids_path,'wb') as out,open(labels_path,'wb') as labs:
             for ids,p,_ in batches():
@@ -465,6 +475,7 @@ def run_batches(batches,ids_path,labels_path,settings,progress,cancel,selected_t
         if not detector.intensity_used:warnings.append('No usable intensity contrast: geometry-only detection is active.')
         if not detector.rings and settings.get('lining_task') in ('all','seams','segments'):warnings.append('No sufficiently supported ring seams found. No ring or segment layout was invented; try finer detail and check depth, spacing and scan coverage.')
         detection=detection_summary(detector,settings.get('lining_task','all'),counts)
+        detection['automatic_refinement']=getattr(detector,'refinement_checks',[])
         if detection['status'] not in ('candidates','review'):warnings.append(detection['summary'])
         lining_frame = {k:np.asarray(m[k]).tolist() for k in ('reference','axis','u','v')}
         lining_frame.update(nodes=m['nodes'].tolist(), radius_m=float(m['radius']))

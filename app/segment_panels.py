@@ -4,6 +4,13 @@ import numpy as np
 from scipy.optimize import brentq
 
 
+def ring_width_matches(settings, width):
+    """A measured span must agree with the supplied width of one ring."""
+    expected = settings.get('lining_ring_width_m', 0.)
+    tolerance = settings.get('lining_ring_tolerance_mm', 100.) / 1000.
+    return not expected or abs(width - expected) <= tolerance + 1e-9
+
+
 def angular_dividers(measured, count, offset_deg, mid, radius):
     """Preserve measured fits and apportion missing sectors among their angular gaps."""
     circumference = 2 * math.pi * radius
@@ -66,6 +73,8 @@ def panel_geometry(model, left, right, first, second, world, ring_at):
 def build(detector, world, ring_at):
     circ = 2*math.pi*detector.radius
     for ri,(left,right) in enumerate(zip(detector.rings, detector.rings[1:]),1):
+        if not ring_width_matches(detector.s, right['station_m'] - left['station_m']):
+            continue
         detector.emit(f'4/5 Reviewing segment boundaries in ring interval {ri}')
         delta = np.subtract(right['coefficients'],left['coefficients'])
         if delta[0]-np.linalg.norm(delta[1:]) <= .10:
@@ -73,9 +82,8 @@ def build(detector, world, ring_at):
         mid = (left['station_m']+right['station_m'])/2
         seams = sorted((s for s in detector.longitudinal if s['ring_interval']==ri),
                        key=lambda s:s['arc_intercept_m'])
-        # Legacy callers without a declared design keep their measured layout
-        # when at least two longitudinal candidates already enclose panels.
-        count = detector.s.get('lining_sector_count', 6 if len(seams)<2 else 0)
+        # Infer divisions only when a segment count has explicitly been supplied.
+        count = detector.s.get('lining_sector_count', 0)
         reach = delta[0]/2+max(np.linalg.norm(left['coefficients'][1:]),np.linalg.norm(right['coefficients'][1:]))
         for seam in seams:
             conflicts = []

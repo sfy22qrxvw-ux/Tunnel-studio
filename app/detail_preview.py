@@ -193,6 +193,15 @@ def sample(item, budget, origin, fallback, mode, z_range, view, quick=False, can
     if quick:
         packed = _quick_sample(item, budget, origin, fallback, mode, z_range, view,cancel=cancel)
     else:
+        if not interactive and not navigation:
+            import priority_view_cache
+            accelerated = priority_view_cache.sample(item, budget, origin, fallback, mode, z_range, view, cancel, decorate)
+            if accelerated is not None:
+                if cache is not None:
+                    if cache != preview_store.cache_path(item, budget, origin, fallback, mode, z_range, quick, view=view):
+                        raise ValueError('The scan changed while loading detail. Refresh the view.')
+                    preview_store.write(cache, accelerated)
+                return accelerated
         m = item['meta']; n = int(m['count'])
         included, hidden = jobdata.view_selections(item)
         source_key = preview_index._key(m)
@@ -246,6 +255,10 @@ def sample(item, budget, origin, fallback, mode, z_range, view, quick=False, can
                 blocks = coarse if fine is None else fine
             ranges = _coalesced_ranges(blocks, gap=1024 if fine is not None else 0)
         chosen = _PrioritySample(budget)
+        # The pose is constant for this viewport request. Avoid validating the
+        # identity transform again for every spatial block (tens of thousands
+        # of blocks on a full tunnel), retaining the original nonidentity path.
+        identity_pose = registration_pose.is_identity(m)
         with ExitStack() as files:
             source = files.enter_context(Path(m['file']).open('rb'))
             excluded = files.enter_context(Path(m['mask_file']).open('rb')) if m.get('mask_file') else None
@@ -260,7 +273,7 @@ def sample(item, budget, origin, fallback, mode, z_range, view, quick=False, can
                 local = local.reshape(count, 3)
                 if builder is not None:
                     builder.add(start, local)
-                q = registration_pose.points(m, local)
+                q = local if identity_pose else registration_pose.points(m, local)
                 use = _view_mask(q, view, frame)
                 jobdata.apply_view_selections(q, use, included, hidden)
                 if not use.any():

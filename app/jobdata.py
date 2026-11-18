@@ -37,6 +37,12 @@ def preview_cache(meta,work,progress=lambda s:None):
     if 'count' in meta:
         progress('Preparing reusable colour and intensity overview…')
         _source_overview(meta,build=True,progress=progress)
+        if n >= 20000000:
+            import priority_view_cache
+            try:
+                priority_view_cache.build(meta,progress=progress)
+            except (OSError, ValueError):
+                progress('Exact zoom cache unavailable; full measured detail remains available.')
     return meta
 
 def _worker_python():
@@ -544,14 +550,38 @@ def _display_rows(path,count,ids,width=3,dtype='<f8',progress=None,cancel=None):
     return _gather_display_rows(path,count,ids,width,dtype,progress,cancel)
 
 @lru_cache(maxsize=32)
-def _intensity_window_cached(path,count,size,modified):
+def _intensity_window_cached(path,count,size,modified,cancel=None):
+    # These are the same deterministic percentiles, not a new colour scale.
+    # Persist the tiny result so opening a billion-point project again does
+    # not fault scattered attribute pages merely to rediscover its contrast.
+    import hashlib,json,os,uuid
+    signature=[str(Path(path).resolve()),int(count),int(size),int(modified)]
+    cache=Path(path).parent/'display_cache'/('intensity-range-'+hashlib.sha256(repr(signature).encode()).hexdigest()+'.json')
+    try:
+        saved=json.loads(cache.read_text())
+        values=saved['range']
+        if saved['signature']==signature and len(values)==2 and np.isfinite(values).all() and values[0]<=values[1]:return tuple(values)
+    except (OSError,ValueError,KeyError,TypeError):pass
     ids=np.linspace(0,count-1,min(count,100000),dtype=np.int64)
-    values=_display_rows(path,count,ids,4,'<f4')[:,0];values=values[np.isfinite(values)]
-    return tuple(np.percentile(values,[2,98])) if len(values) else (0.,1.)
+    values=_display_rows(path,count,ids,4,'<f4',cancel=cancel)[:,0];values=values[np.isfinite(values)]
+    result=tuple(np.percentile(values,[2,98])) if len(values) else (0.,1.)
+    temporary=None
+    try:
+        stat=Path(path).stat()
+        if stat.st_size==size and stat.st_mtime_ns==modified:
+            cache.parent.mkdir(exist_ok=True);temporary=cache.with_suffix('.'+uuid.uuid4().hex+'.tmp')
+            temporary.write_text(json.dumps(dict(signature=signature,range=result)))
+            os.replace(temporary,cache)
+    except OSError:pass
+    finally:
+        if temporary is not None:
+            try:temporary.unlink(missing_ok=True)
+            except OSError:pass
+    return result
 
-def intensity_window(meta):
+def intensity_window(meta,cancel=None):
     p=Path(meta['attributes_file']);stat=p.stat()
-    return _intensity_window_cached(str(p),int(meta['count']),stat.st_size,stat.st_mtime_ns)
+    return _intensity_window_cached(str(p),int(meta['count']),stat.st_size,stat.st_mtime_ns,cancel)
 
 
 def _colour_from_attributes(meta,ids,fallback,mode='rgb',points=None,z_range=None,attributes=None,intensity_range=None,cancel=None):
@@ -577,7 +607,7 @@ def _colour_from_attributes(meta,ids,fallback,mode='rgb',points=None,z_range=Non
         values=attrs[:,0];valid=np.isfinite(values)
         if missing_rgb is not None:valid &= missing_rgb
         if not valid.any():return colours
-        lo,hi=intensity_range if intensity_range is not None else intensity_window(meta);t=np.zeros(len(values),dtype=np.float32);t[valid]=np.clip((values[valid]-lo)/max(float(hi-lo),1e-9),0,1)
+        lo,hi=intensity_range if intensity_range is not None else intensity_window(meta,cancel=cancel);t=np.zeros(len(values),dtype=np.float32);t[valid]=np.clip((values[valid]-lo)/max(float(hi-lo),1e-9),0,1)
         if mode=='intensity-gray':colours[valid]=(.08+.92*t[valid])[:,None]
         elif mode=='intensity-hue':colours[valid]=_colour_ramp(t[valid])
     except InterruptedError:raise

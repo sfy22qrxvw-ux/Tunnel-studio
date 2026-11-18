@@ -92,7 +92,7 @@ def _refs(root,value):
 
 def _owned(root,paths,originals):
     return {p for p in paths if p.is_relative_to(root) and p not in originals
-            and (p.name.endswith(CACHE_ENDINGS) or p.parent.name=='display_cache' and p.suffix in ('.npz','.npy','.json'))}
+            and (p.name.endswith(CACHE_ENDINGS) or p.parent.name=='display_cache' and (p.suffix in ('.npz','.npy','.json') or p.name.endswith(('.priority.bin','.priority.extra.bin'))))}
 
 
 def _depends(value,ids,files):
@@ -259,7 +259,7 @@ def _plan(s,body):
     directories={p.parent/'display_cache' for p in candidates if p.name.endswith(('.xyz64','.vertices64'))}
     for directory in directories:
         if directory.is_dir() and not any(p.parent==directory.parent and p.name.endswith(('.xyz64','.vertices64')) for p in protected):
-            candidates.update(p.resolve() for p in directory.iterdir() if p.is_file() and (p.suffix in ('.npy','.npz') or p.name.endswith('.owner.json')) and p.resolve().is_relative_to(root))
+            candidates.update(p.resolve() for p in directory.iterdir() if p.is_file() and (p.suffix in ('.npy','.npz') or p.name.endswith(('.owner.json','.priority.bin','.priority.extra.bin','.priority.json'))) and p.resolve().is_relative_to(root))
     # Legacy display-cache discovery is deliberately broad, but an original
     # import stays protected even when it was placed inside that directory.
     candidates.difference_update(originals)

@@ -56,8 +56,10 @@ class Settings:
     interior_band_mm:float=30.
     reflection_gap_mm:float=100.
     reflection_match_mm:float=100.
-    lining_sector_count:int=6
+    lining_sector_count:int=0
     lining_sector_offset_deg:float=0.
+    lining_ring_width_m:float=0.
+    lining_ring_tolerance_mm:float=100.
     lining_task:str='all'
     lining_detail:str='detailed'
     lining_depth_mm:float=12.
@@ -91,6 +93,7 @@ class Settings:
         limits.update(lining_bolt_height_mm=(0,1000),lining_bolt_min_points=(0,100000))
         if c.lining_bolt_kind not in ('recess','raised'):raise ValueError('Choose recessed bolt pockets or raised fittings.')
         limits.update(lining_sector_count=(0,24),lining_sector_offset_deg=(-360,360))
+        limits.update(lining_ring_width_m=(0,10),lining_ring_tolerance_mm=(0,2000))
         limits.update(lining_depth_mm=(2,100),lining_seam_depth_mm=(2,100),lining_inward_mm=(10,500),lining_recess_mm=(50,1000),lining_bolt_max_mm=(50,800))
         limits.update(gusac_distance_mm=(1,200),gusac_sector_deg=(1,15),gusac_window_m=(.1,5),gusac_normal_deg=(1,85),gusac_min_support=(6,2000),tmatch_radius_mm=(2,200),tmatch_min_points=(3,1000000),tmatch_ring_width_m=(0,10))
         if c.lining_task not in ('all','bolts','seams','segments','non_lining','departures'):raise ValueError('Choose a lining analysis task.')

@@ -1171,7 +1171,7 @@
  // Fine buffers include a whole-scene sample. Keep those measured points in
  // GPU memory while navigating instead of repeatedly reverting/re-uploading
  // the sparse overview. Coalesce movement into one current-view request.
- jobScene.onNavigate=()=>{if(previewRequest&&detailView&&!setupState&&!viewStillCovered(detailView)){previewEpoch++;previewRequest.controller.abort();}scheduleDetail();};
+ jobScene.onNavigate=()=>{if(previewRequest&&detailView&&!setupState&&(jobScene.scale<detailView.scale*.8||!viewStillCovered(detailView))){previewEpoch++;previewRequest.controller.abort();}scheduleDetail();};
  jobScene.onViewportResize=scheduleDetail;
  function canLoadReviewDetail(){return previewOwner==='shape'&&['orbit','pan'].includes(jobMode)&&!busy;}
  function loadViewDetail(force=false){
@@ -1193,7 +1193,7 @@
   if(loading)previewRefreshPending=true;else sync();
  }
  function viewportFrame(){return {target:jobScene.target.map((v,i)=>v+previewOrigin[i]),...jobScene.basis(),scale:jobScene.scale,aspect:canvas.clientWidth/Math.max(1,canvas.clientHeight)};}
- function scheduleDetail(){clearTimeout(detailTimer);if(jobMode==='polygon'||polygonFrame||cleanSnapshot&&previewOwner!=='shape'||deletedMode)return;detailTimer=setTimeout(()=>loadViewDetail(),350);}
+ function scheduleDetail(){clearTimeout(detailTimer);if(jobMode==='polygon'||polygonFrame||cleanSnapshot&&previewOwner!=='shape'||deletedMode)return;detailTimer=setTimeout(()=>loadViewDetail(),150);}
  for(const event of ['wheel','pointerup'])canvas.addEventListener(event,scheduleDetail,{passive:true});
  function setDisplayEnhancement(contrast=1,gamma=1){displayContrast=Math.max(.25,Math.min(3,+contrast||1));displayGamma=Math.max(.25,Math.min(3,+gamma||1));for(const [name,value] of [['contrast',displayContrast],['gamma',displayGamma]]){for(const prefix of ['reg','ribbon']){const input=$(prefix+'-'+name),output=$(prefix+'-'+name+'-value');if(input)input.value=value;if(output)output.textContent=Math.round(value*100)+'%';}}jobScene.pointContrast=cleanSnapshot?1:displayContrast;jobScene.pointGamma=cleanSnapshot?1:displayGamma;jobScene.draw();}
 
