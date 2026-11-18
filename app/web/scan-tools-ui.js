@@ -36,7 +36,9 @@
    if(!dialog.open||!dialog.classList.contains('limit-editor')||busy||limitSaving||
       source!==window.JobUI.selectedItem()?.id||JSON.stringify(draft)!==JSON.stringify(readBox()))return;
    boxFields(result.box);
-   message(`Aligned at chainage ${fmt(result.chainage,3)} m · ${result.alignment} · box X is along the tunnel. Save the box to use it for analysis.`);
+   if(await persistBox(false)&&dialog.open&&dialog.classList.contains('limit-editor')){
+    message(`Box aligned and saved at chainage ${fmt(result.chainage,3)} m · ${result.alignment}. Box end faces are perpendicular to the local alignment.`);
+   }
   }catch(e){if(dialog.open&&dialog.classList.contains('limit-editor'))message(e.message,true);}
   finally{button.disabled=busy||limitSaving;}
  };

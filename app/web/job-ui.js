@@ -304,7 +304,7 @@
   for(const q of p.points){const use=keep.has(q[3]);if(hidden.has(q[3])||(only&&!only.has(q[3])))continue;if(options.isolate&&options.inspected!==null&&q[3]!==options.inspected)continue;if(use?!options.showKept:q[3]===-1?!options.showNoise:!options.showOther)continue;
    const c=chosen.has(q[3])?[1,85/255,221/255]:use?(options.colours?.[q[3]]||[.32,.82,.64]):[1,.25,.25];values.push(...q.slice(0,3),...c);cleanPointLabels.push(q[3]);}
   packed=new Float32Array(values);previewOrigin=p.origin.slice();jobScene.target=world.map((v,i)=>v-previewOrigin[i]);jobScene.setMesh(new Float32Array(),previewOrigin);jobScene.setPacked(packed,previewOrigin);
-  if(first){clearSelection();setMode('orbit');jobScene.fit();}
+  if(first){clearSelection();setMode('orbit');if(!options.keepCamera)jobScene.fit();}
   $('job-review-legend').hidden=false;const legend=$('job-review-legend').querySelectorAll('span');if(legend.length>=3){legend[1].innerHTML='<i class="surface-dot kept"></i>'+(options.classification&&options.colours?(options.colourMode==='rings'?'Ring colours / grey unresolved':'Cluster colours / grey unresolved'):options.colours?'Feature colours / retained':'Tunnel / keep');legend[2].innerHTML='<i class="surface-dot removed"></i>'+(options.colours?'Excluded':'Noise / remove');}
   $('job-empty').hidden=!!packed.length;if(!packed.length)$('job-empty').textContent='No review points visible · choose Show all clusters';
   $('job-preview-info').textContent=`${options.classification&&options.colours?'TUNNEL CLASSIFICATION · '+(options.colourMode==='rings'?'rings':'clusters')+' / grey unresolved / red excluded / magenta selected':options.colours?'LINING FEATURES · coloured groups / red excluded / magenta selected':'CLEANING PREVIEW · green tunnel / red noise or unwanted / magenta selected'} · ${fmt(packed.length/6,0)} displayed of ${fmt(p.source_count,0)} processed points. Click clusters to select; Box/Lasso edits part of a cluster.`;busyUI(busy);
@@ -420,7 +420,7 @@
  function previewContentKey(){return JSON.stringify([data.items.map(x=>[x.id,x.kind,x.visible,x.display_mode,x.display_colour,x.edit_count,x.redo_count,x.geometry_revision,x.setup_revision,x.original_count??x.count,x.vertices,x.triangles,x.deleted_groups,x.hidden_regions,x.isolated,x.minimum,x.maximum,x.limit_hide_outside===false?null:x.limit_box]),density(),displayMode,liveLimitEditing]);}
  function overviewKey(){return previewContentKey()+'|'+(setupState?setupState.id+'|'+setupState.key:'scene');}
  function clearPreviewCaches(){normalOverview=null;setupOverview=null;meshPreview=null;setupPreviews.clear();}
- function showPointBuffer(b,detailed=false,stage='complete'){
+ function showPointBuffer(b,detailed=false,stage='complete',detail=density()){
   if(b.byteLength<56)throw Error('3D preview response was incomplete.');
   const dv=new DataView(b),version=dv.getUint32(4,true);if(String.fromCharCode(...new Uint8Array(b,0,4))!=='TSPV'||![1,2].includes(version))throw Error('Unknown 3D preview format.');
   const info={sample:Math.round(dv.getFloat64(32,true)),points:Math.round(dv.getFloat64(40,true)),vertices:Math.round(dv.getFloat64(48,true))};
@@ -431,7 +431,7 @@
   else if(info.vertices&&info.sample)throw Error('Model ownership is missing from this preview. Reload the current Tunnel Studio version.');
   if(setupState&&owners?.some(row=>row[2]!==setupState.id))throw Error('Preview belongs to a different setup. Reopen this setup.');
   const world=jobScene.initialised?jobScene.target.map((v,i)=>v+previewOrigin[i]):null;
-  previewOrigin=origin;sourceInfo={...info,detailed,stage};if(world)jobScene.target=world.map((v,i)=>v-previewOrigin[i]);
+  previewOrigin=origin;sourceInfo={...info,detailed,stage,detail};if(world)jobScene.target=world.map((v,i)=>v-previewOrigin[i]);
   pointOwners=owners||[];pointPreviewComplete=stage!=='overview';packed=new Float32Array(b,56,info.sample*6);
   const alreadyFitted=jobScene.initialised;jobScene.setPacked(packed,previewOrigin,owners);
   if(fitPreviewPending&&info.sample){if(alreadyFitted)jobScene.fit();fitPreviewPending=false;}
@@ -444,8 +444,8 @@
   const scans=data.items.filter(x=>x.kind==='scan'&&(setupState?x.id===setupState.id:x.visible!==false));
   const exact=scans.every(x=>x.count_exact!==false),count=scans.reduce((n,x)=>n+(Number.isFinite(x.count)?x.count:0),0);
   const countText=exact?`${fmt(count,0)} retained points`:`up to ${fmt(count,0)} points · ${scans.some(x=>x.metadata_pending)?'checking remaining count':'remaining count unavailable'}`;
-  const {detailed,stage}=sourceInfo;
-  $('job-preview-info').textContent=setupState?`SETUP · ${setupState.name} only · ${fmt(jobScene.pointCount,0)} preview points / ${countText} · ${detailed?'Detailed view':'Whole setup preview'} · Drag to look around · Wheel to zoom`:`${stage==='overview'?'Overview · detail is loading · ':detailed?'Detailed view · ':'Whole scene · '}${fmt(jobScene.pointCount,0)} preview points / ${countText} · display setting ${density()}%${visibleMeshes().length?' · '+visibleMeshes().length+' triangle model'+(visibleMeshes().length===1?'':'s'):''}. Display mode: ${displayMode.replace('-', ' ')}.`;
+  const {detailed,stage,detail=density()}=sourceInfo;
+  $('job-preview-info').textContent=setupState?`SETUP · ${setupState.name} only · ${fmt(jobScene.pointCount,0)} preview points / ${countText} · ${detailed?'Detailed view':'Whole setup preview'} · Drag to look around · Wheel to zoom`:`${stage==='overview'?'Overview · detail is loading · ':detailed?'Detailed view · ':'Whole scene · '}${fmt(jobScene.pointCount,0)} preview points / ${countText} · display setting ${detail}%${visibleMeshes().length?' · '+visibleMeshes().length+' triangle model'+(visibleMeshes().length===1?'':'s'):''}. Display mode: ${displayMode.replace('-', ' ')}.`;
  }
  function scheduleInventoryRefresh(){
   clearTimeout(inventoryTimer);inventoryTimer=null;
@@ -489,13 +489,14 @@
   if(!data.items.length){packed=null;pointOwners=[];targetMarkers=[];jobScene.setPacked(new Float32Array(),previewOrigin);jobScene.setMesh(new Float32Array(),previewOrigin);jobScene.original=null;jobScene.clear();$('job-empty').hidden=false;$('job-empty').textContent='New project · import a scan or create geometry';$('job-preview-info').textContent='No scans loaded';return;}
   if(setupState&&setupDisplay==='photo')return;
   clearCleaningPreview();const requestedLive=liveLimitEditing;
-  const requestedSetup=setupState?setupState.id+'|'+setupState.key:'',requestedView=JSON.stringify(detailView),query={owners:'1',detail:density(),mode:displayMode,live_limit:requestedLive?'1':'0'};if(detailView)query.view=requestedView;if(setupState){query.setup_id=setupState.id;query.setup_key=setupState.key;}
+  const requestedSetup=setupState?setupState.id+'|'+setupState.key:'',requestedView=JSON.stringify(detailView),query={owners:'1',detail:previewDensity(),mode:displayMode,live_limit:requestedLive?'1':'0'};if(detailView)query.view=requestedView;if(setupState){query.setup_id=setupState.id;query.setup_key=setupState.key;}
   const request={controller:new AbortController(),view:requestedView,epoch:previewEpoch};previewRequest=request;
   try{
   const contentKey=previewContentKey(),wholeKey=overviewKey(),cacheKey=requestedSetup?JSON.stringify([contentKey,query]):null;
-  const currentRequest=()=>request.epoch===previewEpoch&&!busy&&!deletedMode&&!previewOwner&&!cleanSnapshot&&requestedLive===liveLimitEditing&&requestedView===JSON.stringify(detailView)&&requestedSetup===(setupState?setupState.id+'|'+setupState.key:'')&&contentKey===previewContentKey();
+  const currentRequest=()=>request.epoch===previewEpoch&&!busy&&!deletedMode&&!previewOwner&&!cleanSnapshot&&requestedLive===liveLimitEditing&&requestedView===JSON.stringify(detailView)&&requestedSetup===(setupState?setupState.id+'|'+setupState.key:'')&&contentKey===previewContentKey()&&query.detail===previewDensity();
   let b=cacheKey?setupPreviews.get(cacheKey):!detailView&&normalOverview?.key===wholeKey&&normalOverview.complete!==false?normalOverview.buffer:null;
-  const needsOverview=setupState?!packed?.length:detailView||data.items.some(x=>x.visible&&x.kind==='scan'&&x.count>2000000);
+  const reuseMeasured=detailView&&packed?.length&&window.SurfaceUI?.measuredReviewActive?.();
+  const needsOverview=setupState?!packed?.length:!reuseMeasured&&(detailView||data.items.some(x=>x.visible&&x.kind==='scan'&&x.count>2000000));
   if(!b&&needsOverview){
    previewFeedback('loading',detailView?'Loading measured points in this view':'Opening measured overview');
    const saved=setupState?setupOverview:normalOverview;
@@ -503,7 +504,7 @@
    if(!qb){const quick=await fetch('/api/job-preview-bin?'+new URLSearchParams({...query,quick:'1'}),{signal:request.controller.signal});if(quick.ok)qb=await quick.arrayBuffer();}
    if(qb&&currentRequest()){
     // A temporarily empty coarse frustum must not blank a useful loaded view.
-    if(qb.byteLength>=56&&(new DataView(qb).getFloat64(32,true)>0||!packed?.length))showPointBuffer(qb,!!detailView,'overview');
+    if(qb.byteLength>=56&&(new DataView(qb).getFloat64(32,true)>0||!packed?.length))showPointBuffer(qb,!!detailView,'overview',query.detail);
     if(!detailView){const overview={key:wholeKey,buffer:qb,complete:false};if(setupState)setupOverview=overview;else normalOverview=overview;}
     busyUI(busy);previewFeedback('loading','Measured points ready · increasing detail in the background');await new Promise(resolve=>requestAnimationFrame(resolve));
    }
@@ -512,7 +513,7 @@
   else if(cacheKey){setupPreviews.delete(cacheKey);setupPreviews.set(cacheKey,b);}
   if(!currentRequest()){if(!previewOwner&&!cleanSnapshot&&!deletedMode)previewRefreshPending=true;return;}
   previewFeedback('loading','Drawing point preview');
-  showPointBuffer(b,!!detailView);
+  showPointBuffer(b,!!detailView,'complete',query.detail);
   if(cacheKey){setupPreviews.set(cacheKey,b);while(setupPreviews.size>3||[...setupPreviews.values()].reduce((sum,x)=>sum+x.byteLength,0)>64*1024*1024)setupPreviews.delete(setupPreviews.keys().next().value);}
   if(!detailView&&b.byteLength<=32*1024*1024){const saved={key:wholeKey,buffer:b,complete:true};if(setupState)setupOverview=saved;else normalOverview=saved;}
   if(setupState){publishMeshPreview();window.SetupCameraUI?.loaded(setupState.id);return;}
@@ -532,7 +533,8 @@
   }
   }finally{if(previewRequest===request)previewRequest=null;}
  }
- function viewSignature(){return JSON.stringify([setupState?.id,setupState?.key,setupDisplay,detailView,liveLimitEditing,data.items.map(x=>[x.id,x.visible,x.display_mode,x.display_colour,x.edit_count,x.geometry_revision,x.original_count??x.count,x.vertices,x.triangles,x.hidden_regions,x.isolated,x.limit_hide_outside===false?null:x.limit_box]),density(),displayMode]);}
+ function previewDensity(){return detailView&&!setupState&&window.SurfaceUI?.measuredReviewActive?.()?100:density();}
+ function viewSignature(){return JSON.stringify([setupState?.id,setupState?.key,setupDisplay,detailView,liveLimitEditing,data.items.map(x=>[x.id,x.visible,x.display_mode,x.display_colour,x.edit_count,x.geometry_revision,x.original_count??x.count,x.vertices,x.triangles,x.hidden_regions,x.isolated,x.limit_hide_outside===false?null:x.limit_box]),previewDensity(),displayMode]);}
  async function sync(options={}){
   if(loading){if(options.retainDisplay){await new Promise(resolve=>previewIdleWaiters.push(resolve));return sync(options);}previewRefreshPending=true;return;}if(busy&&!options.allowBusy)return;loading=true;
   const previousContent=previewContentKey();
@@ -1167,7 +1169,7 @@
  jobScene.onNavigate=()=>{clearTimeout(detailTimer);scheduleDetail();};
  jobScene.onViewportResize=scheduleDetail;
  function canLoadReviewDetail(){return previewOwner==='shape'&&['orbit','pan'].includes(jobMode)&&!busy;}
- function loadViewDetail(force=false){
+ function loadViewDetail(force=false,refresh=false){
   if(jobMode==='polygon'||polygonFrame)return;
   if(busy||liveLimitEditing||!jobScene.initialised)return;
   if(cleanSnapshot){
@@ -1177,10 +1179,10 @@
   if(setupState){if((!force&&!autoDetail)||setupDisplay==='photo')return;if(!force&&detailView&&viewStillCovered(detailView))return;const next=setupDetail();if(!force&&JSON.stringify(next)===JSON.stringify(detailView))return;detailView=next;signature='';previewRequested=true;previewRequest?.controller.abort();if(loading)previewRefreshPending=true;else sync();return;}
   const visible=data.items.filter(x=>x.visible&&x.kind==='scan');if(!visible.length)return;
   const extent=Math.max(...[0,1,2].map(j=>Math.max(...visible.map(x=>x.maximum?.[j]??0))-Math.min(...visible.map(x=>x.minimum?.[j]??0))));
-  const enabled=force||(autoDetail&&jobScene.scale<extent*.25);
-  if(!force&&enabled&&detailView&&jobScene.scale>=detailView.scale*.6&&viewStillCovered(detailView))return;
+  const enabled=force||((autoDetail||window.SurfaceUI?.measuredReviewActive?.())&&jobScene.scale<extent*.25);
+  if(!force&&!refresh&&enabled&&detailView&&jobScene.scale>=detailView.scale*.6&&viewStillCovered(detailView))return;
   const next=enabled?viewportFrame():null;
-  if(!force&&JSON.stringify(next)===JSON.stringify(detailView))return;detailView=next;signature='';previewRequested=true;previewRequest?.controller.abort();
+  if(!force&&(!refresh||!next&&packed?.length)&&JSON.stringify(next)===JSON.stringify(detailView))return;detailView=next;signature='';previewRequested=true;previewRequest?.controller.abort();
   if(next)$('job-preview-info').textContent='Loading more detail in the current view · whole scan preview remains available…';else if(restoreOverview())return;
   if(loading)previewRefreshPending=true;else sync();
  }

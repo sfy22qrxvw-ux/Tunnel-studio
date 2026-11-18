@@ -96,7 +96,7 @@
 <p class="tiny">Runs GuSAC first, then groups connected lining points into coloured clusters. Connection distance must bridge ordinary point spacing without bridging the joints. Missing or unresolved joints can leave merged clusters. Ring numbers are shown only where supported.</p>
 </div>
         <div id="surf-feature-settings" hidden>
-<label>Analysis task<select id="surf-lining-task"><option value="departures">All points above / below lining tolerance</option><option value="all">All lining features</option><option value="bolts">Bolt-hole extraction</option><option value="non_lining">Non-lining point removal</option><option value="seams">Locate ring and longitudinal seams</option><option value="segments">Segments from detected seams</option></select></label>
+<label>Analysis task<select id="surf-lining-task"><option value="departures">All points above / below lining tolerance</option><option value="all">All lining features</option><option value="bolts">Bolt-hole extraction</option><option value="non_lining">Non-lining point removal</option><option value="seams">Locate ring and segment joints</option><option value="segments">Panels from detected joints</option></select></label>
 <label>Processing detail<select id="surf-lining-detail"><option value="fast">Fast · 40 mm map</option><option value="detailed" selected>Detailed · 20 mm map</option><option value="more_detailed">More detailed · 10 mm map</option></select></label>
 <p class="tiny">Finer maps resolve smaller features and take longer. All original points are included. Resolution is not measurement accuracy.</p>
 <section id="surf-panel-layout" hidden>
@@ -164,12 +164,16 @@
 <label>Colour by<select id="surf-colour-by"><option value="decisions">Cleaning decisions</option><option value="clusters">Connected lining groups</option><option value="rings">Supported rings</option></select></label>
 <p id="surf-classification-key" class="tiny" role="status">Green: kept. Red: exclusion candidates. Magenta: selected.</p><button id="surf-segments-from-seams" type="button">Find segment panels from seams</button>
 </div>
+<div id="surf-joint-view" class="surface-actions" hidden>
+<label class="surface-check"><input type="checkbox" id="surf-measured-scan"> Show measured scan</label>
+<label class="surface-check" id="surf-measured-guide-control" hidden><input type="checkbox" id="surf-measured-guides" checked> Show fitted guides</label>
+</div>
 <section id="surf-panel-review" class="surface-card" hidden>
 <h3>Segment review</h3><p id="surf-panel-summary" role="status"></p>
 <p id="surf-panel-width-report" class="tiny" hidden></p>
 <div class="surface-pair"><label>Colour mode<select id="surf-panel-colour"><option value="vivid">Vivid</option><option value="standard">Standard</option></select></label><label>Minimum confidence<select id="surf-panel-confidence"><option value="0">Show all</option><option value="2">Medium or high</option><option value="3">High only</option></select></label></div>
 <div class="surface-actions"><label class="surface-check"><input type="checkbox" id="surf-panel-boundaries" checked> Show boundaries</label><label class="surface-check"><input type="checkbox" id="surf-panel-numbers" checked> Show panel numbers</label></div>
-<p class="tiny">White lines follow detected seams. Dashed yellow lines show inferred joints. Numbers identify panels within each ring. High (3) has two measured side joints, medium (2) has one and low (1) uses an assumed layout on both sides. Filtering changes the review display only.</p></section>
+<p class="tiny">White lines show fits to measured joint evidence. Dashed yellow lines show inferred joints. Numbers identify panels within each ring. High (3) has two measured side joints, medium (2) has one and low (1) uses an assumed layout on both sides. Filtering changes the review display only.</p></section>
 <div class="surface-kpis"><div><span>PROCESSED</span><b id="surf-total">—</b></div><div><span>KEPT</span><b id="surf-kept">—</b></div><div><span>CLUSTERS</span><b id="surf-clusters">—</b></div><div><span>RUN TIME</span><b id="surf-time">—</b></div></div>
       <div id="surf-warnings" class="surface-note">Important extraction warnings will also appear as a centred message. Review them before applying the result.</div>
       <div id="surf-review-card" class="surface-card">

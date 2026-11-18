@@ -32,8 +32,11 @@ window.TunnelSegmentReview = (() => {
   function draw(project, width, height) {
     const jobCanvas = get('job-canvas'), scene = window.JobUI?.cadScene();
     const edges = get('surf-panel-boundaries')?.checked, numbers = get('surf-panel-numbers')?.checked;
+    const owner = window.JobUI?.previewOwner();
+    const measured = !owner && window.SurfaceUI?.measuredReviewActive?.();
     if (!panels.length || !scene || (!edges && !numbers) || width < 1 || height < 1 ||
-        !jobCanvas?.isConnected || !window.SurfaceUI?.reviewActive() || window.JobUI?.previewOwner() !== 'review') {
+        !jobCanvas?.isConnected || !window.SurfaceUI?.reviewActive() || (owner !== 'review' && !measured) ||
+        window.SurfaceUI?.hideMeasuredGuides?.()) {
       if (canvas || frame) clear();
       return;
     }

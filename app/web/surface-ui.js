@@ -93,8 +93,11 @@
  function pockets(r){return r?.settings?.method==='lining_features'?r.clusters.filter(c=>c.feature_kind==='bolt_hole'&&c.points>0):[];}
  function hidePocketGuides(){return reviewActive()&&data.result?.settings?.method==='lining_features'&&
    (!!isolatedClusters||!$('surf-show-kept').checked);}
- let lowConfidenceIds=new Set();
- function panelResult(r){return r?.settings?.method==='lining_features'&&['segments','all'].includes(r.settings.lining_task);}
+ let lowConfidenceIds=new Set(),measuredScan=false;
+ function jointResult(r){return r?.settings?.method==='lining_features'&&['segments','seams','all'].includes(r.settings.lining_task);}
+ function measuredReviewActive(){return measuredScan&&jointResult(data.result)&&reviewActive()&&$('tab-surface').dataset.drawerMode==='review';}
+ function hideMeasuredGuides(){return measuredReviewActive()&&!$('surf-measured-guides').checked;}
+ function panelResult(r){return jointResult(r)&&r.settings.lining_task!=='seams';}
  function layoutFields(){
   const active=$('surf-method').value==='lining_features'&&['segments','all'].includes($('surf-lining-task').value);
   $('surf-panel-layout').hidden=!active;
@@ -119,7 +122,7 @@
   if(d.expected_ring_width_m){
    const unresolved=checks.filter(row=>!row.within_tolerance);
    const examples=unresolved.slice(0,6).map(row=>`interval ${row.ring_interval} at ${fmt(row.width_m,3)} m`).join(', ');
-   widthReport.textContent=`Expected ${fmt(d.expected_ring_width_m,3)} m ± ${fmt(d.ring_width_tolerance_mm,0)} mm. ${checks.length-unresolved.length} of ${checks.length} measured gaps match.`+
+   widthReport.textContent=`Expected ${fmt(d.expected_ring_width_m,3)} m ± ${fmt(d.ring_width_tolerance_mm,0)} mm. ${checks.length-unresolved.length} of ${checks.length} fitted joint gaps match.`+
     (examples?` Unassigned ${examples}${unresolved.length>6?` and ${unresolved.length-6} more`:''}.`:'');
   }
   const hidden=new Set([...lowConfidenceIds,...hiddenClusters]);const keep=kept();
@@ -194,7 +197,28 @@
  $('surf-bolt-kind').onchange=boltTypeInfo;
  function setMethod(method,task=null){if(task)$('surf-lining-task').value=task;$('surf-method').value=method;methodInfo();window.TunnelRibbon?.surfaceDrawerMode('setup');}
  function methodInfo(){boltTypeInfo();layoutFields();const feature=$('surf-method').value==='lining_features';$('surf-feature-settings').hidden=!feature;$('tab-surface').dataset.featureAnalysis=String(feature);if($('tab-surface').classList.contains('drawer-active'))$('tool-drawer-title').textContent=feature?'Lining analysis':'Clean Tunnel';$('surf-preset').closest('label').hidden=feature;$('surf-preset-help').hidden=feature;const method=$('surf-method').value,noise=method==='noise_clean',combined=method==='combined_denoise',reflection=method==='reflection',ray=method==='ray_box';const paper=method==='gusac'||method==='tmatch';$('surf-gusac-settings').hidden=!paper;$('surf-tmatch-settings').hidden=method!=='tmatch';$('surf-preset').closest('label').hidden=feature||paper;$('surf-preset-help').hidden=feature||paper;$('surf-reflection-settings').hidden=!reflection;$('surf-ray-settings').hidden=!ray;$('surf-interior-settings').hidden=method!=='tunnel_envelope';$('surf-interior-band').disabled=$('surf-interior-cleanup').value!=='thorough';$('surf-denoise-settings').hidden=!combined;$('surf-irregular-settings').hidden=method!=='irregular';sensitivityInfo();$('surf-method-help').textContent=method==='gusac'?'GuSAC fits local lining patches and checks surface direction to separate services from the measured tunnel. Every selected original point receives a decision. Joint recesses and uncertain geometry remain available for review.':method==='tmatch'?'GuSAC cleaning followed by connected lining groups. Nearby points can connect across joints, so one cluster can contain several physical panels. Use Segments from seams for panel boundaries; ring labels require observed support.':feature?'Unwraps one supported tunnel branch, detects compact recessed pockets or raised fittings and measured seam evidence, and divides panels between detected boundaries. Uncertain and unresolved regions remain visible. Review measured seams and any boundaries inferred from your segment layout.':reflection?'Finds likely reflection artefacts using supported lining, mirrored geometry, known scanner position and available intensity. Weak evidence stays retained. Review candidates before excluding them; extraction behaviour is unchanged.':ray?'Uses outward radial rays and neighbouring station/angle boxes to find supported lining behind interior pipes and equipment. Unsupported boxes remain retained. Review recesses, junctions and rough SCL before applying.':combined?'First checks neighbour support, then fits the tunnel lining. Green is retained; red groups distinguish isolated points and departures from the lining. Review and keep real features before applying. Every selected retained point is checked.':method==='irregular'?'Highlights connected protrusions, recesses and rough patches relative to a supported lining model. Every retained point in the chosen area is checked. The source is unchanged until you choose Delete selected patches.':noise?'Flags sparse points and local spacing outliers. Radius is in metres; choose it to suit the actual scan spacing. Smaller support counts and larger threshold multipliers are more conservative. Review joints and small details.':method==='tunnel_envelope'?'Learns one lining shape across the selected tunnel, then checks every original point. Green is lining to keep; red is interior objects, stray points or areas needing review. Include both walls and the crown of one branch.':'SMRG groups surface patches and grows connected regions. This is an independent research implementation; inspect the suggested lining.';$('surf-noise-settings').hidden=!(noise||combined);$('surf-lining-settings').hidden=method!=='tunnel_envelope';$('surf-lining-advanced').hidden=method!=='tunnel_envelope'&&!combined&&!reflection&&!ray;$('surf-patch-settings').hidden=paper||feature||noise||reflection||ray||method==='irregular';$('surf-advanced').hidden=method!=='smrg';$('surf-advanced').open=method==='smrg';updateRunControls();}
- function showReview(){panelReview(data.result);classificationView();groupSummary();const active=(document.body.classList.contains('surface-active')||window.DetachedUI?.active?.('tab-surface'))&&$('tab-surface').dataset.drawerMode!=='setup';if(active&&preview&&data.result)window.JobUI?.cleaningPreview(preview,[...kept()],{colours:(data.result?.settings?.method==='lining_features'||(data.result?.settings?.method==='tmatch'&&colourMode()!=='decisions'))?Object.fromEntries(data.result.clusters.map(c=>[c.id,featureColour(c.id)])):null,classification:data.result?.settings?.method==='tmatch',colourMode:colourMode(),hidden:[...new Set([...hiddenClusters,...lowConfidenceIds])],selected:[...selectedClusters],onlySelected:isolatedClusters?[...isolatedClusters]:null,showKept:$('surf-show-kept').checked,showOther:$('surf-show-other').checked,showNoise:$('surf-show-noise').checked,inspected,isolate:$('surf-isolate').checked});else window.JobUI?.clearCleaningPreview('review');}
+ function showReview({keepCamera=false}={}){
+  const r=data.result,active=reviewActive(),allowMeasured=active&&jointResult(r)&&$('tab-surface').dataset.drawerMode==='review';
+  if(!allowMeasured)measuredScan=false;
+  const measured=measuredReviewActive();
+  $('surf-joint-view').hidden=!allowMeasured;
+  $('surf-measured-scan').checked=measured;
+  $('surf-measured-guide-control').hidden=!measured;
+  panelReview(r);classificationView();groupSummary();
+  if(measured){
+   $('surf-preview-info').textContent='Showing the measured scan. Zoom in around a joint to load more points.';
+   window.JobUI?.clearCleaningPreview('review');
+   window.JobUI?.draw();
+  }else if(active&&preview){
+   $('surf-preview-info').textContent=`Displaying ${fmt(preview.sample_count,0)} of ${fmt(preview.source_count,0)} processed points. Every processed point is used for cluster review and export.`;
+   window.JobUI?.cleaningPreview(preview,[...kept()],{
+    colours:(r.settings?.method==='lining_features'||(r.settings?.method==='tmatch'&&colourMode()!=='decisions'))?Object.fromEntries(r.clusters.map(c=>[c.id,featureColour(c.id)])):null,
+    classification:r.settings?.method==='tmatch',colourMode:colourMode(),hidden:[...new Set([...hiddenClusters,...lowConfidenceIds])],
+    selected:[...selectedClusters],onlySelected:isolatedClusters?[...isolatedClusters]:null,showKept:$('surf-show-kept').checked,
+    showOther:$('surf-show-other').checked,showNoise:$('surf-show-noise').checked,inspected,isolate:$('surf-isolate').checked,keepCamera
+   });
+  }else window.JobUI?.clearCleaningPreview('review');
+ }
  function markSelection(keep){const r=data.result,spec=window.JobUI?.currentSelection?.();if(!r||!spec){showTunnelMessage('Select points first','Draw a Box or Lasso in the coloured cleaning preview, then choose Keep selected points or Remove selected points.',true);return;}action({action:'review_selection',revision:r.revision,selection:spec,keep});}
 
  function setInteriorPoint(world){if(!world?.every(Number.isFinite))return;$('surf-use-interior').checked=true;['e','n','h'].forEach((k,j)=>{$('surf-interior-'+k).disabled=false;$('surf-interior-'+k).value=world[j].toFixed(4);});$('surf-progress').textContent='Interior point set from the main 3D view. Press Preview cleaning to rerun.';showTunnelMessage('Interior point set','Tunnel Studio will use this point to resolve which side of the scanned geometry is the tunnel interior.',false);}
@@ -275,6 +299,7 @@
  function updateReviewControls(){
   groupSummary();
   const blocked=busy||loading||actionPending,r=data.result,chosen=selectedClusters.size>0;const del=$('surf-delete-patches');del.hidden=!['irregular','lining_features'].includes(r?.settings?.method);del.textContent=r?.settings?.method==='lining_features'?(r.settings.lining_task==='departures'?'Delete selected departure points':'Delete selected bolt-feature points'):'Delete selected patches';$('surf-select-bolts').textContent=r?.settings?.lining_task==='departures'?'Select lining departures':'Select all bolt-feature candidates';$('surf-select-bolts').hidden=r?.settings?.method!=='lining_features';del.disabled=blocked||recessDetailLoading||!recessDetailReady()||!r?.can_delete_patches||!chosen||[...selectedClusters].some(id=>{const c=r.clusters.find(c=>c.id===id);return !c?.irregular_candidate&&!['bolt_hole','bolt_fitting','lining_departure'].includes(c?.feature_kind);});del.title=r?.can_delete_patches?'Delete only the selected candidate patches from the source scan. Undo restores them.':'Run detection on the current scan before deleting patches.';
+  $('surf-measured-scan').disabled=blocked;
   for(const id of ['surf-keep-clusters','surf-remove-clusters','surf-hide-clusters','surf-show-clusters','surf-isolate-clusters','surf-clear-clusters'])$(id).disabled=blocked||!r||!chosen;
   const boltKind=boltReviewKind(r);
   if(boltKind){
@@ -358,6 +383,7 @@
    sourceInfo();
    const r=data.result,changed=before?.id!==r?.id,reviewChanged=before?.revision!==r?.revision;if(changed||reviewChanged)resetRecessDetail();
    if(changed){$('surf-panel-confidence').value='0';selectedClusters.clear();hiddenClusters.clear();isolatedClusters=null;reviewError='';inspected=null;page=0;$('surf-filter').value='';$('surf-group-filter').value='all';$('surf-cluster-details').open=false;for(const id of ['surf-show-kept','surf-show-other','surf-show-noise'])$(id).checked=true;$('surf-reviewed').checked=false;$('surf-isolate').checked=false;sceneSurface.initialised=false;if(r){$('surf-colour-by').value=r.settings?.method==='tmatch'?'clusters':'decisions';fillSettings(r.settings);fillSelection(r.processing_area==='limit_box'?{mode:'limit_box'}:r.selection);if(data.sources.some(m=>m.key===r.source_kind))$('surf-source').value=r.source_kind;sourceInfo();}}
+   if(changed){measuredScan=false;$('surf-measured-guides').checked=true;}
    if(changed&&r?.settings?.method==='lining_features'&&['bolts','departures'].includes(r.settings.lining_task)&&document.body.classList.contains('surface-active'))selectedClusters=new Set(r.clusters.filter(c=>['bolt_hole','bolt_fitting','lining_departure'].includes(c.feature_kind)).map(c=>c.id));
    if(requestedSource){
     if(!data.sources.some(m=>m.key===requestedSource))throw Error('The selected scan is unavailable for cleaning. Select it in the scene list and open Clean Tunnel again.');
@@ -365,7 +391,7 @@
     fillBox();fillSelection(requestedArea||{mode:hasLimit()?'limit_box':'full'});sourceInfo();pendingSource=null;pendingArea=null;
    }else if(initialSync&&!r&&data.job_selection){fillSelection(data.job_selection);}
    if(reviewChanged&&r){const valid=new Set(clusters().map(c=>c.id));selectedClusters=new Set([...selectedClusters].filter(id=>valid.has(id)));hiddenClusters=new Set([...hiddenClusters].filter(id=>valid.has(id)));if(inspected!==null&&!valid.has(inspected)){inspected=null;$('surf-isolate').checked=false;}if(isolatedClusters){isolatedClusters=new Set([...isolatedClusters].filter(id=>valid.has(id)));if(!isolatedClusters.size)isolatedClusters=null;}}
-   if(r&&(document.body.classList.contains('surface-active')||window.DetachedUI?.active?.('tab-surface'))&&previewId!==r.id+':'+r.revision){preview=await api('/api/surface-preview');sourcePreview=null;previewMode='result';visualSelection=null;sourceOrigin=preview.origin||[0,0,0];previewId=r.id+':'+r.revision;sceneSurface.setCloud(preview);$('surf-empty').style.display='none';$('surf-preview-info').textContent=`Displaying ${fmt(preview.sample_count,0)} of ${fmt(preview.source_count,0)} processed points. Every processed point is used for cluster review and export.`;document.querySelector('.surface-legend').style.opacity='1';}
+   if(r&&(document.body.classList.contains('surface-active')||window.DetachedUI?.active?.('tab-surface'))&&previewId!==r.id+':'+r.revision){preview=await api('/api/surface-preview');sourcePreview=null;previewMode='result';visualSelection=null;sourceOrigin=preview.origin||[0,0,0];previewId=r.id+':'+r.revision;sceneSurface.setCloud(preview);$('surf-empty').style.display='none';document.querySelector('.surface-legend').style.opacity='1';}
    else if(!r&&!sourcePreview){preview=null;previewId='';previewMode='result';sceneSurface.clear();$('surf-empty').style.display='flex';}
    showReview();if(reviewChanged||before?.source_changed!==r?.source_changed){$('surf-reviewed').checked=false;sceneSurface.recolour();}quality();
    if(r&&changed){window.TunnelRibbon?.surfaceDrawerMode?.('review');}if(r&&changed&&r.id!==lastWarningResult&&r.warnings?.length){lastWarningResult=r.id;const important=r.warnings.filter(w=>!/memory-safe batches|review required/i.test(w)).slice(0,3);if(important.length){const hasInterior=r.settings?.method==='smrg'&&important.some(w=>/interior.*(?:reference|point)|pick.*interior/i.test(w));showTunnelMessage('Surface extraction needs review',important.join('\n\n'),false,hasInterior?'Pick interior point':null,hasInterior?pickInterior:null);}}
@@ -448,6 +474,20 @@
   if(lowConfidenceIds.has(inspected)){inspected=null;$('surf-isolate').checked=false;}
   page=0;sceneSurface.recolour();showReview();table();
  };
+ $('surf-measured-scan').onchange=()=>{
+  if($('surf-measured-scan').checked){
+   const source=window.JobUI?.inventory().items.find(item=>item.id===data.result?.source_item_id);
+   if(!source?.visible){
+    $('surf-measured-scan').checked=false;
+    notice('Show the analysed scan in Project explorer to inspect its measured points.',true);
+    return;
+   }
+  }
+  measuredScan=$('surf-measured-scan').checked;
+  showReview({keepCamera:true});
+  if(measuredScan)window.JobUI?.loadViewDetail(false,true);
+ };
+ $('surf-measured-guides').onchange=()=>window.JobUI?.draw();
  $('surf-panel-colour').onchange=()=>{sceneSurface.recolour();showReview();};
  for(const id of ['surf-panel-boundaries','surf-panel-numbers'])$(id).onchange=()=>window.JobUI?.draw();
  $('surf-colour-by').onchange=()=>{classificationView();sceneSurface.recolour();showReview();table();};
@@ -487,6 +527,6 @@
   for(const p of preview.points){if(!isVisible(p,keep))continue;const v=p.slice(0,3).map((n,i)=>n-sceneSurface.target[i]),dot=a=>v.reduce((n,nv,i)=>n+nv*a[i],0),px=(dot(b.right)/sceneSurface.scale+1)*box.width/2,py=(1-dot(b.up)*box.width/box.height/sceneSurface.scale)*box.height/2,d=(px-x)**2+(py-y)**2,z=dot(b.forward);if(d<dist-1||(Math.abs(d-dist)<=1&&z>depth)){best=p;dist=d;depth=z;}}
   if(best)inspect(best[3]);
  });
- window.SurfaceUI={hidePocketGuides,drawSegmentOverlay:panelRenderer.draw,selectFeaturePoints,deleteSelectedGroups,exportHighlight:()=>{const r=data.result;if(!r)return null;const spec=window.JobUI?.currentSelection?.(),visible=[-1,...r.clusters.map(c=>c.id)].filter(id=>isVisible([0,0,0,id],kept()));return {ids:[r.source_item_id],review:{id:r.id,revision:r.revision,clusters:spec?[]:[...selectedClusters],visible_clusters:visible},selection:spec};},configureBolts,setMethod,selectionChanged,reviewActive,selectClusters,selectedClusters:()=>[...selectedClusters],inspect,markClusters,clusterView,continueToOutput,updateReviewControls,sync,busy:setBusySurface,draw:()=>sceneSurface.draw(),selectSource,useJobSelection,pickInterior,showReview,markSelection};
+ window.SurfaceUI={hidePocketGuides,measuredReviewActive,hideMeasuredGuides,drawSegmentOverlay:panelRenderer.draw,selectFeaturePoints,deleteSelectedGroups,exportHighlight:()=>{const r=data.result;if(!r)return null;const spec=window.JobUI?.currentSelection?.(),visible=[-1,...r.clusters.map(c=>c.id)].filter(id=>isVisible([0,0,0,id],kept()));return {ids:[r.source_item_id],review:{id:r.id,revision:r.revision,clusters:spec?[]:[...selectedClusters],visible_clusters:visible},selection:spec};},configureBolts,setMethod,selectionChanged,reviewActive,selectClusters,selectedClusters:()=>[...selectedClusters],inspect,markClusters,clusterView,continueToOutput,updateReviewControls,sync,busy:setBusySurface,draw:()=>sceneSurface.draw(),selectSource,useJobSelection,pickInterior,showReview,markSelection};
  sync().catch(e=>notice(e.message,true));
 })();

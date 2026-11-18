@@ -74,6 +74,21 @@ async function run(){
  assert(await env.context.runAction({action:'hide_selection'}));
  assert.equal(calls.length,2);
  for(const query of calls)assert.deepEqual(JSON.parse(query.get('view')),frame);
- console.log('Progressive preview: retry, reuse, stale responses and hide-selection camera checks passed.');
+
+ let measuredReview=true;calls=[];
+ env=environment(async url=>{calls.push(new URLSearchParams(url.split('?')[1]));return reply('measured joint');});
+ Object.assign(env.context,{detailView:frame,packed:new Float32Array(6),
+  window:{SurfaceUI:{measuredReviewActive:()=>measuredReview}}});
+ await env.context.load();
+ assert.equal(calls.length,1);
+ assert.equal(calls[0].get('detail'),'100');
+ assert.deepEqual(JSON.parse(calls[0].get('view')),frame);
+ assert(!calls[0].has('quick'));
+ assert.equal(env.shown.at(-1)[0],'measured joint');
+ measuredReview=false;calls=[];
+ await env.context.load();
+ assert.equal(calls.length,2);
+ assert(calls.every(query=>query.get('detail')==='35'));
+ console.log('Progressive preview: retry, reuse, stale responses, hide-selection framing and measured joint detail checks passed.');
 }
 run().catch(error=>{console.error(error);process.exitCode=1;});
