@@ -1,4 +1,5 @@
 """Read-only import of the observed Register 360 project/database layout."""
+from contextlib import closing
 from pathlib import Path,PureWindowsPath
 import copy,hashlib,sqlite3,uuid,os
 import numpy as np
@@ -74,7 +75,7 @@ def inspect(path,database=None):
         raise ValueError('No REGISTER 360 deliverable database (project_deliv_*.db) was found in '+str(root)+'. '+('The bounded folder search was incomplete; choose a closer project folder. ' if truncated else '')+'Select the saved project folder containing the database and SetupsFolder, or choose its database directly. A backup/archive or another REGISTER database layout needs separate support.')
     if db.suffix.lower()!='.db' or not db.is_file():raise ValueError('Choose a Register 360 project database.')
     root=db.parent
-    with sqlite3.connect(db.as_uri()+'?mode=ro',uri=True) as c:
+    with closing(sqlite3.connect(db.as_uri()+'?mode=ro',uri=True)) as c:
         c.row_factory=sqlite3.Row;c.execute('PRAGMA query_only=ON')
         if c.execute('PRAGMA quick_check').fetchone()[0]!='ok':raise ValueError('The Leica database failed its integrity check.')
         try:

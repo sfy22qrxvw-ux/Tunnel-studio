@@ -1,0 +1,98 @@
+{
+  "sample_crop": {
+    "points": 76070,
+    "tolerance_mm": 5,
+    "within_points": 50773,
+    "raised_points": 83,
+    "recessed_points": 25214,
+    "reference_rms_mm": 0.449695259918995,
+    "deepest_fitted_residual_mm": 79.44792560694198,
+    "largest_raised_fitted_residual_mm": 18.27887722085665,
+    "scope": "Actual supplied E57 crop; robust local quadratic reference. Distances are fitting residuals, not certified survey measurements. Raw point and attribute files are unchanged."
+  },
+  "version": "0.21.3",
+  "base_version": "0.21.2",
+  "date": "2026-11-04",
+  "application_tests": {
+    "tests_discovered": 622,
+    "tests_run": 622,
+    "seconds": 70.23707503499827,
+    "success": true,
+    "failures": [],
+    "errors": [],
+    "skipped": [],
+    "source_files_changed_during_tests": [],
+    "native_windows_execution": false
+  },
+  "syntax": {
+    "python_files": 222,
+    "javascript_files": 65,
+    "passed": true
+  },
+  "browser_checks": {
+    "bolt_scope_ui.json": {
+      "scenarios": [
+        "Whole-cloud recess runs without a seed or local budget, fits the real synthetic tunnel, classifies every retained point and selects measured candidate point groups.",
+        "Whole-cloud raised runs without a seed or local budget, fits the real synthetic tunnel, classifies every retained point and selects measured candidate point groups.",
+        "Whole-cloud departures runs without a seed or local budget, fits the real synthetic tunnel, classifies every retained point and selects measured candidate point groups.",
+        "Reviewed both-sided departures separate into a new scan with an exact source mask; one Undo restores the source and removes the child item.",
+        "Local scope retains its explicit neighbourhood budget and seed requirement; recessed-pocket labels describe depth into a dip."
+      ],
+      "errors": [],
+      "platform": "Linux Chromium/software WebGL; production server, real lining fitting and streamed original IDs on a synthetic tunnel.",
+      "status": "passed"
+    },
+    "deleted_restore_ui.json": {
+      "scenarios": [
+        "The export context option adds the measured wall within the same drawn area while leaving original exclusions and scans unchanged.",
+        "A drawn deleted-point area exports through the normal XYZ save dialog at original density, without restoring points or changing source groups.",
+        "box selection restores only the drawn deleted area, leaves the other group intact, and is reversible in one Undo.",
+        "lasso selection restores only the drawn deleted area, leaves the other group intact, and is reversible in one Undo.",
+        "polygon selection restores only the drawn deleted area, leaves the other group intact, and is reversible in one Undo.",
+        "brush selection restores only the drawn deleted area, leaves the other group intact, and is reversible in one Undo.",
+        "Ribbon Restore selected handles posed cleaning archives as a separate four-point scan; unselected exclusions stay archived and Back to scan reloads current retained points.",
+        "Saved group remainders and independently restored scans survive a browser/workspace reload."
+      ],
+      "errors": [],
+      "platform": "Linux Chromium, software WebGL, production HTTP routes and immutable synthetic XYZ/attributes.",
+      "status": "passed"
+    },
+    "bundle_independence_ui.json": {
+      "scenarios": [
+        "Opening an old project places the completed registered cloud and cleaned tunnel outside the 16-setup source bundle.",
+        "Bundle deletion review selects only the 16 source setups and explicitly identifies the registered cloud being kept.",
+        "Confirmed source-bundle deletion retains both full clouds and the cleaned tunnel edit mask byte for byte.",
+        "Workspace reload and named saved-project manifest retain the two independent cloud items after source removal.",
+        "Explicitly selecting the registered result still permits its own separate reviewed deletion."
+      ],
+      "errors": [],
+      "platform": "Linux Chromium/software WebGL; real API, 16 synthetic setups, saved cloud files and retained-point mask.",
+      "status": "passed"
+    },
+    "merged_cleaning_ui.json": {
+      "status": "passed",
+      "scenarios": 10,
+      "checks": [
+        "16-scan connected component without bundle adjustment",
+        "selection-sensitive availability",
+        "missing-setup guard",
+        "matched merge receipt selects Registered cloud",
+        "existing cache controls preserved",
+        "disk preflight",
+        "cancelled merge retains prior selection",
+        "stale receipt rejection",
+        "failed job retains prior selection",
+        "duplicate-job exclusion"
+      ]
+    }
+  },
+  "browser_scenario_groups": 28,
+  "fixture": "Posed synthetic normal and archived cleaning deletions; bounded 200,003-point unit fixtures; 16 joined setups with independent registered and cleaned assets. Browser uses actual pointer gestures, production APIs, saved masks and file hashes.",
+  "semantics": "Bolt scopes distinguish recessed pockets and raised fittings. All lining departures selects supported points on both sides of the tolerance band without a bolt-size or compactness filter; reviewed groups can be removed or separated with one-step Undo. Whole cloud streams all retained IDs in bounded lining windows and local scope retains its neighbourhood working budget. Active limit boxes still apply. Area restoration tests full-density original IDs in project coordinates and leaves unselected deleted points in persisted binary remainder lists. Normal groups restore in place; cleaning archives restore as separate scans. Mixed groups commit together and support one-step Undo. Deleted-area export uses original-density source observations, optionally with source wall context, without restoring them. The supplied E57 crop was checked against the actual local classifier. The 0.21.2 independent-bundle fix is retained.",
+  "preserved_outputs": "Registered XYZ/attributes, independent cleaned XYZ/mask, saved mesh, analysis and inspection survive source-bundle deletion and named project reopening in the regression.",
+  "original_user_data_deleted": false,
+  "native_windows_execution": false,
+  "native_webview2_execution": false,
+  "user_921_million_point_project_tested": false,
+  "recovery_limit": "Pre-existing permanently removed caches cannot be recreated by this patch."
+}

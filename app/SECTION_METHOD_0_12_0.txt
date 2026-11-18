@@ -1,0 +1,35 @@
+ROBUST SECTION COMPARISON 0.12
+Reference: Camara, Wang & You, Sensors 24 (2024), 7192
+https://doi.org/10.3390/s24227192
+
+Corrected ellipse: (x'/a)^2+(y'/b)^2=1, a>=b, metres. The paper's eq.4 repeats a
+as both denominators; the second is b. Eccentricity e=sqrt(1-(b/a)^2) has no unit.
+Report signed semi-axis changes and centre shifts in millimetres; wrap orientation
+modulo 180 degrees and withhold it for near-circular fits/circular reference.
+No mixed-unit structural-health percentage is implemented.
+
+Fitting: local right/up points from the current alignment section and wall band;
+1-degree angular bins contribute median radius and angle for fit balance only.
+250 deterministic five-point RANSAC trials, then three soft-L1 least-squares
+refinement passes. Residual is signed Sampson approximation F/||gradient F||,
+not exact orthogonal distance. Threshold 0.5–500 mm, default20; minimum24 bins,
+maximum60-degree gap both before and after consensus. Axis bounds .5R–1.5R;
+centre bounds depend on design radius. Inspect original points for local defects.
+
+Ray/ellipse comparison includes centre translation. For ellipse Q, centre c,
+common origin o and direction u: A=u^T Q u; B=2u^T Q(o-c); C=(o-c)^T Q(o-c)-1.
+r=(-B+sqrt(B^2-4AC))/(2A). Origin must lie inside both ellipses. Common origin is
+the reference centre. CSV also gives shape-only radii from each own centre,
+corresponding to the limitation of the paper's eq.11. Angle: crown0, right90,
+invert180, left270, looking along increasing chainage.
+
+Save reference records name, fit, independent plane copy, source name, width,
+wall band and time. Comparison enforces matching plane and width; it cannot
+verify that a user registered independent epochs correctly.
+
+Triangle shape metric added to mesh summaries:
+Q = 4*sqrt(3)*triangle_area / (edge1^2+edge2^2+edge3^2).
+Mean, minimum and fifth percentile use all triangles. 1=equilateral,0=degenerate.
+This is shape quality, not surface deviation. Metric reviewed in Lipschuetz et al.,
+Isotropic Point Cloud Meshing using unit Spheres, arXiv:2305.07570v1 (2023).
+The full sphere-packing mesher is not implemented.

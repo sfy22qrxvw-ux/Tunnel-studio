@@ -1,0 +1,35 @@
+Tunnel Studio 0.18.4 — installer startup correction
+30 October 2026
+
+Fix the installation blocker in the startup recovery check. The check now
+requires the application's intended hidden recovery file, verifies all 21 MB
+of synthetic metadata and its SHA-256, and rejects duplicate named projects.
+It no longer requires a named previous-session project that startup deliberately
+does not create. Recovery/data-protection checks have not been disabled.
+
+Add real-process startup regressions and a build gate that runs the same complete
+component command against the staged application. The Windows installer still
+runs this gate using its bundled Windows interpreter before activation.
+
+Show the actual final exception or native exit status on the first error line;
+retain phase output and timeout diagnostics in the installation error log.
+Remove obsolete 0.17.2 wording from launcher error messages.
+
+This is a full cumulative installer containing the 0.18.3 application repairs.
+Application algorithm files and the Windows runtime are unchanged. Native
+Windows/WebView2/GPU execution has not been performed on the Linux build host.
+
+Scope and evidence
+
+The reported 0.18.3 dialog is emitted after payload verification and before the
+active-release transaction. A real execution of the exact packaged command on
+Linux reproduced the obsolete recovery assertion after all imports succeeded.
+This proves a release-blocking check mismatch; without the user's Windows log it
+does not establish whether that PC also encountered an earlier native DLL error.
+
+The application opens an empty workspace and keeps a hidden last-session recovery
+by design. Correcting the probe preserves that behavior and prevents an unwanted
+duplicate project from being reintroduced merely to satisfy the installer.
+
+All 0.18.3 survey-workflow changes and their documented limitations remain.
+See VALIDATION_0_18_4.json and the separate finished-installer verification report.

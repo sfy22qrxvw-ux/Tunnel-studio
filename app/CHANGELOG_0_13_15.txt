@@ -1,0 +1,50 @@
+TUNNEL STUDIO 0.13.15
+Fix for the unresponsive Go to setup view button
+14 October 2026
+
+INSTALL
+1. Save your project and close Tunnel Studio completely.
+2. Extract the whole ZIP into a new folder.
+3. Run UPDATE_TUNNEL_STUDIO.bat.
+4. Restart Tunnel Studio and confirm version 0.13.15. Refresh browser mode
+   after restarting the application if you use it in a browser.
+
+This is an update for your existing Windows installation. The updater backs
+up application files; RESTORE_PREVIOUS_VERSION.bat restores the previous
+application files. There is no need to import your scans again for this fix.
+
+WHAT WAS WRONG
+The 0.13.14 package contained the new setup-view script, but the local server
+did not serve it to the screen. Clicking the button then returned silently.
+The earlier UI tests loaded scripts directly and missed this delivery fault.
+
+WHAT CHANGED
+The server now serves the setup-view script. Go to setup view opens the
+selected scanner's point cloud in the existing main 3D viewport. If the setup
+controller cannot load or opening throws an unexpected error, an explanation
+appears in the workspace instead of leaving an unresponsive button.
+
+HOW TO USE IT
+Select an individual Leica setup in Scans & models, then click Go to setup
+view. Drag to look around from the scanner position and use the wheel to zoom.
+The inline Setup list switches between scanners. Pick cloud point lets you
+name and save a measured point as a target. Return to normal 3D restores the
+normal view. No separate setup window opens.
+
+CHECKS
+Seven focused suites passed. The new integration test loads the production
+page and all its scripts over the app's actual HTTP asset handler, then clicks
+the visible setup button. It checks loading feedback, the same main canvas,
+the selected scanner, missing-script feedback and retry after an error.
+The static-route test checks every updated page asset; it failed on 0.13.14
+for setup-camera-ui.js and passes with this fix.
+
+The existing setup-camera, scan registration, Leica feedback, surface UI and
+updater suites also passed. Python/JavaScript syntax and package integrity
+were checked. See tests/validation_0_13_15.json and tests/run_0_13_15/.
+
+The HTTP handler is production code; unrelated backend APIs are stubbed in
+the test server. UI tests use JSDOM with simulated scan APIs and mocked WebGL.
+Real Windows/WebView rendering and input were not checked here. No point or
+geometry calculations changed. The earlier real-scan check is retained as
+history and was not rerun for this loading fix.

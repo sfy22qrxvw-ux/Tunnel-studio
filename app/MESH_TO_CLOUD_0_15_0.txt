@@ -1,0 +1,51 @@
+Tunnel Studio 0.15.0 — Mesh to Point Cloud
+
+Use
+Select a triangle mesh in Scans & models, right-click and choose Mesh to Point
+Cloud. Choose average spacing or a requested whole point count, press Estimate
+size, review the point count and cache estimate, then Create sampled cloud.
+The original mesh stays in the scene. The new cloud can use the existing cloud
+viewing, editing, portable-project and point-cloud export workflows.
+
+Method and interpretation
+Triangle selection is stratified in cumulative surface area, so unequal-sized
+triangles receive points in proportion to area. Uniform barycentric samples
+spread points over triangle interiors. Disconnected pieces are included in the
+same area calculation; very small pieces can receive no sample at coarse density.
+Spacing sets count = ceil(total triangle area / spacing squared), with at least
+one point. It controls average density, not a guaranteed minimum separation or
+Poisson-disk spacing. Zero-area triangles are skipped and counted in the estimate.
+The generated count is exact. Invalid indices, nonfinite geometry, stale source
+files, invalid settings and insufficient disk space stop the operation.
+
+Coordinates and attributes
+Saved float64 mesh vertices use the same frame as reference-mesh preview/export.
+No scanner pose, datum, scaling or additional transform is inferred. Coordinates
+are generated inside those triangles, not adjusted scan observations. Existing
+baked transforms and large coordinate offsets are preserved. Spacing is expressed
+in mesh units; imported mesh units must be known before interpreting it in metres.
+Optional OBJ vertices of the form v X Y Z R G B accept normalized RGB values 0–1.
+These values are preserved as a vertex-colour cache. Samples interpolate RGB only
+where all three source vertices have colour; missing values remain unavailable.
+No measured intensity is generated. The scene metadata and export information
+label the cloud as generated mesh samples. Existing exporters omit incomplete
+attribute channels with an explicit warning. PTS may require a documented zero
+intensity placeholder to retain RGB; this is not measured intensity.
+
+Memory, cancellation and transactions
+The triangle reader gathers at most 98,304 vertices per batch through bounded
+64 MiB source windows. Output batches contain at most 100,000 generated points.
+The preview is written during sampling and contains at most 250,000 points.
+Surface areas are accumulated without retaining all triangle weights. Disk space
+is estimated before writing and includes the existing project-drive reserve.
+Source files are read only. Cancel or failure discards new incomplete files.
+A scene-save failure restores the previous scene and removes the new cloud.
+
+Validation
+Ten focused Python checks cover exact counts, spacing, unequal triangle areas,
+disconnected components, zero-area faces, large transformed coordinates, bounded
+chunks, RGB interpolation, missing colours, compatible CSV export, cancellation,
+late failure, invalid inputs and scene-save rollback. Production JavaScript UI
+checks exercise menu access, estimates, settings changes, creation, cancellation
+and recoverable errors. These are synthetic and fixture checks; native Windows
+execution and a user-supplied field mesh have not been tested by this build host.

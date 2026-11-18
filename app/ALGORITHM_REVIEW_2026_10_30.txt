@@ -1,0 +1,214 @@
+TUNNEL STUDIO - SIX-PAPER ALGORITHM REVIEW
+30 October 2026 | Baseline 0.18.0 | Resulting maintenance release 0.18.1
+
+DECISION
+Retain the current combination of reviewed regional GuSAC cleaning, local 3D
+section frames, angular-balanced robust ellipse fitting, and explicit design or
+measured-point distance calculations. The newly supplied 2025 displacement
+paper does not establish a superior replacement for that combination. Its ring
+organization and reporting ideas are useful; its printed filtering rule and
+unrestricted ring-wise alignment must not become monitoring defaults.
+
+There is no demonstrated universal best algorithm across cleaning, section
+extraction, comparison to design and change between epochs. These tasks measure
+different things. The software must identify the quantity actually calculated,
+preserve observations and retain the limits of each method.
+
+WERE THE TWO ATTACHED PAPERS ALREADY USED?
+1. Camara, Wang and You (2024), Sensors 24, 7192, DOI 10.3390/s24227192:
+   yes. section_research.py and SECTION_METHOD_0_12_0.txt explicitly cite it.
+   The archived 0.17.12 source already includes the citation, corrected ellipse
+   denominator, robust fitting and common-origin radial comparison. This
+   finding is based on code, not an assumption from the filename.
+2. Camara, Wang and You (2025), Applied Sciences15,625,
+   DOI 10.3390/app15020625: no implementation of this complete pipeline or exact
+   citation was found in the current app. Related distances, registration and
+   section metrics already exist. The exact paper has now been reviewed in
+   full. Source absence does not prove it was never mentioned in an unavailable
+   historical conversation.
+
+COMPARISON WITH THE EARLIER PAPERS
+
+Shen et al. 2021 - dense TLS cross-sections and convergence
+DOI 10.11947/j.JGGS.2021.0206. Useful contributions are local section coordinates,
+robust median/MAD residual screening and explicit chord/convergence definitions.
+The experiment uses horizontal PCA for a linear circular tunnel, two internal
+geometric reference locations, 720 angular sectors, floor removal and circle
+fitting. The internal locations are not surveyed control targets. The authors
+explicitly discuss the need to segment curves rather than use whole-tunnel 2D
+PCA (PDF p.14). Their 1.34 mm result belongs to their test and reference data.
+Decision: retain local 3D perpendicular frames and reviewable residual detection.
+Do not make global2D PCA, universal0.5-degree sectors, automatic invert removal,
+or forced circle agreement the default for curved/graded RTC360 jobs.
+
+Wang et al. 2020 - fractional smoothing,3D moments and ellipse extraction
+DOI 10.1016/j.optlastec.2020.106220. Useful contributions are local orientation,
+moments and best-fit ellipse description. The paper subdivides its roughly 64 m
+tunnel into near-straight portions, applies 5 x 5 fractional smoothing and uses
+point interpolation (PDF pp.1-5,8-9).
+Decision: retain local supported frames and robust ellipse outlines. Do not
+replace measured survey observations with smoothed/interpolated coordinates for
+deformation measurements. Current free-section ellipse outlines are calibrated
+on a bounded preview and checked against all extracted CSV rows; that outline
+fit must not be described as a full-point exact optimization.
+
+Wang, Wei and Wang 2024 - orthogonal rotation and combined denoising
+DOI 10.12082/dqxxkx.2024.240505. Useful contributions are support filtering,
+robust cylinder fitting and section orientation. Their stated assumptions
+include short straight regular cylindrical tunnels without major dents. They
+use 10 mm voxels, tune a 4 mm cylinder threshold on their data partly against design
+radius, and resample fitted circles. They explicitly discuss noncircular and
+missing-data limitations (PDF pp.3,5-7,11).
+Decision: keep combined denoising as a reviewed alternative; retain source
+coordinates and true local 3D frames. Do not copy the 4 mm threshold universally,
+snap lining onto a cylinder, or let closeness to design define measurement truth.
+
+Wang et al. 2025 - GuSAC/TMatch segmentation and ring sections
+DOI 10.3390/app15062926. Useful contributions are regional RANSAC planes, normal
+agreement, sliding local support, lining components/GMM and ring-plane fitting.
+This is the most directly applicable of these papers to the requested removal
+of interior clutter while retaining supported lining. The implementation is an
+independent interpretation with documented corrections to inconsistent printed
+normal equations. It classifies original retained points, protects uncertain
+lining and joints, and makes exclusions reviewable. TMatch-style connectivity
+is exact on eligible original points; named results and model calibration are
+bounded. The authors' underspecified crown/MST axis and some reassignment steps
+are not reproduced exactly. Their F1=.9527 and IoU=.9055 are their ten-ring
+classification results, not a Tunnel Studio field accuracy or service-removal
+guarantee. Local normalized CD/RMSE values in the paper are unitless.
+Decision: retain GuSAC-based cleaning as the primary current route; retain
+TMatch as geometric instance grouping, not pipe/cable semantic recognition.
+
+Camara et al.2024 - robust ellipse and section-deformation descriptors
+DOI 10.3390/s24227192. Useful quantities include eccentricity, centre movement,
+axis changes, orientation and radial comparison. Current fitting balances
+angular samples, uses RANSAC plus robust geometric refinement, withholds weak
+coverage and undefined near-circular orientation, and evaluates residual support
+on retained inputs. Full-point processing does not mean every original point
+has equal weight in the fitted ellipse: the fit uses 1-degree balanced bins.
+The printed p.9 Eq.4 uses a in both denominators; the code correctly uses a,b.
+The p.7 standard-deviation expressions are inconsistent; p.10 health-score
+normalization is unspecified. The p.11 radial expression is shape-only because
+it omits centre offsets; the code separately retains common-origin radial
+change and centre movement. The paper's small inter-instrument differences do
+not establish an RTC360 uncertainty budget or a structural health percentage.
+Decision: retain the corrected descriptors, robust fitting and common frame.
+Do not copy the uncalibrated health score or transfer claimed sub-mm accuracy.
+
+Camara et al.2025 - ring-wise displacement workflow
+DOI 10.3390/app15020625. The analysed experiment covers 102 rings / approximately 122 m,
+two epochs six months apart, with a rail-mounted SILSS compared to Pegasus.
+It manually crops the facility-heavy lower lining, applies a neighbour-distance
+filter, detects seams, aligns corresponding rings with ICP, calculates unsigned
+nearest-point distances and derives centroid/PCA-based shape summaries.
+Decision: accept physical-ring identity, epoch organization, trends and separate
+centre/shape maps as useful workflow ideas. Do not adopt the complete pipeline
+as the new measurement default for static RTC360 setups.
+
+WHY THE 2025 DISPLACEMENT PIPELINE IS NOT A SAFE LITERAL REPLACEMENT
+1. Its p.6 Eqs.1-3 define mean neighbour distance, then print T=mean-3*SD and
+   remove points below T. That rejects unusually dense observations, not sparse
+   distance outliers. The minus sign and inequality were checked visually.
+   A typo or different unpublished implementation is possible; the printed
+   rule is not an appropriate implementation specification.
+2. Free rigid ICP on each ring can remove real translation/rotation before
+   residuals are calculated. That can answer shape change after best-fit
+   alignment, but does not establish absolute motion. Registration against
+   stable independent control must remain separate from the movement measured.
+3. Nearest scan points need not be the same material point. Their Euclidean
+   distance is nonnegative and affected by sampling. It is not a signed
+   inward/outward change, a 3D displacement vector or an uncertainty estimate.
+4. A point centroid and PCA axes depend on density and visible coverage.
+   Removing the invert or seeing different parts of the lining can move the
+   centroid and change covariance with no actual deformation. Robust geometric
+   fitting with coverage checks is preferable to that substitution here.
+5. Reported 0.02 mm detection/precision is not established by independent known-
+   motion truth. Agreement between two systems processed by the same workflow
+   can share biases. A repeated no-motion baseline, independent checks and an
+   error/uncertainty model are needed before choosing a detection threshold.
+
+CONTROLLED METHOD CHECKS RUN DURING THIS REVIEW
+These deterministic Linux examples test mathematical consequences and current
+code. They are not reproductions of a paper's field experiment or RTC360
+accuracy specifications.
+- Same 3 m radius circular surface sampled at different angular phases: true
+  surface change 0 mm; current exact nearest-point distance mean 1.308997 mm.
+  This validates the distance calculation and demonstrates its interpretation.
+- A true 10 mm rigid movement followed by free best-fit translation: residual
+  below 1e-9 mm. The movement has been absorbed by the fit.
+- Current robust section comparison on a known +10 mm right / -6 mm up translation:
+  recovered 9.999999 mm / -5.999999 mm, with effectively unchanged axes.
+- Unchanged circle with 40 degrees of coverage missing: raw point centroid
+  shifts 367.430838 mm; robust fitted centre stays effectively unchanged while
+  sufficient angular support remains. This ideal case is not an occlusion-
+  independent accuracy guarantee.
+- The new application regression additionally preserves +15 mm right / -7 mm up
+  across different epoch source/mask metadata and verifies original-file SHA-256.
+
+APPLIED FIX IN0.18.1
+Saved measured-section comparisons now require the same plane, slice width,
+wall band, design radius and fit threshold. Previously, only plane and width
+were checked. A change in filtering/fitting settings could therefore appear
+as a change in shape. The guard runs before the ellipse fit and provides the
+saved values needed to restore a comparable calculation. Incomplete legacy
+baselines require recreation; missing settings are not guessed. Different
+epoch source files and masks remain allowed. No coordinates are transformed
+by this guard. Existing0.18.0 registration, whole-project analysis, delete,
+preview and storage fixes are retained.
+
+REMAINING MONITORING GAP
+Current Cloud vs Cloud is exact unsigned nearest measured-point distance. A
+separate confidence-qualified epoch engine is still absent. A strong candidate
+for development is signed local surface-normal change with support/occlusion
+checks and a spatial detection limit. M3C2-EP is relevant when measurement and
+alignment uncertainties can actually be supplied: Winiwarter, Anders and
+Hoefle 2021, DOI 10.1016/j.isprsjprs.2021.06.011. The authors' framework propagates
+measurement/alignment uncertainty, including multiple setups. It is not
+implemented here and has not been benchmarked against these RTC360 jobs.
+It estimates normal change; a full3D material displacement vector additionally
+needs persistent correspondences/targets or identifiable features. Smooth
+cylindrical geometry alone cannot resolve every tangential or axial motion.
+
+WHAT WOULD ESTABLISH THE BEST DEFAULT FOR THESE JOBS
+Use the same representative straight/curved/graded and cluttered RTC360 data
+for candidates. Independently control the datum and reserve check observations
+outside fitting. Include repeat scans with no movement; known translations,
+rotations and radial changes; changed sampling/occlusion; real joints and
+lining behind pipes; and the same physical rings across epochs. Compare bias,
+repeatability, false positives, retained lining, missed movement, support gaps,
+runtime, peak memory and temporary disk. Validate at realistic full-tunnel
+scale. Choose settings on training/calibration areas and assess separate held-
+out areas. A smaller fit RMS or cleaner-looking cylinder alone is not proof.
+
+VALIDATION SCOPE
+233 application tests passed with no failures/errors/skips after this change;
+156 Python files parsed and 47 JavaScript files syntax checked. The Windows
+package receives separate activation and archive/hash checks. No native
+Windows run, full user tunnel field test, reproduced publication accuracy,
+universal7 GB memory guarantee or automatic safety certification is claimed.
+
+PRIMARY REFERENCES
+1. Camara M, Wang L, You Z. Sensors 2024,24,7192.
+   https://doi.org/10.3390/s24227192 (18 supplied PDF pages)
+2. Camara M, Wang L, You Z. Applied Sciences 2025,15,625.
+   https://doi.org/10.3390/app15020625 (21 supplied PDF pages)
+3. Shen Y, Wang J, Wang J, Duan W, Ferreira VG. JGGS 2021,4(2),56-71.
+   https://doi.org/10.11947/j.JGGS.2021.0206 (16 supplied PDF pages)
+4. Wang W, Chen W, Wang K, Li S. Optics and Laser Technology 2020,128,106220.
+   https://doi.org/10.1016/j.optlastec.2020.106220 (10 supplied PDF pages)
+5. Wang T, Wei G, Wang Y. Journal of Geo-information Science 2024,26(12),2759-2771.
+   https://doi.org/10.12082/dqxxkx.2024.240505 (13 supplied PDF pages)
+6. Wang Z, Zhu Z, Wu Y, Hong Q, Jiang D, Fu J, Xu S. Applied Sciences 2025,15,2926.
+   https://doi.org/10.3390/app15062926 (22 supplied PDF pages)
+7. Winiwarter L, Anders K, Hoefle B. ISPRS JPRS 2021,178,240-258.
+   https://doi.org/10.1016/j.isprsjprs.2021.06.011
+   Primary author overview: https://www.geog.uni-heidelberg.de/en/3dgeo/projects-of-the-3dgeo-research-group/m3c2-ep
+
+IMPLEMENTATION SOURCES
+section_research.py; section_api.py; test_section_baseline_0181.py;
+large_sections.py; core.py; scan_geometry.py; section_shape.py;
+gusac.py; tmatch.py; combined_denoising.py; clean_tunnel.py;
+inspection.py; inspection_points.py; GUSAC_TMATCH_METHOD_0_15_0.txt.
+Full independent review notes and controlled-check code/results accompany the
+source archive under release_evidence_0_18_1. Supplied papers are not bundled
+into the application installer.

@@ -1,0 +1,44 @@
+Tunnel Studio 0.21.6
+5 November 2026
+
+Confirmed multi-example shape library
+Clean > Find similar shapes now stores named types such as Pocket 1. Draw and
+confirm several measured examples of the same type. Nearby measured lining is
+kept separately as wall-to-keep context, not taught as part of the object.
+
+Existing separated pocket scans can also supply examples: choose the main
+lining scan for context, then choose the separated scan. Disconnected compact
+groups are processed independently; unusable groups and missing wall support
+are reported. Check the saved examples. Hidden scans can be chosen explicitly.
+
+Search with all confirmed examples of one saved type across the whole retained
+cloud. Compact candidates allow oblique orientation and bounded size variation;
+accepted candidates select their full connected measured off-lining footprint.
+The old drawn-example route and continuing pipe/duct matching remain available.
+
+Confirm good detections as more examples, or mark wrong matches as incorrect
+examples. Detection alone never teaches. Remove and teach independently saves
+confirmed complete objects before removing their exact original point IDs.
+One workspace Undo reverses both the edit and its teaching; Redo restores both.
+Failed saves/cancellation preserve source data and training labels. A recoverable
+journal and an OS lock protect interrupted or concurrent library transactions.
+
+Library files live in ShapeLibrary under the configured data catalogue, separate
+from program files and project caches. Examples own their raw measured object
+and wall crops; source/bundle deletion and emptying Deleted points cannot remove
+them. Repeat confirmations reuse stored geometry. The library is shared between
+projects using the same catalogue. Archive types, view examples, or Forget a
+mistaken example. Undo can reverse recent teaching changes. No whole tunnel copy
+is stored per example; source coordinates and attributes remain unchanged.
+
+Also fixes missing pocket-depth/diameter fields after switching from lining
+departures, selected table row contrast, and misleading recess/bolt wording
+when reviewing general above/below-lining departures. Selection highlights and
+Keep/Exclude output decisions remain explicit and separate.
+
+Validation checks implementation behaviour on constructed data and grouping /
+point preservation in the supplied pockets1.e57. The full matching wall cloud
+was not supplied with that crop. No field recognition rate, published-paper
+accuracy, speed comparison, native Windows/WebView2 run or successful processing
+of Damian's complete 921-million-point project is claimed. More examples can
+improve coverage but cannot guarantee recognition. Review matches before edits.

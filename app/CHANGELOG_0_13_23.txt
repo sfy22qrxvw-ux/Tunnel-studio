@@ -1,0 +1,30 @@
+Tunnel Studio 0.13.23 - Combined denoising and local cross-sections
+
+- Model > Combined denoising combines full-density neighbour support and robust
+  lining fitting. Choose a measured profile or a straight circular cylinder.
+- Adjustable lining tolerance in mm; separate red review groups for isolated
+  points and lining departures. Uncertain model regions remain retained.
+- Cleaned coordinates and attributes remain tied to original point IDs.
+- Optional Fit ellipse outline overlays the measured section and reports full
+  diameters plus full-density residual statistics; the CSV stays unchanged.
+- Selected ring plane fits a plane to one explicit narrow ring selection.
+  It does not implement automatic GuSAC/TMatch segmentation.
+- Cross-sections now follow a cached local 3D tunnel tangent or the active
+  alignment's local segment, including grade, instead of one global PCA normal.
+- Robust local quadratic centre smoothing avoids flattening curved path ends.
+  The browser cut and full-density export use the same path/frame definition.
+- Selected regions, deletion masks and enabled limit boxes constrain the guide
+  and section. Changed source/alignment/selection rejects stale cached paths.
+- Model > Irregular surfaces finds connected protrusions, recesses and rough
+  patches. Sensitivity, patch size and minimum count are adjustable.
+- Full-density original IDs support per-patch inspection, preview Hide/Show,
+  selected-candidate deletion, updated counts, global Undo and Deleted restore.
+- Candidate representatives are included in previews so small detected patches
+  do not disappear just because of a regular display stride.
+- Deletion validates source revision and rolls back state/files on a failed save.
+- Read all six supplied papers, including the Chinese denoising paper, checked latest RL preprint and TriMe source,
+  and built/tested TriMe separately. No new mesh engine is shipped in this update.
+- Keeps 0.13.22 experimental direct RTC360 import and its recorded limitations.
+
+Validation is synthetic/backend and production JS with mocked HTTP/WebGL.
+No Windows/GPU execution, field defect accuracy or survey accuracy claim.

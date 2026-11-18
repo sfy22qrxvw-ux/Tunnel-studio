@@ -1,0 +1,2617 @@
+{
+  "version": "0.17.1",
+  "date": "2026-10-26",
+  "timezone": "UTC",
+  "passed": true,
+  "scope": "Alignment and understandable model workflow, content-sized Explorer, persistent appearance choices and reviewed permanent deleted-point removal over the full 0.17.0 release.",
+  "current_backend_and_installer_tests": 45,
+  "current_browser_and_disk_scenarios": 47,
+  "browser_scenarios_by_gate": {
+    "alignment_browser": 20,
+    "explorer_theme_browser": 14,
+    "explorer_dock_browser": 4,
+    "permanent_removal_browser": 9
+  },
+  "current_theme_bridge_javascript_checks": 4,
+  "test_results": [
+    {
+      "id": "test_designer_consolidated.DesignerConsolidated.test_active_alignment_starts_at_profiles_without_mutating_axis_or_draft",
+      "outcome": "passed",
+      "seconds": 0.3316
+    },
+    {
+      "id": "test_designer_consolidated.DesignerConsolidated.test_alignment_preview_survives_incomplete_profile",
+      "outcome": "passed",
+      "seconds": 0.0178
+    },
+    {
+      "id": "test_designer_consolidated.DesignerConsolidated.test_constant_sections_ignore_unused_end_profile",
+      "outcome": "passed",
+      "seconds": 0.4057
+    },
+    {
+      "id": "test_designer_consolidated.DesignerConsolidated.test_failed_copy_and_invalid_source_preserve_existing_model_and_draft",
+      "outcome": "passed",
+      "seconds": 0.8369
+    },
+    {
+      "id": "test_designer_consolidated.DesignerConsolidated.test_float_chainage_picks_keep_distinct_rings",
+      "outcome": "passed",
+      "seconds": 0.1233
+    },
+    {
+      "id": "test_designer_consolidated.DesignerConsolidated.test_legacy_pdf_derived_geometry_remains_editable_without_reader",
+      "outcome": "passed",
+      "seconds": 0.1695
+    },
+    {
+      "id": "test_designer_consolidated.DesignerConsolidated.test_pdf_drawing_removed_and_pdf_report_paths_preserved",
+      "outcome": "passed",
+      "seconds": 0.0053
+    },
+    {
+      "id": "test_designer_consolidated.DesignerConsolidated.test_update_and_separate_copy_preserve_identity_transform_and_editability",
+      "outcome": "passed",
+      "seconds": 0.6811
+    },
+    {
+      "id": "test_designer_consolidated.DesignerConsolidated.test_vertical_only_alignment_leaves_new_editor_usable",
+      "outcome": "passed",
+      "seconds": 0.0005
+    },
+    {
+      "id": "test_permanent_points_0171.PermanentPoints.test_all_deleted_removes_scan_and_every_active_alias",
+      "outcome": "passed",
+      "seconds": 0.0279
+    },
+    {
+      "id": "test_permanent_points_0171.PermanentPoints.test_all_deleted_requires_metadata_space_not_duplicate_cloud_reserve",
+      "outcome": "passed",
+      "seconds": 0.0162
+    },
+    {
+      "id": "test_permanent_points_0171.PermanentPoints.test_archive_only_cleaned_copy_can_forget_deleted_groups_without_rewriting_points",
+      "outcome": "passed",
+      "seconds": 0.0158
+    },
+    {
+      "id": "test_permanent_points_0171.PermanentPoints.test_cancel_during_copy_or_immediately_before_commit_is_atomic",
+      "outcome": "passed",
+      "seconds": 0.0235
+    },
+    {
+      "id": "test_permanent_points_0171.PermanentPoints.test_corrupt_snapshot_blocks_reclamation_but_not_safe_compaction",
+      "outcome": "passed",
+      "seconds": 0.0233
+    },
+    {
+      "id": "test_permanent_points_0171.PermanentPoints.test_dependent_results_removed_while_fixed_measurement_geometry_survives",
+      "outcome": "passed",
+      "seconds": 0.0564
+    },
+    {
+      "id": "test_permanent_points_0171.PermanentPoints.test_exact_xyz_attributes_truth_derived_and_bounded_copy",
+      "outcome": "passed",
+      "seconds": 0.984
+    },
+    {
+      "id": "test_permanent_points_0171.PermanentPoints.test_external_source_cache_is_never_unlinked",
+      "outcome": "passed",
+      "seconds": 0.0226
+    },
+    {
+      "id": "test_permanent_points_0171.PermanentPoints.test_failed_metadata_commit_preserves_old_cache_selection_and_history",
+      "outcome": "passed",
+      "seconds": 0.0155
+    },
+    {
+      "id": "test_permanent_points_0171.PermanentPoints.test_no_space_and_truncated_cache_fail_before_creating_assets",
+      "outcome": "passed",
+      "seconds": 0.0076
+    },
+    {
+      "id": "test_permanent_points_0171.PermanentPoints.test_other_scan_and_saved_snapshot_keep_shared_caches",
+      "outcome": "passed",
+      "seconds": 0.0347
+    },
+    {
+      "id": "test_permanent_points_0171.PermanentPoints.test_post_commit_cleanup_failure_reports_success_with_warning",
+      "outcome": "passed",
+      "seconds": 0.0209
+    },
+    {
+      "id": "test_permanent_points_0171.PermanentPoints.test_production_action_clears_undo_and_reopen_export_uses_exact_remaining_points",
+      "outcome": "passed",
+      "seconds": 0.0282
+    },
+    {
+      "id": "test_permanent_points_0171.PermanentPoints.test_recovery_snapshot_alone_protects_its_original_cache",
+      "outcome": "passed",
+      "seconds": 0.02
+    },
+    {
+      "id": "test_permanent_points_0171.PermanentPoints.test_saved_snapshot_protects_shared_archive_ids_and_labels",
+      "outcome": "passed",
+      "seconds": 0.0831
+    },
+    {
+      "id": "test_permanent_points_0171.PermanentPoints.test_source_mutation_during_copy_never_publishes_replacement",
+      "outcome": "passed",
+      "seconds": 0.0154
+    },
+    {
+      "id": "test_permanent_points_0171.PermanentPoints.test_stale_review_rejects_changed_source_mask_or_workspace_history",
+      "outcome": "passed",
+      "seconds": 0.0105
+    },
+    {
+      "id": "test_ui_preferences_0171.AppearancePreferenceTests.test_atomic_replace_failure_preserves_old_choice_and_cleans_temporary",
+      "outcome": "passed",
+      "seconds": 0.0199
+    },
+    {
+      "id": "test_ui_preferences_0171.AppearancePreferenceTests.test_corrupt_or_oversized_settings_do_not_break_startup",
+      "outcome": "passed",
+      "seconds": 0.0435
+    },
+    {
+      "id": "test_ui_preferences_0171.AppearancePreferenceTests.test_each_theme_survives_recreated_store_and_bridge",
+      "outcome": "passed",
+      "seconds": 0.0302
+    },
+    {
+      "id": "test_ui_preferences_0171.AppearancePreferenceTests.test_invalid_values_do_not_replace_saved_choice",
+      "outcome": "passed",
+      "seconds": 0.002
+    },
+    {
+      "id": "test_ui_preferences_0171.AppearancePreferenceTests.test_new_session_has_no_native_override",
+      "outcome": "passed",
+      "seconds": 0.0025
+    },
+    {
+      "id": "test_ui_preferences_0171.AppearancePreferenceTests.test_preference_changes_do_not_modify_project_data",
+      "outcome": "passed",
+      "seconds": 0.0106
+    },
+    {
+      "id": "test_ui_preferences_0171.AppearancePreferenceTests.test_unconfigured_bridge_does_not_write_any_file",
+      "outcome": "passed",
+      "seconds": 0.0005
+    },
+    {
+      "id": "test_installer.InstallerTests.test_active_application_blocks_installation",
+      "outcome": "passed"
+    },
+    {
+      "id": "test_installer.InstallerTests.test_component_failure_preserves_active_version",
+      "outcome": "passed"
+    },
+    {
+      "id": "test_installer.InstallerTests.test_damaged_payload_never_activates",
+      "outcome": "passed"
+    },
+    {
+      "id": "test_installer.InstallerTests.test_install_preserves_data_previous_release_and_index",
+      "outcome": "passed"
+    },
+    {
+      "id": "test_installer.InstallerTests.test_install_preserves_oversized_workspace_and_backup_byte_for_byte",
+      "outcome": "passed"
+    },
+    {
+      "id": "test_installer.InstallerTests.test_installer_leaves_staging_directory_before_activation",
+      "outcome": "passed"
+    },
+    {
+      "id": "test_installer.InstallerTests.test_marker_failure_rolls_back_both_directories",
+      "outcome": "passed"
+    },
+    {
+      "id": "test_installer.InstallerTests.test_path_traversal_rejected",
+      "outcome": "passed"
+    },
+    {
+      "id": "test_installer.InstallerTests.test_reinstall_retains_previous_same_version",
+      "outcome": "passed"
+    },
+    {
+      "id": "test_installer.InstallerTests.test_startup_metadata_self_check_failure_preserves_user_workspace_and_release",
+      "outcome": "passed"
+    },
+    {
+      "id": "test_installer.InstallerTests.test_startup_self_check_refuses_another_workspace_before_writing",
+      "outcome": "passed"
+    },
+    {
+      "id": "test_installer.InstallerTests.test_startup_self_check_refuses_existing_project_before_writing",
+      "outcome": "passed"
+    }
+  ],
+  "gates": {
+    "designer_backend": {
+      "release": "0.17.1",
+      "scope": "Existing consolidated designer and editable-model requirements. No new numerical algorithm changes.",
+      "passed": true,
+      "tests_run": 9,
+      "failures": 0,
+      "errors": 0,
+      "skips": 0,
+      "test_results": [
+        {
+          "id": "test_designer_consolidated.DesignerConsolidated.test_active_alignment_starts_at_profiles_without_mutating_axis_or_draft",
+          "outcome": "passed",
+          "seconds": 0.3316
+        },
+        {
+          "id": "test_designer_consolidated.DesignerConsolidated.test_alignment_preview_survives_incomplete_profile",
+          "outcome": "passed",
+          "seconds": 0.0178
+        },
+        {
+          "id": "test_designer_consolidated.DesignerConsolidated.test_constant_sections_ignore_unused_end_profile",
+          "outcome": "passed",
+          "seconds": 0.4057
+        },
+        {
+          "id": "test_designer_consolidated.DesignerConsolidated.test_failed_copy_and_invalid_source_preserve_existing_model_and_draft",
+          "outcome": "passed",
+          "seconds": 0.8369
+        },
+        {
+          "id": "test_designer_consolidated.DesignerConsolidated.test_float_chainage_picks_keep_distinct_rings",
+          "outcome": "passed",
+          "seconds": 0.1233
+        },
+        {
+          "id": "test_designer_consolidated.DesignerConsolidated.test_legacy_pdf_derived_geometry_remains_editable_without_reader",
+          "outcome": "passed",
+          "seconds": 0.1695
+        },
+        {
+          "id": "test_designer_consolidated.DesignerConsolidated.test_pdf_drawing_removed_and_pdf_report_paths_preserved",
+          "outcome": "passed",
+          "seconds": 0.0053
+        },
+        {
+          "id": "test_designer_consolidated.DesignerConsolidated.test_update_and_separate_copy_preserve_identity_transform_and_editability",
+          "outcome": "passed",
+          "seconds": 0.6811
+        },
+        {
+          "id": "test_designer_consolidated.DesignerConsolidated.test_vertical_only_alignment_leaves_new_editor_usable",
+          "outcome": "passed",
+          "seconds": 0.0005
+        }
+      ],
+      "elapsed_seconds": 4.814411341001687,
+      "source_hashes": {
+        "app/server.py": "32322346a105154247fbfe596640aa11a641e401e325e64632b8e44c75fd7edb",
+        "app/job_api.py": "90ec899c9ee7fb9f67cd1414263fae86a4e4c329437d22d269255ac091d56499",
+        "app/tunnel_designer.py": "ef4e98309448229b82a79008016f4f857dd794370a72e0142a621e4dec031cfa"
+      }
+    },
+    "permanent_removal_backend": {
+      "release": "0.17.1",
+      "passed": true,
+      "tests_run": 17,
+      "failures": 0,
+      "errors": 0,
+      "skips": 0,
+      "test_results": [
+        {
+          "id": "test_permanent_points_0171.PermanentPoints.test_all_deleted_removes_scan_and_every_active_alias",
+          "outcome": "passed",
+          "seconds": 0.0279
+        },
+        {
+          "id": "test_permanent_points_0171.PermanentPoints.test_all_deleted_requires_metadata_space_not_duplicate_cloud_reserve",
+          "outcome": "passed",
+          "seconds": 0.0162
+        },
+        {
+          "id": "test_permanent_points_0171.PermanentPoints.test_archive_only_cleaned_copy_can_forget_deleted_groups_without_rewriting_points",
+          "outcome": "passed",
+          "seconds": 0.0158
+        },
+        {
+          "id": "test_permanent_points_0171.PermanentPoints.test_cancel_during_copy_or_immediately_before_commit_is_atomic",
+          "outcome": "passed",
+          "seconds": 0.0235
+        },
+        {
+          "id": "test_permanent_points_0171.PermanentPoints.test_corrupt_snapshot_blocks_reclamation_but_not_safe_compaction",
+          "outcome": "passed",
+          "seconds": 0.0233
+        },
+        {
+          "id": "test_permanent_points_0171.PermanentPoints.test_dependent_results_removed_while_fixed_measurement_geometry_survives",
+          "outcome": "passed",
+          "seconds": 0.0564
+        },
+        {
+          "id": "test_permanent_points_0171.PermanentPoints.test_exact_xyz_attributes_truth_derived_and_bounded_copy",
+          "outcome": "passed",
+          "seconds": 0.984
+        },
+        {
+          "id": "test_permanent_points_0171.PermanentPoints.test_external_source_cache_is_never_unlinked",
+          "outcome": "passed",
+          "seconds": 0.0226
+        },
+        {
+          "id": "test_permanent_points_0171.PermanentPoints.test_failed_metadata_commit_preserves_old_cache_selection_and_history",
+          "outcome": "passed",
+          "seconds": 0.0155
+        },
+        {
+          "id": "test_permanent_points_0171.PermanentPoints.test_no_space_and_truncated_cache_fail_before_creating_assets",
+          "outcome": "passed",
+          "seconds": 0.0076
+        },
+        {
+          "id": "test_permanent_points_0171.PermanentPoints.test_other_scan_and_saved_snapshot_keep_shared_caches",
+          "outcome": "passed",
+          "seconds": 0.0347
+        },
+        {
+          "id": "test_permanent_points_0171.PermanentPoints.test_post_commit_cleanup_failure_reports_success_with_warning",
+          "outcome": "passed",
+          "seconds": 0.0209
+        },
+        {
+          "id": "test_permanent_points_0171.PermanentPoints.test_production_action_clears_undo_and_reopen_export_uses_exact_remaining_points",
+          "outcome": "passed",
+          "seconds": 0.0282
+        },
+        {
+          "id": "test_permanent_points_0171.PermanentPoints.test_recovery_snapshot_alone_protects_its_original_cache",
+          "outcome": "passed",
+          "seconds": 0.02
+        },
+        {
+          "id": "test_permanent_points_0171.PermanentPoints.test_saved_snapshot_protects_shared_archive_ids_and_labels",
+          "outcome": "passed",
+          "seconds": 0.0831
+        },
+        {
+          "id": "test_permanent_points_0171.PermanentPoints.test_source_mutation_during_copy_never_publishes_replacement",
+          "outcome": "passed",
+          "seconds": 0.0154
+        },
+        {
+          "id": "test_permanent_points_0171.PermanentPoints.test_stale_review_rejects_changed_source_mask_or_workspace_history",
+          "outcome": "passed",
+          "seconds": 0.0105
+        }
+      ],
+      "failure_details": [],
+      "seconds": 1.407514671998797,
+      "scope": "Generated exact-point, attribute, disk-cache and transaction fixtures. Largest fixture550,003points; no550-million-point or nativeWindows performance claim.",
+      "source_hashes": {
+        "app/scan_compaction.py": "17b68496ecc8e427d988af3d1b95364abdafdcf9f275bd1a8d19354af13b7471",
+        "app/scan_edits.py": "97180faf0308fe3f709e575f632618ef31c5b1a6f6fb4357cd90a2ffdd6d8896",
+        "app/job_api.py": "90ec899c9ee7fb9f67cd1414263fae86a4e4c329437d22d269255ac091d56499",
+        "app/server.py": "32322346a105154247fbfe596640aa11a641e401e325e64632b8e44c75fd7edb"
+      }
+    },
+    "appearance_store": {
+      "release": "0.17.1",
+      "passed": true,
+      "tests_run": 7,
+      "failures": 0,
+      "errors": 0,
+      "skips": 0,
+      "test_results": [
+        {
+          "id": "test_ui_preferences_0171.AppearancePreferenceTests.test_atomic_replace_failure_preserves_old_choice_and_cleans_temporary",
+          "outcome": "passed",
+          "seconds": 0.0199
+        },
+        {
+          "id": "test_ui_preferences_0171.AppearancePreferenceTests.test_corrupt_or_oversized_settings_do_not_break_startup",
+          "outcome": "passed",
+          "seconds": 0.0435
+        },
+        {
+          "id": "test_ui_preferences_0171.AppearancePreferenceTests.test_each_theme_survives_recreated_store_and_bridge",
+          "outcome": "passed",
+          "seconds": 0.0302
+        },
+        {
+          "id": "test_ui_preferences_0171.AppearancePreferenceTests.test_invalid_values_do_not_replace_saved_choice",
+          "outcome": "passed",
+          "seconds": 0.002
+        },
+        {
+          "id": "test_ui_preferences_0171.AppearancePreferenceTests.test_new_session_has_no_native_override",
+          "outcome": "passed",
+          "seconds": 0.0025
+        },
+        {
+          "id": "test_ui_preferences_0171.AppearancePreferenceTests.test_preference_changes_do_not_modify_project_data",
+          "outcome": "passed",
+          "seconds": 0.0106
+        },
+        {
+          "id": "test_ui_preferences_0171.AppearancePreferenceTests.test_unconfigured_bridge_does_not_write_any_file",
+          "outcome": "passed",
+          "seconds": 0.0005
+        }
+      ],
+      "elapsed_seconds": 0.11103523799829418,
+      "source_hashes": {
+        "app/ui_preferences.py": "ae49ff380c05bb96bdee825a4c5e2001ee8de7a74fe4f124c8b1480312fc3a2a",
+        "app/desktop.py": "5a7f2791d3b376a7b95ea4a45d1093ae96257bcc4e830b66e86a481a276a6ff3"
+      },
+      "scope": "Actual Python appearance-store and DesktopBridge methods with isolated files. No native WebView2 execution."
+    },
+    "alignment_browser": {
+      "executed_at": "2026-10-26T20:49:12.216Z",
+      "passed": true,
+      "checks": [
+        {
+          "name": "Alignment and Model primary controls remain directly visible at 1920 \u00d7 1080",
+          "passed": true
+        },
+        {
+          "name": "Alignment and Model primary controls remain directly visible at 1366 \u00d7 768",
+          "passed": true
+        },
+        {
+          "name": "Alignment and Model primary controls remain directly visible at 1093 \u00d7 614",
+          "passed": true
+        },
+        {
+          "name": "Alignment and Model primary controls remain directly visible at 911 \u00d7 512",
+          "passed": true
+        },
+        {
+          "name": "Alignment and Model primary controls remain directly visible at 768 \u00d7 600",
+          "passed": true
+        },
+        {
+          "name": "Create 3D model from alignment starts at alignment creation when no active alignment exists",
+          "passed": true
+        },
+        {
+          "name": "Create alignment exposes setup choices immediately, saves exact entered coordinates, and direct coordinates opens its editor",
+          "passed": true
+        },
+        {
+          "name": "Draw alignment in 3D opens the horizontal alignment step even when another alignment is already active",
+          "passed": true
+        },
+        {
+          "name": "Alignment Import uses the existing unified importer and reads all original stationing and coordinates",
+          "passed": true
+        },
+        {
+          "name": "Edit alignment opens the active original coordinates directly without searching through advanced settings",
+          "passed": true
+        },
+        {
+          "name": "Active alignment starts at profiles; three chainage heights, two profiles and constant/transition ranges build a saved editable solid",
+          "passed": true,
+          "model_id": "cad:f5f1a4b70e9942298d81355a6d4cfea9",
+          "volume_m3": 148.3095238095033
+        },
+        {
+          "name": "Edit tunnel design reopens the selected model and updates the same object with changed heights",
+          "passed": true
+        },
+        {
+          "name": "Create a separate 3D copy preserves the original model and the imported alignment",
+          "passed": true
+        },
+        {
+          "name": "Create 3D model from alignment starts a new design even while a saved tunnel model is selected",
+          "passed": true
+        },
+        {
+          "name": "Alignment tab protects an active measured-point pick, and opening alignment afterwards closes the inactive measurement panel",
+          "passed": true
+        },
+        {
+          "name": "Alignment switching preserves a pending geometry calculation and closes inactive geometry after it finishes",
+          "passed": true
+        },
+        {
+          "name": "Save As \u2192 New project \u2192 Open restores both editable 3D designs and exact active alignment rows",
+          "passed": true
+        },
+        {
+          "name": "The reopened saved model remains selectable and editable from the visible Model ribbon",
+          "passed": true
+        },
+        {
+          "name": "No uncaught JavaScript errors or failed HTTP resources during the visible alignment/model workflow",
+          "passed": true
+        },
+        {
+          "name": "Independent disk read preserves both editable designs, original scan bytes and frozen application source",
+          "passed": true
+        }
+      ],
+      "errors": [],
+      "failedResponses": [],
+      "layout": [
+        {
+          "width": 1920,
+          "height": 1080,
+          "tab": "Alignment",
+          "command": "m-create-alignment",
+          "button": {
+            "left": 12,
+            "top": 80,
+            "right": 96,
+            "bottom": 154
+          },
+          "label": {
+            "left": 17,
+            "top": 120.25,
+            "right": 91,
+            "bottom": 147.75
+          },
+          "text": "Create alignment"
+        },
+        {
+          "width": 1920,
+          "height": 1080,
+          "tab": "Model",
+          "command": "model-from-alignment",
+          "button": {
+            "left": 12,
+            "top": 80,
+            "right": 156,
+            "bottom": 154
+          },
+          "label": {
+            "left": 17,
+            "top": 120.25,
+            "right": 151,
+            "bottom": 147.75
+          },
+          "text": "Create 3D model from alignment"
+        },
+        {
+          "width": 1366,
+          "height": 768,
+          "tab": "Alignment",
+          "command": "m-create-alignment",
+          "button": {
+            "left": 12,
+            "top": 80,
+            "right": 96,
+            "bottom": 154
+          },
+          "label": {
+            "left": 17,
+            "top": 120.25,
+            "right": 91,
+            "bottom": 147.75
+          },
+          "text": "Create alignment"
+        },
+        {
+          "width": 1366,
+          "height": 768,
+          "tab": "Model",
+          "command": "model-from-alignment",
+          "button": {
+            "left": 12,
+            "top": 80,
+            "right": 156,
+            "bottom": 154
+          },
+          "label": {
+            "left": 17,
+            "top": 120.25,
+            "right": 151,
+            "bottom": 147.75
+          },
+          "text": "Create 3D model from alignment"
+        },
+        {
+          "width": 1093,
+          "height": 614,
+          "tab": "Alignment",
+          "command": "m-create-alignment",
+          "button": {
+            "left": 12,
+            "top": 74,
+            "right": 90,
+            "bottom": 142
+          },
+          "label": {
+            "left": 17,
+            "top": 111.25,
+            "right": 85,
+            "bottom": 138.75
+          },
+          "text": "Create alignment"
+        },
+        {
+          "width": 1093,
+          "height": 614,
+          "tab": "Model",
+          "command": "model-from-alignment",
+          "button": {
+            "left": 12,
+            "top": 74,
+            "right": 156,
+            "bottom": 142
+          },
+          "label": {
+            "left": 17,
+            "top": 111.25,
+            "right": 151,
+            "bottom": 138.75
+          },
+          "text": "Create 3D model from alignment"
+        },
+        {
+          "width": 911,
+          "height": 512,
+          "tab": "Alignment",
+          "command": "m-create-alignment",
+          "button": {
+            "left": 8,
+            "top": 74,
+            "right": 86,
+            "bottom": 142
+          },
+          "label": {
+            "left": 13,
+            "top": 111.25,
+            "right": 81,
+            "bottom": 138.75
+          },
+          "text": "Create alignment"
+        },
+        {
+          "width": 911,
+          "height": 512,
+          "tab": "Model",
+          "command": "model-from-alignment",
+          "button": {
+            "left": 8,
+            "top": 74,
+            "right": 152,
+            "bottom": 142
+          },
+          "label": {
+            "left": 13,
+            "top": 111.25,
+            "right": 147,
+            "bottom": 138.75
+          },
+          "text": "Create 3D model from alignment"
+        },
+        {
+          "width": 768,
+          "height": 600,
+          "tab": "Alignment",
+          "command": "m-create-alignment",
+          "button": {
+            "left": 8,
+            "top": 74,
+            "right": 86,
+            "bottom": 142
+          },
+          "label": {
+            "left": 13,
+            "top": 111.25,
+            "right": 81,
+            "bottom": 138.75
+          },
+          "text": "Create alignment"
+        },
+        {
+          "width": 768,
+          "height": 600,
+          "tab": "Model",
+          "command": "model-from-alignment",
+          "button": {
+            "left": 8,
+            "top": 74,
+            "right": 152,
+            "bottom": 142
+          },
+          "label": {
+            "left": 13,
+            "top": 111.25,
+            "right": 147,
+            "bottom": 138.75
+          },
+          "text": "Create 3D model from alignment"
+        }
+      ],
+      "scope": "Actual Linux Chromium with the production local HTTP backend and software WebGL. Generated scan and alignment fixtures; direct user-like UI clicks, real geometry build/save/reopen. Native Windows/WebView2, user survey correctness and large-cloud performance are outside this navigation check.",
+      "seconds": 73.593,
+      "tested_source_hashes": {
+        "app/web/ribbon-layout.js": "2b0c66929d230397b78b568ff262e283b2dfae69bac83d572b78065aa6f75b98",
+        "app/web/ribbon.js": "bd43daaaa686c75b9a3077aae0a5726400abada01cce01c350b118c4981ba887",
+        "app/web/ribbon-modern.css": "371730970ca458bf81eefdf43b6c81d7ed5e3bc4f3741f96a4535ef62b8816f1",
+        "app/web/alignment-hub.js": "67974b574cad41220f593b2a1c9dd4229d9c1a448ca2919a67a1700ee1990136",
+        "app/web/tunnel-designer-ui.js": "d9798b4fb2a17cb418b3cdb979448a2a196912520fa6b9620c70b5c6de08fdfb",
+        "app/web/parameter-help.js": "1659a81f9c59fea1b7edd37ca039885c2b8b1ad1a060d0c8a25cf0142a4823ee",
+        "app/web/cad-ui.js": "7f01387e1a08706bfcbc0cf2416d1af8860d1332dfcb28ab1e2987de9001cf5d",
+        "app/web/measure-tools-ui.js": "769998284fdfb8a36996ae0eb128da5d1d4e0c37c98f2db887b8c482718eb48c",
+        "app/web/geometry-tools-ui.js": "027c88b6f01ece88812c26e25f6c62d58b61b66d19e3b68db5468b9f4860ccd5",
+        "app/web/index.html": "e1c3db584cc69c1f0ff919e9463b78f3eeae2ac391ea95a0bc8524d5cd0f07b2",
+        "app/web/explorer-polish.js": "1550fc6b4f3d4740f5c5d4e4e86607bbd43bbfbf1cf04b59847894d217329bf6",
+        "app/web/explorer-polish.css": "c43b730827e24bfa7077300adadda65cf0cea8d22f0a4a1173dff5631094632e",
+        "app/web/job-ui.js": "8c7585a32f00e20a8e0d40f01ea760a0fa1a2bac51a4d5d5338efdeb29507cb2",
+        "app/web/theme-ui.js": "4759ad0c33c521193116983466d1ecfb672034d5f18f943fc6419329cd7222d5",
+        "app/web/theme-ui.css": "8204d44fb3f36f55fcbdbcb12e38d71764dfd01e8b95dfa6a59712071c69696b",
+        "app/web/cad.css": "46d66230e823ad9f87606ceb05f8d3aee807f6c89b008e6226f35e50516b97c2"
+      }
+    },
+    "explorer_theme_browser": {
+      "executed_at": "2026-10-26T20:50:40.705Z",
+      "passed": true,
+      "checks": [
+        {
+          "name": "Explorer wraps two visible items and its footer without a full-height empty panel",
+          "passed": true,
+          "layout": {
+            "panel": {
+              "left": 11,
+              "top": 210.5,
+              "right": 311,
+              "bottom": 476.5,
+              "width": 300,
+              "height": 266,
+              "clientHeight": 264,
+              "scrollHeight": 264
+            },
+            "list": {
+              "left": 18,
+              "top": 274.5,
+              "right": 304,
+              "bottom": 428.5,
+              "width": 286,
+              "height": 154,
+              "clientHeight": 154,
+              "scrollHeight": 155
+            },
+            "footer": {
+              "left": 12,
+              "top": 428.5,
+              "right": 310,
+              "bottom": 475.5,
+              "width": 298,
+              "height": 47,
+              "clientHeight": 46,
+              "scrollHeight": 46
+            },
+            "host": {
+              "left": 11,
+              "top": 210.5,
+              "right": 1355,
+              "bottom": 745,
+              "width": 1344,
+              "height": 534.5,
+              "clientHeight": 535,
+              "scrollHeight": 535
+            },
+            "viewport": {
+              "left": 11,
+              "top": 210.5,
+              "right": 1355,
+              "bottom": 745,
+              "width": 1344,
+              "height": 534.5,
+              "clientHeight": 535,
+              "scrollHeight": 535
+            },
+            "canvas": {
+              "left": 11,
+              "top": 210.5,
+              "right": 1355,
+              "bottom": 745,
+              "width": 1344,
+              "height": 534.5,
+              "clientHeight": 535,
+              "scrollHeight": 535
+            },
+            "rows": 2,
+            "capped": "false",
+            "contentHeight": 267
+          }
+        },
+        {
+          "name": "Explorer header has only Options and Collapse; named docking/float actions work and the 3D canvas extends beneath the short card",
+          "passed": true
+        },
+        {
+          "name": "Explorer grows when scan details expand and shrinks again when they collapse",
+          "passed": true,
+          "collapsed_height": 266,
+          "expanded_height": 296
+        },
+        {
+          "name": "Long names ellipsize with full tooltips; yellow/grey bulbs toggle visibility independently of multiple selection",
+          "passed": true
+        },
+        {
+          "name": "Added rows grow the card only to the available viewport; excess rows scroll while the footer remains visible",
+          "passed": true,
+          "layout": {
+            "panel": {
+              "left": 11,
+              "top": 210.5,
+              "right": 311,
+              "bottom": 744.5,
+              "width": 300,
+              "height": 534,
+              "clientHeight": 532,
+              "scrollHeight": 532
+            },
+            "list": {
+              "left": 18,
+              "top": 274.5,
+              "right": 304,
+              "bottom": 696.5,
+              "width": 286,
+              "height": 422,
+              "clientHeight": 422,
+              "scrollHeight": 536
+            },
+            "footer": {
+              "left": 12,
+              "top": 696.5,
+              "right": 310,
+              "bottom": 743.5,
+              "width": 298,
+              "height": 47,
+              "clientHeight": 46,
+              "scrollHeight": 46
+            },
+            "host": {
+              "left": 11,
+              "top": 210.5,
+              "right": 1355,
+              "bottom": 745,
+              "width": 1344,
+              "height": 534.5,
+              "clientHeight": 535,
+              "scrollHeight": 535
+            },
+            "viewport": {
+              "left": 11,
+              "top": 210.5,
+              "right": 1355,
+              "bottom": 745,
+              "width": 1344,
+              "height": 534.5,
+              "clientHeight": 535,
+              "scrollHeight": 535
+            },
+            "canvas": {
+              "left": 11,
+              "top": 210.5,
+              "right": 1355,
+              "bottom": 745,
+              "width": 1344,
+              "height": 534.5,
+              "clientHeight": 535,
+              "scrollHeight": 535
+            },
+            "rows": 10,
+            "capped": "true",
+            "contentHeight": 648
+          }
+        },
+        {
+          "name": "Removing generated duplicated items shrinks the Explorer back to the two-row content height",
+          "passed": true
+        },
+        {
+          "name": "The content-sized Explorer remains width-resizable without losing full filename tooltips",
+          "passed": true,
+          "width": 242.5
+        },
+        {
+          "name": "A click projected into the full-width canvas still recovers an exact original measured point after the Explorer overlay change",
+          "passed": true,
+          "picked": [
+            420005.32295347,
+            285001.26796272316,
+            125.287992403607
+          ]
+        },
+        {
+          "name": "Readable light theme preserves scan/bulb colours, explicit alignment buttons and contained designer layout at1366 and911px",
+          "passed": true
+        },
+        {
+          "name": "Readable dark theme preserves scan/bulb colours, explicit alignment buttons and contained designer layout at1366 and911px",
+          "passed": true
+        },
+        {
+          "name": "Chosen theme survives a browser reload at the same origin",
+          "passed": true
+        },
+        {
+          "name": "Follow Windows responds live to system colour-scheme changes",
+          "passed": true
+        },
+        {
+          "name": "Empty project collapses the Explorer to its small useful content instead of leaving a tall blank card",
+          "passed": true,
+          "height": 171
+        },
+        {
+          "name": "No uncaught JavaScript errors or failed resources across Explorer resizing, themes and designer transitions",
+          "passed": true
+        }
+      ],
+      "errors": [],
+      "responses": [],
+      "layouts": [
+        {
+          "name": "two_items",
+          "panel": {
+            "left": 11,
+            "top": 210.5,
+            "right": 311,
+            "bottom": 476.5,
+            "width": 300,
+            "height": 266,
+            "clientHeight": 264,
+            "scrollHeight": 264
+          },
+          "list": {
+            "left": 18,
+            "top": 274.5,
+            "right": 304,
+            "bottom": 428.5,
+            "width": 286,
+            "height": 154,
+            "clientHeight": 154,
+            "scrollHeight": 155
+          },
+          "footer": {
+            "left": 12,
+            "top": 428.5,
+            "right": 310,
+            "bottom": 475.5,
+            "width": 298,
+            "height": 47,
+            "clientHeight": 46,
+            "scrollHeight": 46
+          },
+          "host": {
+            "left": 11,
+            "top": 210.5,
+            "right": 1355,
+            "bottom": 745,
+            "width": 1344,
+            "height": 534.5,
+            "clientHeight": 535,
+            "scrollHeight": 535
+          },
+          "viewport": {
+            "left": 11,
+            "top": 210.5,
+            "right": 1355,
+            "bottom": 745,
+            "width": 1344,
+            "height": 534.5,
+            "clientHeight": 535,
+            "scrollHeight": 535
+          },
+          "canvas": {
+            "left": 11,
+            "top": 210.5,
+            "right": 1355,
+            "bottom": 745,
+            "width": 1344,
+            "height": 534.5,
+            "clientHeight": 535,
+            "scrollHeight": 535
+          },
+          "rows": 2,
+          "capped": "false",
+          "contentHeight": 267
+        },
+        {
+          "name": "ten_items",
+          "panel": {
+            "left": 11,
+            "top": 210.5,
+            "right": 311,
+            "bottom": 744.5,
+            "width": 300,
+            "height": 534,
+            "clientHeight": 532,
+            "scrollHeight": 532
+          },
+          "list": {
+            "left": 18,
+            "top": 274.5,
+            "right": 304,
+            "bottom": 696.5,
+            "width": 286,
+            "height": 422,
+            "clientHeight": 422,
+            "scrollHeight": 536
+          },
+          "footer": {
+            "left": 12,
+            "top": 696.5,
+            "right": 310,
+            "bottom": 743.5,
+            "width": 298,
+            "height": 47,
+            "clientHeight": 46,
+            "scrollHeight": 46
+          },
+          "host": {
+            "left": 11,
+            "top": 210.5,
+            "right": 1355,
+            "bottom": 745,
+            "width": 1344,
+            "height": 534.5,
+            "clientHeight": 535,
+            "scrollHeight": 535
+          },
+          "viewport": {
+            "left": 11,
+            "top": 210.5,
+            "right": 1355,
+            "bottom": 745,
+            "width": 1344,
+            "height": 534.5,
+            "clientHeight": 535,
+            "scrollHeight": 535
+          },
+          "canvas": {
+            "left": 11,
+            "top": 210.5,
+            "right": 1355,
+            "bottom": 745,
+            "width": 1344,
+            "height": 534.5,
+            "clientHeight": 535,
+            "scrollHeight": 535
+          },
+          "rows": 10,
+          "capped": "true",
+          "contentHeight": 648
+        },
+        {
+          "name": "removed_back_to_two",
+          "panel": {
+            "left": 11,
+            "top": 210.5,
+            "right": 311,
+            "bottom": 476.5,
+            "width": 300,
+            "height": 266,
+            "clientHeight": 264,
+            "scrollHeight": 264
+          },
+          "list": {
+            "left": 18,
+            "top": 274.5,
+            "right": 304,
+            "bottom": 428.5,
+            "width": 286,
+            "height": 154,
+            "clientHeight": 154,
+            "scrollHeight": 155
+          },
+          "footer": {
+            "left": 12,
+            "top": 428.5,
+            "right": 310,
+            "bottom": 475.5,
+            "width": 298,
+            "height": 47,
+            "clientHeight": 46,
+            "scrollHeight": 46
+          },
+          "host": {
+            "left": 11,
+            "top": 210.5,
+            "right": 1355,
+            "bottom": 745,
+            "width": 1344,
+            "height": 534.5,
+            "clientHeight": 535,
+            "scrollHeight": 535
+          },
+          "viewport": {
+            "left": 11,
+            "top": 210.5,
+            "right": 1355,
+            "bottom": 745,
+            "width": 1344,
+            "height": 534.5,
+            "clientHeight": 535,
+            "scrollHeight": 535
+          },
+          "canvas": {
+            "left": 11,
+            "top": 210.5,
+            "right": 1355,
+            "bottom": 745,
+            "width": 1344,
+            "height": 534.5,
+            "clientHeight": 535,
+            "scrollHeight": 535
+          },
+          "rows": 2,
+          "capped": "false",
+          "contentHeight": 267
+        },
+        {
+          "name": "light_1366",
+          "panel": {
+            "left": 11,
+            "top": 255.5,
+            "right": 309,
+            "bottom": 557.5,
+            "width": 298,
+            "height": 302,
+            "clientHeight": 300,
+            "scrollHeight": 300
+          },
+          "list": {
+            "left": 18,
+            "top": 354.796875,
+            "right": 302,
+            "bottom": 509.5,
+            "width": 284,
+            "height": 154.703125,
+            "clientHeight": 155,
+            "scrollHeight": 155
+          },
+          "footer": {
+            "left": 12,
+            "top": 509.5,
+            "right": 308,
+            "bottom": 556.5,
+            "width": 296,
+            "height": 47,
+            "clientHeight": 46,
+            "scrollHeight": 46
+          },
+          "host": {
+            "left": 11,
+            "top": 255.5,
+            "right": 1355,
+            "bottom": 745,
+            "width": 1344,
+            "height": 489.5,
+            "clientHeight": 490,
+            "scrollHeight": 490
+          },
+          "viewport": {
+            "left": 11,
+            "top": 255.5,
+            "right": 1355,
+            "bottom": 627,
+            "width": 1344,
+            "height": 371.5,
+            "clientHeight": 372,
+            "scrollHeight": 372
+          },
+          "canvas": {
+            "left": 11,
+            "top": 255.5,
+            "right": 1355,
+            "bottom": 627,
+            "width": 1344,
+            "height": 371.5,
+            "clientHeight": 372,
+            "scrollHeight": 372
+          },
+          "rows": 2,
+          "capped": "false",
+          "contentHeight": 303,
+          "contrast": {
+            "text": "Main tunnel northbound \u2013 long descriptive survey scan name including station range 100+000 to 100+025",
+            "fg": "rgb(36, 66, 80)",
+            "bg": "rgb(224, 240, 237)",
+            "ratio": 9.06352195726086
+          }
+        },
+        {
+          "name": "designer_light_1366",
+          "dialog": {
+            "top": 34.5625,
+            "bottom": 733.4375,
+            "left": 27.3125,
+            "right": 1338.671875,
+            "height": 698.875,
+            "clientHeight": 697,
+            "scrollHeight": 697
+          },
+          "body": {
+            "top": 277.046875,
+            "bottom": 653.84375,
+            "left": 48.3125,
+            "right": 1317.671875,
+            "height": 376.796875,
+            "clientHeight": 377,
+            "scrollHeight": 377
+          },
+          "editor": {
+            "top": 277.046875,
+            "bottom": 653.84375,
+            "left": 48.3125,
+            "right": 730.859375,
+            "height": 376.796875,
+            "clientHeight": 377,
+            "scrollHeight": 536
+          },
+          "footer": {
+            "top": 665.84375,
+            "bottom": 712.4375,
+            "left": 48.3125,
+            "right": 1317.671875,
+            "height": 46.59375,
+            "clientHeight": 46,
+            "scrollHeight": 46
+          },
+          "help": {
+            "text": "Choose where each profile is used: enter the start and end chainages or pick them in 3D. Use Constant theoretical profile for one shape, or Interpolate between profiles for a transition.",
+            "fg": "rgb(32, 59, 74)",
+            "bg": "rgb(237, 246, 243)",
+            "ratio": 10.682345277057875
+          },
+          "title": {
+            "text": "Create 3D model from alignment",
+            "fg": "rgb(32, 59, 74)",
+            "bg": "rgb(255, 255, 255)",
+            "ratio": 11.758885341370762
+          }
+        },
+        {
+          "name": "light_911",
+          "panel": {
+            "left": 11,
+            "top": 238.5,
+            "right": 309,
+            "bottom": 447.5,
+            "width": 298,
+            "height": 209,
+            "clientHeight": 207,
+            "scrollHeight": 207
+          },
+          "list": {
+            "left": 18,
+            "top": 300.796875,
+            "right": 302,
+            "bottom": 406.5,
+            "width": 284,
+            "height": 105.703125,
+            "clientHeight": 106,
+            "scrollHeight": 143
+          },
+          "footer": {
+            "left": 12,
+            "top": 406.5,
+            "right": 308,
+            "bottom": 446.5,
+            "width": 296,
+            "height": 40,
+            "clientHeight": 39,
+            "scrollHeight": 39
+          },
+          "host": {
+            "left": 11,
+            "top": 238.5,
+            "right": 900,
+            "bottom": 489,
+            "width": 889,
+            "height": 250.5,
+            "clientHeight": 251,
+            "scrollHeight": 251
+          },
+          "viewport": {
+            "left": 11,
+            "top": 238.5,
+            "right": 900,
+            "bottom": 448,
+            "width": 889,
+            "height": 209.5,
+            "clientHeight": 210,
+            "scrollHeight": 210
+          },
+          "canvas": {
+            "left": 11,
+            "top": 238.5,
+            "right": 900,
+            "bottom": 448,
+            "width": 889,
+            "height": 209.5,
+            "clientHeight": 210,
+            "scrollHeight": 210
+          },
+          "rows": 2,
+          "capped": "true",
+          "contentHeight": 247,
+          "contrast": {
+            "text": "Main tunnel northbound \u2013 long descriptive survey scan name including station range 100+000 to 100+025",
+            "fg": "rgb(36, 66, 80)",
+            "bg": "rgb(255, 255, 255)",
+            "ratio": 10.659157826650365
+          }
+        },
+        {
+          "name": "designer_light_911",
+          "dialog": {
+            "top": 10.234375,
+            "bottom": 501.75,
+            "left": 18.21875,
+            "right": 892.765625,
+            "height": 491.515625,
+            "clientHeight": 490,
+            "scrollHeight": 490
+          },
+          "body": {
+            "top": 189.015625,
+            "bottom": 445.453125,
+            "left": 31.21875,
+            "right": 879.765625,
+            "height": 256.4375,
+            "clientHeight": 256,
+            "scrollHeight": 844
+          },
+          "editor": {
+            "top": 189.015625,
+            "bottom": 702.578125,
+            "left": 31.21875,
+            "right": 879.765625,
+            "height": 513.5625,
+            "clientHeight": 514,
+            "scrollHeight": 514
+          },
+          "footer": {
+            "top": 452.453125,
+            "bottom": 490.75,
+            "left": 31.21875,
+            "right": 879.765625,
+            "height": 38.296875,
+            "clientHeight": 37,
+            "scrollHeight": 37
+          },
+          "help": {
+            "text": "Choose where each profile is used: enter the start and end chainages or pick them in 3D. Use Constant theoretical profile for one shape, or Interpolate between profiles for a transition.",
+            "fg": "rgb(32, 59, 74)",
+            "bg": "rgb(237, 246, 243)",
+            "ratio": 10.682345277057875
+          },
+          "title": {
+            "text": "Create 3D model from alignment",
+            "fg": "rgb(32, 59, 74)",
+            "bg": "rgb(255, 255, 255)",
+            "ratio": 11.758885341370762
+          }
+        },
+        {
+          "name": "dark_1366",
+          "panel": {
+            "left": 11,
+            "top": 255.5,
+            "right": 309,
+            "bottom": 557.5,
+            "width": 298,
+            "height": 302,
+            "clientHeight": 300,
+            "scrollHeight": 300
+          },
+          "list": {
+            "left": 18,
+            "top": 354.796875,
+            "right": 302,
+            "bottom": 509.5,
+            "width": 284,
+            "height": 154.703125,
+            "clientHeight": 155,
+            "scrollHeight": 155
+          },
+          "footer": {
+            "left": 12,
+            "top": 509.5,
+            "right": 308,
+            "bottom": 556.5,
+            "width": 296,
+            "height": 47,
+            "clientHeight": 46,
+            "scrollHeight": 46
+          },
+          "host": {
+            "left": 11,
+            "top": 255.5,
+            "right": 1355,
+            "bottom": 745,
+            "width": 1344,
+            "height": 489.5,
+            "clientHeight": 490,
+            "scrollHeight": 490
+          },
+          "viewport": {
+            "left": 11,
+            "top": 255.5,
+            "right": 1355,
+            "bottom": 627,
+            "width": 1344,
+            "height": 371.5,
+            "clientHeight": 372,
+            "scrollHeight": 372
+          },
+          "canvas": {
+            "left": 11,
+            "top": 255.5,
+            "right": 1355,
+            "bottom": 627,
+            "width": 1344,
+            "height": 371.5,
+            "clientHeight": 372,
+            "scrollHeight": 372
+          },
+          "rows": 2,
+          "capped": "false",
+          "contentHeight": 303,
+          "contrast": {
+            "text": "Main tunnel northbound \u2013 long descriptive survey scan name including station range 100+000 to 100+025",
+            "fg": "rgb(227, 238, 243)",
+            "bg": "rgb(33, 55, 67)",
+            "ratio": 10.513116371054842
+          }
+        },
+        {
+          "name": "designer_dark_1366",
+          "dialog": {
+            "top": 34.5625,
+            "bottom": 733.4375,
+            "left": 27.3125,
+            "right": 1338.671875,
+            "height": 698.875,
+            "clientHeight": 697,
+            "scrollHeight": 697
+          },
+          "body": {
+            "top": 277.046875,
+            "bottom": 653.84375,
+            "left": 48.3125,
+            "right": 1317.671875,
+            "height": 376.796875,
+            "clientHeight": 377,
+            "scrollHeight": 377
+          },
+          "editor": {
+            "top": 277.046875,
+            "bottom": 653.84375,
+            "left": 48.3125,
+            "right": 730.859375,
+            "height": 376.796875,
+            "clientHeight": 377,
+            "scrollHeight": 536
+          },
+          "footer": {
+            "top": 665.84375,
+            "bottom": 712.4375,
+            "left": 48.3125,
+            "right": 1317.671875,
+            "height": 46.59375,
+            "clientHeight": 46,
+            "scrollHeight": 46
+          },
+          "help": {
+            "text": "Choose where each profile is used: enter the start and end chainages or pick them in 3D. Use Constant theoretical profile for one shape, or Interpolate between profiles for a transition.",
+            "fg": "rgb(174, 196, 207)",
+            "bg": "rgb(27, 48, 64)",
+            "ratio": 7.51365878666957
+          },
+          "title": {
+            "text": "Create 3D model from alignment",
+            "fg": "rgb(227, 238, 243)",
+            "bg": "rgb(25, 44, 56)",
+            "ratio": 12.195829751983588
+          }
+        },
+        {
+          "name": "dark_911",
+          "panel": {
+            "left": 11,
+            "top": 238.5,
+            "right": 309,
+            "bottom": 447.5,
+            "width": 298,
+            "height": 209,
+            "clientHeight": 207,
+            "scrollHeight": 207
+          },
+          "list": {
+            "left": 18,
+            "top": 300.796875,
+            "right": 302,
+            "bottom": 406.5,
+            "width": 284,
+            "height": 105.703125,
+            "clientHeight": 106,
+            "scrollHeight": 143
+          },
+          "footer": {
+            "left": 12,
+            "top": 406.5,
+            "right": 308,
+            "bottom": 446.5,
+            "width": 296,
+            "height": 40,
+            "clientHeight": 39,
+            "scrollHeight": 39
+          },
+          "host": {
+            "left": 11,
+            "top": 238.5,
+            "right": 900,
+            "bottom": 489,
+            "width": 889,
+            "height": 250.5,
+            "clientHeight": 251,
+            "scrollHeight": 251
+          },
+          "viewport": {
+            "left": 11,
+            "top": 238.5,
+            "right": 900,
+            "bottom": 448,
+            "width": 889,
+            "height": 209.5,
+            "clientHeight": 210,
+            "scrollHeight": 210
+          },
+          "canvas": {
+            "left": 11,
+            "top": 238.5,
+            "right": 900,
+            "bottom": 448,
+            "width": 889,
+            "height": 209.5,
+            "clientHeight": 210,
+            "scrollHeight": 210
+          },
+          "rows": 2,
+          "capped": "true",
+          "contentHeight": 247,
+          "contrast": {
+            "text": "Main tunnel northbound \u2013 long descriptive survey scan name including station range 100+000 to 100+025",
+            "fg": "rgb(227, 238, 243)",
+            "bg": "rgb(33, 55, 67)",
+            "ratio": 10.513116371054842
+          }
+        },
+        {
+          "name": "designer_dark_911",
+          "dialog": {
+            "top": 10.234375,
+            "bottom": 501.75,
+            "left": 18.21875,
+            "right": 892.765625,
+            "height": 491.515625,
+            "clientHeight": 490,
+            "scrollHeight": 490
+          },
+          "body": {
+            "top": 189.015625,
+            "bottom": 445.453125,
+            "left": 31.21875,
+            "right": 879.765625,
+            "height": 256.4375,
+            "clientHeight": 256,
+            "scrollHeight": 844
+          },
+          "editor": {
+            "top": 189.015625,
+            "bottom": 702.578125,
+            "left": 31.21875,
+            "right": 879.765625,
+            "height": 513.5625,
+            "clientHeight": 514,
+            "scrollHeight": 514
+          },
+          "footer": {
+            "top": 452.453125,
+            "bottom": 490.75,
+            "left": 31.21875,
+            "right": 879.765625,
+            "height": 38.296875,
+            "clientHeight": 37,
+            "scrollHeight": 37
+          },
+          "help": {
+            "text": "Choose where each profile is used: enter the start and end chainages or pick them in 3D. Use Constant theoretical profile for one shape, or Interpolate between profiles for a transition.",
+            "fg": "rgb(174, 196, 207)",
+            "bg": "rgb(27, 48, 64)",
+            "ratio": 7.51365878666957
+          },
+          "title": {
+            "text": "Create 3D model from alignment",
+            "fg": "rgb(227, 238, 243)",
+            "bg": "rgb(25, 44, 56)",
+            "ratio": 12.195829751983588
+          }
+        },
+        {
+          "name": "empty",
+          "panel": {
+            "left": 11,
+            "top": 210.5,
+            "right": 309,
+            "bottom": 381.5,
+            "width": 298,
+            "height": 171,
+            "clientHeight": 169,
+            "scrollHeight": 169
+          },
+          "list": {
+            "left": 18,
+            "top": 274.5,
+            "right": 302,
+            "bottom": 333.5,
+            "width": 284,
+            "height": 59,
+            "clientHeight": 59,
+            "scrollHeight": 60
+          },
+          "footer": {
+            "left": 12,
+            "top": 333.5,
+            "right": 308,
+            "bottom": 380.5,
+            "width": 296,
+            "height": 47,
+            "clientHeight": 46,
+            "scrollHeight": 46
+          },
+          "host": {
+            "left": 11,
+            "top": 210.5,
+            "right": 1355,
+            "bottom": 745,
+            "width": 1344,
+            "height": 534.5,
+            "clientHeight": 535,
+            "scrollHeight": 535
+          },
+          "viewport": {
+            "left": 11,
+            "top": 210.5,
+            "right": 1355,
+            "bottom": 745,
+            "width": 1344,
+            "height": 534.5,
+            "clientHeight": 535,
+            "scrollHeight": 535
+          },
+          "canvas": {
+            "left": 11,
+            "top": 210.5,
+            "right": 1355,
+            "bottom": 745,
+            "width": 1344,
+            "height": 534.5,
+            "clientHeight": 535,
+            "scrollHeight": 535
+          },
+          "rows": 0,
+          "capped": "false",
+          "contentHeight": 172
+        }
+      ],
+      "scope": "Actual Linux Chromium/production localhost UI on generated scans. Checks dynamic card height, row controls, width dragging, visual contrast, browser-origin theme persistence, media emulation and designer layout. Native Windows theme persistence is a separate desktop-bridge check.",
+      "seconds": 59.676,
+      "tested_source_hashes": {
+        "app/web/explorer-polish.js": "1550fc6b4f3d4740f5c5d4e4e86607bbd43bbfbf1cf04b59847894d217329bf6",
+        "app/web/explorer-polish.css": "c43b730827e24bfa7077300adadda65cf0cea8d22f0a4a1173dff5631094632e",
+        "app/web/job-ui.js": "8c7585a32f00e20a8e0d40f01ea760a0fa1a2bac51a4d5d5338efdeb29507cb2",
+        "app/web/theme-ui.js": "4759ad0c33c521193116983466d1ecfb672034d5f18f943fc6419329cd7222d5",
+        "app/web/theme-ui.css": "8204d44fb3f36f55fcbdbcb12e38d71764dfd01e8b95dfa6a59712071c69696b",
+        "app/web/index.html": "e1c3db584cc69c1f0ff919e9463b78f3eeae2ac391ea95a0bc8524d5cd0f07b2",
+        "app/web/tunnel-designer-ui.js": "d9798b4fb2a17cb418b3cdb979448a2a196912520fa6b9620c70b5c6de08fdfb",
+        "app/web/ribbon-layout.js": "2b0c66929d230397b78b568ff262e283b2dfae69bac83d572b78065aa6f75b98",
+        "app/web/ribbon.js": "bd43daaaa686c75b9a3077aae0a5726400abada01cce01c350b118c4981ba887",
+        "app/web/detached-ui.js": "a1e6d5cb2b9c488265dcdc2bbe9a0220b15b50a6969afdedb06fc87c16ebbaf2",
+        "app/web/detached-client.js": "d8eaf043a7c631a52d3b11648b7212b7bc74518a330176fbc45e3850d4afa2fe",
+        "app/web/cad-ui.js": "7f01387e1a08706bfcbc0cf2416d1af8860d1332dfcb28ab1e2987de9001cf5d",
+        "app/web/cad.css": "46d66230e823ad9f87606ceb05f8d3aee807f6c89b008e6226f35e50516b97c2"
+      },
+      "source_hashes_before": {
+        "app/web/explorer-polish.js": "1550fc6b4f3d4740f5c5d4e4e86607bbd43bbfbf1cf04b59847894d217329bf6",
+        "app/web/explorer-polish.css": "c43b730827e24bfa7077300adadda65cf0cea8d22f0a4a1173dff5631094632e",
+        "app/web/job-ui.js": "8c7585a32f00e20a8e0d40f01ea760a0fa1a2bac51a4d5d5338efdeb29507cb2",
+        "app/web/theme-ui.js": "4759ad0c33c521193116983466d1ecfb672034d5f18f943fc6419329cd7222d5",
+        "app/web/theme-ui.css": "8204d44fb3f36f55fcbdbcb12e38d71764dfd01e8b95dfa6a59712071c69696b",
+        "app/web/index.html": "e1c3db584cc69c1f0ff919e9463b78f3eeae2ac391ea95a0bc8524d5cd0f07b2",
+        "app/web/tunnel-designer-ui.js": "d9798b4fb2a17cb418b3cdb979448a2a196912520fa6b9620c70b5c6de08fdfb",
+        "app/web/ribbon-layout.js": "2b0c66929d230397b78b568ff262e283b2dfae69bac83d572b78065aa6f75b98",
+        "app/web/ribbon.js": "bd43daaaa686c75b9a3077aae0a5726400abada01cce01c350b118c4981ba887",
+        "app/web/detached-ui.js": "a1e6d5cb2b9c488265dcdc2bbe9a0220b15b50a6969afdedb06fc87c16ebbaf2",
+        "app/web/detached-client.js": "d8eaf043a7c631a52d3b11648b7212b7bc74518a330176fbc45e3850d4afa2fe",
+        "app/web/cad-ui.js": "7f01387e1a08706bfcbc0cf2416d1af8860d1332dfcb28ab1e2987de9001cf5d",
+        "app/web/cad.css": "46d66230e823ad9f87606ceb05f8d3aee807f6c89b008e6226f35e50516b97c2"
+      },
+      "source_hashes_after": {
+        "app/web/explorer-polish.js": "1550fc6b4f3d4740f5c5d4e4e86607bbd43bbfbf1cf04b59847894d217329bf6",
+        "app/web/explorer-polish.css": "c43b730827e24bfa7077300adadda65cf0cea8d22f0a4a1173dff5631094632e",
+        "app/web/job-ui.js": "8c7585a32f00e20a8e0d40f01ea760a0fa1a2bac51a4d5d5338efdeb29507cb2",
+        "app/web/theme-ui.js": "4759ad0c33c521193116983466d1ecfb672034d5f18f943fc6419329cd7222d5",
+        "app/web/theme-ui.css": "8204d44fb3f36f55fcbdbcb12e38d71764dfd01e8b95dfa6a59712071c69696b",
+        "app/web/index.html": "e1c3db584cc69c1f0ff919e9463b78f3eeae2ac391ea95a0bc8524d5cd0f07b2",
+        "app/web/tunnel-designer-ui.js": "d9798b4fb2a17cb418b3cdb979448a2a196912520fa6b9620c70b5c6de08fdfb",
+        "app/web/ribbon-layout.js": "2b0c66929d230397b78b568ff262e283b2dfae69bac83d572b78065aa6f75b98",
+        "app/web/ribbon.js": "bd43daaaa686c75b9a3077aae0a5726400abada01cce01c350b118c4981ba887",
+        "app/web/detached-ui.js": "a1e6d5cb2b9c488265dcdc2bbe9a0220b15b50a6969afdedb06fc87c16ebbaf2",
+        "app/web/detached-client.js": "d8eaf043a7c631a52d3b11648b7212b7bc74518a330176fbc45e3850d4afa2fe",
+        "app/web/cad-ui.js": "7f01387e1a08706bfcbc0cf2416d1af8860d1332dfcb28ab1e2987de9001cf5d",
+        "app/web/cad.css": "46d66230e823ad9f87606ceb05f8d3aee807f6c89b008e6226f35e50516b97c2"
+      },
+      "sources_unchanged": true
+    },
+    "explorer_dock_browser": {
+      "checks": [
+        {
+          "name": "Short-window defaults retain a usable scrollable item list and independently clickable bulb",
+          "passed": true
+        },
+        {
+          "name": "right dock retains the short-window content height cap",
+          "passed": true
+        },
+        {
+          "name": "left dock retains the short-window content height cap",
+          "passed": true
+        },
+        {
+          "name": "Named command-bar control exposes coordinate entry and options, accepts LINE, and preserves explicit collapse/expand choice across resize",
+          "passed": true
+        }
+      ],
+      "layouts": [
+        {
+          "name": "before",
+          "sidebar": {
+            "top": 238.5,
+            "bottom": 447.5,
+            "height": 209,
+            "clientHeight": 207,
+            "scrollHeight": 207
+          },
+          "inlineHeight": "209px",
+          "viewport": {
+            "top": 238.5,
+            "bottom": 448,
+            "height": 209.5,
+            "clientHeight": 210,
+            "scrollHeight": 210
+          },
+          "list": {
+            "top": 300.796875,
+            "bottom": 406.5,
+            "height": 105.703125,
+            "clientHeight": 106,
+            "scrollHeight": 143
+          },
+          "cap": "true",
+          "content": "247"
+        },
+        {
+          "name": "right",
+          "sidebar": {
+            "top": 238.5,
+            "bottom": 447.5,
+            "height": 209,
+            "clientHeight": 207,
+            "scrollHeight": 207
+          },
+          "inlineHeight": "209px",
+          "viewport": {
+            "top": 238.5,
+            "bottom": 448,
+            "height": 209.5,
+            "clientHeight": 210,
+            "scrollHeight": 210
+          },
+          "list": {
+            "top": 300.796875,
+            "bottom": 406.5,
+            "height": 105.703125,
+            "clientHeight": 106,
+            "scrollHeight": 143
+          },
+          "cap": "true",
+          "content": "247"
+        },
+        {
+          "name": "left",
+          "sidebar": {
+            "top": 238.5,
+            "bottom": 447.5,
+            "height": 209,
+            "clientHeight": 207,
+            "scrollHeight": 207
+          },
+          "inlineHeight": "209px",
+          "viewport": {
+            "top": 238.5,
+            "bottom": 448,
+            "height": 209.5,
+            "clientHeight": 210,
+            "scrollHeight": 210
+          },
+          "list": {
+            "top": 300.796875,
+            "bottom": 406.5,
+            "height": 105.703125,
+            "clientHeight": 106,
+            "scrollHeight": 143
+          },
+          "cap": "true",
+          "content": "247"
+        },
+        {
+          "name": "collapsed_again",
+          "sidebar": {
+            "top": 238.5,
+            "bottom": 447.5,
+            "height": 209,
+            "clientHeight": 207,
+            "scrollHeight": 207
+          },
+          "inlineHeight": "209px",
+          "viewport": {
+            "top": 238.5,
+            "bottom": 448,
+            "height": 209.5,
+            "clientHeight": 210,
+            "scrollHeight": 210
+          },
+          "list": {
+            "top": 300.796875,
+            "bottom": 406.5,
+            "height": 105.703125,
+            "clientHeight": 106,
+            "scrollHeight": 143
+          },
+          "cap": "true",
+          "content": "247"
+        }
+      ],
+      "errors": [],
+      "passed": true,
+      "source_hashes_before": {
+        "app/web/explorer-polish.js": "1550fc6b4f3d4740f5c5d4e4e86607bbd43bbfbf1cf04b59847894d217329bf6",
+        "app/web/explorer-polish.css": "c43b730827e24bfa7077300adadda65cf0cea8d22f0a4a1173dff5631094632e",
+        "app/web/job-ui.js": "8c7585a32f00e20a8e0d40f01ea760a0fa1a2bac51a4d5d5338efdeb29507cb2",
+        "app/web/index.html": "e1c3db584cc69c1f0ff919e9463b78f3eeae2ac391ea95a0bc8524d5cd0f07b2",
+        "app/web/cad-ui.js": "7f01387e1a08706bfcbc0cf2416d1af8860d1332dfcb28ab1e2987de9001cf5d",
+        "app/web/cad.css": "46d66230e823ad9f87606ceb05f8d3aee807f6c89b008e6226f35e50516b97c2"
+      },
+      "source_hashes_after": {
+        "app/web/explorer-polish.js": "1550fc6b4f3d4740f5c5d4e4e86607bbd43bbfbf1cf04b59847894d217329bf6",
+        "app/web/explorer-polish.css": "c43b730827e24bfa7077300adadda65cf0cea8d22f0a4a1173dff5631094632e",
+        "app/web/job-ui.js": "8c7585a32f00e20a8e0d40f01ea760a0fa1a2bac51a4d5d5338efdeb29507cb2",
+        "app/web/index.html": "e1c3db584cc69c1f0ff919e9463b78f3eeae2ac391ea95a0bc8524d5cd0f07b2",
+        "app/web/cad-ui.js": "7f01387e1a08706bfcbc0cf2416d1af8860d1332dfcb28ab1e2987de9001cf5d",
+        "app/web/cad.css": "46d66230e823ad9f87606ceb05f8d3aee807f6c89b008e6226f35e50516b97c2"
+      },
+      "sources_unchanged": true
+    },
+    "permanent_removal_browser": {
+      "passed": true,
+      "checks": [
+        {
+          "name": "Permanent removal is a visible individual Edit ribbon button at 1366, 911 and 768 px",
+          "passed": true
+        },
+        {
+          "name": "Review states exact deleted/retained counts; cancelling without confirmation leaves both scans unchanged",
+          "passed": true
+        },
+        {
+          "name": "Explicit confirmation physically compacts ordinary deleted points and clears obsolete deleted groups and workspace Undo",
+          "passed": true,
+          "removed": 201,
+          "remaining": 802
+        },
+        {
+          "name": "Cleaning-only restoration archives have a working right-click permanent-removal route even with zero masked points",
+          "passed": true
+        },
+        {
+          "name": "Confirmed archive-only cleanup removes restoration groups while keeping the already-cleaned cloud intact; narrow dark review remains contained",
+          "passed": true
+        },
+        {
+          "name": "After both cleanup operations permanent removal correctly reports that no deleted points remain",
+          "passed": true
+        },
+        {
+          "name": "Save As \u2192 New project \u2192 Open preserves exact remaining counts and does not recreate forgotten restoration archives",
+          "passed": true
+        },
+        {
+          "name": "No uncaught JavaScript errors or failed HTTP resources during review, physical removal, archive cleanup and project reopen",
+          "passed": true
+        },
+        {
+          "name": "Independent saved-project read verifies exact retained float64 XYZ/attributes, no remaining mask/groups and archive tombstone",
+          "passed": true
+        }
+      ],
+      "errors": [],
+      "responses": [],
+      "scope": "Actual production HTTP and Chromium on Linux with generated small masked and archived cleaning fixtures. Not native Windows or 550-million-point performance.",
+      "elapsed_seconds": 36.06045317400276,
+      "source_hashes": {
+        "app/scan_compaction.py": "17b68496ecc8e427d988af3d1b95364abdafdcf9f275bd1a8d19354af13b7471",
+        "app/scan_edits.py": "97180faf0308fe3f709e575f632618ef31c5b1a6f6fb4357cd90a2ffdd6d8896",
+        "app/job_api.py": "90ec899c9ee7fb9f67cd1414263fae86a4e4c329437d22d269255ac091d56499",
+        "app/server.py": "32322346a105154247fbfe596640aa11a641e401e325e64632b8e44c75fd7edb",
+        "app/web/permanent-points-ui.js": "5ba4d9ff7953d4013a453ec79ce17555f56045af87ed1c16ed1138909752079c",
+        "app/web/permanent-points-ui.css": "b0dcb3636934b1b0cb8df2e6b014e99cc8b41cc522740e889560dec88999f9db",
+        "app/web/job-ui.js": "8c7585a32f00e20a8e0d40f01ea760a0fa1a2bac51a4d5d5338efdeb29507cb2",
+        "app/web/workspace-ui.js": "3c53c23d092ca42f75cd00e4849a77d9f6e370dbada57563bcb53194c8f22d5c",
+        "app/web/ribbon-layout.js": "2b0c66929d230397b78b568ff262e283b2dfae69bac83d572b78065aa6f75b98",
+        "app/web/index.html": "e1c3db584cc69c1f0ff919e9463b78f3eeae2ac391ea95a0bc8524d5cd0f07b2"
+      }
+    },
+    "theme_bridge_javascript": {
+      "passed": true,
+      "checks": [
+        {
+          "name": "Native saved preference restores without overwriting it",
+          "passed": true
+        },
+        {
+          "name": "Late native read preserves the user choice and writes remain ordered",
+          "passed": true
+        },
+        {
+          "name": "A late desktop bridge persists an existing user choice",
+          "passed": true
+        },
+        {
+          "name": "Save failure keeps the chosen appearance and a later choice can save",
+          "passed": true
+        }
+      ],
+      "scope": "Focused JavaScript native-preference timing and failure contracts using production theme-ui.js in a Node VM. No native WebView2 execution.",
+      "source_sha256": "4759ad0c33c521193116983466d1ecfb672034d5f18f943fc6419329cd7222d5"
+    },
+    "installer_transactions": {
+      "release": "0.17.1",
+      "suite": "installer transactions and startup isolation",
+      "test_ids": [
+        "test_installer.InstallerTests.test_active_application_blocks_installation",
+        "test_installer.InstallerTests.test_component_failure_preserves_active_version",
+        "test_installer.InstallerTests.test_damaged_payload_never_activates",
+        "test_installer.InstallerTests.test_install_preserves_data_previous_release_and_index",
+        "test_installer.InstallerTests.test_install_preserves_oversized_workspace_and_backup_byte_for_byte",
+        "test_installer.InstallerTests.test_installer_leaves_staging_directory_before_activation",
+        "test_installer.InstallerTests.test_marker_failure_rolls_back_both_directories",
+        "test_installer.InstallerTests.test_path_traversal_rejected",
+        "test_installer.InstallerTests.test_reinstall_retains_previous_same_version",
+        "test_installer.InstallerTests.test_startup_metadata_self_check_failure_preserves_user_workspace_and_release",
+        "test_installer.InstallerTests.test_startup_self_check_refuses_another_workspace_before_writing",
+        "test_installer.InstallerTests.test_startup_self_check_refuses_existing_project_before_writing"
+      ],
+      "tests_run": 12,
+      "failures": [],
+      "errors": [],
+      "skipped": [],
+      "passed": true,
+      "elapsed_seconds": 3.2444192670009215,
+      "native_windows_execution": false,
+      "source_hashes": {
+        "packaging/test_installer.py": "3330effac4cf86559830a743b3c0251172bb1d36d6c241f951fffa3fae003d35",
+        "packaging/windows_installer.py": "0bdedf031914a2a66e9d426c23499ec010bbeae76e69eb8c3624b19b806c6d6a",
+        "packaging/startup_smoke.py": "59c2562ccda52b90bf84712f0f23d9d074021cae921087c63b6e3532b4e4d411",
+        "packaging/TunnelStudio.nsi": "1f099b6683b585511a3e9ac42e10c673e9dd70b891619c1ae4c5e34087895a1e"
+      },
+      "scope": "Installer activation checks on Linux. Includes complete preservation and backup of a >20 MB existing project.json, rejection of nonisolated/existing self-check workspaces, and activation refusal on startup-check failure. No native Windows runtime claim."
+    },
+    "startup_self_check": {
+      "empty_workspace_persisted": true,
+      "fixture_data": "Synthetic metadata only; no scan points or user project paths.",
+      "fixture_metadata_bytes": 21000132,
+      "fixture_sha256": "17cac654d49c88fa4788d5c400cc118f4f61b5f9e83c5db05f9742b3cabfab4c",
+      "isolated_workspace_verified": true,
+      "passed": true,
+      "previous_autosave_bytes_preserved": true,
+      "previous_session_named_snapshot_reopened": true,
+      "recovery_sha256": "17cac654d49c88fa4788d5c400cc118f4f61b5f9e83c5db05f9742b3cabfab4c",
+      "saved_metadata_content_sha256": "fc9156a834667ae1d729e9e6280b7326f218fb854e2671d23120645bb7485ba8",
+      "startup_opened_blank": true,
+      "release": "0.17.1",
+      "backend_modules_imported": [
+        "geometry_tools",
+        "feature_selection",
+        "measure_tools",
+        "scan_compaction",
+        "ui_preferences"
+      ],
+      "elapsed_seconds": 5.3413394239978516,
+      "runtime": "/workspace/scratch/bab272ca555f/tmp/inspection_runtime/bin/python",
+      "host": "Linux-6.18.55-x86_64-with-glibc2.39",
+      "native_windows_execution": false,
+      "scope": "The same oversized-metadata self-check body used before installer activation, executed on Linux with the matching dependency runtime. Native Windows execution occurs when the installer runs on Windows.",
+      "source_hashes": {
+        "packaging/startup_smoke.py": "59c2562ccda52b90bf84712f0f23d9d074021cae921087c63b6e3532b4e4d411",
+        "packaging/windows_installer.py": "0bdedf031914a2a66e9d426c23499ec010bbeae76e69eb8c3624b19b806c6d6a",
+        "app/projects.py": "7065e3d4355cb31b56557c8b5da5388581128771b3bb248833320372be591c1b",
+        "app/session_start.py": "eef284234e82e0e6e467578341d6978e82620ba73c634f57ebbb224087967d66",
+        "app/server.py": "32322346a105154247fbfe596640aa11a641e401e325e64632b8e44c75fd7edb",
+        "app/release.py": "8fea4f69f1209d339dd1f1e5b6622a28f910b78f7eb5ffe5d32f4d9726a8265c",
+        "app/geometry_tools.py": "da62b1f4d4135ef0d825990201ab215126f6dc47c90a3ebb73ec6d17d701e4af",
+        "app/feature_selection.py": "668bbb0f6415ecf01a85bf968d8180abdd130612104fe7fc3ecd49284fef59f4",
+        "app/measure_tools.py": "4d582257c4a2d04a4a54b57f1fa25abdd69b5c46a04249b31ec1531bf61483e5",
+        "app/scan_compaction.py": "17b68496ecc8e427d988af3d1b95364abdafdcf9f275bd1a8d19354af13b7471",
+        "app/ui_preferences.py": "ae49ff380c05bb96bdee825a4c5e2001ee8de7a74fe4f124c8b1480312fc3a2a",
+        "app/desktop.py": "5a7f2791d3b376a7b95ea4a45d1093ae96257bcc4e830b66e86a481a276a6ff3"
+      }
+    },
+    "unchanged_runtime": {
+      "release": "0.17.1",
+      "baseline_version": "0.16.0",
+      "baseline_installer_sha256": "bfa22e83bd0acdea43f2059ba79765849c43a247772ea5bfaf9b91ce886a4075",
+      "baseline_installer_bytes": 244733549,
+      "baseline_manifest_sha256": "4bc91854f80a1dd0b7dde41dc2986d430c1cc6543a56f454d35f6fd532ee6897",
+      "verified_baseline_payload_files": 20278,
+      "archive_missing_file_count": 0,
+      "archive_extra_file_count": 0,
+      "extracted_missing_file_count": 0,
+      "extracted_extra_file_count": 0,
+      "hash_mismatch_count": 0,
+      "nonarchive_transfer_artifacts_omitted": [
+        "runtime/mesh_engines/open3d/.Open3D.dll.NcDtsd"
+      ],
+      "runtime_files_staged_unchanged": 20001,
+      "staged_runtime_hash_mismatch_count": 0,
+      "application_source_frozen": false,
+      "application_source_copied": false,
+      "stage": "/workspace/scratch/bab272ca555f/tunnel_studio_next/work/build_0_17_1/stage",
+      "baseline_manifest": "/workspace/scratch/bab272ca555f/tunnel_studio_next/work/build_0_17_1/baseline/FILES_SHA256.json",
+      "native_windows_execution": false
+    }
+  },
+  "evidence_file_hashes": {
+    "work/validation_0_17_1/focused_backend.json": "e977ddd418451106823cdf7e1317c0df4a0e5e0d6f2e384f3d3dd3aff1ac6918",
+    "work/validation_0_17_1/permanent_points.json": "d4d29dece61357cf156fbfe4dc20364c5ec72b4ea01f7d3756b9bf888cd176c6",
+    "work/validation_0_17_1/ui_preferences.json": "d4b1e844f7e96b0a29bbd4f91576a5990e7d82c47b0941c0b4baf36d79474d01",
+    "work/validation_0_17_1/alignment_browser.json": "0977b087cce2d43639b1d482abe76998aa63e792c5184cb19188cce85535a0ed",
+    "work/validation_0_17_1/explorer_theme_browser.json": "6efc6cea7356590b47696626399d0db60e1aa235204ff02a9bff3eb2e321b8ce",
+    "work/validation_0_17_1/explorer_dock_browser.json": "8fcc3bfda16a74c70530ef3a71a636f22cdad68eff68c8c90ca8f3bdcb309b94",
+    "work/validation_0_17_1/permanent_points_browser.json": "7726c588dae302d354adee2c133b7bdbbc56776876e1fd0dda242185a954e83d",
+    "work/validation_0_17_1/theme_preference_logic.json": "f698d344cb413beae724e554b7a9f7ff683e45a6c036829395afdb2117cffa5f",
+    "work/build_0_17_1/installer_transactions.json": "1baa46cfd11088083e734540028101a6438144f208a8d9d843acd42b891ffb99",
+    "work/build_0_17_1/startup_smoke.json": "996b8bc809bb798f563dfcf2b4bba2e6a1ad40cfab84c148e0e1565023c22360"
+  },
+  "reference_workflow": {
+    "source": "Six user-supplied Amberg Tunnel screenshots dated 20 October 2026, retrieved and visually reviewed for this correction.",
+    "library_file_ids": [
+      "libfile_5986c763bfb88191bead13e0c4c8c2a5",
+      "libfile_4fab7fd7aad88191a9a725c6d2fbe141",
+      "libfile_c022e9fde55081918fa5a66f766cc54f",
+      "libfile_22e0310b89288191bde4e8d1d742a547",
+      "libfile_b99f876d46c88191a5275d2c8215e10f",
+      "libfile_81ce367546748191a1708a0a09b72ea1"
+    ],
+    "mapping": [
+      "Horizontal alignment \u2192 Plan alignment",
+      "Vertical alignment \u2192 Heights / gradients",
+      "Theoretical profiles \u2192 Tunnel profiles",
+      "Theoretical sections \u2192 Chainage ranges",
+      "3D model \u2192 Preview & build"
+    ]
+  },
+  "syntax": {
+    "python_files": 132,
+    "python_paths": [
+      "app/alignment_model.py",
+      "app/analysis_tools.py",
+      "app/browser_mode.py",
+      "app/cad_api.py",
+      "app/cad_geometry.py",
+      "app/checker_evidence.py",
+      "app/clean_tunnel.py",
+      "app/combined_denoising.py",
+      "app/core.py",
+      "app/demo_targets.py",
+      "app/design_api.py",
+      "app/design_compare.py",
+      "app/desktop.py",
+      "app/detached_windows.py",
+      "app/detail_preview.py",
+      "app/e57_setup_photos.py",
+      "app/e57_worker.py",
+      "app/editing.py",
+      "app/exchange.py",
+      "app/feature_selection.py",
+      "app/geometry_tools.py",
+      "app/gusac.py",
+      "app/heatmap.py",
+      "app/hspca_codec.py",
+      "app/hspca_import.py",
+      "app/hspca_worker.py",
+      "app/inspection.py",
+      "app/inspection_api.py",
+      "app/inspection_geometry.py",
+      "app/inspection_points.py",
+      "app/install_bundle.py",
+      "app/install_windows.py",
+      "app/irregular_surfaces.py",
+      "app/job_api.py",
+      "app/jobdata.py",
+      "app/joint_scan.py",
+      "app/large_sections.py",
+      "app/leica_bridge.py",
+      "app/leica_e57_worker.py",
+      "app/leica_project.py",
+      "app/lining_features.py",
+      "app/lining_tiles.py",
+      "app/mask_storage.py",
+      "app/measure_tools.py",
+      "app/mesh_geometry.py",
+      "app/mesh_preview.py",
+      "app/mesh_repair.py",
+      "app/mesh_to_cloud.py",
+      "app/meshing.py",
+      "app/native_progress.py",
+      "app/ply_ascii.py",
+      "app/pointio.py",
+      "app/preview_index.py",
+      "app/preview_store.py",
+      "app/project_maintenance.py",
+      "app/project_validation.py",
+      "app/projects.py",
+      "app/ray_box_extraction.py",
+      "app/reflection_cleaning.py",
+      "app/registered_cloud.py",
+      "app/registration.py",
+      "app/registration_network.py",
+      "app/registration_references.py",
+      "app/registration_workspace.py",
+      "app/release.py",
+      "app/reporting.py",
+      "app/ring_creep.py",
+      "app/ring_suggestions.py",
+      "app/rtc360_folder.py",
+      "app/rtc360_image_probe.py",
+      "app/rtc360_native.py",
+      "app/rtc360_native_worker.py",
+      "app/rtc360_optics.py",
+      "app/rtc360_scan_probe.py",
+      "app/rtc360_source.py",
+      "app/runtime_diagnostics.py",
+      "app/scan_compaction.py",
+      "app/scan_edits.py",
+      "app/scan_export.py",
+      "app/scan_geometry.py",
+      "app/scene_objects.py",
+      "app/section_api.py",
+      "app/section_path.py",
+      "app/section_research.py",
+      "app/section_shape.py",
+      "app/server.py",
+      "app/session_start.py",
+      "app/setup_camera.py",
+      "app/setup_photo_codec.py",
+      "app/setup_photos.py",
+      "app/setup_view.py",
+      "app/startup_support.py",
+      "app/structures.py",
+      "app/surface_api.py",
+      "app/surface_demo.py",
+      "app/surface_extraction.py",
+      "app/surface_streaming.py",
+      "app/target_ops.py",
+      "app/target_search.py",
+      "app/target_thumbnail.py",
+      "app/test_core.py",
+      "app/test_desktop_backend.py",
+      "app/test_features.py",
+      "app/test_inspection.py",
+      "app/test_inspection_geometry.py",
+      "app/test_inspection_points.py",
+      "app/test_jobs.py",
+      "app/test_mesh_to_cloud.py",
+      "app/test_project_storage.py",
+      "app/test_ray_box.py",
+      "app/test_registration.py",
+      "app/test_startup.py",
+      "app/test_surface.py",
+      "app/test_update.py",
+      "app/tmatch.py",
+      "app/tunnel_axis_fit.py",
+      "app/tunnel_designer.py",
+      "app/tunnel_lining.py",
+      "app/tunnel_surface.py",
+      "app/ui_preferences.py",
+      "app/upload_io.py",
+      "app/work/checks/test_gusac.py",
+      "app/workflows.py",
+      "app/workspace_history.py",
+      "app/workspace_tools.py",
+      "packaging/build_windows.py",
+      "packaging/finalize_validation.py",
+      "packaging/finalize_validation_0_16_0.py",
+      "packaging/startup_smoke.py",
+      "packaging/test_installer.py",
+      "packaging/verify_windows.py",
+      "packaging/windows_installer.py"
+    ],
+    "changed_javascript_files": 13,
+    "javascript_paths": [
+      "app/web/alignment-hub.js",
+      "app/web/cad-ui.js",
+      "app/web/detached-client.js",
+      "app/web/detached-ui.js",
+      "app/web/explorer-polish.js",
+      "app/web/job-ui.js",
+      "app/web/parameter-help.js",
+      "app/web/permanent-points-ui.js",
+      "app/web/ribbon-layout.js",
+      "app/web/ribbon.js",
+      "app/web/theme-ui.js",
+      "app/web/tunnel-designer-ui.js",
+      "app/web/workspace-ui.js"
+    ],
+    "failures": 0
+  },
+  "baseline_correspondence": {
+    "version": "0.17.0",
+    "removed_application_files": [],
+    "modified_application_files": [
+      "desktop.py",
+      "job_api.py",
+      "release.py",
+      "scan_compaction.py",
+      "scan_edits.py",
+      "server.py",
+      "web/alignment-hub.js",
+      "web/cad-ui.js",
+      "web/cad.css",
+      "web/detached-client.js",
+      "web/detached-ui.js",
+      "web/index.html",
+      "web/job-ui.js",
+      "web/parameter-help.js",
+      "web/ribbon-layout.js",
+      "web/ribbon-modern.css",
+      "web/ribbon.js",
+      "web/tunnel-designer-ui.js",
+      "web/workspace-ui.js"
+    ],
+    "added_application_files": [
+      "RELEASE_SCOPE_0_17_1.txt",
+      "ui_preferences.py",
+      "web/explorer-polish.css",
+      "web/explorer-polish.js",
+      "web/permanent-points-ui.css",
+      "web/permanent-points-ui.js",
+      "web/theme-ui.css",
+      "web/theme-ui.js"
+    ],
+    "backend_changes": [
+      "Permanent-removal transactions, review revisions and cleaning archive tombstones",
+      "Desktop appearance preference store and bridge",
+      "Static routes for new user interface assets"
+    ],
+    "cleaning_segmentation_and_model_geometry_algorithms_changed": false,
+    "historical_validation_sha256": "2619fe5409ecbdd9805dc704ba1231bbe65fb43257bd399df39376b3b0100228"
+  },
+  "application_files": {
+    "CHANGELOG_0_10_0.txt": "cd9fe8f1e015c5015265ef4c177b700e3ae2d24ef9a22be18d12347881517733",
+    "CHANGELOG_0_11_0.txt": "a6fc42f5f61b81ae548fdb8df5cc75e1b9ed73fa825a4d47f0e3a4baaf46e52e",
+    "CHANGELOG_0_11_1.txt": "ec29473b57321931e084d32d1428002bee21e9fda67d5ab41f49a887481113d9",
+    "CHANGELOG_0_12_0.txt": "c5ccd3672b3e96f86f7f3609a2c68031cb0b0f23700e492de32011afd0a6a974",
+    "CHANGELOG_0_13_0.txt": "53cddb686c55ac2d3935bec800621c96a95962a9f1eda16acfde047948739ab9",
+    "CHANGELOG_0_13_1.txt": "ef63b461eeab95bda638ed4bcdf49bf5b63c200a48e6a7c3cef6762c226d641b",
+    "CHANGELOG_0_13_10.txt": "9912b041b7e021cc06e897cc5410ef715a425e0ef552dfd52a1d82e40c4ae99d",
+    "CHANGELOG_0_13_11.txt": "add7ac7cde66ed60ce947d70b73b8733667bba3363a106fbb123693b117e6658",
+    "CHANGELOG_0_13_12.txt": "5a0ad1380df3715c2237a7d723dafec46f03fc23c50d39bc23cf1b491f211dd3",
+    "CHANGELOG_0_13_13.txt": "c321557abf96f04ba0a903014668625fe0b49e3287fc44e39d1003e4af88398c",
+    "CHANGELOG_0_13_14.txt": "56a517d6b93fe64ee02ce5ad7a2b48a8202e8c2ffe7245d355328760c64cc433",
+    "CHANGELOG_0_13_15.txt": "91dfa43c80c4fa7ae6153f2d3e7500766f58155e78bcc789780aac248beca572",
+    "CHANGELOG_0_13_16.txt": "deb9b5900d4c13c93d776097cb54a522d6d3702f0a4ddae7ad8bd0e9971722f5",
+    "CHANGELOG_0_13_17.txt": "994902b852924cb5009375aa2f35c5d781dea2294100814201658f36468235a3",
+    "CHANGELOG_0_13_18.txt": "fa34d06cdcb88bfb4a8128de7c600e8a752c8724c11d8546d7a7916b77491a07",
+    "CHANGELOG_0_13_19.txt": "7afe0ed7ba23acef8514da67e4602b70b51789808b417290bc6604c1ba69aa26",
+    "CHANGELOG_0_13_2.txt": "f79ccac4f63d252ee016e5e5cbbcff3cf486604f2ada1746077d79a8c8570710",
+    "CHANGELOG_0_13_20.txt": "530174cf44275b1b323e377b77e3ebc512f3ca5e89323a28fe3d8570d8083aa0",
+    "CHANGELOG_0_13_22.txt": "24955ca548649359043669e34d2e35d6840d569bd778e01509b987e36dffeb82",
+    "CHANGELOG_0_13_23.txt": "1577dbbd64acf88b80b8d3fce4cf0c8344e765a12db5731669afe43aa0829f4e",
+    "CHANGELOG_0_13_24.txt": "328bf049b3cada3d09f42cf93f7ca494bde874a913a7909ff9483bd576f4f0a8",
+    "CHANGELOG_0_13_25.txt": "e861e7a79016f60ad5a5102cf5f4a55327b9c9571d78c653793ac1bca4fedea9",
+    "CHANGELOG_0_13_3.txt": "a9c7965dce1d60beb4398c04831d68f03dc1d9c5f044031f41dcc19657ff4088",
+    "CHANGELOG_0_13_4.txt": "863c5f9330d88aef08c2b9923477c7686fbc2e3d46706a45396c2773cfc43bf9",
+    "CHANGELOG_0_13_5.txt": "d728e0e55b67073fbc5118f6b47c0bc66ea256e14b7394634dd3d6317e87e059",
+    "CHANGELOG_0_13_6.txt": "62a0381da37171301367d70274e84ccc9dcb15d1a29ea3bfb5136c9cbc1deee6",
+    "CHANGELOG_0_13_7.txt": "6b08ea4679a14552868391c98f980a531f52d1a173d0eec47becaf7ee2a60675",
+    "CHANGELOG_0_13_8.txt": "884254764d3599f3b119cb5a10c1357c1c4b5ef177e99d05b86fce2c9b0df1cc",
+    "CHANGELOG_0_13_9.txt": "db3dc0fea8c73b136963f8e77b3b5eb3c9192ba62f8cad74e5261c33c6556387",
+    "CHANGELOG_0_14_0.txt": "e271e9dbeaf8cf56e9b2e129c445169bab53c2200681e78692f8185c46daa483",
+    "CHANGELOG_0_14_1.txt": "3d54f167d9a04733c9774855054b67174a55c1dbeb3295a11a4561cdfe012d48",
+    "CHANGELOG_0_14_2.txt": "12c6b14a2ac36434bddb91020ed55d72048486c92add7eec39475239d641bdf9",
+    "CHANGELOG_0_14_3.txt": "bdf7f36c71bea71f2fb043739c84a0cad31a32936c5e52c72a82eda306db210b",
+    "CHANGELOG_0_15_0.txt": "e2fcf5a7aa15971e9ef237af2ec6297b8cf9507185db34b7b6fd129e42dbdc6e",
+    "CHANGELOG_0_6_0.txt": "3ffd82d54212c05651e61d1a82f52a179cb42af0032f158d2080293e779d3f20",
+    "CHANGELOG_0_7_0.txt": "384a99c04a1283829aae635551a893bff044aa0a665912388d70461efa92e498",
+    "CHANGELOG_0_7_1.txt": "61342c2884ba6d07d7515b96f2723f962bf0aaf4098a36dceb19bedd8339afe1",
+    "CHANGELOG_0_7_2.txt": "8750f98b6747b3e5a77a9f631fffb595f12ee3bbadb1cdd2a5e6d5cb2c399b3a",
+    "CHANGELOG_0_8_0.txt": "8d4be7bfa0f09b4faea642b3020b0f51632f6756bc6458e6d413a1c6652713ff",
+    "CHANGELOG_0_9_0.txt": "d30282814729dadd10d2ef939f3583fe6e141c47b4c70927ddc40b339e911c6e",
+    "CLEAN_TUNNEL_METHOD_0_12_0.txt": "7c8297a9ba77c27d56de4a807347fbb142249d18e3c0ab20c1c366a6e88af52b",
+    "COPYRIGHT.txt": "1cbc46f6b41f915bc53cbb533dd4a90e912f9ce154660fc2ddc9022639865f06",
+    "DEVELOPMENT.txt": "aba6e97d16e7eb5c38cf019743dd1238208d73b4f5e95c7ef034a517042e7a80",
+    "DEVELOPMENT_0_3_0.txt": "a175375283cd58faf43c92929882e129fff8ff1aee642e1ebe6c1ebebe743de4",
+    "GEOMETRY_METHOD_0_17_0.txt": "25404fe40e23552d229c7cc426f46b88eb9aebe6079a4e6d9d3079710697a394",
+    "GUSAC_TMATCH_METHOD_0_15_0.txt": "d544b438e3c5d63e1c95a0d5a1a27c17409ce07a8779b0d97b8bf14dfbacd5f5",
+    "MESH_TO_CLOUD_0_15_0.txt": "417a948b9d9ac1e26dcb97d4362e5ea49ffeb7d1f48106f37d8ea229b74f4d5d",
+    "METHODS_0_13_0.txt": "1e67b4e6bfe1738df4ffbce02e5c5d13549bd5955fc1134ef0e47c95ec12e226",
+    "METHODS_0_13_22.txt": "71a72b075af34b1792f4378b4c4ce25ddef82346945b73aece852195292f7d6b",
+    "METHODS_0_13_23.txt": "9eb9340fc77b1688cf5a49fcf5cad6a150a3b6a9907deaa55a92233f770f988d",
+    "METHODS_0_13_24.txt": "0feb5de8426df9b5e09002bf8ff46f8ebe00c26a25a4f7469105593c62a4b55b",
+    "METHODS_0_13_25.txt": "479a5275f01e3cfdd0ca6e3a389b6f925fac90a9e9d30ec694bb5baed5e35f8c",
+    "METHODS_0_13_4.txt": "7c64a3dd539728524f2674858c5979ad6ff7a1a8d7180614604c33550304d1db",
+    "METHODS_0_13_6.txt": "e2bad2959340193c7f6927eee886fdb9726d0dd2aff9aa99ff8f66aeb208532a",
+    "METHODS_0_13_7.txt": "8bb48b9fbdfceb103c96a12669b446a5dc97adfe0059a47cb1b425330df19717",
+    "METHODS_0_13_8.txt": "a0674a8841f8ff70671b77aa11e842a4356e5383e2625e28f1d1927690d6f233",
+    "METHODS_0_14_2.txt": "c58835ba5c351104cfb0091b6293ef2a9b659050b60db7f960bf1908f320087d",
+    "METHODS_0_14_3.txt": "fc684379664bc2f25323ffde1c6f44b80be4656fa87bc9b5c6627465116c9e8b",
+    "METHODS_LOCAL_FEATURES_0_17_0.txt": "f2b72996ae0c0fe41bd30982781d6d6924028d4c67dc184053faf47efc791316",
+    "METHOD_RAY_BOX_0_14_10.txt": "4e8ef4078a43c617dd58a21f0077cac6d3744d38630afc4505b648be39c5791c",
+    "REFERENCES_0_10_0.txt": "50deef0c3eb14a09099677b0588c82bd90642231346f17db42a77b93ececa6ee",
+    "REFERENCES_0_11_0.txt": "60e5e294b6d1b8b0c69097c4eb375d05353ea53c025afc70313aba499044b856",
+    "RELEASE_SCOPE_0_15_0.txt": "a4bb77cc76890286f6b4740e5362a94d139216bb6f58a7cacd6416ec9a4b6b2f",
+    "RELEASE_SCOPE_0_16_0.txt": "c43b2eb65ca5e242fe471c64b51d5aa6a8e78633ae8223f63243cad6110867f4",
+    "RELEASE_SCOPE_0_16_1.txt": "e068720dc47a30b8cb7aab7f2bfd1509794dc4bc73ac715e6d23cdefd47235ce",
+    "RELEASE_SCOPE_0_17_0.txt": "7774c391669e9079719137382e68e8ed598784a3e57e91591a16f3976f0782eb",
+    "RELEASE_SCOPE_0_17_1.txt": "ce258a894b8bde6cba1cfcb3a1006ab3e89da0caba17eca27949247098ebc7f7",
+    "SECTION_METHOD_0_12_0.txt": "77c4fcc39213d47406289dcd4a579e29517d01791af152400aff754160968dd4",
+    "SURFACE_METHOD_0_4_0.txt": "8bf37b8b2f799c58802bbd82be8c527ad78b8ba60ee9deb5ed4f0c035d0271c6",
+    "TARGET_DETECTION_REVIEW_0_12_0.txt": "25eb208e23e4f224af6b37d8ce3c392f2704e548489b25e5474b5c507598f402",
+    "TEST_RESULTS.txt": "bc11330c55380427b52cea1820f04c18001ed2ded0bc02c682744055097b57fb",
+    "TEST_RESULTS_0_5_0.txt": "e2eaf5c2787a46428d0b05b96a949eeeb54a1814295892c29e6810a4c0d231cc",
+    "THIRD_PARTY_NOTICES.txt": "d537040165dc369b81a3d5e9a3f2e3f82f1dc727a03ec4c31e340a94cae1189b",
+    "UPDATE_GUIDE_0_4_0.txt": "a141711194c103bd66f23a0024defd17254248f1dae038ba36008fcff0c9296b",
+    "UPDATE_GUIDE_0_5_0.txt": "ecbebbb46d1c308994719278f7cd676afe6b22f2679b16d29ed5a5dae7054ad2",
+    "VALIDATION_0_15_0.json": "fe4eb08c4678c2e4fa8c41a942389834a7fecb63cec7a31c0a96446928dfa1ac",
+    "VALIDATION_0_16_0.json": "133667e61dea4958c9e0130f65ff9aa9d3ff16c72f0eae8b46d4a2e13072acba",
+    "VALIDATION_0_16_1.json": "4ce9aa70825dbbd665e3c186b43302434d876d8e3d078c5a57b208541ada593c",
+    "VALIDATION_0_17_0.json": "2619fe5409ecbdd9805dc704ba1231bbe65fb43257bd399df39376b3b0100228",
+    "WEEKEND_CHECKLIST.txt": "c389c9c3794952686b26766379839ea25934cba55a7a18a6e4821a898d7a18ca",
+    "alignment_model.py": "a9780ebb8b4d2d8349c141b470fcb87455d69d215e1db41f92ce72a4716db2c5",
+    "analysis_tools.py": "b633c75f2a073c22dbb5be219682473063f9f5450c8274f13a80a0901c891cec",
+    "browser_mode.py": "8a08e27d90815e1a520fce0f36b3887c75c8fa612909f514ef5d197ebe4183ea",
+    "cad_api.py": "fd38bbc18ccb5c3e3414491d33d70f8f15f99618d06126a2ee1df7629731e231",
+    "cad_geometry.py": "7beeee64f261aae132fbe8766108e8daed5b098f0324e1a355cad5d6abcf0998",
+    "checker_evidence.py": "8c75aea056870cdba10b917f4ec82d2ff0ba926e720b86016c5e6221f2bf6aa9",
+    "clean_tunnel.py": "ca4e88d150a7778b2f58ed7f31455c1195d02fad3b3da46306aef6899962ab61",
+    "combined_denoising.py": "18a73ac7d3dead224149e15359ecddcebb3218f7d7f0595d805a2c22fd7146cc",
+    "core.py": "5ee5f6cddbfee97f54a378dbdf4252f0b402cc1b4454561ead2f1bffca582024",
+    "demo_targets.py": "41037ceba4e2b298b5f88245c997a91954814bbb2a19bb7bce359f74af53f5cb",
+    "design_api.py": "304e22b46b030097e3a3d30b9286737a522c894595261f529efff4dc30e390d0",
+    "design_compare.py": "f3b0bb7b040713d5327e1a72aeb171670e6c581d1b53893ad578ed1c27ac3675",
+    "desktop.py": "5a7f2791d3b376a7b95ea4a45d1093ae96257bcc4e830b66e86a481a276a6ff3",
+    "detached_windows.py": "4bdfb1245073705a90b2d752c84095c0fb629209caf61198f1301bfbe5184163",
+    "detail_preview.py": "8ded0ebc1530f7d3f9778ef641aa74026d5028a709f4ef56b673b56a7f6925fc",
+    "e57_setup_photos.py": "34918a0b456763cf5f017825a0052be1807de9d9bf20c82e541d3bd7a3e57f0e",
+    "e57_worker.py": "76b12b19977809efbb1fb21c0d4e97a12c8da4a22d903deb7c4f1d895e22d61e",
+    "editing.py": "45cf3d7c4bc9114eb72a854759258f8c66e538ab7d34c507a2a81ccbe1591fd9",
+    "examples/SAMPLE_SURVEY_REPORT.html": "4f87e8b9cc1fdc353a9a987ebd482571a731d2c747ffd9db22861ff3d52125e9",
+    "examples/SAMPLE_SURVEY_REPORT.pdf": "df1f91eb749fd6cefd7a08a1cf9c212022176473623903613878565aa54d69f6",
+    "examples/alignment_template.csv": "9dc65c5a3a506161d72efdcd258fabd5b85c7b3ba680ba891fc2699fc1da8f5f",
+    "examples/control_template.csv": "aa2d00ae10d0ea62a3173b18db56540491c81f2f023fbb23c8cfba9cb3fd6f2c",
+    "examples/demo_alignment.csv": "c970fddbad074ab7cd9c83a4bf8d627a0f2fb61fec73470e6ec0e593aeb49f21",
+    "examples/demo_rings.csv": "efa9a04b483a730afc7bb319657cfb9419f8344275e16bf7880bdc8be1c62fc7",
+    "examples/points_template.csv": "bb8d2542567ef04ffe817aca925ac616df5096a85481fdb3fe037f1f4d557b1d",
+    "examples/ring_template.csv": "a52e713d60ebd07ea16c6252ade025a29ab2d0d997d5eb6048ca6ee45fee52df",
+    "exchange.py": "15ba5bb19352a43787fa74819ae1ec728a63f80e65db39ad1623e4daf479e7fc",
+    "feature_selection.py": "668bbb0f6415ecf01a85bf968d8180abdd130612104fe7fc3ecd49284fef59f4",
+    "geometry_tools.py": "da62b1f4d4135ef0d825990201ab215126f6dc47c90a3ebb73ec6d17d701e4af",
+    "gusac.py": "340a0e762cba92d429d959a874cb1b497817e06a6d6c084bc535777e84b938cd",
+    "heatmap.py": "83650ba586989909009ee614efe2baf7ff591b5e8d0b6568bb71dcb4a88d7c26",
+    "hspca_codec.py": "cf83ded72ad7af93c0e17a3087051ffc5dcce8d04c49e6c31e9038b134105023",
+    "hspca_import.py": "55eab9f6d403eb4f21cc0ebb4669ad2c47bde13712ffb916fb1b2e1838ccf32c",
+    "hspca_worker.py": "9d660223deb20bb87b2296cfa47160140877ccc3751c420ed51cf087ab678143",
+    "inspection.py": "ec090186c37686668b202a3ce51e297aac8ec31eb0884d1d2c42d752c99c5432",
+    "inspection_api.py": "8cb17bbe9948d9264a453f1f300289d311db337fde3e03feaa52a9841ded6b8b",
+    "inspection_geometry.py": "9ecfcbb16e54757fbd841131f8cb176b4c1d736ddf80a9940ed8125103064476",
+    "inspection_points.py": "384ec40bdb109a86bcaf21d05172b0f05426497ae387a1e774f5359803032246",
+    "install_bundle.py": "2c5dfcac212dbbd4c4fe0e14dc223d500ad023d513af7d27b8090c9dacb4b8e0",
+    "install_windows.py": "b395d8de5a690e74c8b1ee381d6f442e85555971369d076e4c2eecbb6882276b",
+    "irregular_surfaces.py": "ea94aa7290f4702553fc0b956583053aaacaccd121e7f619fc1770c71fde3357",
+    "job_api.py": "90ec899c9ee7fb9f67cd1414263fae86a4e4c329437d22d269255ac091d56499",
+    "jobdata.py": "1fd283cab72c4272825caeb5eb70aa90db61b4aa23af55bd15f5953e9b8d94f5",
+    "joint_scan.py": "24f0f325c2bb0990b74f4a9ec22a5aabd906bfe39aea2813155bfc008e3da11b",
+    "large_sections.py": "8100090f33b5183fef761ff87a1915da6bb4fdeabd1038428be336add7ecf626",
+    "leica_bridge.py": "1b1339a15947de9c4121a80182ffdb9e18b82526bd2b9d1e4b25052826f5aebd",
+    "leica_e57_worker.py": "06b6ca2bac9f9df51934ae20669b1e733be05f750f6880930afa26532c3c61b5",
+    "leica_project.py": "c5bd0199528f8e78525859640841a6b72eb9a8b97f26f92888b9c511b7c0c672",
+    "lining_features.py": "e95da5c807853e0285d86953e8c54ff18f764cebb011ecf2c81a771678b4815c",
+    "lining_tiles.py": "9c0d269cff1372ce6ea512d387dac6ab5972b24c1670b12e7be9f3efaa88323f",
+    "mask_storage.py": "370be2197171fc141d6df7c82c566518897b8104376690f49a8dd1d78d12878c",
+    "measure_tools.py": "4d582257c4a2d04a4a54b57f1fa25abdd69b5c46a04249b31ec1531bf61483e5",
+    "mesh_geometry.py": "587fc5198023d21b26ff2ca376e508f6a2d7abac89b7d3763da313553a43e9ae",
+    "mesh_preview.py": "a2891f1146cb826360b28b158f2752cb793e76fccf7aee0314867a2784d05c28",
+    "mesh_repair.py": "3922ecb533fa0c3fb43d256de70950dbecf367e7bb653d4aa2233070d9b1c647",
+    "mesh_to_cloud.py": "c96fa93e00186d177d2a6ad2b4594eb6a2b70c129ecdf2fc6ed16af3fca5d9c6",
+    "meshing.py": "41b90650ec92d498ee0b370bf11ccaf704c69693f52a7014cea8540545dbc3ef",
+    "native_progress.py": "76c2b9f5ba6bf3173c9ed367c96f3ae9703f30d516c0877b86df867315657d3d",
+    "ply_ascii.py": "aa741a8ba3627897b84daf2a8b55d7e805560c963a9b0752e534de6708c99252",
+    "pointio.py": "6dc23a865d3c33ab8b806e5950b6cd9f87e0a2f5f00780429cacc108ce42ee5c",
+    "preview_index.py": "c70aba1cb11da6c35d2ddb1d957b82a2d976ac389412705cc75561f1bbe28549",
+    "preview_store.py": "fd6bffa65426f54d9fd75a0e46ebd6e1a40a400a70ca6a84410ede889e10e2c2",
+    "project_maintenance.py": "baf795a1758943924bba61b5e1a08e993a2f51e0e494ebe4d5f101cb0e0954fc",
+    "project_validation.py": "4ebe43b7ecbffa34db59266f44834db26b31c8fb14fedda8aa6071c5ca3358d1",
+    "projects.py": "7065e3d4355cb31b56557c8b5da5388581128771b3bb248833320372be591c1b",
+    "ray_box_extraction.py": "dce44a9b42f5feb36e5d3a7cf03bbf70af30f7f711a2ba9d8430946df4bc4fce",
+    "reflection_cleaning.py": "6334cc3efa39f38688fc033b1fcc099795c06b7448b332be4d40b47efcc923c5",
+    "registered_cloud.py": "92f5fdfe301df57ab0c8ee2e7dc1e388d1e43985e36b86d302bb912a5157c23c",
+    "registration.py": "2a5871bf23315fe5ab14caa0ca697a6da0860aa2404dd07d9dc5d943ea9b4628",
+    "registration_network.py": "e5b929175f9b6ba719442ba1901015df7a8fba3d1b67a69a53ed7d283633e163",
+    "registration_references.py": "fd3d6618dde24db277c1813c013751d6e86d4bb2e385adce4f13442e2112ca85",
+    "registration_workspace.py": "91ac371c49e641321d367b188f9dbf45f8afd75f1772432a1ffc7b85e97b6688",
+    "release.py": "8fea4f69f1209d339dd1f1e5b6622a28f910b78f7eb5ffe5d32f4d9726a8265c",
+    "reporting.py": "56185da652cf8198b79da836a6a10cf0011823a10b354f13b46ebf0287a95b53",
+    "requirements-desktop.txt": "89e2f0fc59ad44c88a3b2a20bc1026ecbf9185c73d888c547d1c86e684f0fe1b",
+    "requirements.txt": "318975e04056bf18adf20564cbc4e4b7f515db0e7c23d691a950139e626bfa68",
+    "ring_creep.py": "2a3c1958f2b5bcca538bd704f481942b00ef82f4b97b275c7abe2e18fa611c26",
+    "ring_suggestions.py": "b1b08ba5203fb156e620e1946b7a27bd06aa5177c9e1bd7902c83196412f2c12",
+    "rtc360_folder.py": "2a4049941899c99b79b15e8772cd7d6dbdf418407b0b06df2fa2925e9edfa87a",
+    "rtc360_image_probe.py": "ef447454b6d380a2fc7400be3f8126b8ba1c32cbeced141f592ee2944b28440d",
+    "rtc360_native.py": "90a3c37e5f32d15636b51b66d3de890e62db8bca10c03262cbadc39c6f25ff70",
+    "rtc360_native_worker.py": "366c9ad04159067fa05e2885295b55c856539c6fb0d32081c58ccf007023245f",
+    "rtc360_optics.py": "6b1b32523f51fbf85c847be89da0f9e87031a505cb58f2bcb99ceb4c2bdac3ed",
+    "rtc360_scan_probe.py": "a37757982a38fd11e9449654d280d62da726a2111359844b43796083ab2da737",
+    "rtc360_source.py": "1b8d4f2049fec205b8fbd3813030920b34560385bca160fbdcb3ba232d8c9e73",
+    "runtime_diagnostics.py": "a8d25d081cacb1fa30f0e2557da25f54e13b2278860242cb74d7d54ff565c97e",
+    "scan_compaction.py": "17b68496ecc8e427d988af3d1b95364abdafdcf9f275bd1a8d19354af13b7471",
+    "scan_edits.py": "97180faf0308fe3f709e575f632618ef31c5b1a6f6fb4357cd90a2ffdd6d8896",
+    "scan_export.py": "93b6aed46bab5fce4eacd591db937a8f339484794570a3b987418785e52ede1e",
+    "scan_geometry.py": "60270cee4090b550ce909d02255d0d579dd503a21f1370ec947bc06defc0b931",
+    "scene_objects.py": "d8f166826cad52ca628baba5e7f0b4246daac9399695ab1ce232c9c16645cfbd",
+    "section_api.py": "2ece54be96e483c6fc01afa752611285a6d5a883304084258bbdf0f97814b41e",
+    "section_path.py": "a55322f67860f4d6b3f0f1f4f683369f5f9188f44437a56d7b0cced354cb769d",
+    "section_research.py": "e6ef5f66c1659b30cdb56bab91e1ce3a2f282ee6eabfd930fe18424806e7c24f",
+    "section_shape.py": "e441079a452f9062936f91f2a5053405dc970603c914736e6a2655012ebc5576",
+    "server.py": "32322346a105154247fbfe596640aa11a641e401e325e64632b8e44c75fd7edb",
+    "session_start.py": "eef284234e82e0e6e467578341d6978e82620ba73c634f57ebbb224087967d66",
+    "setup_camera.py": "dbdad22ad6c38d6e58533cada3db2b462bc44c79f786533e3bcbc1b9edd5b9d5",
+    "setup_photo_codec.py": "ca7b7e180991d69ea7fd90339d61ce74f61f0cfdab7724ebaba1a6e1b01ca1d6",
+    "setup_photos.py": "90dd7881dc6a85c351919f4de67abd87e9c904220ec4479397e83fe6cdf58603",
+    "setup_view.py": "1addf1c115fb1cb7ccf5f8ddd279f32ab591d97d9cc519486950add5b7b513fe",
+    "startup_support.py": "7768d113d19e47751040c8303f5f6c7eb8d1be2933616138961c00cf5b02e7b7",
+    "structures.py": "9c01a8be100497dd1bf6a50bf13315e0dc60ac6d62c04552bd9a456a01500572",
+    "surface_api.py": "b91162433f81762838556ddb50608bc2f6f4e99b7c2dffe8cc8f9bacf5fd904a",
+    "surface_demo.py": "5f46da1ee0fef968dc4c8f799c1ee6d7c0c27d4203eeb95b8a0c2507d51f64dc",
+    "surface_extraction.py": "c32ba305b4820a23fa6a2f4b5601df36730ce45d9b411240e1e8c9171da5c167",
+    "surface_streaming.py": "bc4544688a61bd1fd36e02df03ddb4e7e8f315057773fdac0458f8b4cf0c4810",
+    "target_ops.py": "3ad3303a85e6588c643fdc489c8330c067013f6edb778745f8e4b5f4c96afdd3",
+    "target_search.py": "7f49adb80dcdb06bb765c4e85399f191b5e133bb1c645df392d01ec3d0d6d791",
+    "target_thumbnail.py": "face7434722c5f283ce509801bf5e9d2efad7fef7cc6ae0629822b8713dc660a",
+    "test_core.py": "047c7463cc8608cacff33b4022e22baa67ae6e6ea6504d89bc8e46ee7d0418da",
+    "test_desktop_backend.py": "a2ffa0f889d551fdef53ff6a37ea43a316afcaa28fc435b2c9ddaf16f7e34ed3",
+    "test_features.py": "930d6df54459ccfbff5ade0665b23b27252a93529fc77eec411cf343c19c4516",
+    "test_inspection.py": "64d3032ff2caf3328093cd608b37c94585dd437e539ee41e60aeb8f6103255a1",
+    "test_inspection_geometry.py": "66a02d825d0417dc8969b5f06990efbc3228b002e4d990cfa2dad6897c130e05",
+    "test_inspection_points.py": "c174461e4dc6d2f918c838f70054bcd9b4bc0a4b4c76d6fd03dda39ae08298dd",
+    "test_jobs.py": "98bd957a3bc7b9cac869a3d0c1ebb8d28bf5af2c2eb0c265311af0b87b192e99",
+    "test_mesh_to_cloud.py": "95a5d69d60b890fb796dd5d4deb43823f6e2d3230eeb8a7b86941378088748fc",
+    "test_project_storage.py": "284df14ed0ab080f9b0720aa3c9a086aeeb73067f9ec186585cf180f8efb5868",
+    "test_ray_box.py": "ae83c2550f36676c31c3f7212e3b73b81bc7229e28901c130f6e420d7b0545ab",
+    "test_registration.py": "f9a426aa25d4255753f00decac5f2ad1b6847589d9a61c3285427931ea755693",
+    "test_startup.py": "2f34db8e59e5d9f26e9b2a025610405e72a783d1c9b046e7d9fedc7d94c5e443",
+    "test_surface.py": "6b59139c3ab716db8221e15b2d3f10bf9ddfdf4d4d6cf27fc0f42f4d387437f7",
+    "test_update.py": "ce636e96c8f527827dfa74cb985c9b89847c9568aec6d43194ab26a62671875d",
+    "tmatch.py": "0cfcc1078af13401ca603f6676aca3999c7786508b102bdcd627f7f0a2d9ca86",
+    "tunnel_axis_fit.py": "b098101170ce6dae70a1fae7d6edde09d94219031b3c7a3edf227f3f016a96a2",
+    "tunnel_designer.py": "ef4e98309448229b82a79008016f4f857dd794370a72e0142a621e4dec031cfa",
+    "tunnel_lining.py": "3081bcafaf2c1278302fcd77a34c5e96b36b1b16a5f227f9cd953edab6cae06a",
+    "tunnel_surface.py": "1b78ff7752a2fd53edd6af530c666579248b5277d87e1de416eb8c0d204f437b",
+    "ui_preferences.py": "ae49ff380c05bb96bdee825a4c5e2001ee8de7a74fe4f124c8b1480312fc3a2a",
+    "upload_io.py": "60307819dcfcdd6017b97bc93b9a605d4e95ff423e343feb5ae04ce4212ac1e7",
+    "web/alignment-editor-ui.js": "d34081e191ecff5d92cac2e7cd42d5b097985da9610da9e6c3ee9f9991dad309",
+    "web/alignment-hub.js": "67974b574cad41220f593b2a1c9dd4229d9c1a448ca2919a67a1700ee1990136",
+    "web/app.js": "ebad2528f7801fd6a86566289f4dd1a9da51dc7203ecb385f4b32df9b69ab25c",
+    "web/cad-math.js": "3c2d8272f86673c7475ec9f008ae1df4621ef8ec0a86a04f6b2a2231ef014cac",
+    "web/cad-ui.js": "7f01387e1a08706bfcbc0cf2416d1af8860d1332dfcb28ab1e2987de9001cf5d",
+    "web/cad.css": "46d66230e823ad9f87606ceb05f8d3aee807f6c89b008e6226f35e50516b97c2",
+    "web/cleaning-help.js": "f203843706bdfd511c4289157968dc415c81381aab1dcae7282fd2495f4dcade",
+    "web/design-ui.js": "909bf96e63fbf562737b6fb4e2e000e5ee60fac0cdcaa0aef77e1dcc3342144a",
+    "web/detached-client.js": "d8eaf043a7c631a52d3b11648b7212b7bc74518a330176fbc45e3850d4afa2fe",
+    "web/detached-ui.js": "a1e6d5cb2b9c488265dcdc2bbe9a0220b15b50a6969afdedb06fc87c16ebbaf2",
+    "web/detached.html": "f3762c59486e7be9902f77cad67bd1eae7ddbdb682b48e5d017280208a19d7f5",
+    "web/explorer-polish.css": "c43b730827e24bfa7077300adadda65cf0cea8d22f0a4a1173dff5631094632e",
+    "web/explorer-polish.js": "1550fc6b4f3d4740f5c5d4e4e86607bbd43bbfbf1cf04b59847894d217329bf6",
+    "web/export-ui.js": "e86f20a525c605ca0a7f1972b3467d04b1886ae7f6ca20aa4de093811a7ec713",
+    "web/feature-selection-ui.css": "109f2223f820b24051755bcc9d505ac494bc10ab09471972d313d370173fadc7",
+    "web/feature-selection-ui.js": "f4f024a742d32dac2cafd9b3f55b42c0e4723b4688c2533a6b2aff30694f757e",
+    "web/file-drop-ui.js": "f2b2b2d96cd6308bd3188dcff8fc3569bdbca81f5cab33d1b21d9f200cc17975",
+    "web/geometry-tools-ui.css": "4564d0da3b15925f9991fe64c47f309f52a6df5b17b7e6e0ee12ceefcfd30406",
+    "web/geometry-tools-ui.js": "027c88b6f01ece88812c26e25f6c62d58b61b66d19e3b68db5468b9f4860ccd5",
+    "web/heatmap-ui.js": "e1b4e1d0034f315b53372d42148a180026991432e11e36af46fc9daccf2d2524",
+    "web/history-ui.js": "108a2e587ce579499d12f9ad55a3c9d257c5e9e80c0d0768a2bf6dbca3e98d6e",
+    "web/index.html": "e1c3db584cc69c1f0ff919e9463b78f3eeae2ac391ea95a0bc8524d5cd0f07b2",
+    "web/inspection-ui.css": "98aada7f625790740396ed4fe64c2ae43d8795bf3dc47a584c9c405df2231e33",
+    "web/inspection-ui.js": "197d9bd5d14bf448bb55de9e83f801bc9cea1949b41a8c5320a95ef1c0fe8a62",
+    "web/job-ui.js": "8c7585a32f00e20a8e0d40f01ea760a0fa1a2bac51a4d5d5338efdeb29507cb2",
+    "web/job.css": "52fdf258fc4865dd2f56a6ce37afbcf8a73513bfa68dc84480c553070ee267b7",
+    "web/joint-ui.js": "62852da3d34e97ed94510f526488468d711fa9659055276b8e6aa565a9abd693",
+    "web/leica-bridge-ui.js": "5d84d1a1d626ecf149f58692eff8e72f086902dc94da9c8b0c36b29aca458655",
+    "web/limit-box-ui.js": "25b23659269b235ce7febaf9d0aadf46ff3bd77b9723b2e74688e943f2c28331",
+    "web/measure-tools-ui.css": "ce1ad2138ffa1d124c2822df0f10536b02989b81271853c55cffacc281cfc817",
+    "web/measure-tools-ui.js": "769998284fdfb8a36996ae0eb128da5d1d4e0c37c98f2db887b8c482718eb48c",
+    "web/mesh-repair-ui.js": "c915690f4a4f17e8496c3bc4d85d58932f9729d3384f1c692384e8477d5c15d6",
+    "web/mesh-to-cloud-ui.js": "5a0c0ba55fccdf20959cc2961f1880036819e7663548711e68c7bf29166a1b66",
+    "web/parameter-help.js": "1659a81f9c59fea1b7edd37ca039885c2b8b1ad1a060d0c8a25cf0142a4823ee",
+    "web/permanent-points-ui.css": "b0dcb3636934b1b0cb8df2e6b014e99cc8b41cc522740e889560dec88999f9db",
+    "web/permanent-points-ui.js": "5ba4d9ff7953d4013a453ec79ce17555f56045af87ed1c16ed1138909752079c",
+    "web/registration-ui.js": "24e29b91a3898e18fc05876d8c6e14e4a6c3f6a53697566f529604104547fa66",
+    "web/ribbon-layout.js": "2b0c66929d230397b78b568ff262e283b2dfae69bac83d572b78065aa6f75b98",
+    "web/ribbon-modern.css": "371730970ca458bf81eefdf43b6c81d7ed5e3bc4f3741f96a4535ef62b8816f1",
+    "web/ribbon.css": "bbe31f02a4fe7f084b698c96318da4bd99c1e968d9544fe804b088d2be8d5dcb",
+    "web/ribbon.js": "bd43daaaa686c75b9a3077aae0a5726400abada01cce01c350b118c4981ba887",
+    "web/ring-creep-ui.js": "e113adc43ce2ca4487893741600f098c03d8e3354eb24b9dcbd2cb7631b83dd9",
+    "web/scan-registration-ui.js": "a0d157b9930980b0d9e0a6aea1acb5fbe2497282cf75949aac319b8442302096",
+    "web/scan-tools-ui.js": "70b12d25150d4837053df7adec425d5579ed04f66d18270de46bb45123f9ae66",
+    "web/scene-objects-ui.js": "e02b50fd099b061957f7980f658988a162acbeb7a4ea723ff3a579947960a037",
+    "web/section-locator-ui.js": "c0880cae8ff19e37d12cde2b6d55827c8e98287fe971d9cbfdc92ae7d59a549b",
+    "web/section-plot-ui.js": "f9106ea662d2f16247abf4bb93e4014968fe0cd254c4e7f11dd5edc4e41ec23c",
+    "web/section-research-ui.js": "50cd6be4c19930a80d36f29665b87cf8f3226d25b40ad8f1a3ac4c88fe44133e",
+    "web/setup-backdrop.js": "f0c5921f0b85a75c75f80c312dbe524aaed5bc99a01a95157d751d1c8f65a701",
+    "web/setup-camera-ui.js": "ca0048c9c5d4e1929b31caded03e189f49cc8d6576fe197d7424be3d7d6ddd15",
+    "web/setup-photo-viewer.js": "1eb7bf8f02904f50473296dcebab71beea5a31f0bc8d286865c51f72938688fd",
+    "web/style.css": "59e259b597d37c30f77183c47dd11f277837d9b27c8be4b6343685dd61b5adc6",
+    "web/surface-ui.js": "ba0874fcc2c4e06e4b454f39b371b052cc4c98933ce15ae6d95ede52c6dfb97a",
+    "web/surface.css": "152fa39a079989330b144fe2158c51be7a016e7e2b4a16ad7b9c17d6076ee9e9",
+    "web/theme-ui.css": "8204d44fb3f36f55fcbdbcb12e38d71764dfd01e8b95dfa6a59712071c69696b",
+    "web/theme-ui.js": "4759ad0c33c521193116983466d1ecfb672034d5f18f943fc6419329cd7222d5",
+    "web/tunnel-designer-ui.js": "d9798b4fb2a17cb418b3cdb979448a2a196912520fa6b9620c70b5c6de08fdfb",
+    "web/tunnel.ico": "703a4b80cfa64e8419482e1a2e68f60ca2b0087ff8bd94d0b707108f794cce6f",
+    "web/ui-icons.js": "ca8a3fd3f6ddd1ede50c6d40f74f6127e69812427266ff1eb57c967007d929dc",
+    "web/work-status-ui.js": "25552d7a4e2b1c894a775cc564d1c1228e0bbf2f745bcbfc3e1a6b9313c00470",
+    "web/workspace-ui.js": "3c53c23d092ca42f75cd00e4849a77d9f6e370dbada57563bcb53194c8f22d5c",
+    "windows/launcher.c": "81d48b783f307a469b9106d2e58be3136080fe8a4629cff0fc9a85b913361f71",
+    "windows/version.rc": "eb760dbd5343f88ab6d2b323989428a222b78412b2c81e842bd234f9336e6f66",
+    "work/checks/gusac_synthetic_report.json": "c4d9c446ef697e2b914c8bdd1120d41a8f1ea99c4a8fb163f8058b20158dfa67",
+    "work/checks/test_gusac.py": "2fe73c4acb181f829fa8aaa3d33518aeb00c475f7bcd740e7e952d021ce0c688",
+    "workflows.py": "de13d6055019463eb2ffb7dbb2f5780fbec45fa27fe05c78583c90fab976821f",
+    "workspace_history.py": "4b1f4772392e7b21dac2ed5604546872bf57e36988f9e00773a6407da2660633",
+    "workspace_tools.py": "4721dbf0885e5de7e1441cde51ccd891a53888451f65b41d57a055707b5d0781"
+  },
+  "packaging_files": {
+    "RELEASE_NOTES.txt": "4b8764a494098fecc2bd1682e9617ce6072297b2860b332dc001eb0d370de083",
+    "TunnelStudio.nsi": "1f099b6683b585511a3e9ac42e10c673e9dd70b891619c1ae4c5e34087895a1e",
+    "build_windows.py": "3de488bd9dc9a99c0ca073c9b3979e0e7262b886f846c6f5a270d24066a01cde",
+    "finalize_validation.py": "3c20d5737ed72cc6aaa184a4d8ba82483e57bfd32e739a30fdde0ad96b5cbeda",
+    "finalize_validation_0_16_0.py": "4ba5a40eeafc1c8dda33c920c13108425db0cf3c71c06811ed6c8681dce2d251",
+    "launcher.c": "9480c764538fe895782d7e22f6183cc9c2524db605a939383f179844799fc5a6",
+    "launcher.rc": "c02525368d352bedbb2e54f512b5d0aededfcbb2bc1613bde1f512270a58d177",
+    "source_provenance.json": "566145eccf0a9c80c3e9068efdf6bb805b5e2bdf637ad3571dd9ff4e3a17eae2",
+    "startup_smoke.py": "59c2562ccda52b90bf84712f0f23d9d074021cae921087c63b6e3532b4e4d411",
+    "test_installer.py": "3330effac4cf86559830a743b3c0251172bb1d36d6c241f951fffa3fae003d35",
+    "verify_windows.py": "7394af82fe2ba0cdd1717daaf8d7ce73589f3d7828c9a2b8cc4524da80e4600d",
+    "windows_installer.py": "0bdedf031914a2a66e9d426c23499ec010bbeae76e69eb8c3624b19b806c6d6a"
+  },
+  "host": "Linux-6.18.55-x86_64-with-glibc2.39",
+  "limitations": [
+    "Native Windows/WebView2 execution is not available on this Linux build host.",
+    "The full 550-million-point user project is unavailable; the largest new permanent-removal fixture has 550,003 points.",
+    "No new full-cloud cleaning accuracy, segmentation performance or universal deletion speed claim.",
+    "Permanent removal clears the entire workspace Undo/Redo history; original imports and other saved references remain protected.",
+    "Amberg screenshots inform organisation; Amberg file compatibility or construction-stage feature parity is not claimed.",
+    "Historical 0.17.0 reports document inherited features and are not counted as new 0.17.1 test runs."
+  ]
+}

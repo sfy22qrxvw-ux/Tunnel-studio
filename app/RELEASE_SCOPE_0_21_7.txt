@@ -1,0 +1,49 @@
+Tunnel Studio 0.21.7 | Per-scan display styles and full-density pocket inspection
+
+Baseline: the verified delivered 0.21.6 source and byte-identical Windows runtime.
+No private scan, project, shape-library examples or screenshots are packaged.
+
+scan_appearance.py persists display_mode/display_colour on each scan item.
+Updates validate colour/mode, refuse concurrent jobs and roll back failed saves.
+Normal and detail samples resolve each override before their existing colour
+cache keys. Geometry/export signatures and analytical revisions exclude display
+styles. Workspace history supplies one Undo/Redo action. The normal viewer,
+setup view and compatibility preview all retain their existing sampled paths.
+Semantic analysis colours do not inherit scan overrides. Explorer colour buttons,
+Properties and the context menu open the same per-scan style dialog.
+
+shape_inspection.py validates the live matching review, source fingerprint and
+revision, and streams exact int64 candidate IDs, labels and selection flags in
+at most 100,000-row owned reads. Each matched original observation is retrieved
+from the source, its current virtual pose applied, and its measured intensity
+copied to an independent disposable cache. No preview indices or nearest-point
+substitution are used. Float64 world observations become local-origin float32
+only in the binary display response. Nearby context is a bounded measured
+sample (at most 50,000 points), not claimed to be full density. A supported
+context PCA normal faces the object towards the camera; bounds set its zoom.
+
+Only a completed, revision-rechecked inspection is published. Four recent
+entries share a soft 512 MiB disk-cache budget, retaining the current entry even
+when it alone is larger. Cancellation removes only new incomplete caches. Active
+inspection files are protected from storage cleanup; strict generated filenames
+make abandoned inspection caches eligible without claiming user exports.
+
+The browser reads 100k-point binary pages with cancellation and generation
+guards. Original object pages bypass overview sampling and navigation LOD.
+Every page's identity/start/count is verified before drawing; the view is marked
+complete only after all object observations are loaded. A 192 MiB local graphics
+budget refuses oversized groups explicitly; it does not limit source matching,
+original-point selection or export. Continuing service groups may span the
+tunnel and are inspected in the main overview rather than as compact pockets.
+Page buffers/CPU arrays are released when replaced or closed. Errors restore
+the overview. Selection highlight can be replaced by measured intensity.
+
+Clicking a match name inspects; its separate checkbox controls removal. Previous,
+Next, Back and Stop do not teach or edit the source. Existing refinement uses
+the paged observations for drawing its screen-depth interval. Removal dialogs
+state that edits apply to all checked groups, not just the focused object.
+
+Validation separates constructed-review UI behaviour from detection accuracy.
+Measured E57 grouping/coordinate preservation does not prove semantic identity.
+The full corresponding wall cloud, native Windows/WebView2 and the user's
+complete 921-million-point project were not executed here.

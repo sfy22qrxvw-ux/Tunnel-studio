@@ -1,0 +1,68 @@
+{
+  "version": "0.18.1",
+  "date_utc": "2026-10-30",
+  "baseline_application_version": "0.18.0",
+  "scope": "Saved measured section reference consistency guard; six-paper method review; retain all0.18.0 behaviour otherwise",
+  "application_tests": {
+    "tests": 233,
+    "failures": 0,
+    "errors": 0,
+    "skipped": 0,
+    "seconds": 19.644,
+    "result": "OK",
+    "platform": "Linux"
+  },
+  "new_baseline_regression_tests": 9,
+  "syntax": {
+    "python_files_parsed": 156,
+    "javascript_files_syntax_checked": 47,
+    "passed": true
+  },
+  "controlled_method_checks": {
+    "purpose": "Check consequences of algorithm choices for the six-paper review",
+    "platform": "Linux, deterministic synthetic circular geometry",
+    "field_accuracy_claim": false,
+    "nearest_point_spacing": {
+      "true_surface_change_mm": 0.0,
+      "mean_unsigned_nearest_measured_point_mm": 1.3089969286112524,
+      "expected_sampling_distance_mm": 1.308996928611808,
+      "method_under_test": "Tunnel Studio inspection_points.CloudReference, all 7,200 reference points",
+      "source_unchanged": true
+    },
+    "free_registration_absorbs_motion": {
+      "true_rigid_movement_mm": 10.0,
+      "fitted_registration_translation_mm": [
+        -10.000000000000624,
+        0.0,
+        0.0
+      ],
+      "maximum_residual_after_free_translation_fit_mm": 8.881784197001252e-13,
+      "meaning": "A free best-fit epoch registration can absorb real motion; this is a mathematical counterexample, not a reproduction of the paper ICP implementation."
+    },
+    "current_section_comparison_preserves_translation": {
+      "known_centre_right_mm": 10.0,
+      "known_centre_up_mm": -6.0,
+      "recovered_centre_right_mm": 9.999999112943208,
+      "recovered_centre_up_mm": -5.999999466376307,
+      "semi_major_change_mm": 2.475797344914099e-09,
+      "semi_minor_change_mm": 1.4566126083082054e-09,
+      "method_under_test": "Current angular-balanced robust ellipse fit and common-frame comparison"
+    },
+    "occlusion_centroid_bias": {
+      "true_geometry_change_mm": 0.0,
+      "missing_sector_degrees": 40,
+      "naive_point_centroid_shift_mm": 367.4308376780721,
+      "robust_ellipse_centre_shift_mm": 2.7755575615628914e-14,
+      "remaining_points": 6400,
+      "meaning": "Sampling/occlusion can move a raw point centroid without physical movement; this ideal circle has enough angular support for a robust fit."
+    },
+    "all_assertions_passed": true
+  },
+  "source_coordinate_changes": false,
+  "new_multi_epoch_uncertainty_engine": false,
+  "M3C2_EP_implemented": false,
+  "native_windows_execution": false,
+  "real_user_tunnel_benchmark": false,
+  "paper_accuracy_reproduced": false,
+  "prior_evidence": "VALIDATION_0_18_0.json remains historical validation of0.18.0 larger-scale paths."
+}

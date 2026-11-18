@@ -1,0 +1,22 @@
+Tunnel Studio 0.21.1 | Storage and project organisation
+
+Cumulative Windows build based on the 0.21.0 application and its runtime.
+
+Storage totals describe files on the inspected drive at inspection time. Shared
+asset references, retained Undo/recovery state, links, and external data affect
+what can be reclaimed. An incomplete or unreadable inventory is identified.
+Old files whose ownership or purpose cannot be proved may appear as protected.
+Selection and separate confirmation are required for deletion, including when
+closing a project. Actual disk reclamation may continue after quarantine.
+
+An organised copy contains the project's linked assets and archived shapefile
+members. Original scanner folders, unrelated loose files and user exports
+outside the workspace remain at their current paths. The destination must have
+space for the full copy. An ordinary project save and link-free relocation of
+immutable caches are different operations. A verified copied project has its
+own data. The original workspace stays available for explicit review.
+
+Estimated storage calculations based on record width are illustrative. No
+inventory of the user's computer has been taken. Validation used temporary
+synthetic projects on Linux, including the real local HTTP application and a
+Chromium browser. Windows Explorer and native close callbacks were simulated.

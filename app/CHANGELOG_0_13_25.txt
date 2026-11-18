@@ -1,0 +1,28 @@
+TUNNEL STUDIO 0.13.25 — WHAT CHANGED
+
+- Persistent heat-map ownership: older design results and inactive cleaning
+  panels cannot clear a newly generated heat map. Closing/switching options
+  keeps a valid comparison; stale inputs invalidate it. Recolouring an existing
+  heat map keeps the camera view.
+- Project explorer with named bundles, scans and expandable connections,
+  search, multi-selection, Properties and compact export access.
+- Original setup connections remain accessible after merging. Connection lines
+  can be shown/hidden separately from their saved metadata.
+- Context-specific cloud, mesh, point-selection, target, geometry, connection
+  and bundle menus. Menus are viewport-bounded, scrollable and keyboard usable.
+  Right-click cloud identification uses ownership recorded with the displayed
+  point buffer; an empty-space click never silently acts on another cloud.
+- Fit item uses that item's coordinate bounds. Mesh style controls move to
+  Properties/context menus; geometry export retains the full mesh.
+- Export highlighted reads original point caches in bounded chunks, with masks,
+  attributes and project coordinates. Review exports use original point IDs.
+  Multi-mesh OBJ and JSON geometry/target/connection export are supported.
+- Export caches track the exact source/mesh revision. A prepared OBJ for another
+  mesh cannot be offered as the newly selected mesh.
+- Independent native tool/dialog/explorer windows, resizing, remembered monitor
+  position, redocking with form values intact, and Reset tool windows.
+- Updated test fixtures for current target names, merged-setup connections and
+  full-density statistics; lifecycle drainage avoids false JSDOM shutdown errors.
+
+This update was explicitly authorised by “ok update it nowlets see”.
+The preceding review-only instruction has been superseded for this release.

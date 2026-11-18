@@ -1,0 +1,62 @@
+TUNNEL STUDIO 0.13.24 — 15 October 2026
+
+1. Cloud vs Design accepts an estimated alignment.
+   Use your reviewed scan-derived alignment as the active alignment, then run
+   the comparison or Generate 3D heat map. Results, the heatmap legend and CSV
+   identify the estimated reference. The calculation uses its centreline and
+   node radii. It describes variation from that reference; it does not provide
+   an independent check against the original tunnel design.
+
+2. Cleaning protects sparse wall returns around pipes.
+   A sparse point matching the supported lining is retained even when the
+   neighbour filter flags it. The local lining fit is constrained by the
+   surrounding wall profile so dense pipe returns cannot so easily replace
+   the wall. Uncertain lining areas are retained in both Combined denoising
+   and Clean tunnel. Preview green/red groups before applying.
+   If the earlier cleaning is already applied, Undo or restore that deletion
+   first. Installing this update does not restore points or change your edits.
+
+3. Ring suggestions have a revised detector and useful feedback.
+   Use scan extent is on initially. Turn it off to enter a manual chainage
+   range; polling no longer overwrites that range. Wall band is visible here.
+   Choose partial, half or broad circumferential support. Detection checks
+   coherent geometric changes across angular sectors, excludes deleted points
+   and respects an enabled limit box. An incomplete projection is rebuilt.
+   Empty results distinguish insufficient coverage from insufficient radial
+   signal. Suggestions still need review; flush/intensity-only, tilted or
+   obscured joints may be missed. No joint is invented merely from ring pitch.
+
+4. The cross-section top overview can zoom and pan.
+   Wheel zooms around the cursor; +/− zoom about the centre. Right-drag or
+   middle-drag pans. Fit overview restores the full scan. Left-click/drag
+   still moves the yellow cutting line. Zoom/pan does not move the cut or
+   launch a new section calculation. The section plot has its own controls.
+
+5. Two-point distances are visible, saved geometry.
+   Pick two points to create a labelled line in the main 3D view. It appears
+   under Geometry & references. Click the line or its row to select it; use
+   Delete, Remove, or the sidebar Remove button. Rename and eye visibility
+   controls work, and Undo restores a deleted line. Deleting the line does
+   not delete scan points. Endpoint coordinates stay fixed at the picked
+   world positions; move/re-register a scan and remeasure if necessary.
+
+INSTALL
+Save and close Tunnel Studio. Extract the whole ZIP into a new folder, then
+run UPDATE_TUNNEL_STUDIO.bat. Reopen and check version 0.13.24. Refresh/restart
+any browser fallback. This is a cumulative patch for the existing installation.
+
+VALIDATION
+143 focused checks passed: 66 backend and 77 UI checks. The synthetic occluded
+wall fixture retained all 83,784 wall points, including all 243 sparse points
+behind/between pipes, while flagging both pipes' 15,424 points in all three
+checked cleaning modes. This is a constructed test, not field accuracy.
+
+The full Windows application, installer and GPU pixels were not run here.
+Ring numerical tests use constructed projection data; the installed base
+projection module is not included in this patch. Two unrelated optional-mesh
+checks could not run because Open3D is unavailable in this test environment;
+the seven affected alignment-comparison checks passed separately. See
+METHODS_0_13_24.txt and tests/validation_0_13_24.json for scope and limitations.
+
+Direct Leica/RTC360 import and the earlier 0.13.23 functionality are included.
+Their existing experimental limitations remain unchanged.

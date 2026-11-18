@@ -1,0 +1,16 @@
+Tunnel Studio 0.20.0 PERFORMANCE
+
+- Direct ordered CPU work for supported meshing stages and cloud projection.
+- Complete slab support, deterministic joins and bounded owned source reads.
+- Saved RTC360 VIS positions applied automatically for registered imports.
+- 500-evaluation, 1e-8 bundle solves with a guarded pairwise fallback and an
+  explicit warning; invalid geometry and inconsistent loops still block apply.
+- Terminal-first ICP checks preserve verified convergence and failure causes.
+- Cooperative mesh/job cancellation, joined workers and atomic publication.
+- 256 MB project metadata limit retained across save and open paths.
+- Connected groups can build and select a Registered cloud for cleaning.
+- Two-billion selected-point admission ceiling for bounded noise screening.
+
+Retains previous application features. No new GPU reconstruction engine.
+See RELEASE_SCOPE_0_20_0.txt and VALIDATION_0_20_0.json for scope and current
+checks; older versioned validation files describe earlier releases only.

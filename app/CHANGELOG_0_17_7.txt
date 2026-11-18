@@ -1,0 +1,12 @@
+TUNNEL STUDIO 0.17.7 — BULK PERMANENT POINT REMOVAL
+
+- Edit > Permanently remove deleted points now supports multiple scans in one reviewed batch.
+- Select all eligible scans, clear the selection, or choose any subset before review.
+- Batch processing is sequential by design: one scan at a time keeps peak RAM and temporary disk bounded and avoids competing large SSD reads/writes.
+- Each selected scan is validated before the first commit. If Stop is pressed later, already completed scans remain committed while the scan currently being processed keeps its atomic rollback protection.
+- Full physical compaction now uses 1,000,000-point streaming blocks instead of 100,000-point blocks to reduce syscall/progress overhead on large RTC360 caches while remaining far below the application's RAM budget.
+- The replacement preview is generated during the same retained-point streaming pass. The previous implementation performed a second full read of the newly-created XYZ cache solely to build the preview; that extra pass has been removed.
+- Archive-only permanent removal still skips point-cloud rewriting entirely.
+- The review shows per-scan deleted/retained counts, peak temporary-space requirement and total batch counts before confirmation.
+- Original imported files and saved projects remain protected. Physical disk reclamation still necessarily writes retained points once when a compacted cache is required.
+- 0.17.6 transform-only virtual registration remains unchanged and is cumulative in this release.

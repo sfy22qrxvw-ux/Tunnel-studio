@@ -1,0 +1,82 @@
+TUNNEL STUDIO 0.13.8 - TARGET SEARCH AND DISPLAY METHODS
+Copyright (c) 2026 Damian Gulczynski
+
+PURPOSE
+Estimate the intersection of four alternating black-and-white quadrants.
+No physical target size is requested. An internal support scale is a fitting
+window, not an estimate of the printed target's outer dimensions.
+
+SEARCH
+1. Visit every finite, retained original XYZ record. Intensity and RGB
+   brightness are processed separately. Excluded points are not used.
+2. Accumulate local cell counts, intensity moments and range at support
+   scales 0.05, 0.08, 0.125, 0.20, 0.32, 0.50, 0.80 and 1.25 m. Cell size
+   is 0.42 times the support scale. Keep spatially distributed proposals.
+   Channel-normalised scores avoid 8-bit RGB dominating normalised intensity.
+3. Up to 900 local patterns proceed. The limit is reported when reached.
+   Full-density traversal is not exhaustive fitting of every possible centre.
+   Chunk/local quotas can omit targets; point order/density can affect proposals.
+4. Collect independent overlapping original-point neighbourhoods, with a
+   deterministic priority sample and a total budget near 2.4 million samples.
+   Per-patch sample: 2,500 to 35,000 points. Final fit: at most 30,000 points.
+5. Fit a local plane, project into it, spatially balance intensity samples,
+   normalise local contrast and search crossing locations and orientations.
+   The original values are not altered. Refine a soft four-quadrant model
+   using robust least squares. Report the fitted continuous 3D intersection.
+6. Validate the fixed pattern on all original retained points in its local
+   neighbourhood, including four-quadrant support, contrast, sign agreement,
+   plane support, and competing translated/rotated edges. Contrast score is
+   not a probability, centre precision, metrological uncertainty or approval.
+7. A weak pattern needs a consistent centre at another validated scale.
+   A strong pattern (score at least 0.75) may pass at a single scale.
+   These empirical thresholds reduce false positives; they can miss dirty,
+   sparse, occluded or unusual targets and require real-scene validation.
+
+PICK & FIT
+Uses the same automatic scale family around the approximate clicked point,
+with original-density validation. The clicked point is a seed, never an
+unverified replacement for a fitted centre. No physical dimension is needed.
+
+DISPLAY
+The overview is still bounded to at most 1,000,000 displayed points/vertices.
+Automatic detail activates on zoom (scale below 25% of visible scan extent),
+after 450 ms without another wheel/release event. It streams original points
+inside the orthographic camera volume, including a 15% lateral margin, then
+uses deterministic sampling only if that region exceeds the display budget.
+Deleted/hidden/isolated points and enabled limit boxes remain respected.
+This is an on-demand region read, not a persistent octree/LOD index.
+Large scans or slow disks may take longer; all points are not loaded into GPU
+memory at once. Fit resets to the global overview. Navigation during loading
+preserves the latest camera, and obsolete detail responses are discarded.
+Local intensity percentiles improve contrast. User contrast/gamma are GPU
+display transforms, disabled for cleaning/analysis colour overlays. Target
+detection uses unmodified source intensity/RGB, independent of these sliders.
+
+RESEARCH REVIEWED
+Wang, C. and Zha, B. (2023), Point Cloud Target Registration Algorithm Based
+on Local Feature Description, J. Phys.: Conf. Ser. 2478, 062024.
+DOI: 10.1088/1742-6596/2478/6/062024 (user-supplied paper).
+Its local descriptors use normal angles, projection distances and density
+for correspondence / RANSAC / ICP between 3D objects. It does not provide a
+black-and-white printed-quadrant centre detector; that descriptor pipeline
+has not been claimed or implemented in this update.
+
+Rachakonda, P., Muralikrishnan, B. and Sawyer, D. (2018), Metrological
+evaluation of contrast target center algorithm for terrestrial laser scanners.
+https://tsapps.nist.gov/publication/get_pdf.cfm?pub_id=925952
+This paper supports combining geometric and intensity data for contrast
+target centres. It starts from target ROIs, uses image/edge processing and
+subsequent refinement. This update is its own plane / contrast-model method,
+not a reproduction or validation of NIST's spherical-domain procedure.
+
+REAL-SCAN LIMIT
+The supplied E57 has 10,125,420 points and intensity/RGB. Original-cache
+hashes were unchanged after display tests. Several earlier suggestions were
+visually inspected and proved to be seams; final automatic search returned
+zero suggestions. No labelled Leica target in that E57 has been established,
+so recall, false-negative rate and real-centre accuracy remain unverified.
+Separate Leica database target records were inspected, but correspondence
+and frame agreement with this E57 have not been established. No transform or
+target coordinates from those databases were assumed to be E57 ground truth.
+
+Retained 0.13.7 algorithms / limitations are documented in METHODS_0_13_7.txt.

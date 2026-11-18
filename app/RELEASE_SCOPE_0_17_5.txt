@@ -1,0 +1,30 @@
+TUNNEL STUDIO 0.17.5 — REGISTRATION STORAGE UPDATE
+
+Purpose
+- Applying a reviewed registration no longer automatically materialises another full-density merged cloud.
+- Connected setups are positioned and their target/network links are saved first.
+- A physical merged cloud is now optional and explicit.
+
+Registration workflow
+1. Solve/review target geometry as before.
+2. Apply geometry positions the connected setups and saves the registration.
+3. Continue adding links/setups without an automatic merged-cache rebuild.
+4. Build merged cloud only when an independent editable combined cache is actually needed.
+
+Disk-space behaviour
+- Optional merge shows an upper-bound point count, available free space and estimated free space required.
+- The estimate includes the existing 512 MB reserve.
+- Existing unedited generated merged clouds are listed in Registration and may be released explicitly.
+- Release merged cache deletes only the derived merged cache. Individual setup caches, registration links and setup coordinates remain.
+- Edited/cleaned derived merged clouds are protected from this release action.
+
+Important remaining boundary
+Applying a registration still creates a transformed full-density working cache for newly positioned setups. This release removes the much larger automatic combined-cache duplication; it does not yet implement a completely transform-only virtual full-density processing architecture.
+
+Validation
+- New focused tests confirm Apply geometry does not create a merged cloud.
+- Optional merge estimate/build/release passed.
+- Edited merged caches are protected.
+- Large-coordinate rigid registration and 198.8 mm sphere-target fitting regressions passed.
+- JavaScript syntax check passed.
+- Export-format tests requiring pye57/laspy/plyfile are unavailable in this Linux host and are not part of this focused change.

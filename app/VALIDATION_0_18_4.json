@@ -1,0 +1,50 @@
+{
+  "version": "0.18.4",
+  "date": "2026-10-30",
+  "scope": "Installer self-check correction; application algorithms unchanged from 0.18.3.",
+  "confirmed_failure": "The old installer probe required a named previous-session project. Production startup deliberately preserves only a hidden recovery, so correct startup failed this probe.",
+  "pre_fix_reproduction": {
+    "check": "exact bundled 0.18.3 smoke -c command executed with Linux validation Python, bundled app and packaging sources",
+    "native_windows": false,
+    "runtime_executable": "/workspace/scratch/0d497fbe0eff/validation/venv/bin/python",
+    "returncode": 1,
+    "output": "Traceback (most recent call last):\n  File \"<string>\", line 1, in <module>\n  File \"/workspace/scratch/0d497fbe0eff/build_stage/release/payload/build_support/startup_smoke.py\", line 77, in verify_startup\n    raise RuntimeError('Startup self-check did not create a reopenable previous session.')\nRuntimeError: Startup self-check did not create a reopenable previous session.\n",
+    "source_sha256": {
+      "build_stage/release/payload/app/session_start.py": "34f1d5da5786be31c2d55782733f0ff0680551ed7305d16414d41e133697c69e",
+      "build_stage/release/payload/build_support/startup_smoke.py": "59c2562ccda52b90bf84712f0f23d9d074021cae921087c63b6e3532b4e4d411",
+      "build_stage/release/payload/build_support/windows_installer.py": "742f2bba3a78851d8fc71bbbcc02a02f133b892d6500f23255a81f8db05ce50f"
+    },
+    "named_project_files": [],
+    "hidden_recovery_files": [
+      "workspace_20261030_202558_5ab8facc.json"
+    ]
+  },
+  "installer_tests": {
+    "tests": 21,
+    "seconds": 4.211,
+    "failures": 0,
+    "errors": 0,
+    "skipped": 0,
+    "platform": "Linux",
+    "result": "OK"
+  },
+  "new_regression_coverage": [
+    "Real server/project/probe process: 21 MB recovery remains byte-identical and readable, active workspace opens empty, no duplicate named project.",
+    "Same-size recovery corruption is rejected.",
+    "Legacy named-recovery duplication is rejected before listing can retire it.",
+    "Regression to 20 MB metadata read limit is rejected.",
+    "Failure dialog first line retains actual exception or native exit code; timeout and non-UTF8 output remain diagnosable."
+  ],
+  "additional_build_gate": "The builder must execute the same production component command against staged app/support sources using its host Python, then the Windows installer repeats it with bundled Windows Python before activation.",
+  "application_changed_files_relative_to_0_18_3": [
+    "app/release.py"
+  ],
+  "application_algorithm_files_unchanged": true,
+  "original_survey_files_used_in_check": false,
+  "startup_check_workspace": "New isolated temporary folder with synthetic metadata only.",
+  "activation_preservation": "Component checks precede active release renaming/activation and operate outside the user survey workspace.",
+  "native_windows_execution": false,
+  "native_windows_webview2_gpu_execution": false,
+  "prior_application_evidence": "app/VALIDATION_0_18_3.json: 331 tests and prior geometry, browser, registration, alignment, mesh and analysis evidence retained; not rerun or expanded by this installer-only correction.",
+  "remaining_limits": "All previously documented survey accuracy, segmentation/classification/bolt and huge-cloud performance limitations remain. The user Windows log was not supplied, so an earlier native import failure on that machine cannot be excluded."
+}

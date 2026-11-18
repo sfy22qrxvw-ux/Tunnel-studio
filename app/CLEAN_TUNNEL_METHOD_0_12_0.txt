@@ -1,0 +1,40 @@
+CLEAN TUNNEL 0.12 — INDEPENDENT NOISE FILTER
+Coordinates and all length parameters are in metres.
+
+For each distinct location i, find up to k other distinct locations within R.
+si = support count; di = mean neighbour distance. si < minimum is a sparse
+candidate. Exact duplicates are one support observation; all original records
+are still kept or removed together unless a spatial review overrides labels.
+
+For neighbours j that meet minimum support, mi = median(dj), MADi =
+median(abs(dj-mi)). With enough such references, classify i as a distance outlier
+when di > max(mi + strength*1.4826*MADi, 1.8*mi) + 1e-12 metres.
+Defaults: R=.10, k=12, minimum=3, strength=3. The 1.8 floor is an explicit
+implementation choice. This is not a calibrated probability or accuracy bound.
+
+Spatial cells have side max(.5,4R). Each core is classified with a 2R halo so
+its neighbours and their support are complete. Selected points only provide
+support; selection boundaries still need inspection. No output coordinates
+are averaged, repositioned or silently replaced with a display sample.
+Temporary staging is removed on completion/error. Dense cells can use large RAM.
+
+This extends the radius-support and neighbour-distance filtering principles:
+https://pointclouds.org/documentation/tutorials/remove_outliers.html
+https://pointclouds.org/documentation/tutorials/statistical_outlier.html
+PCL's tutorial statistical method uses a global mean/std threshold; the local
+MAD rule, spatial halo processing and review workflow here are independent work.
+
+Existing SMRG is a separate surface extraction mode, based on Song et al. 2026:
+https://doi.org/10.1038/s41598-026-73755-6
+It uses PCA supervoxels, graph pruning, hierarchical growth and existing-point
+boundary recovery. Paper eq.19 is directional as printed; the symmetric option
+is separately labelled. Its large input blocks still have independent clusters;
+the new halo guarantee applies only to noise_clean. The authors' reported
+accuracy/runtime was not reproduced. Full paper is CC BY 4.0; implementation
+is independent. Boundary recovery is not geometric hole filling.
+
+Manual Box/Lasso review operates on full processed point IDs. Revision checks
+prevent stale decisions. Automatic labels are retained for reset. Cleaned copies
+contain kept points inside the processed area with original coordinates/attrs.
+Dense objects can survive noise screening. Inspect sparse lining, small details,
+joints, portals and the chosen support scale before meshing.

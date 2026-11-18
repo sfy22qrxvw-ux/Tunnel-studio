@@ -1,0 +1,53 @@
+Tunnel Studio 0.21.3 | Area restoration in Deleted points
+
+Cumulative application and Windows runtime based on verified 0.21.2.
+
+Box, Lasso, Polygon and Brush selections operate in the orange Deleted points
+view. Restore selected points tests the complete original-point group at full
+density in project coordinates. The display sample supplies the selection
+shape; it does not determine which original points are restored. The stored
+source bounds supply selection depth, including archived cleaning sources.
+
+Normal exclusions return to their original scan through a new reversible mask.
+Cleaning exclusions have different point identities from the cleaned result;
+selected archived observations become their own restored scan. Both forms keep
+unselected points deleted and retain immutable binary lists for the remainder.
+Multiple selected groups commit in one transaction and one workspace Undo step.
+Progress and Stop cover chunked reads, partitioning, extraction and mask copies.
+Cancellation or a failed save rolls back the complete restoration.
+
+This does not interpolate or invent points and cannot recover observations whose
+restoration caches have previously been permanently removed. Original point and
+attribute files are never rewritten. The 0.21.2 independent-bundle fix is retained.
+Native Windows/WebView2 and Damian's actual project are not executed here.
+
+Whole-cloud bolt detection uses the existing surface_streaming/lining_features
+pipeline, including disk-backed lining_tiles windows on long tunnels. It preserves
+the local seeded collector's bounded workload as a separate option. New settings
+choose recessed pockets or raised fittings and an optional maximum feature depth/
+height. Legacy settings default to the earlier recess detector with no new maximum.
+Full-density feature labels retain original point IDs. A synthetic repeat-observation
+regression streams 1,134,000 IDs with no input block over 100,000 records. A separate
+browser regression fits a synthetic tunnel through the production HTTP workflow.
+These establish code behaviour. The supplied local crop is assessed below; the
+actual 921-million-point project and native Windows/WebView2 remain untested.
+
+All lining departures and point separation
+Above / below lining selects every supported measured point outside a user band
+on either side, with no bolt-diameter or compactness restriction. The whole-cloud
+route streams all IDs against the supported tunnel reference; a local picked
+patch uses a robust quadratic lining fit. Review the groups, then Remove or
+Separate selected points to a new scan. Separation and removal preserve source
+coordinates and support one workspace Undo. Unsupported areas remain retained.
+
+Export selected deleted areas
+Draw an area in Deleted points and choose Export selected deleted points, or use
+the Explorer Export button. The captured deleted groups export at full density
+without restoring them. The export dialog can also include original source wall
+points inside the drawn area, which is useful for supplying a bolt-pocket sample.
+E57, XYZ and the existing point-cloud formats use the normal destination dialog.
+
+The supplied 76,070-point E57 crop was also inspected. At a ±5 mm local band,
+25,214 points are below and 83 above the fitted wall. The local support RMS is
+0.450 mm and the deepest fitted departure is about 79.4 mm. These are fitted
+residuals on this crop, not survey accuracy or certified defect dimensions.

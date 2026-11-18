@@ -6,6 +6,16 @@ window.AnalysisArea=(()=>{
   const area=window.JobUI?.highlightRequest?.(),ids=source.source_scan_ids||[source.id];
   return area?.selection&&!area.deleted_groups&&ids.every(id=>area.ids.includes(id))?area.selection:null;
  }
+ function describe(id,source){
+  const select=$(id),mode=select.value==='auto'?select.dataset.defaultMode:select.value;
+  let note=document.getElementById(id+'-members');
+  if(!note){note=document.createElement('small');note.id=id+'-members';select.after(note);}
+  note.textContent=(source?.source_members||[]).map(member=>{
+   const area=mode==='selection'?(member.boxed?'highlight inside box':'highlight'):
+    mode==='limit'?(member.boxed?'inside saved box':'whole retained scan (no saved box)'):'whole retained scan';
+   return member.name+' — '+area;
+  }).join(' · ');
+ }
  function configure(id,source){
   const el=$(id),old=el.dataset.source===source?.id?el.value:'auto';
   const selection=highlight(source),hasLimit=source?.has_limit_box||source?.limit_box;
@@ -16,6 +26,7 @@ window.AnalysisArea=(()=>{
   if(mode!=='auto')options.push(new Option('Whole retained source','whole'));
   el.replaceChildren(...options);el.dataset.source=source?.id||'';el.dataset.defaultMode=mode;
   el.value=options.some(option=>option.value===old)?old:'auto';
+  describe(id,source);
  }
  function request(id,source){
   const el=$(id),selection=highlight(source);
@@ -27,7 +38,7 @@ window.AnalysisArea=(()=>{
  function extent(bounds){
   return bounds?.length===2?bounds[0].map((v,i)=>`${['E','N','H'][i]} ${fmt(bounds[1][i]-v,2)} m`).join(' × '):'';
  }
- return {configure,request,extent};
+ return {configure,request,extent,describe};
 })();
 (()=>{
  let result=null,loading=false,showAfterRun=false,displayedId=null,previousResultId=null,pendingMeshIds=null,sources=[];
@@ -63,6 +74,7 @@ window.AnalysisArea=(()=>{
  $('design-export').onclick=()=>{if(result&&!result.stale&&!busy)location.href='/api/design-comparison.csv';};
  $('design-import-mesh').onclick=()=>{if(busy)return;pendingMeshIds=new Set((window.JobUI?.meshItems()||[]).map(x=>x.id));window.TunnelRibbon?.openImport('model');};
  $('design-mode').onchange=()=>{modeUI();render();};
+ $('design-area').onchange=()=>window.AnalysisArea.describe('design-area',source());
  $('design-source').onchange=()=>{areaUI();render();};
  window.DesignUI={sync,open:()=>sync(window.JobUI?.selectedItem()?.id)};sync();
 })();

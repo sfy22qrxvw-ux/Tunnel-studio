@@ -1,0 +1,37 @@
+Tunnel Studio 0.20.0 PERFORMANCE - scope and limitations
+
+Source: complete 0.19.0 application baseline, cumulative source changes for
+live measurement, mesh selection, registration and raw import, and the
+reviewed 0.20.0 performance, fallback, cancellation and cleaning changes.
+The current uploaded pointio.py and surface_api.py match this source tree.
+The uploaded clean_tunnel(1).py is installed as clean_tunnel.py.
+
+The Windows runtime is preserved byte-for-byte from the 0.19.0 installer and
+checked against its file manifest. New application/installer versions are
+0.20.0. The installer verifies file hashes and application components before
+activation. Project data lives outside the release folder.
+
+CPU parallelism uses bounded independent tasks and ordered writes. Global
+Poisson, ball-pivoting and Delaunay geometry are not arbitrarily split into
+independent reconstructions. No fixed speedup or GPU acceleration is claimed.
+
+Pairwise fallback is permitted only after an eligible non-convergence result
+and validation of fresh edge solutions and loop residuals. It is not full
+joint bundle convergence or survey control. Cancellation, invalid inputs and
+unobservable geometry are not silently converted into successful results.
+
+Cleaning a connected registration group first creates a physical Registered
+cloud. This needs additional disk space; it is not direct multi-source
+streaming through separate bundle members. Noise cleaning's two-billion
+selected-point ceiling is subject to local support-density, memory, index and
+disk checks. SMRG retains its distinct selected-area guard. This does not
+certify every downstream editing operation for two billion points.
+
+No original survey coordinates are rewritten by registration. No missing
+R0007 attribute cache or other original input can be reconstructed by a code
+update. Review residuals, classifications and experimental raw reconstruction
+against independent control and original measurements.
+
+Current checks are recorded in VALIDATION_0_20_0.json. Native Windows/WebView2
+execution, real-scanner field alignment and the user's 921-million-point
+end-to-end workflow remain unverified on the build host.

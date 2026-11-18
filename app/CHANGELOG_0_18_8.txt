@@ -1,0 +1,31 @@
+Tunnel Studio 0.18.8
+2026-11-02
+
+Manual visual registration
+- Registration > Visual alignment opens a fixed blue / moving orange pair.
+- Switch between plan, side elevation, front elevation and 3D inspection while retaining the draft alignment.
+- Drag, rotate about a chosen pivot, and use millimetre/degree steps with local Undo, Redo and Reset.
+- Elevation starts in height-only mode; tilt correction requires explicitly unlocking tilt.
+- Join and lock saves a rigid pose for the connected moving group. The fixed group and original point coordinates are preserved. Workspace Undo restores the previous registration.
+- Manual links are identified as manual and do not report an invented fit RMS.
+
+Mesh repair
+- Selected CAD surfaces and imported meshes reach the repair dialog correctly, including after switching ribbon tabs.
+- The dialog offers an explicit source chooser when selection is empty or ambiguous.
+- Changing source clears stale inspection data. Repair creates a separate copy and supports Undo.
+
+Bolt-hole point selection
+- Selecting a detected bolt-recess guide selects its labelled original cloud points for review and deletion.
+- Ctrl-selection and select-all combine recess groups; deletion operates on original point IDs and supports Undo.
+- Preview limits are disclosed separately from the full selected point count. The detection algorithm is unchanged.
+
+Live point-to-plane measurements
+- The transparent cyan plane appears after the third valid reference point.
+- Point placement and coordinate edits update perpendicular distance automatically.
+- Hover snaps to visible displayed scan points; a confirmed pick recovers the original precise coordinate.
+- Saved measurement planes remain filled and transparent after reopening the workspace.
+
+Cumulative release
+- Includes the 0.18.7 deletion, retained-result and setup-view theme changes.
+- Uses the verified 0.18.7 bundled Windows runtime and transactional installer lifecycle.
+- Existing projects and scans are kept; prior active program files remain available for rollback.

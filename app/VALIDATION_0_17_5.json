@@ -1,0 +1,36 @@
+{
+  "version": "0.17.5",
+  "generated_utc": "2026-10-27T20:49:32.316456+00:00",
+  "purpose": "Avoid automatic full-density merged-cache rebuild after every registration link.",
+  "checks": [
+    {
+      "name": "apply geometry without merged cloud",
+      "status": "passed"
+    },
+    {
+      "name": "optional merge estimate/build/release",
+      "status": "passed"
+    },
+    {
+      "name": "edited merged cache protection",
+      "status": "passed"
+    },
+    {
+      "name": "large-coordinate rigid registration",
+      "status": "passed"
+    },
+    {
+      "name": "198.8 mm sphere target fitting",
+      "status": "passed"
+    },
+    {
+      "name": "indexed exact sphere neighbourhood",
+      "status": "passed"
+    },
+    {
+      "name": "scan-registration-ui.js syntax",
+      "status": "passed"
+    }
+  ],
+  "known_boundary": "Newly positioned setups still require a transformed full-density working cache. Physical combined merge is now explicit and optional."
+}

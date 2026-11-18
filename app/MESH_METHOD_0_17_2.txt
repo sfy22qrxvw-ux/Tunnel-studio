@@ -1,0 +1,205 @@
+Tunnel Studio 0.17.2 - measured surfaces and triangle meshes
+
+WHAT A COMPLETED MESH CONTAINS
+A mesh contains shared vertices and triangular faces. Neighbouring faces use
+the same vertex indices along their shared edges. A filled triangle surface is
+different from a point cloud, even when both describe the same shape.
+
+A useful tunnel mesh may have open portals, measurement boundaries and genuine
+openings. Such a surface can be connected without enclosing a watertight volume.
+The words solid display describe filled triangle rendering; they do not certify
+a closed CAD solid, lining thickness, or a valid enclosed volume.
+
+CREATE TUNNEL SURFACE
+This is the primary direct lining-mesh workflow for one approximately straight
+tunnel branch. It uses a shared-vertex radial grid fitted to retained measured
+points. It is appropriate after selecting the branch and reviewing or cleaning
+services, equipment and other geometry that should not become part of the lining.
+Use the alignment-grid workflow for a curved tunnel with a suitable alignment.
+Separate junctions and overlapping branches before fitting one radial surface.
+
+The desktop path reads the original float64 coordinate cache in bounded blocks.
+Deleted points are excluded by the current mask. A supplied selection and active
+limit box constrain the source area. The display point cache is not the meshing
+input, and meshing does not write an index beside the original source scan.
+
+The first source pass obtains retained bounds and stable centred statistics.
+The next pass assigns every retained finite measurement in the chosen area to
+an axial/angular cell. Support counts are exact. A small, bounded reservoir of
+measured radii supplies each cell's fitted median. Original point identities
+determine reproducible reservoir priorities independently of input chunk size.
+
+For a cell whose measurements fit in its reservoir, the median is exact. For a
+cell with more measurements, the reported radius is an approximate median of
+the retained reservoir. Quality controls the reservoir capacity; the overall
+grid budget can reduce that capacity. The saved mesh summary records the
+effective capacity, exact and approximate cell counts, source passes, measured
+support and effective grid dimensions. Reading all retained support does not
+mean keeping every source point in memory or computing every median exactly.
+
+The grid and working arrays have automatic size controls. Source point count
+still affects reading and processing time. These controls do not establish a
+universal runtime or whole-application memory guarantee for every possible
+project, imported model, or combination of open tools.
+
+Cell vertices are fitted positions, not unchanged scan returns. Adjacent
+supported cells are triangulated with shared indices and consistent radial
+winding. Edge limits prevent overly long connections. A request that produces
+no supported faces fails with an explanation rather than publishing a vertex
+cloud labelled as a mesh.
+
+PHYSICAL GAP LIMITS AND OPENINGS
+Small-gap interpolation uses only original measured support in a single pass.
+An empty cell must have admissible support in both the angular and axial
+directions. Angular distance uses the local radius, and the combined tangential
+or axial span and radial change must fit inside the stated physical gap limit.
+Testing these distances together prevents a large diagonal jump from passing
+two separate small-coordinate tests.
+
+Newly interpolated cells are not reused to grow repeatedly across an opening.
+An unmeasured complete ring, a long slit, a large hole or a portal is therefore
+not filled merely because an individual cross-gap distance looks short.
+Increasing cell size changes resolution and the amount of support per cell;
+it does not increase the chosen physical gap limit.
+
+Faces using interpolated cells are marked as inferred geometry for review.
+Separate hole-repair commands retain their existing portal, extent, topology
+and overlap checks. A capped or repaired result is not automatically certified
+as a watertight survey volume.
+
+FLOAT64 COORDINATES AND GRID BOUNDARY TIES
+Original survey coordinates and saved mesh vertices remain float64. Local
+centred coordinates are used for sensitive geometric calculations and display.
+Near an existing cell boundary, the grid resolves floating-point ties using a
+roundoff allowance derived from coordinate magnitude and projection scale.
+The PCA unwrap path also uses stable bin ties and local-coordinate averaging.
+
+This allowance is numerical uncertainty, not a survey accuracy setting, a
+welding tolerance or permission to fill a physical gap. It addresses artificial
+alternating empty rows or angular cells caused by roundoff at regular sampling
+boundaries. A nearly circular cross-section uses a stable transverse frame when
+its radial eigenvalues do not determine a unique orientation. A measurement
+within the numeric tie interval can be assigned to a neighbouring existing bin;
+arbitrary translations are not promised to produce bitwise-identical fitted
+medians. Requests below reliable float64 bin resolution are rejected.
+
+OTHER MESH METHODS
+Generic methods obtain spatially distributed measured representatives through
+bounded source passes. A representative is an unchanged measured XYZ row near
+its voxel centre. This avoids allocating most working points to the densest
+scanner region simply because that region occupies most input rows. Working
+budgets and effective sampling resolution are reported automatically.
+
+Scan to Mesh Auto selects a supported reconstruction route from the selected
+geometry and reports its choice. PCA tunnel unwrap, planar Delaunay, Ball
+Pivoting, Screened Poisson, Alpha Shape, explicit Convex Hull and voxel/Marching
+Cubes remain separate methods with different assumptions. A planar projection
+is not a general reconstruction of a tunnel. A convex hull is an outer envelope
+that can span concavities. Normal-dependent engines need suitable oriented
+normals, and implicit reconstruction can produce geometry in weakly supported
+areas. The method's edge limits and review information still matter.
+
+Spatial sampling changes the relative influence of densely repeated returns.
+A lower point-weighted distance to an uncleaned cloud is not, by itself, proof
+of a better lining surface. Small interior objects can affect that metric even
+when the intended output is the surrounding tunnel. No meshing method here is
+a semantic guarantee that pipes, cables, bolts or services have been removed.
+
+RESULT QUALITY AND CONNECTIVITY
+The result summary distinguishes triangles, edge-connected pieces, the largest
+piece's area fraction, boundary edges, non-manifold edges, isolated triangles
+and winding conflicts. Touching at one vertex does not count as a joined sheet.
+All output components are retained; small pieces are not silently discarded to
+make a connectivity statistic look better.
+
+For the radial grid, measured-cell retention reports how many observed cells
+contribute to at least one face. It does not measure completion of unobserved
+areas. The report also records how many candidate triangles an edge limit
+removed. Fragmented or poorly supported output is labelled for review rather
+than described as a complete continuous lining.
+
+Triangle shape quality uses Q = 4*sqrt(3)*area / sum(edge_length_squared).
+An equilateral triangle has Q=1; a degenerate sliver approaches zero. A high Q
+does not prove source accuracy, correct classification or complete coverage.
+Boundary and edge-incidence checks do not certify absence of self-intersections
+or a watertight volume.
+
+The built-in fit diagnostic compares area-weighted mesh samples with bounded
+spatial representatives of retained measurements. Its normalized bidirectional
+squared Chamfer value is an approximate sampled comparison. It is not exact
+distance to all triangle interiors, an independent full-source validation, or
+a survey acceptance criterion. The release's independent real-scan checks use
+withheld source points and nearest triangle-interior distances separately.
+
+TRIANGLE DISPLAY
+The result card offers Solid, Solid + wire and Wire display, source visibility,
+preview retry and full-mesh export. It distinguishes saved triangle counts from
+displayed counts. Point-cloud colour and point-size choices do not replace the
+mesh's triangle representation.
+
+Large previews use connected surface simplification within the display budget.
+They do not randomly sample unrelated faces. A simplified preview leaves the
+saved full mesh unchanged. A failed triangle preview is shown as an error with
+its reason and a retry route; there is no silent vertex-only mesh fallback.
+When one model fails in a mixed scene, usable models can still display and the
+scene reports a partial error. Display failure and incomplete reconstructed
+geometry are different states, and both remain visible to the user.
+
+SAVE, EXPORT AND CANCELLATION
+Mesh creation and refinement write assets to a private operation directory.
+Before publication, the source geometry and exclusion-mask revision are checked
+again. A complete model is added to the workspace through the project save.
+Cancellation, a changed source or a failure before commit removes only that
+operation's unpublished assets and leaves the previous workspace intact.
+The last cancellable checkpoint precedes publication; a completed committed
+model is not subsequently reported as an unpublished cancelled operation.
+
+OBJ export reads the full saved vertex and face caches in bounded blocks. It
+exports every saved triangle, not the simplified screen preview. Vertex text
+uses 17 significant digits so an OBJ reader using float64 can recover the saved
+coordinate values. OBJ face groups distinguish original_surface from
+inferred_repair faces where that provenance is available.
+
+The OBJ writer validates cache lengths and face indices, writes to a temporary
+file beside the destination, and replaces the destination only after a complete
+write. A failed write removes the temporary file. Cancelling the save dialog
+publishes no export. Other formats retain their existing capability notices;
+this change does not make every format preserve scanner setups, panoramas or
+every point-cloud attribute.
+
+RESEARCH MAPPING
+The supplied Isotropic Point Cloud Meshing using unit Spheres (IPCMS), original
+2023 version by Lipschuetz, Reitebuch, Polthier and Skrodzki, is a different
+reconstruction algorithm. Its oriented splats, unit-sphere candidate placement,
+priority queues, half-edge region bookkeeping, crossing checks and region
+triangulation are not implemented here as the complete IPCMS method.
+
+This release applies relevant principles about sufficient local support,
+connectivity, controlled openings and triangle-quality reporting. The Q metric
+above is the metric discussed on IPCMS page 10. Relevant method and limitation
+sections are pages 3-9 and 13. The original version is arXiv:2305.07570v1; a later
+extended version has a different title and must not be confused with the
+user-supplied original method.
+
+The supplied triangle.pdf is Point2Mesh: A Self-Prior for Deformable Meshes,
+Hanocka, Metzer, Giryes and Cohen-Or, 2020, arXiv:2005.11084. Its actual method
+uses a deformable triangular mesh and a per-input MeshCNN/self-prior optimization
+with coarse-to-fine refinement and a beam-gap loss. This application does not
+implement that complete neural reconstruction. Area-weighted triangle sampling
+from its section 3.2 informs the fit diagnostic; using that metric is not a
+Point2Mesh implementation. The paper's closed-mesh prior also does not establish
+that a tunnel should have its portals sealed.
+
+VALIDATION AND LIMITS
+See VALIDATION_0_17_2.json for final release checks and source hashes. The source
+evidence work/validation_0_17_2/real_comparison.json records the controlled
+baseline/candidate real-scan runs, unchanged-source hashes, withheld queries,
+settings, connectedness, coverage, resource observations and fit measures.
+Use the final bound records rather than an archived intermediate iteration.
+
+The available raw scan has no labelled lining/service ground truth and has
+strongly nonuniform density. Whole-area fitting can retain sparse disconnected
+pieces even when it recovers more measured surface. Coarser detail can improve
+support while reducing local detail. No universal single-solid outcome or
+semantic-cleaning accuracy is claimed. The user's full 550-million-point cloud
+and native Windows/WebView2 execution were not benchmarked on the Linux host.

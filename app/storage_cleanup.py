@@ -216,7 +216,7 @@ def _candidate_files(root,state,mode):
         elif si.owned_name(root,p):
             owners=[];suffix=p.suffix.lower()
             if suffix=='.preview64' or p.name.endswith('.xyz64.viewindex.npz'):category='previews'
-            elif suffix in ('.analysis64','.design-results','.inspection-results','.surface_labels','.surface_ids'):category='analysis'
+            elif suffix in ('.analysis64','.design-results','.inspection-results','.surface_labels','.surface_ids') or si.MESH_TEMP.fullmatch(p.name):category='analysis'
             else:category='caches'
             if mode=='close' and category=='analysis' and not (product.get('recipe') and product['recipe'] in recipes):continue
         else:continue

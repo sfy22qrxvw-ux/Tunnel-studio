@@ -1,0 +1,242 @@
+TUNNEL STUDIO 0.4.0 — TUNNEL SURFACE EXTRACTION
+Copyright (c) 2026 Damian Gulczynski
+
+WHAT WAS ADDED
+Process > Extract surface opens a separate scan-processing workspace. It can
+use the active survey, registration source, positioned registration scan, or
+a separately imported scan. No alignment is required except when selecting
+by chainage or applying the result to an active survey.
+
+This is an independent, editable research implementation of the SMRG method
+described in the supplied paper. It is not the authors' implementation or a
+certified reproduction of their results. The original datasets were not
+supplied. No trained model, internet service or GPU computation is required.
+
+REFERENCE AND ATTRIBUTION
+Pengfei Song, Fengxiang Jin, Min Ji and Qiang Chen (2026).
+Supervoxel-based multi-level region growing method for surface point cloud
+extraction in intersecting tunnels. Scientific Reports.
+https://doi.org/10.1038/s41598-026-73755-6
+
+The supplied article is licensed Creative Commons Attribution 4.0:
+https://creativecommons.org/licenses/by/4.0/
+This software independently implements and adapts the mathematical method.
+No author code, article figures, model weights or original scan datasets
+are redistributed. Our interpretations and changes are listed below.
+
+QUICK START
+1. Close Tunnel Studio, extract the update ZIP and run
+   UPDATE_TUNNEL_STUDIO.bat. Reopen with the usual desktop shortcut.
+2. Choose Process > Extract surface > Try synthetic demo > Extract surface.
+   The generated scene contains two intersecting square tunnels, a pipe,
+   a small equipment box and random interior points.
+3. Green points belong to kept clusters. Orange is other clusters, grey is
+   density noise. Click a point or Inspect in the table; yellow identifies
+   the inspected cluster. Orbit, pan, zoom and isolate to inspect both walls.
+4. Tick or untick Keep for each cluster. Density noise can contain real
+   tunnel surface: inspect it, and optionally keep it using its checkbox.
+   Restore automatic suggestion resets the cluster decisions.
+5. Export kept surface or other points; choose E57, LAS/LAZ, PTS, PLY, XYZ
+   or CSV. Only the processed area is in these outputs. Available original
+   intensity/RGB follows the original point identities. Existing format
+   limitations still apply; E57 export is unstructured, not a native Leica
+   project or a reconstruction of scanner setups.
+6. For your own survey: choose its scan, process a suitable area, inspect
+   the result and confirm review. Apply excludes other points inside that
+   area. All points outside the area are preserved. Process > Undo restores
+   the previous working mask. Rebuild heatmaps, meshes and reports after
+   editing. Previous meshes/exported files are not automatically regenerated.
+7. Save / Save As retains the result, settings and review history. A portable
+   .tstudio includes the original caches, labels, selected point identities
+   and, for the demonstration, the synthetic truth labels.
+
+DATA, SCALE AND MEMORY
+- Coordinates must be finite XYZ in metres. No CRS, datum, geoid, orientation
+  or unit conversion occurs here. E57 import applies the scan's stored pose
+  using the existing reader. Proprietary Leica project containers still
+  need an exchange export from Leica software.
+- The importer reads the application's supported formats in chunks, but the
+  SMRG region-growing computation is an in-memory algorithm, not a streaming
+  billion-point solver. Default area cap: 300,000 retained original points.
+  Configurable range: 1,000–750,000. At least 50 distinct locations are needed.
+  Above the cap the run stops with an explanation; it does not subsample.
+- Use a coordinate box or a survey chainage range on large files. A box is
+  inclusive on each axis. A chainage range includes points whose design
+  projection chainage is finite and inside the range. Existing deletion
+  masks are respected. The radial wall-band display setting is not used.
+- Neighbourhood arrays and repeated graph construction can require substantial
+  RAM. Runtime depends on point density and patch count as well as point
+  count. This release has not been validated at the maximum cap on your
+  Windows laptop. There is no automatic tile stitching or cross-tile merging.
+- Cropping changes neighbourhoods and the largest-cluster assumption. Inspect
+  crop edges; use overlap and independent checks when working in sections.
+- Only the 3D display is sampled (up to 80,000 evenly spaced result points).
+  A very small cluster may be absent from the display sample even though its
+  full point count and keep/exclude decision are preserved.
+- Working geometry is float64, shifted to a local origin before the
+  calculations. Exact duplicate locations share geometric calculations;
+  their original rows, attributes and output multiplicity remain intact.
+
+IMPLEMENTED MATHEMATICS
+Symbols: p = point/seed position; n = unit normal; C = patch centroid;
+rv = requested patch resolution; d = mean nearest-neighbour spacing.
+
+1. Estimate each point's normal by PCA of its 15 nearest distinct neighbours
+   by default (the query point is excluded). The eigenvector belonging to
+   the smallest eigenvalue is the normal. Absolute normal dot products
+   remove the sign ambiguity during initial supervoxel formation.
+
+2. Connectivity metric (paper equations 1–4):
+     Sn = 1 - abs(ni dot nj)
+     Ss = norm(pi - pj) / rv
+     So = [abs(ni dot (pj-pi)) + abs(nj dot (pj-pi))] / 2
+     D  = alpha1*Sn + alpha2*Ss + alpha3*So
+   Defaults: alpha1=1, alpha2=0.4, alpha3=0.6.
+   Merge loss = point count of absorbed group times D of its seed pair.
+   Epsilon starts at median first-neighbour spacing and doubles each pass.
+   Merge eligible connected groups until the requested target group count.
+   Refine boundary labels using the least-cost neighbouring seed, then use
+   density clustering inside each group to separate disconnected surfaces.
+
+3. Patch eigenvalues are ascending: lambda1 <= lambda2 <= lambda3.
+     curvature = lambda1 / sum(lambda)
+     linearity = (lambda3-lambda2) / lambda3
+     planarity = lambda2 / sum(lambda)
+     e1 = [sqrt(lambda3)-sqrt(lambda2)] / sqrt(lambda3)
+     e2 = [sqrt(lambda2)-sqrt(lambda1)] / sqrt(lambda3)
+     e3 = sqrt(lambda1) / sqrt(lambda3)
+   LOW saliency when e2 > max(e1,e3); otherwise HIGH.
+   This is a geometric type, not a probability of tunnel surface.
+
+4. Build adaptive patch adjacency. Orient normals consistently along a
+   minimum-spanning forest, choosing each component's initial sign away
+   from an interior reference. The default reference is the area's bounding-
+   box centre. You can provide a known interior E/N/H instead. A single
+   reference plus MST does not guarantee physically outward normals in every
+   branched, non-star-shaped or disconnected scene.
+
+5. For each patch and its adjacent centroids, use PCA. Fit a line if local
+   linearity >=0.8; otherwise fit a plane. Reject adjacent centroids with
+   fit residual exceeding median(R) + k*1.4826*MAD(R), with k=2.
+   Neighbourhoods with fewer than three neighbours are left unchanged.
+   An extreme outlier can dominate PCA and evade this test; this is not a
+   robust plane-fitting algorithm with a guaranteed breakdown point.
+
+6. Rank seeds in four tiers: all neighbours LOW; current LOW with some HIGH
+   neighbours; current HIGH with some HIGH neighbours; isolated patches.
+   For the first two tiers sort by (1-planarity)+0.1*curvature; the third by
+   (1-linearity)+0.1*curvature; isolated patches by curvature.
+
+7. Let similar mean ni dot nj > cos(20 degrees), close mean symmetric normal
+   offset <=0.1 m, convex mean the selected Z test is >=0.
+   LOW/LOW:   (similar AND close) OR (convex AND close)
+   Mixed:     similar AND close AND convex
+   HIGH/HIGH: similar OR close
+   An accepted neighbour becomes a further seed if curvature <=0.05.
+
+8. Choose the cluster with the largest original point count as the initial
+   surface. For each other cluster, form its convex hull. Count hull vertices
+   within twice the global mean first-neighbour spacing of the current
+   surface. Merge if that proportion is strictly greater than 0.5 and rebuild
+   the surface neighbour index. This recovers measured points; it does not
+   invent points, interpolate gaps or create a mesh.
+
+EXPLICIT INTERPRETATIONS AND DIFFERENCES
+The article does not fully specify a directly reproducible implementation.
+The following choices are recorded instead of silently asserting equivalence.
+
+- Target supervoxel count: number of occupied rv-size grid cells. This turns
+  the resolution into a concrete stopping target. Groups are formed on a
+  deduplicated 15-neighbour point graph. At each pass candidates are sorted
+  by loss; the smaller group is absorbed, the surviving seed is retained,
+  and the current loss is rechecked after earlier merges. This is our
+  deterministic approximation to the described grouping procedure.
+- Boundary refinement is simultaneous, limited to three passes by default,
+  and reassigns the current boundary point to its better neighbouring seed.
+  This follows the apparent intent of the text despite its label ambiguity.
+- Density parameters are not supplied in the article: default radius is
+  2.5 times the group's median original nearest-neighbour spacing, minimum
+  points is 3 including the query point. Three is the minimum to define a
+  plane. Raising the minimum is stricter but can discard genuine small
+  surface fragments. Density-noise points remain explicitly reviewable.
+- The literal centroid-neighbour description can yield very sparse graphs
+  when patch centres are much farther apart than original point spacing.
+  DEFAULT: link patches whose original KNN boundary contacts are at most
+  2*max(di,dj) apart. ALTERNATIVE: link centroids whose original-point search
+  sets overlap, each with radius 2*di. Both are labelled in Advanced settings.
+- The PCA/MAD graph-pruning stage removes an undirected edge if either end
+  marks the other as an outlying centroid. This resolves an unspecified
+  reciprocity rule.
+- Normal orientation uses edge weight 1-abs(ni dot nj) on the initial graph,
+  followed by spanning-tree sign propagation and an interior reference.
+- Equation 16 repeats the same symbol in two cases, while its explanatory
+  text says to use linearity for the third tier. We follow that text and
+  interpret the earlier geometric score as planarity defined above.
+- Equation 19 AS PRINTED:
+    Z = ni dot unit(Cj-Ci) - nj dot unit(Ci-Cj)
+      = (ni+nj) dot unit(Cj-Ci).
+  This changes sign when the directed edge reverses. Default mode implements
+  it literally. The optional SYMMETRIC VARIANT uses
+    Z = (ni-nj) dot unit(Cj-Ci).
+  This is an explicit experimental alternative, not a claim about the
+  authors' intended formula. The chosen mode is in every report.
+- The boundary-overlap text says greater than 50%; a table uses >=. We use
+  strictly greater than the selected threshold and record that choice here.
+- Degenerate hulls use a 2D hull in their fitted plane, line endpoints for
+  collinear points, or all points if Qhull still fails. Candidate clusters
+  are visited in descending point count and checked once; merges update
+  the reference surface. An unsuccessful earlier candidate is not revisited.
+- Exact duplicate coordinates are consolidated for geometry only. Cluster
+  size and outputs count their original multiplicity. Colour/intensity is
+  preserved but not used for classification, as in this geometry method.
+
+PARAMETER SENSITIVITY AND INTERPRETING ACCURACY
+The generated demonstration is a reproducible exercise, not field evidence.
+Its known labels are used ONLY after extraction to calculate:
+  IoU       = TP / (TP + FP + FN)
+  Precision = TP / (TP + FP)
+  Recall    = TP / (TP + FN)
+These are based on the selected area and currently reviewed kept clusters.
+No accuracy estimate is shown for unlabelled real scans.
+
+On our 19,842-point generated fixture (seed 47, spacing 0.09 m), the final
+default implementation obtained TP=16,897, FP=17 and FN=65: IoU 99.5171%,
+precision 99.8995%, recall 99.6168%. With the density minimum raised from 3
+to 5, unchanged 0.20 m resolution, IoU was approximately 70.0%, largely due
+to discarded small patches. At 0.30 m resolution and density minimum 5,
+IoU was approximately 61.5%; changing growth offset to 0.20 m changed it to
+about 99.4%. These figures show sensitivity, not guaranteed accuracy. They
+must not be substituted for the paper's reported original-dataset results.
+A second density check of the same geometry at 0.045 m spacing (74,361 points)
+obtained TP=68,058, FP=1, FN=238 and IoU 99.6501% in about 10 seconds on the
+Linux validation environment. It remains synthetic and does not establish
+performance on a mine, a bored tunnel or the maximum supported area.
+
+Review especially: cables touching the wall, tight gaps, incomplete walls,
+unexpected point spacing, a crop dominated by equipment, sharp corners,
+separate roof/floor clusters, uneven density, and a reference point outside
+the tunnel. The largest region need not be the tunnel. An isolated smooth
+object may also be accepted. Always examine excluded real surface points.
+
+FILES AND UPDATE BEHAVIOUR
+surface_extraction.py: pure numerical stages and settings validation.
+surface_api.py: bounded selection, jobs, cancellation, immutable labels,
+  cluster review, export, reports and undoable survey application.
+surface_demo.py: reproducible synthetic scene and separate truth labels.
+web/surface-ui.js + web/surface.css: controls, 3D review and explanations.
+test_surface.py: numerical, ground-truth, integrity and project tests.
+The update includes source so future functions can be added.
+
+Cancellation checks occur between processing batches, graph passes and
+other checkpoints, not during every individual NumPy/SciPy operation.
+If cancelled or rejected before commit, the previous result stays available.
+An applied result cannot be applied again to a changed survey; re-extract
+or Undo first. Original input files are not overwritten.
+
+The application-only updater keeps the existing Python/WebView runtime,
+its working DLLs, desktop shortcut and survey data. It stages and verifies
+the payload, backs up changed program files, and can restore the previous
+application using RESTORE_PREVIOUS_VERSION.bat. Old application versions
+do not expose new surface features; keep a portable .tstudio of important
+work before switching versions. See TEST_RESULTS_0_4_0.txt for validation
+and the remaining Windows/real-scan limits.

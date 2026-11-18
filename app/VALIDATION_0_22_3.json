@@ -1,0 +1,162 @@
+{
+  "version": "0.22.3",
+  "date": "2026-11-06",
+  "baseline": "Delivered 0.22.2",
+  "application_tests": {
+    "tests_discovered": 742,
+    "tests_run": 742,
+    "seconds": 178.4360615790065,
+    "success": true,
+    "failures": [],
+    "errors": [],
+    "skipped": [],
+    "source_files_changed_during_tests": [],
+    "native_windows_execution": false
+  },
+  "focused_tests": {
+    "run": 14,
+    "passed": true,
+    "scope": "Caption style and contrast, pywebview backend, existing desktop exit review"
+  },
+  "browser_scenarios": 37,
+  "browser_checks": {
+    "project_browser_ui": {
+      "scenarios": [
+        "Ctrl-select two setups; right-click preserves both and reviews exactly those two, excluding the intermediate registered setup.",
+        "A real full-density selected merge publishes one independent, named cloud using saved rigid poses; original files are unchanged.",
+        "Undo and Redo restore the whole selected merge atomically without rewriting point caches.",
+        "Unregistered/disconnected setups do not offer the registered merge command.",
+        "Open Project lists actual saved titles, dates, storage sizes and thumbnails; inspecting a project does not replace the live workspace.",
+        "The isolated WebGL project overview renders real saved point geometry in both application themes.",
+        "Name search filters cards; single-click 3D preview supports orbit, zoom, plan, elevation and Fit without opening the project.",
+        "An older UUID-named snapshot acquires a bounded local point overview without resaving or changing source data.",
+        "A late project-preview response cannot replace the more recently selected project.",
+        "Browsing a folder reads project titles inside portable files. Older portable files explicitly show bounds instead of claiming a measured point preview.",
+        "Open project uses the existing checked save/recovery workflow and opens the chosen named project.",
+        "Repeated open/close cycles release preview data and reuse one isolated graphics context; source XYZ stays byte-identical.",
+        "An empty current catalogue still offers folder browsing and a clear empty preview; no local named save is required first."
+      ],
+      "errors": [],
+      "platform": "Linux Chromium/software WebGL; production HTTP, source files, Undo, portable projects. Synthetic geometry.",
+      "dark_contrast": {
+        "checked": 47,
+        "issues": []
+      },
+      "light_contrast": {
+        "checked": 47,
+        "issues": []
+      },
+      "status": "passed"
+    },
+    "leica_project_browser_ui": {
+      "scenarios": [
+        "A parent folder like Desktop/Tunnel recognises nested UUID Leica project folders, deduplicates saved databases, and ignores unrelated subfolders.",
+        "A catalogue title is used only for its matching project GUID. Multiple saved databases remain an explicit choice; no timestamp is silently selected.",
+        "The saved setup positions and links render as an interactive labelled layout, with plan, elevation and Fit; no point-cloud preview is invented.",
+        "A slower response for a previously selected database cannot replace the more recent layout selection.",
+        "A saved site-map label is shown with an explicit title-unavailable note; an opaque folder identifier is never fabricated into a human title.",
+        "Name search works for Leica cards; metadata-only folders remain visible with a disabled import action and an honest missing-setup-database state.",
+        "Selecting the UUID project folder directly reads its proper project title from the adjacent matching catalogue as well.",
+        "Leica cards, database choices and layout controls retain readable text and backgrounds in both application themes.",
+        "Import setups opens the existing Leica import review with the selected saved database and readable title; unavailable HSPCA source files are reported instead of importing invented geometry.",
+        "The populated Leica import review remains readable in Light and Dark themes.",
+        "Discovery, layout previews, database switching and import inspection leave source databases, file inventory and the active project unchanged."
+      ],
+      "errors": [],
+      "platform": "Linux Chromium/software WebGL; production HTTP. Synthetic observed Leica SQLite schema, no measured point buffers.",
+      "dark_catalogue_contrast": {
+        "checked": 35,
+        "issues": []
+      },
+      "light_catalogue_contrast": {
+        "checked": 35,
+        "issues": []
+      },
+      "dark_import_contrast": {
+        "checked": 21,
+        "issues": []
+      },
+      "light_import_contrast": {
+        "checked": 21,
+        "issues": []
+      },
+      "status": "passed"
+    },
+    "modern_workspace_ui": {
+      "scenarios": [
+        "light theme: inspected 29 production dialogs and 480 visible text/control colour pairs.",
+        "dark theme: inspected 29 production dialogs and 480 visible text/control colour pairs.",
+        "Dark appearance persists across reload and uses the modern shared surface palette.",
+        "The header appearance control changes and saves the theme through the existing preference system.",
+        "Real cleaning output: retained/excluded cards, statistics and selected magenta rows remain readable in dark mode.",
+        "dark detached review receives shared styles and keeps text/background contrast.",
+        "light detached review receives shared styles and keeps text/background contrast.",
+        "Individual scan-colour controls use the same modern dialog theme."
+      ],
+      "errors": [],
+      "contrast_checks": [
+        {
+          "theme": "dark",
+          "dialog": "real lining review",
+          "checked": 97,
+          "issues": []
+        },
+        {
+          "theme": "dark",
+          "dialog": "detached review",
+          "checked": 103,
+          "issues": []
+        },
+        {
+          "theme": "light",
+          "dialog": "detached review",
+          "checked": 103,
+          "issues": []
+        },
+        {
+          "theme": "dark",
+          "dialog": "scan colour",
+          "checked": 10,
+          "issues": []
+        }
+      ],
+      "platform": "Linux Chromium/software WebGL, production HTTP and real cleaning review. Detached-window transport is controlled; native WebView2 is not executed.",
+      "colour_pair_failures": [],
+      "status": "passed"
+    },
+    "window_chrome_ui": {
+      "scenarios": [
+        "Browser/native-frame recovery retains application branding when no custom caption is active.",
+        "Duplicate client branding is hidden only after the native caption reports ready.",
+        "Rapid appearance changes leave the native theme matching the latest resolved application theme.",
+        "A failed or restored native caption reinstates the normal client branding.",
+        "The real 3D project browser renders named Tunnel Studio and Leica cards in the proposed branded window frame."
+      ],
+      "native_windows_execution": false,
+      "preview": "Actual application UI and synthetic scan/projects; native caption and installer illustrated with matching design assets.",
+      "status": "passed"
+    }
+  },
+  "syntax": {
+    "python_files": 246,
+    "javascript_files": 71,
+    "errors": [],
+    "passed": true
+  },
+  "native_windows_execution": false,
+  "full_user_project_execution": false,
+  "safeguards": [
+    "Native controls outside WebView2; HTML modals cannot make the caption controls inert.",
+    "Normal pywebview destruction path and existing busy/cleanup exit guards retained.",
+    "Caption construction failure rolls back to the standard Windows caption.",
+    "Original resize/taskbar/system-menu style bits retained; no WndProc/native callback override.",
+    "Native DPI layout; readable Light/Dark text contrast.",
+    "Branded installer retains existing staged verification/activation/rollback."
+  ],
+  "limitations": [
+    "Native WinForms rendering and controls, DPI/monitor movement and snapping were not executed on this Linux build host.",
+    "Preview images use real application UI and example data, with illustrated native caption and installer frame.",
+    "Native file pickers and system prompts remain Windows dialogs.",
+    "The complete user project remains unrun."
+  ]
+}

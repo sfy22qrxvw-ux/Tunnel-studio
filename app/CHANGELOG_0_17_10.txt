@@ -1,0 +1,8 @@
+TUNNEL STUDIO 0.17.10 — VERIFIED CUMULATIVE PROJECT STORAGE FIX
+
+- Fixes Open Project > Delete… so its review and confirmation happen inside the existing Project window instead of opening a second modal dialog. This avoids the silent no-action behaviour observed on Windows/WebView2.
+- Delete review visibly reports that storage is being calculated, then shows exclusive reclaimable data and shared/protected data before the permanent delete button is enabled. A final native confirmation is required.
+- Clean unreferenced data uses the same in-place review flow and gives visible progress/errors instead of relying on a nested modal.
+- Automatic orphan cleanup is now deliberately restricted to Tunnel Studio internal cache/result formats. Neutral/source/exchange files such as E57, LAS/LAZ, PTS, PLY, XYZ, CSV and OBJ are never auto-deleted merely because they are unreferenced.
+- Project permanent deletion still removes files referenced exclusively by that project, including internal caches/results/merged data under the Tunnel Studio working root; shared data and recovery-referenced data remain protected. Original source files outside the Tunnel Studio working root are not deleted.
+- Retains 0.17.4 RTC360 raw-folder/target improvements, 0.17.6 transform-only virtual registration, 0.17.7 bulk/single-pass permanent point compaction, 0.17.8 shared-runtime fast updater and 0.17.9 project storage management.

@@ -1,0 +1,28 @@
+TUNNEL STUDIO 0.14.0 — RELEASE NOTES
+
+Adds a persistent 3D modelling mode to the existing tunnel workspace, with
+precise world/local coordinates, named working frames, CAD command input,
+snapping, editable profiles and tessellated solid/surface construction.
+
+Implemented commands: Point, Line, Polyline, Circle, Arc, Rectangle; Extrude
+in arbitrary 3D directions (vector, two-point, normal, exact length, reverse,
+symmetric and draggable preview); Sweep, Loft, Box, Cylinder, Sphere; Move,
+Copy, Rotate, Scale, Mirror, Align, Cut, Trim, Extend, Offset, Break, Join,
+Union, Subtract and Intersect. Commands validate supported input combinations.
+
+Adds model properties, layers, ordered multi-selection, model rows inside
+bundles, search, context actions, highlighted DXF/OBJ/JSON export and DXF import.
+Bundling/visibility, undo/redo, project persistence and session recovery include
+modelling-only projects. Working-frame changes preserve existing world geometry.
+Native detachable tool controls also cover modelling dialogs and properties.
+
+Performance safeguards: persistent GPU buffers with a local render origin,
+separate preview buffers, cached screen-space model snaps, click-only recovery
+of precise measured cloud coordinates, worker-backed model mutations, geometry
+budgets, history memory bounds, stale-operation guards and atomic save rollback.
+
+Includes all previous 0.13.25 fixes, including persistent 3D heat maps, grouped
+scan/connection explorer, highlighted point-cloud exports and native tool windows.
+
+Read READ_ME_FIRST.txt for operation details and explicit feature limits.
+Read METHODS_0_14_0.txt for test coverage and unverified Windows/field conditions.

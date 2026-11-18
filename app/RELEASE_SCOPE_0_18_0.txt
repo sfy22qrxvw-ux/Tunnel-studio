@@ -1,0 +1,37 @@
+Tunnel Studio 0.18.0 — release scope and evidence
+
+Baseline
+Recovered canonical TunnelStudio_3D_Drawing_Working_Copy.zip version 17, application 0.17.12. All 339 source-file hashes match its manifest; the 327-file 0.17.12 updater payload matches that source. Windows runtime comes from TunnelStudio_Setup_0.17.3_x64.exe and is preserved unchanged, checked against its full extracted manifest.
+
+Requested problems addressed
+1. Registration displaying updated and old/separate geometry together.
+2. Point limits and single-scan inputs preventing whole-tunnel analysis.
+3. Slow box-selection deletion caused by avoidable full scan passes.
+4. Slow display and a uniform blue quick preview.
+5. Previously requested project-history/storage behaviour, with further concrete defects corrected.
+
+User workflow
+Register and Apply to use the existing setup geometry at accepted world poses. Normal visibility uses one current representation.
+Choose Whole project or a registered bundle in Compare / Inspect, Cloud vs Design, 3D Heat Map or the movable Cross-section Source scope.
+Normal Delete modifies a reversible exclusion mask. Permanent removal is the separate disk-compaction command.
+The viewer first shows a measured overview, then requested detail. Its preview size does not limit analytical input.
+
+Measured evidence
+The final inventory is in VALIDATION_0_18_0.json.
+A synthetic run used 3,100,123 original points across three differently posed setups; 3,100,120 remained after masks. Cloud vs Design, Cloud vs Cloud and a dense perpendicular section each used all retained points and recovered 10 mm. Original XYZ hashes were unchanged and no merged XYZ cache was added.
+Maximum Linux backend process high-water RSS across the exercise was 191,631,360 bytes (about 183 MiB). Its cloud reference contained 720 points, so it does not establish performance for two multi-million-point clouds.
+A 5,000,000-point synthetic ordinary-deletion exercise deleted the same 1,000 points with and without a reusable index. The indexed case read 16,384 XYZ rows; the cold-index case read 5,000,000. Linux warm-cache timings do not establish Windows/RTC360 speed.
+
+Practical limits
+- Existing projects without a spatial index require a first index-building pass. New imports build it during the existing read. Spatially mixed row order and large selections reduce block pruning.
+- Older projects may build the new disposable coloured overview on first use. Subsequent openings and ordinary pose/mask changes can reuse it.
+- Permanently reclaiming disk still reads/writes retained records. Full-point analysis results require proportional result storage.
+- SMRG retains its 3M local selection guard. GuSAC is the separate whole-scan cleaning route. Full-point comparison and sections do not use the SMRG guard.
+- Display budgets, mesh/reference complexity, local-feature neighbourhood limits and report station-count limits remain.
+- Generic reconstruction and some local fitting use documented samples or approximations. Not every operation is a full-point exact solve.
+- Edits made only to an old physical merged copy remain preserved in that hidden previous result; they are not automatically transferred to the original setup masks after re-registration.
+- No real 550-million/billion-point tunnel benchmark was run. The complete Windows application has not been proved to meet a universal 7 GB memory cap across UI, workers and history.
+- Native Windows installation, WebView2, GPU/drivers, native dialogs and the user's actual jobs require field validation. Linux backend/browser/package checks cannot establish those results.
+
+Original data
+Original coordinate files stay unchanged. Registration uses saved poses. Calculations read float64 coordinates in owned bounded blocks; display uses local float32 buffers.

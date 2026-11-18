@@ -1,0 +1,70 @@
+TUNNEL STUDIO 0.5.0 - WINDOWS APPLICATION UPDATE
+Copyright (c) 2026 Damian Gulczynski
+
+INSTALL ON YOUR LAPTOP
+1. Close Tunnel Studio and any browser recovery console.
+2. Right-click Tunnel_Studio_0_5_0_Update.zip and choose Extract All.
+3. Open the extracted Tunnel_Studio_0_5_0_Update folder.
+4. Double-click UPDATE_TUNNEL_STUDIO.bat.
+5. Wait for "Update complete". The updater then opens Tunnel Studio.
+   For future starts, use your usual desktop shortcut. Check it says 0.5.0.
+
+This small, offline update needs your existing working desktop installation.
+It includes the earlier 0.3.0 and 0.4.0 application changes. No new Python
+download is needed. The installed runtime and its repaired desktop DLLs are
+reused. The original scan files and saved projects are not replaced.
+Your program folder can still be called releases\0.2.1; the app inside it
+becomes 0.5.0. Do not rename that installation folder.
+
+WHAT IS NEW
+- A Job ribbon and workspace for multiple scans and reference OBJ models.
+- E57 files with several scan records create separate setup entries.
+- Full scan coordinates and mesh vertices/triangles are cached on disk.
+- The job overview displays a bounded sample: 200,000 points by default,
+  adjustable from 100,000 to 500,000 across visible items. Each item has an
+  overview sample of at most 100,000 points or mesh vertices.
+- Hide, isolate, show all, rename, fit and point-size controls.
+- Direct import from local file paths for large jobs, progress messages,
+  free-space checks and cancellation at safe import checkpoints.
+- Select a scan for the registration, surface-extraction or survey workspace.
+- Save, Save As, reopen and portable project export include the job inventory.
+
+START THIS WEEKEND
+Open WEEKEND_CHECKLIST.txt for the first trial. Start with one scan and your
+OBJ model, then save and reopen before adding the rest of your job.
+The original scan and model are not included in this update ZIP.
+
+WHAT HAS BEEN CHECKED
+Your 10,125,420-point E57 and reduced OBJ with 8,800,000 vertices and
+17,592,519 triangles were imported together and reopened successfully.
+51 automated tests passed. The actual browser interface passed checks for
+the real model display, hide/isolate, workspace routing, Save As/reopen,
+queued file import and a 100,000-point global display budget.
+See TEST_RESULTS_0_5_0.txt for scope and measurements.
+
+CURRENT LIMITS
+25-60 GB full field jobs have not yet been tested on your Windows laptop.
+The job overview displays mesh vertices, not a shaded triangle surface.
+OBJ import is reference geometry: scan-to-OBJ deviation heatmaps are not
+implemented. Existing heatmaps compare one positioned scan with the circular
+alignment design. Importing setups does not register or stitch them.
+Automatic multi-setup network adjustment is not implemented.
+Native .3dr, LGS/LGSx and scanner project databases are not read; export
+neutral scan files or a triangular OBJ from the original software first.
+Units and the coordinate system must be checked against known control.
+
+RESTORE THE PREVIOUS APPLICATION
+Close Tunnel Studio and run RESTORE_PREVIOUS_VERSION.bat in this folder.
+It restores the latest program backup. Survey files and project data remain.
+Older versions cannot display new Job features, so keep a separate named
+project snapshot before switching versions.
+
+IF THE UPDATE STOPS
+Read the message and retain the details file shown:
+%LOCALAPPDATA%\TunnelStudio\update_0_5_0_error.txt
+The updater checks payload hashes, backs up replaced application files,
+and rolls back if file verification or the component import check fails.
+It refuses to update while Tunnel Studio holds its session lock.
+
+This package includes editable Python and JavaScript application source.
+Your copyright notice remains; third-party dependencies keep their licences.

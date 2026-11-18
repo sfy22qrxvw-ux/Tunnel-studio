@@ -1,0 +1,25 @@
+{
+  "version": "0.17.10",
+  "created_utc": "2026-10-27T22:26:08Z",
+  "scope": "Verified cumulative project-storage UI fix and safety regression pass.",
+  "focused_backend_tests": 23,
+  "second_pass_feature_tests": 15,
+  "full_suite": {
+    "total": 143,
+    "environment_errors": 20,
+    "skipped": 3,
+    "note": "All 20 errors are missing Linux-host optional/runtime dependencies: pye57, laspy, plyfile, pywebview, manifold3d; no new project-storage backend failure observed."
+  },
+  "static_checks": {
+    "delete_uses_in_place_panel": true,
+    "delete_uses_native_confirm": true,
+    "cleanup_uses_in_place_panel": true,
+    "no_nested_delete_modal": true,
+    "no_nested_cleanup_modal": true,
+    "visible_review_progress": true,
+    "orphan_excludes_neutral_exchange": true,
+    "virtual_registration_present": true,
+    "bulk_delete_block_1m": true
+  },
+  "windows_native_execution": "not available on Linux build host"
+}

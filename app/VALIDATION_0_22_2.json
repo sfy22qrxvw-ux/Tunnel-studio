@@ -1,0 +1,263 @@
+{
+  "version": "0.22.2",
+  "date": "2026-11-06",
+  "baseline": "Delivered 0.22.1",
+  "application_tests": {
+    "tests_discovered": 736,
+    "tests_run": 736,
+    "seconds": 147.30045083300138,
+    "success": true,
+    "failures": [],
+    "errors": [],
+    "skipped": [],
+    "source_files_changed_during_tests": [],
+    "native_windows_execution": false
+  },
+  "focused_tests": {
+    "run": 27,
+    "success": true,
+    "scope": "Leica metadata and existing Tunnel Studio project browser contracts"
+  },
+  "syntax": {
+    "python_files": 244,
+    "javascript_files": 70,
+    "errors": [],
+    "passed": true
+  },
+  "browser_scenarios": 50,
+  "browser_checks": {
+    "leica_project_browser_ui": {
+      "scenarios": [
+        "A parent folder like Desktop/Tunnel recognises nested UUID Leica project folders, deduplicates saved databases, and ignores unrelated subfolders.",
+        "A catalogue title is used only for its matching project GUID. Multiple saved databases remain an explicit choice; no timestamp is silently selected.",
+        "The saved setup positions and links render as an interactive labelled layout, with plan, elevation and Fit; no point-cloud preview is invented.",
+        "A slower response for a previously selected database cannot replace the more recent layout selection.",
+        "A saved site-map label is shown with an explicit title-unavailable note; an opaque folder identifier is never fabricated into a human title.",
+        "Name search works for Leica cards; metadata-only folders remain visible with a disabled import action and an honest missing-setup-database state.",
+        "Selecting the UUID project folder directly reads its proper project title from the adjacent matching catalogue as well.",
+        "Leica cards, database choices and layout controls retain readable text and backgrounds in both application themes.",
+        "Import setups opens the existing Leica import review with the selected saved database and readable title; unavailable HSPCA source files are reported instead of importing invented geometry.",
+        "The populated Leica import review remains readable in Light and Dark themes.",
+        "Discovery, layout previews, database switching and import inspection leave source databases, file inventory and the active project unchanged."
+      ],
+      "errors": [],
+      "platform": "Linux Chromium/software WebGL; production HTTP. Synthetic observed Leica SQLite schema, no measured point buffers.",
+      "dark_catalogue_contrast": {
+        "checked": 35,
+        "issues": []
+      },
+      "light_catalogue_contrast": {
+        "checked": 35,
+        "issues": []
+      },
+      "dark_import_contrast": {
+        "checked": 21,
+        "issues": []
+      },
+      "light_import_contrast": {
+        "checked": 21,
+        "issues": []
+      },
+      "status": "passed"
+    },
+    "project_browser_ui": {
+      "scenarios": [
+        "Ctrl-select two setups; right-click preserves both and reviews exactly those two, excluding the intermediate registered setup.",
+        "A real full-density selected merge publishes one independent, named cloud using saved rigid poses; original files are unchanged.",
+        "Undo and Redo restore the whole selected merge atomically without rewriting point caches.",
+        "Unregistered/disconnected setups do not offer the registered merge command.",
+        "Open Project lists actual saved titles, dates, storage sizes and thumbnails; inspecting a project does not replace the live workspace.",
+        "The isolated WebGL project overview renders real saved point geometry in both application themes.",
+        "Name search filters cards; single-click 3D preview supports orbit, zoom, plan, elevation and Fit without opening the project.",
+        "An older UUID-named snapshot acquires a bounded local point overview without resaving or changing source data.",
+        "A late project-preview response cannot replace the more recently selected project.",
+        "Browsing a folder reads project titles inside portable files. Older portable files explicitly show bounds instead of claiming a measured point preview.",
+        "Open project uses the existing checked save/recovery workflow and opens the chosen named project.",
+        "Repeated open/close cycles release preview data and reuse one isolated graphics context; source XYZ stays byte-identical.",
+        "An empty current catalogue still offers folder browsing and a clear empty preview; no local named save is required first."
+      ],
+      "errors": [],
+      "platform": "Linux Chromium/software WebGL; production HTTP, source files, Undo, portable projects. Synthetic geometry.",
+      "dark_contrast": {
+        "checked": 47,
+        "issues": []
+      },
+      "light_contrast": {
+        "checked": 47,
+        "issues": []
+      },
+      "status": "passed"
+    },
+    "modern_workspace_ui": {
+      "scenarios": [
+        "light theme: inspected 29 production dialogs and 480 visible text/control colour pairs.",
+        "dark theme: inspected 29 production dialogs and 480 visible text/control colour pairs.",
+        "Dark appearance persists across reload and uses the modern shared surface palette.",
+        "The header appearance control changes and saves the theme through the existing preference system.",
+        "Real cleaning output: retained/excluded cards, statistics and selected magenta rows remain readable in dark mode.",
+        "dark detached review receives shared styles and keeps text/background contrast.",
+        "light detached review receives shared styles and keeps text/background contrast.",
+        "Individual scan-colour controls use the same modern dialog theme."
+      ],
+      "errors": [],
+      "contrast_checks": [
+        {
+          "theme": "dark",
+          "dialog": "real lining review",
+          "checked": 97,
+          "issues": []
+        },
+        {
+          "theme": "dark",
+          "dialog": "detached review",
+          "checked": 103,
+          "issues": []
+        },
+        {
+          "theme": "light",
+          "dialog": "detached review",
+          "checked": 103,
+          "issues": []
+        },
+        {
+          "theme": "dark",
+          "dialog": "scan colour",
+          "checked": 10,
+          "issues": []
+        }
+      ],
+      "platform": "Linux Chromium/software WebGL, production HTTP and real cleaning review. Detached-window transport is controlled; native WebView2 is not executed.",
+      "colour_pair_failures": [],
+      "status": "passed"
+    },
+    "bundle_independence_ui": {
+      "scenarios": [
+        "Opening an old project places the completed registered cloud and cleaned tunnel outside the 16-setup source bundle.",
+        "Bundle deletion review selects only the 16 source setups and explicitly identifies the registered cloud being kept.",
+        "Confirmed source-bundle deletion retains both full clouds and the cleaned tunnel edit mask byte for byte.",
+        "Workspace reload and named saved-project manifest retain the two independent cloud items after source removal.",
+        "Explicitly selecting the registered result still permits its own separate reviewed deletion."
+      ],
+      "errors": [],
+      "platform": "Linux Chromium/software WebGL; real API, 16 synthetic setups, saved cloud files and retained-point mask.",
+      "status": "passed"
+    },
+    "project_save_in_ui": {
+      "scenarios": [
+        "Save shows the real data root, free space, pending project-record folder and native reveal action",
+        "Fast named Save writes a named record and Save As displays its existing path",
+        "Cancelling the file chooser leaves the working project and destination intact",
+        "Save in uses the picker, writes one complete portable copy at the destination, and displays the matching receipt",
+        "Declining overwrite retains the previous portable copy byte for byte",
+        "With no desktop chooser, entering an absolute destination saves a portable copy",
+        "Storage manager shows the data folder and project record"
+      ],
+      "errors": [],
+      "platform": "Linux Chromium, actual application and synthetic project assets, simulated native picker and folder reveal",
+      "status": "passed"
+    },
+    "storage_ownership_ui": {
+      "scenarios": [
+        "Current project guarded in the picker. Single retired project preview counts only its owned cache.",
+        "Cancel at review preserves the old project record and its exclusive output.",
+        "Unreadable saved metadata blocks a previously reviewed destructive operation.",
+        "Equal-byte replacement of the reviewed orphan set requires a new review and removes nothing.",
+        "Confirmed multi-project removal quarantines the old-only union once and preserves shared/live/undo/recovery files and protected or unknown inputs byte-for-byte.",
+        "Reviewed unreferenced-data cleanup removes exactly the generated orphan. The active project, portable copy, executable, original input, unrelated folder/file, hard link and symlink survive."
+      ],
+      "errors": [],
+      "platform": "Temporary synthetic project assets, real application HTTP routes and Linux Chromium. No production data.",
+      "status": "passed"
+    }
+  },
+  "real_leica_metadata": {
+    "status": "passed",
+    "datasets": [
+      {
+        "dataset": "older supplied metadata",
+        "project_guid_found": true,
+        "title_source": "site_map",
+        "unique_readable_site_map_label": true,
+        "databases_checked": [
+          {
+            "sha256": "61f657223e1ccfce887c09c37402d27252a64489f3427e1d8c596b228f5529a5",
+            "bytes": 602112,
+            "setup_count": 3,
+            "saved_layout_positions": 3,
+            "point_buffers_available": false
+          },
+          {
+            "sha256": "4dc950edf006d5465098d608df7897567e6de601fb56a4f0ec7930c2d9cdd175",
+            "bytes": 602112,
+            "setup_count": 3,
+            "saved_layout_positions": 3,
+            "point_buffers_available": false
+          }
+        ],
+        "source_inventory_unchanged": true
+      },
+      {
+        "dataset": "newer supplied metadata",
+        "project_guid_found": true,
+        "title_source": "site_map",
+        "unique_readable_site_map_label": true,
+        "databases_checked": [
+          {
+            "sha256": "8bfb731496d263064f76cfe3e2b85e3035b41f4b629c406a1b4b132201e408ea",
+            "bytes": 667648,
+            "setup_count": 3,
+            "saved_layout_positions": 3,
+            "point_buffers_available": false
+          },
+          {
+            "sha256": "957d329682d75fd8d61a56dc38b8a6e66cd88f8e4ac086f31ea31ae6b3d55451",
+            "bytes": 667648,
+            "setup_count": 3,
+            "saved_layout_positions": 3,
+            "point_buffers_available": false
+          },
+          {
+            "sha256": "a57b7e7161ceaa9bc129a387b5694d5c4b59bb5829015d07ba5a6fff4b98fb7a",
+            "bytes": 667648,
+            "setup_count": 3,
+            "saved_layout_positions": 3,
+            "point_buffers_available": false
+          }
+        ],
+        "source_inventory_unchanged": true
+      }
+    ],
+    "metadata_files": 7,
+    "sqlite_setup_databases": 5,
+    "project_info_databases": 2,
+    "all_sources_byte_identical": true,
+    "actual_4686_project_available": false,
+    "native_windows_execution": false,
+    "note": "Previously supplied Leica metadata was inspected read-only. No measured HSPCA point buffers or project catalogue titles were available. Site-map labels are not claimed as the original project titles."
+  },
+  "preview_limits": {
+    "metadata_depth": 4,
+    "metadata_entries": 20000,
+    "project_cards": 200,
+    "sqlite_query_seconds": 1,
+    "metadata_text_bytes": 4194304,
+    "setup_layout_locations_per_database": 2000
+  },
+  "safeguards": [
+    "Never infer a project title from a UUID, setup, asset, report or workspace name.",
+    "Adjacent catalogue titles require the same project GUID.",
+    "Site-map fallback labelled; multiple database snapshots require a choice.",
+    "Read-only immutable metadata; pending journal changes refused; no point-buffer reads for Leica layout.",
+    "Metadata revision guard and late-response selection guard.",
+    "Browsing and import inspection leave source inventory and the active workspace unchanged."
+  ],
+  "native_windows_execution": false,
+  "full_user_project_execution": false,
+  "actual_4686_project_available": false,
+  "limitations": [
+    "Only the observed Leica SQLite setup schema and explicit title fields are supported.",
+    "The previously supplied files expose site-map labels, not original project titles.",
+    "No measured HSPCA point buffers accompanied the real metadata samples.",
+    "Native Windows/WebView2 and the latest screenshot project were not executed here."
+  ]
+}

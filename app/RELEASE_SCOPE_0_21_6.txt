@@ -1,0 +1,45 @@
+Tunnel Studio 0.21.6 | Persistent confirmed shape examples
+
+Cumulative source and unchanged Windows runtime baseline: delivered 0.21.5.
+No user data, library examples, point caches or screenshots enter the installer.
+
+shape_examples.py captures one compact object in a bounded working set (up to
+2 million crop observations, <=3 m extent) with up to 50,000 actual neighbouring
+wall observations. These are per-example working safeguards, not a whole-cloud
+admission limit. Float64 world observations are stored independently and source
+poses/masks are respected. Manual screen selections choose the nearest depth
+layer; explicit object-side labels orient local departure signs. A robust local
+quadratic fit reports its wall residual, convergence and support in metadata.
+Rougher wall context than the minimum offset is refused. Either-side teaching
+keeps both signs eligible instead of guessing a sign from the camera.
+
+shape_separated.py partitions existing retained example scans with disk-backed
+occupied-voxel connectivity, then fits each compact group's wall context from
+the chosen lining scan. Small or unsupported groups are reported. A connected
+group is not proof of a physical object; touching objects need manual separation.
+All observations stream in <=100,000-point owned reads. The graph is on disk.
+
+compact_shapes.py compares complete off-lining components using principal
+directions, symmetric footprint/depth agreement and size factors 0.75 to 1.30.
+Shapes/descriptors use bounded map tiles, angular wrapping and deterministic
+ownership. A final streaming pass selects exact 64-bit original IDs. Closed
+sampling-gap cells never create observations. Connected seams, insufficient
+lining support and missing measurements may prevent matches. The library does
+not infer unseen pockets from ring positions. Long services retain the prior
+FFT/connected-depth workflow and are not saved as compact library examples.
+
+shape_library.py owns immutable object/context crops and compact descriptors
+in a SQLite catalogue. Active positive/negative labels use per-project claims;
+repeated confirmation does not duplicate geometry or undo another project's
+confirmation. Lazy descriptor caching is bounded. Negative examples veto an
+equally close positive match for the selected class. A pending journal ties label
+changes to the saved project head, with an OS lock across the atomic save and
+recovery. Undo/Redo reverses only the corresponding action's label changes.
+Library storage is protected from project/orphan cache cleanup. Forget/Archive
+changes matching eligibility, preserving immutable assets required for Undo.
+
+Searches have no input point-count cap. Calibration and display samples have
+separate bounded budgets. Source coordinates, attributes and registration are
+not rewritten, nor is missing lining reconstructed. A saved example is not a
+neural model, semantic identity, survey control or guaranteed detection accuracy.
+Native Windows/WebView2 and the complete user project are not executed here.

@@ -1,0 +1,24 @@
+TUNNEL STUDIO 0.14.1 — 16 October 2026
+
+- Consistent vector symbols for primary commands, with hover labels and
+  accessible names. Text remains for data fields, menus and instructions.
+- Extrusion panel remains modeless when opened, reused or returned from a
+  detached window. Escape, X and Cancel dismiss previews; mode/tool changes
+  close the old panel. The main scene stays interactive.
+- Live extrusion by dragging the highlighted face or gold handle. Preview
+  geometry updates locally during movement; the geometry engine validates on
+  release and Apply. Dragging does not create a model until Apply is chosen.
+- Default extrusion follows the profile normal, including vertical profiles.
+  Drawn profiles and connected planar faces of CAD solids/surfaces are supported.
+  Face extrusion creates a separate body; face holes require separate profiles.
+- Model JSON import supports editable transfer between projects, preserving
+  exact world coordinates and construction metadata with fresh object IDs.
+- Destination bundle for cloud/path/browser imports and editable model imports;
+  working bundle selector, model/cloud move controls and global export menu.
+- Direct Model mode entry for clouds/reference meshes, shared scene and right-
+  click export. Portable project export includes models and cloud data.
+
+This cumulative package updates an existing Windows installation. See
+READ_ME_FIRST.txt for installation, controls and exchange-format limits.
+Validation was performed in the Linux test environment and actual Chromium;
+Windows WebView2 and physical multi-monitor operation were not run here.

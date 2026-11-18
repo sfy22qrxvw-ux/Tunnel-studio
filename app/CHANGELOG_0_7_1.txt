@@ -1,0 +1,13 @@
+Tunnel Studio 0.7.1 — functionality repair
+
+- Fixed blank right-hand tool drawers: Registration, Settings, Extract Surface, Models/Mesh and other ribbon tools now actually display their controls.
+- Registration commands can automatically use the scan selected in the main 3D workspace.
+- Target picking now happens in the main persistent 3D view.
+- Find B&W Targets now keeps low-confidence planar contrast suggestions for review instead of returning an empty list when strict checker fitting finds nothing.
+- Added scan display modes: Scanner RGB, Greyscale intensity, Hue intensity, Colour by scan/bundle, Colour by elevation.
+- Fixed lasso/polygon Maximum call stack size exceeded by removing large spread calls and bounding/simplifying the lasso path.
+- Extract Surface and Models/Mesh panels no longer appear empty.
+- Clear inspection now clears the persistent visible selection/highlight as well.
+- Preserved the 0.7 single-workspace layout and one main Import workflow.
+
+Target-detection suggestions are review aids. Survey registration still requires reviewed target centres and independent QA/check observations.

@@ -1,0 +1,63 @@
+Tunnel Studio 0.22.2
+6 November 2026
+
+REGISTER 360 projects in Open Project
+Home > Open project > Browse a project folder now recognises supported Leica
+REGISTER 360 project metadata alongside Tunnel Studio saves. Choose a parent
+such as Desktop/Tunnel, or the UUID project folder itself. There is no need to
+rename the Leica folder or copy its point files into a different structure.
+
+Cards read explicit saved project titles from local project metadata, or from
+an adjacent catalogue row whose project GUID matches. Setup, asset, report and
+workspace names are not treated as project titles. If the available files only
+contain a site-map label, the card says so and explains that the original title
+is unavailable. A UUID cannot be decoded into a human project title.
+
+Each recognised project has one card even when several saved databases exist.
+Multiple deliverable databases require an explicit selection; timestamps are
+not guessed to represent the current result. Supported version-only projects
+can be inspected too. Unknown schemas and missing source files remain visible
+as metadata notices rather than fabricated names or point geometry.
+
+Saved setup layout and import review
+The selected Leica database can display its saved setup locations and links
+as an interactive 3D layout. Top, Front, orbit, pan, zoom and Fit are available.
+It is labelled as setup layout guides, not a measured point-cloud preview.
+Separate site-map coordinate frames and different database snapshots are not
+combined. A late response cannot replace a newer database selection.
+
+Import setups opens the existing Leica import review with the readable title
+and selected database. Setup availability and saved-position choices remain
+checked there. Missing HSPCA source files are reported. Inspection neither
+replaces the active Tunnel Studio workspace nor imports points automatically.
+An empty, unnamed workspace may adopt the readable imported title; existing
+named projects keep their name. Import failure restores the prior workspace.
+
+Read-only source handling
+Discovery reads bounded metadata and skips point/cache asset trees. SQLite
+metadata is opened read-only and immutable, without creating journals or SHM.
+Pending journal changes require closing REGISTER 360 and refreshing. XML
+DOCTYPE/ENTITY declarations are refused. Source files, poses and folder names
+are not altered by browsing. Metadata revisions are checked before preview.
+Both the project cards and populated import review use readable Light/Dark
+application surfaces.
+
+Cumulative from delivered 0.22.1: exact selected registered-setup merging,
+named Tunnel Studio project cards and sampled previews, local measured-wall
+shape reference and coverage diagnostics, shape library, independent scan
+colours, full-density pocket inspection, source-independent registered clouds,
+cleaning, storage, registration, measurement and mesh workflows are retained.
+
+Validation and limits
+Checks cover synthetic parent/UUID-folder discovery and import review, both
+themes, and seven previously supplied Leica metadata files (five saved setup
+databases and two ProjectInfoDb files). Those samples contain readable site-map
+labels, not original project titles. GUID-matched catalogue/title cases are
+constructed checks. None of these samples is the particular 4686e3dc project
+shown in the latest screenshot; its contents and exact title are unverified.
+No HSPCA point buffers were available with those metadata samples. The complete
+user point cloud and native Windows/WebView2 are not executed on this build
+host. Saved positions and display layouts do not certify registration or
+survey accuracy. Unknown Leica formats may need further metadata inspection.
+Cumulative tests and independent finished-installer verification are recorded
+in the supplied source/checks archive and standalone release checks.

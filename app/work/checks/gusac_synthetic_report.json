@@ -1,0 +1,98 @@
+{
+  "kind": "synthetic_only",
+  "paper_accuracy_reproduced": false,
+  "real_scan_validation": false,
+  "limitation": "Generated circular/gently curved geometry does not validate all services, irregular profiles, heavy occlusion, runtime on billion-point clouds or real scanner data.",
+  "tests_run": 9,
+  "failures": 0,
+  "errors": 0,
+  "numpy_version": "2.3.5",
+  "seconds": 55.847,
+  "cases": [
+    {
+      "case": "straight_cylinder_and_pipe",
+      "source": "synthetic_generated_geometry",
+      "points": 44440,
+      "wall_points": 36360,
+      "lining_retained_fraction": 1.0,
+      "obstruction_candidate_fraction": 1.0,
+      "class_counts": [
+        36360,
+        8080,
+        0,
+        0,
+        0
+      ],
+      "regional_planes": 855,
+      "seconds": 8.185
+    },
+    {
+      "case": "sparse_lining_behind_dense_service",
+      "source": "synthetic_generated_geometry",
+      "points": 98521,
+      "wall_points": 33881,
+      "lining_retained_fraction": 1.0,
+      "obstruction_candidate_fraction": 1.0,
+      "class_counts": [
+        33819,
+        64640,
+        0,
+        62,
+        0
+      ],
+      "regional_planes": 853,
+      "seconds": 10.12
+    },
+    {
+      "case": "gently_curved_branch",
+      "source": "synthetic_generated_geometry",
+      "points": 44440,
+      "wall_points": 36360,
+      "lining_retained_fraction": 1.0,
+      "obstruction_candidate_fraction": 1.0,
+      "class_counts": [
+        36088,
+        8080,
+        0,
+        272,
+        0
+      ],
+      "regional_planes": 846,
+      "seconds": 6.273
+    },
+    {
+      "case": "outward_joint_recesses",
+      "source": "synthetic_generated_geometry",
+      "points": 44440,
+      "wall_points": 36360,
+      "lining_retained_fraction": 1.0,
+      "obstruction_candidate_fraction": 1.0,
+      "class_counts": [
+        35918,
+        8080,
+        360,
+        0,
+        82
+      ],
+      "regional_planes": 831,
+      "seconds": 6.182
+    },
+    {
+      "case": "large_coordinate_offset",
+      "source": "synthetic_generated_geometry",
+      "points": 44440,
+      "wall_points": 36360,
+      "lining_retained_fraction": 1.0,
+      "obstruction_candidate_fraction": 1.0,
+      "class_counts": [
+        36360,
+        8080,
+        0,
+        0,
+        0
+      ],
+      "regional_planes": 855,
+      "seconds": 5.861
+    }
+  ]
+}

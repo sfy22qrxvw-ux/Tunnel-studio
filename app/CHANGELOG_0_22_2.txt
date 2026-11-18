@@ -1,0 +1,12 @@
+Tunnel Studio 0.22.2 — 6 November 2026
+- Recognise supported native REGISTER 360 metadata in parent and UUID folders.
+- Read actual project-title fields or a GUID-matched adjacent catalogue record.
+- Clearly identify a site-map label when the original project title is absent.
+- One project card per folder; explicit saved-database selection.
+- Labelled 3D setup-layout previews without point-buffer reads.
+- Open the existing Leica import review from project cards.
+- Read-only SQLite handling, pending-journal and metadata-revision guards.
+- Preserve the current workspace, source data and existing project names.
+- Retain the complete delivered 0.22.1 feature set and unchanged Windows runtime.
+- Real metadata, synthetic flow, theme and finished-package checks have separate
+  scopes; the latest screenshot project and native Windows remain unexecuted.

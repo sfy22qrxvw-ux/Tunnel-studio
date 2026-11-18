@@ -1,0 +1,166 @@
+TUNNEL STUDIO 0.16.0 — COMPARISON AND WORKSPACE UPDATE
+26 October 2026
+
+Release basis
+This release continues the complete 0.15.0 application. Its primary paper-based
+GuSAC cleaning, TMatch classification, registration, reversible point editing,
+meshing, tunnel design, project recovery and other retained tools remain in the
+application. RELEASE_SCOPE_0_15_0.txt and GUSAC_TMATCH_METHOD_0_15_0.txt describe
+that inherited scope and the differences from the published paper. Historical
+validation files remain historical evidence; current checks are recorded in
+VALIDATION_0_16_0.json.
+
+1. SIX COMPARISON MODES
+Analyse > Compare / Inspect groups the commands under Cloud and Mesh:
+- Cloud vs Mesh
+- Cloud vs Cloud
+- Cloud vs CAD
+- Cloud vs Geometry
+- Mesh vs Mesh
+- Mesh vs CAD
+
+Choose an inspected object and a reference object, set tolerance in millimetres,
+and run. Inputs must already share the intended coordinate system and alignment.
+Comparison does not perform registration. A stopped or failed run leaves the
+previous successful result available. Changed inputs mark the result stale and
+require a new calculation before display/export.
+
+Cloud source comparisons evaluate every retained finite original source point,
+including points that are hidden or omitted from the display preview. Deleted
+points are excluded. The display heatmap is bounded separately; its density
+does not set the numerical analysis density. Original point IDs and float64
+survey coordinates are carried into result records and CSV export.
+
+Cloud vs Cloud measures directed unsigned Euclidean distance to the nearest
+retained finite reference point. All retained reference points are indexed.
+Coincident coordinates may use one identical representative without changing
+the result or reported reference count. This is point-to-point distance: point
+spacing and coverage affect the answer. It does not infer a smooth wall surface,
+a sign, a registration correction or an accuracy certificate.
+
+The exact reference index uses disk-backed spatial partitions and bounded query
+batches. Reusable leaf indexes have a fixed 512 MiB component-estimate cache
+budget, plus at most one new leaf under construction; this replaces repeated
+small-index rebuilding. The estimate is not a cap on the complete process.
+
+Mesh and triangulated CAD references use the stored triangle surfaces, including
+triangle interiors; they are not reduced to vertices or a display decimation.
+The optional oriented sign follows the reference face winding. Ambiguous
+tangential edge cases are excluded and counted. An inconsistent winding is not
+automatically repaired by the comparison. Unsigned distance is the default.
+Large survey coordinates are translated locally for the native float32 engine;
+the reference/query precision guard is tied to one tenth of the chosen tolerance.
+References exceeding the stated component memory estimate are rejected clearly
+rather than silently decimated. This estimate is not a whole-process RAM proof.
+
+Supported preserved geometric definitions use float64 analytic distances where
+their representation permits it: planes, spheres, capped finite cylinders and
+boxes. Point/line/circle references are explicitly labelled as point or curve
+distance. Transformed, tessellated, stale or unsupported analytic definitions
+fall back to their complete stored triangles when available. The interface and
+result notes identify the representation used. CAD import remains the existing
+DXF and editable-model JSON support; this release does not add STEP/IGES readers.
+
+Mesh source comparisons subdivide every triangle into bounded surface samples
+at the selected maximum spacing. Samples retain their original face IDs and
+area weights. Means, RMS, quantiles and within-tolerance percentages use those
+area weights. Reported maximum is the maximum at evaluated samples, not a
+mathematically proven maximum over the continuous surface. These comparisons
+are directional, not symmetric Hausdorff distances.
+
+2. RESULTS, COLOURING AND EXPORT
+Results report evaluated/included/excluded counts, tolerance percentage, minimum,
+maximum, mean, RMS, median and 95th-percentile deviations. Mesh results also
+report sampled surface area. Percentiles use the full included result records;
+they are not estimated from the display preview.
+
+An optional comparison band is off by default. When enabled, it excludes
+distances outside the band from statistics and records the excluded count.
+Colour-ramp scale and tolerance colouring affect only the visual presentation.
+The full numerical result does not change when display colours are adjusted.
+
+Results appear in the object tree, can be hidden/opened again, and survive a
+portable project save/reopen when their required input/result assets are valid.
+CSV preparation runs as a cancellable background job, carries original IDs,
+coordinates, deviation, status and comparison settings, and publishes only a
+complete file. The previous prepared file is preserved on failure/cancellation.
+
+3. MEASURE TAB
+A dedicated Measure tab provides the working tools already supported by the
+application: point coordinates, a saved two-point measurement with 3D/horizontal
+distance and height difference, full-density selected-point extents, and selected
+CAD surface area/volume. Help text explains what each measurement reports.
+This does not claim every angle, clearance or volume tool shown in the Cyclone
+reference screenshots. No nonfunctional placeholder commands were added.
+
+4. WORKSPACE LAYOUT
+The object tree defaults to the left. Its height responds to displayed content,
+then scrolls at the available viewport limit; its width remains user-resizable.
+Selection and visibility are separate. Yellow bulbs mean visible, grey bulbs
+mean hidden. The Find scan/model search is removed.
+
+Join scans remains in Registration and is removed from the side panel. Persistent
+bottom launchers for limit boxes, cross-sections and alignments are removed;
+their working commands remain in their designated top tabs. Ribbon and drawer
+offsets respond to actual ribbon height to prevent overlapping controls.
+
+The orthographic scale bar updates with zoom and viewport size. Perspective
+view hides the bar because metres per pixel varies with depth; it does not show
+a misleading single scale. Layout follows the user's Cyclone navigation
+references while retaining Tunnel Studio's own interface and functions.
+
+5. IMPORT, EDIT, SAVE AND EXPORT VALIDATION
+The current gate covers the whole chain: import, reversible edit, comparison,
+file export, independent readback and project reopen. E57, LAS, LAZ, PLY, PTS,
+XYZ and CSV are exercised with known coordinates, RGB/intensity and deleted
+points. Format-specific precision and channel conversion are checked explicitly.
+OBJ mesh and DXF/editable-model JSON round trips and .tstudio restoration are
+also covered. Neutral point-cloud exports remain unstructured; scanner setups,
+panoramas, row/column grids and registration links are not represented by that
+export contract.
+
+The export dialog retains explicit format selection and provides a direct full
+destination-path entry option. Existing directories are rejected as destinations
+before a format extension is appended. Destination validation, overwrite
+confirmation, prepared-file retry and transactional final save remain active.
+The overwrite confirmation now uses an opaque text token: numeric nanosecond
+timestamps could lose precision in browser JSON and wrongly reject a confirmed
+replacement. A real JavaScript round trip and browser overwrite check cover the
+fix while concurrent destination changes still block replacement.
+The earlier native Windows 'Export cancelled' report was not reproduced on a
+Windows host here; the additional route is a concrete usability improvement,
+not a claim that every possible native picker failure has been diagnosed.
+
+6. VALIDATION LIMITS AND REMAINING REQUESTS
+VALIDATION_0_16_0.json records the final current-source test inventory, dependency
+versions, real-scan execution, source hashes and practical limitations. The
+real E57 check uses the supplied 10,125,420-point scan with independently known
+comparison references. It does not establish labelled tunnel-cleaning accuracy.
+
+The final real-data run imported all 10,125,420 points, applied a reversible
+72-point spatial edit, and independently checked the mask against every original
+point. All 10,125,348 retained points returned exactly zero distance to their
+unchanged full reference. The generated-plane comparison evaluated those same
+points, with a largest numerical difference of 0.000474 mm against independent
+vertical-distance calculation. This is computational agreement, not scanner
+accuracy. The 344,262,059-byte LAS export reopened with exactly 10,125,348 points;
+every retained coordinate and its source order was checked, and all deleted
+points were absent. Original E57 and XYZ-cache hashes remained unchanged.
+
+The available environment runs backend checks and the actual application in
+Chromium on Linux using software WebGL. Native Windows/WebView2 dialogs, Windows
+DPI/GPU behaviour and installation execution remain untested on a Windows host.
+The installer checks its bundled required engines before activation and preserves
+the previous release if that preactivation check fails.
+
+The user's 550-million-point project and a complete 7 GB desktop process-tree
+budget have not been benchmarked. Fixed working bounds and smaller real-data
+evidence do not establish performance for every cloud, mesh or legacy engine.
+
+The separate requests to improve whole-area SMRG separation of pipes from lining,
+detect/remove protruding bolt heads, and add the complete new best-fit plane /
+best-fit cylinder / seeded region-growth toolset remain recorded in the update
+tracker. This release does not label those outstanding algorithms as completed.
+Existing plane/primitive geometry and earlier fitting tools remain available;
+supporting a geometry as a comparison reference does not itself create a new
+geometry-fitting command.

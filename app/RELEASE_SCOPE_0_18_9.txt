@@ -1,0 +1,32 @@
+Tunnel Studio 0.18.9 release scope
+
+Implemented: bounded streaming point-to-plane ICP with local RANSAC increments,
+PCA reference normals, cKDTree matching, proper rotations, fixed scale, explicit
+review and group-aware virtual-pose acceptance. Optional attributes are skipped
+for geometry fitting. Source and mask revisions are checked before acceptance.
+One accepted operation creates one Workspace Undo checkpoint; save failures
+restore metadata. Cancellation leaves original point caches unchanged.
+
+Sampling limits (moving/reference): Fast 25,000/50,000; Balanced 75,000/150,000;
+High 150,000/300,000. All retained points are streamed to form the samples;
+initial read time remains proportional to source size. Display crops are not
+used as solve boundaries. At least 500 distinct retained correspondences,
+adequate six-axis constraints and convergence are required. RANSAC is local,
+not a global feature search. Plane RMS is not a probability or survey accuracy.
+
+Implemented: read-only RTC360 metadata inspector (4 MiB per file), observed XML
+SetupPosition parser, explicit initial-pose review/apply workflow, provenance,
+tilt compensation, prior-registration protection, idempotence and undo.
+Observed input: 16 records in user-supplied 231023-SC-D1 SetupPositions; the
+actual scanner data is not included in the installer. project.rtc360 may be an
+empty marker. Unknown schemas, mismatched IDs and invalid rotations are refused.
+The initial pose is independently interpreted saved scanner positioning/VIS,
+not vendor-certified decoding, coordinate control or verified field accuracy.
+
+Validation details are in VALIDATION_0_18_9.json and the separate release checks.
+Linux numerical, application, real-browser and installer-structure checks do
+not substitute for native Windows/WebView2/GPU execution or field comparison.
+
+Unchanged unresolved items: missing original R0007 .attr32 data, physical
+segment recognition/rendering against the research paper, and field deletion
+timing/quality on the user's complete multi-scan project.

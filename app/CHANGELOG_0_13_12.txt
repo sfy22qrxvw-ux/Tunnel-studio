@@ -1,0 +1,133 @@
+TUNNEL STUDIO 0.13.12
+Photograph views, connected-scan adjustment and smoother tunnel alignments
+14 October 2026
+
+INSTALL
+1. Save your project and close Tunnel Studio completely.
+2. Extract the whole ZIP into a new folder.
+3. Double-click UPDATE_TUNNEL_STUDIO.bat.
+4. Confirm version 0.13.12 after restart. Refresh browser mode if needed.
+
+This is an update for the existing Windows installation, not a standalone app.
+The updater backs up application files. RESTORE_PREVIOUS_VERSION.bat restores
+those files. Project data and full point caches are retained.
+
+SCANNER PHOTOGRAPHS
+New Leica project-folder imports attach the supported RGB setup photographs.
+For scans already imported: select a setup, Go to setup view, expand Load
+photographs for scans already imported, select/paste the original main Leica
+project folder and click Load photographs. This attaches matching images
+without importing the points again. Keep the original folder structure.
+
+Each setup has its own photographs and calibrated camera directions. Choose
+Photographs - fast view, drag to look around and wheel to zoom. Fast uses six
+1024-pixel faces; Detailed uses the supplied 2048-pixel faces. These views do
+not load the main point-cloud display. If 360-degree graphics are unavailable,
+the fallback shows one photograph face at a time. Scan intensity is still
+available for setups without a supported photograph container.
+
+Click a photograph to look up a nearby original measured point. Its exact
+cached XYZ is shown; image pixels are not treated as 3D coordinates. First
+lookup builds a spatial-block cache, so it takes longer than later picks.
+Picking respects deleted points and active viewing clips. Save picked point
+as target saves to this setup, using your entered name and a small preview
+where available. Fit target at picked point remains available for fitting the
+quadrant centre; a manual photograph pick is not a fitted target centre.
+
+The observed standard Leica CUBE/JPEG layer is supported. Camera metadata and
+project identity must match; unknown camera offsets/models are rejected for
+picking. Point RGB, HDR, external cleaning masks and arbitrary Leica native
+variants remain unsupported. Photographs speed up setup navigation; full
+measured points are retained for analysis and exact point lookup.
+
+GEOMETRY WITH TWO TARGETS
+Match two scans > Geometry method > Two targets - keep vertical.
+Use two horizontally separated matching targets and confirm that both scans
+already share the same vertical/Z direction. This solves heading and XYZ
+translation while holding roll, pitch and scale fixed. Two targets alone
+cannot determine unrestricted 3D rotation. Use Full 3D with at least three
+non-collinear targets whenever that vertical assumption is not valid.
+Residuals and the selected constraint appear before Apply geometry.
+
+ADDITIONAL LINKS AND LOOP ADJUSTMENT
+Already-connected scans can now receive another connection. For example,
+after setup 1-3 and setup 1-4, match setup 3-4 and Solve geometry. Choose the
+setup to hold fixed. The other connected setups are adjusted jointly using
+the recorded target matches across all links. Opening an existing pair and
+solving it updates that connection, rather than duplicating it.
+
+Review total fit error before/after, each link's error and any check targets.
+Apply geometry commits the reviewed positions and link records together.
+Failure, cancellation or a changed source leaves the previous state intact.
+Links appear under Geometry & references > Scan links and in each scan's
+information. Target labels remain specific to the selected scan.
+
+This is equal-weight target network adjustment with fixed scale, not a repeat
+of Leica cloud-to-cloud registration. Imported links need recorded target
+pairs; older links without them must have their pairs entered first. Limits:
+30 connected scans and 2,000 fit pairs. Lower total error need not improve every
+individual link. Independent check targets remain excluded from the fit.
+
+SMOOTHER ALIGNMENTS FROM MULTIPLE SCANS
+Open Scan-derived alignment. Tick the linked source scans or Select all linked
+scans. These scans must already share a connected registration group. Select
+one branch in 3D first if you want only the main tunnel or only a cross passage.
+That captured selection is applied to every chosen source in world coordinates;
+each scan's deletions and active limit box are respected. Exact input counts
+are recorded per scan. One deterministic fitting sample is capped at 180,000
+points across all sources, rather than a separate full sample per scan.
+
+The estimator now identifies a supported circular lining in each section,
+balances angular coverage, rejects radius outliers and repeatedly reorients
+sections along the local tunnel direction. A robust smooth curve reduces
+section-to-section jitter. Smoothing still has simple Off/Light/Medium/More
+choices. Incomplete or disagreeing sections are flagged for review; unsupported
+sections may be bridged and are not presented as measured lining centres.
+
+Review and edit nodes in plan and elevation. Each branch can keep its own
+named alignment. Any source's deletion or repositioning marks the stored line
+as out of date. This is an estimated approximately circular tunnel centreline,
+not your design alignment. It does not assume every tunnel has a perfect
+circle or impose a surveyed design radius. Junctions, non-circular sections,
+very tight bends and missing walls still require review or manual correction.
+
+POINT DELETION AND VISIBLE BUTTONS
+Scans & models now has a visible action row directly above its list:
+- Delete selected items: remove the selected whole scans/models from the
+  workspace; original files and their cached data are kept.
+- Delete selected points: delete the current 3D area across visible unlocked
+  scans. The existing selection confirmation explains this scope.
+The old action row was hidden by the compact-layout stylesheet; the new row
+is explicitly visible. Point deletion still appears in the shared Deleted
+points folder at the bottom, with View and Restore, and supports Undo/Redo.
+
+Interior point edits update counts and attribute totals from changed points
+instead of rescanning every attribute. If deletion changes the scan's bounds,
+XYZ bounds are recalculated exactly. Undo/Redo reuse saved exact properties.
+A multi-scan selection refreshes the 3D preview once after the batch instead
+of after each scan. Full-density selection and mask writing still take time
+on large datasets; these changes do not silently sample away editing points.
+
+RING JOINT SUGGESTIONS
+The Ring joints panel now names its scan source. It starts with the selected
+workspace scan and prepares its analysis projection automatically as needed.
+You no longer need a separate Use for analysis step just because the scan was
+imported through Scans & models. A missing alignment produces a specific
+instruction: import one, or review a scan-derived alignment and Use for
+chainage. Suggestions remain geometric candidates requiring review.
+
+VALIDATION
+See tests/validation_0_13_12.json and tests/run_0_13_12/ for the executed checks.
+Production browser event handlers were checked in JSDOM with simulated APIs;
+full Windows/WebView/GPU interaction was not available here. Missing installed
+base modules are stubbed in isolated numerical tests, including the existing
+ring-joint detector. Its new source-selection/projection flow was tested.
+
+All three supplied real RGB photograph containers were decoded. Camera
+projection was visually checked against saved targets in setup 03, and exact
+point lookups were exercised on its 36,694,551-point cache. These checks do not
+establish survey accuracy or performance on your computer. Synthetic alignment
+and deletion results are recorded separately; they are not claimed as real
+survey accuracy or end-to-end editing benchmarks. The HSPCA point decoder is
+unchanged from 0.13.10. Original scans and photographs are not bundled in this
+software update.

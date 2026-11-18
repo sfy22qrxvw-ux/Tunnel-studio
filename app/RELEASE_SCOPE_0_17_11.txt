@@ -1,0 +1,47 @@
+TUNNEL STUDIO 0.17.11 — FAST PROJECT STORAGE MANAGEMENT
+Copyright (c) 2026 Damian Gulczynski
+
+PURPOSE
+Make project storage understandable and make deletion practical for RTC360 workspaces
+that can contain hundreds of gigabytes of cached point data.
+
+OPEN PROJECT
+- Every saved project row shows total referenced data, the amount individually reclaimable
+  if that project alone is deleted, and shared/protected data.
+- Each row has a selection checkbox. Select all, Clear and Delete selected support bulk
+  project management.
+- Bulk deletion is reviewed as one transaction. A cache shared only by selected projects
+  becomes reclaimable once all of those projects are selected; a cache used by any
+  unselected project or startup recovery snapshot remains protected.
+- If the active project is selected, current working assets created since its last named
+  save are included in the storage review and deletion set.
+
+FAST DELETE ARCHITECTURE
+- Delete no longer waits for Windows to physically erase hundreds of gigabytes.
+- Exclusive assets and selected project manifests are first moved by same-volume rename
+  into a private purge queue. This removes them from the live workspace without copying
+  their contents.
+- The application returns control after quarantine and a daemon purge thread releases
+  physical disk space in the background.
+- Pending purge queues resume automatically on next application startup and when Open
+  Project is opened. Legacy 0.17.9/0.17.10 .delete_project_* and .clean_orphans_*
+  staging folders are automatically adopted into the queue after an interrupted cleanup.
+- Open Project reports the queued amount still being released. The number is the original
+  queued amount, not a byte-accurate live deletion progress meter.
+- Clean unreferenced data uses the same quarantine/background-purge path.
+
+SAFETY
+- Reference protection covers every unselected named project, the current workspace when
+  it is not selected for deletion, and startup recovery snapshots.
+- The storage review is re-evaluated at deletion time. A changed reclaimable byte count
+  invalidates the review and requires the user to review again.
+- Neutral/source exchange files such as E57, LAS/LAZ, PTS, PLY, XYZ, CSV and OBJ remain
+  excluded from automatic orphan cleanup merely because they are unreferenced.
+- Staging failures roll renamed files/manifests back to their original locations.
+
+CUMULATIVE FEATURES RETAINED
+0.17.6 transform-only virtual registration for long RTC360 networks; 0.17.7 multi-scan
+permanent point compaction with 1,000,000-point streaming blocks and single-pass preview;
+0.17.8 shared-runtime updater; raw RTC360 import/display and 198.8 mm sphere fitting;
+robust registration review; cleaning, meshing, modelling, analysis and existing project
+recovery/export workflows.

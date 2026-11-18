@@ -1,0 +1,61 @@
+TUNNEL STUDIO 0.13.13
+Reliable individual setup views
+14 October 2026
+
+INSTALL
+1. Save your project and close Tunnel Studio completely.
+2. Extract the whole ZIP into a new folder.
+3. Double-click UPDATE_TUNNEL_STUDIO.bat.
+4. Confirm version 0.13.13 after restart. Refresh browser mode if needed.
+
+This updates the existing Windows installation. It includes the 0.13.12
+features as well as these setup-view fixes. The updater backs up application
+files; RESTORE_PREVIOUS_VERSION.bat restores the previous application files.
+
+OPEN AN INDIVIDUAL SCANNER SETUP
+Select a scan in Scans & models and click Go to setup view above the list.
+The button is now outside the action row hidden by the compact layout.
+Choose another setup inside the view to work on that scan's targets.
+
+Photographs: drag to look around and use the mouse wheel to zoom. Fast uses
+1024-pixel faces; Detailed uses 2048-pixel faces. Loading shows how many of
+the six photographs have arrived. Cancel loading stops the photograph
+request; it does not send an unrelated point-processing cancellation.
+A failed, cancelled or timed-out detail change keeps the previous photograph
+usable. Retry by selecting the detail setting again. Initial load failures
+show Retry setup view. Image downloads time out after 30 seconds.
+
+For scans imported before photograph support: expand Load photographs for
+scans already imported, choose the original main Leica project folder and
+click Load photographs. This attaches images to matching setups without
+importing points again.
+
+A setup without supported photographs can show its measured intensity view.
+That fallback no longer prevents the next setup from opening its photographs.
+If you explicitly choose Scan intensity, that preference remains selected.
+
+PICK AND NAME TARGETS
+Click a visible target or surface to look up its retained measured XYZ.
+The first photograph lookup can take longer while the point cache is prepared.
+Enter a target name and click Save picked point as target. Use the same name
+for the same physical target in the other setups. Fit target at picked point
+remains the separate action for estimating a checker target's centre.
+
+Delayed point results are discarded after closing or switching setup views.
+A target save already requested retains its original scan, coordinates and
+name when the dialog closes. Closing during setup preparation cannot launch
+a hidden intensity build after the close. Dragging or a second pointer does
+not accidentally pick a point. Cancel point lookup shows when cancellation
+is in progress, including when the calculation has only just started.
+
+VALIDATION
+See tests/validation_0_13_13.json and tests/run_0_13_13/ for the executed checks.
+The new suite covers 11 setup-view failure, cancellation and ownership cases.
+Existing setup, photograph, target, scan inventory, registration, Leica import
+and updater checks are included in the focused validation run.
+
+Browser checks use JSDOM, simulated APIs and mocked WebGL. Real Windows/WebView
+rendering, mouse feel and device performance could not be checked here. The
+photo decoder and exact measured-point backend are unchanged from 0.13.12;
+its real-data checks are retained in the package and were not rerun for this
+UI update. Original scans and photographs are not bundled in the update.

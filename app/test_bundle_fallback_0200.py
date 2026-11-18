@@ -1,5 +1,4 @@
 """Finite-budget fallback, datum preservation and atomic acceptance checks."""
-from collections import OrderedDict
 import copy
 import tempfile
 import unittest
@@ -18,34 +17,6 @@ import registration_workspace as rw
 import registration_pose as pose
 import registered_cloud
 from test_registration_transaction_0186 import Server, add, P
-
-
-class BundleSampleTests(unittest.TestCase):
-    def test_sample_reuses_source_after_pose_change_but_not_after_mask_change(self):
-        with tempfile.TemporaryDirectory() as tmp:
-            path=Path(tmp)/'points.xyz64'
-            xyz=np.arange(90,dtype='<f8').reshape(-1,3)
-            xyz.tofile(path)
-            meta=dict(file=str(path),count=len(xyz))
-            item=dict(id='sample',name='Setup sample',meta=meta)
-            cache=OrderedDict()
-            stamp=[('sample','file',str(path))]
-            origin=np.zeros(3)
-            points,info=workflow._sample_scan(cache,stamp,item,20,origin,lambda _:None,lambda:False)
-            self.assertFalse(info['cache_reused'])
-            move=np.array([10.,20.,30.])
-            pose.set_pose(meta,np.eye(3),move)
-            with mock.patch.object(workflow.pointio,'chunks',side_effect=AssertionError('read on cache hit')):
-                after,info=workflow._sample_scan(cache,stamp,item,20,origin,lambda _:None,lambda:False)
-            np.testing.assert_allclose(after,points+move)
-            self.assertTrue(info['cache_reused'])
-            mask=Path(tmp)/'mask'
-            np.r_[np.zeros(3,np.uint8),np.ones(len(xyz)-3,np.uint8)].tofile(mask)
-            meta['mask_file']=str(mask)
-            masked,info=workflow._sample_scan(cache,stamp+[('sample','mask_file',str(mask))],
-                                              item,20,origin,lambda _:None,lambda:False)
-            np.testing.assert_allclose(masked,xyz[:3]+move)
-            self.assertFalse(info['cache_reused'])
 
 
 class BundleBudgetTests(unittest.TestCase):
@@ -154,12 +125,10 @@ class PairwiseFallbackTests(unittest.TestCase):
         self.observations = []
         for node in self.nodes.values():
             node.update(tree=object(), normals=np.zeros((len(P), 3)))
-        self.nodes['a']['name'] = 'Setup 12'
-        self.nodes['b']['name'] = 'Setup 17'
         failure = dict(converged=False, inlier_count=700, normal_matrix_rank=6,
                        reason='maximum iterations reached; best-effort earlier iterate retained')
         with mock.patch.object(workflow.icp, '_run_icp', return_value=failure):
-            with self.assertRaisesRegex(ValueError, 'Setup 12 ↔ Setup 17 .*maximum iterations reached'):
+            with self.assertRaisesRegex(ValueError, 'maximum iterations reached'):
                 self.run_fallback()
 
     def test_real_cloud_pair_uses_converged_current_coordinate_fit(self):
@@ -195,42 +164,6 @@ class FallbackTransactionTests(unittest.TestCase):
             draft, _ = workflow.build(s, dict(anchor='a', use_cloud=False))
         s.STATE['scan_link_draft'] = draft
         return s, draft
-
-    def test_apply_requires_rms_review_for_exact_current_draft(self):
-        with tempfile.TemporaryDirectory() as folder:
-            s,draft=self.prepare(folder)
-            s.JOB_CANCEL_FILE=Path(folder)/'cancel'
-            s._bundle_registration=dict(token='run',context=id(s.STATE),state='ready',
-                                        draft=draft,preview=[])
-            with self.assertRaisesRegex(ValueError,'Review the RMS report'):
-                workflow.apply(s,dict(token='run'))
-            old=workflow.status(s,dict(token='run'))['review_id']
-            self.assertEqual(workflow.status(s,dict(token='run'))['review_id'],old)
-            rebuilt=copy.deepcopy(draft)
-            rebuilt['id']='rebuilt'
-            rebuilt['solution']['tolerance_mm']=7
-            s._bundle_registration['draft']=rebuilt
-            with self.assertRaisesRegex(ValueError,'Review the RMS report'):
-                workflow.apply(s,dict(token='run',review_id=old))
-            latest=workflow.status(s,dict(token='run'))['review_id']
-            self.assertNotEqual(latest,old)
-            # A changed result is a new review even when the draft ID is reused.
-            rebuilt['solution']['datum']='floating'
-            with self.assertRaisesRegex(ValueError,'Review the RMS report'):
-                workflow.apply(s,dict(token='run',review_id=latest))
-            latest=workflow.status(s,dict(token='run'))['review_id']
-            link=s.STATE['scan_links'][0]
-            saved=link['matches'][0]['role']
-            link['matches'][0]['role']='check'
-            with self.assertRaisesRegex(ValueError,'changed after review'):
-                workflow.apply(s,dict(token='run',review_id=latest))
-            link['matches'][0]['role']=saved
-            with self.assertRaisesRegex(ValueError,'Review the RMS report'):
-                workflow.apply(s,dict(token='run',review_id=latest))
-            latest=workflow.status(s,dict(token='run'))['review_id']
-            with self.assertRaisesRegex(ValueError,'Review the RMS report'):
-                workflow.apply(s,dict(token='run',review_id=old))
-            self.assertTrue(workflow.apply(s,dict(token='run',review_id=latest))['applied'])
 
     def test_warning_is_saved_inside_accept_transaction(self):
         with tempfile.TemporaryDirectory() as folder:

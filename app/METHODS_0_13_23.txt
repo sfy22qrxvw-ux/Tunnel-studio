@@ -1,0 +1,84 @@
+TUNNEL STUDIO 0.13.23 - METHODS AND VALIDATION
+15 October 2026
+
+The accompanying 10-page Tunnel_Studio_Research_Review.pdf contains six full-paper
+reviews, equations, measured tests, limitations and references. Implementation
+is independent; published accuracy is not claimed or reproduced.
+
+COMBINED DENOISING
+Wang T., Wei G., Wang Y. (2024), Journal of Geo-information Science 26(12),
+2759-2771; DOI 10.12082/dqxxkx.2024.240505. Chinese full text reviewed.
+Stage 1 uses full-density radius support over distinct locations, with a local
+neighbour-distance median/MAD filter. Spatial tiles include a 2R halo. Duplicate
+coordinates count once for support, but every original point ID is output.
+Stage 2 uses at most 140,000 actual coordinates, balanced at 0.01 m voxel scale.
+Projected RANSAC circle hypotheses along principal-axis candidates initialise
+robust cylinder refinement. This does not reproduce the full adaptive RANSAC
+sampler in the paper. Measured mode follows supported local sections and floor
+profiles; circular mode classifies with a straight cylinder residual:
+  d = norm((p-c) - dot(p-c,n)*n) - r, with norm(n)=1.
+The paper's Equation 1 lacks the square on the equivalent axial dot product.
+All selected retained points are classified at original XYZ. Labels:
+0 lining; 1 sparse; 2 spacing outlier; 3 inward departure; 4 outward departure;
+5 insufficient model support. Labels 0 and 5 are automatically retained.
+Tolerance defaults to 20 mm and is adjustable 1-500 mm. The paper's 4 mm value,
+15 neighbours and 0.1 m radius are dataset settings, not universal choices.
+No design radius is used to bias the fit. Strong bends, junctions, missing data
+and noncircular tunnels need separate review. Real small details can be flagged.
+Detection never deletes points. Review can keep groups or selected points.
+Every cleaned output point keeps its measured coordinates and attributes.
+
+CROSS-SECTIONS AND IRREGULARITIES
+Shen et al. (2021), DOI 10.11947/j.JGGS.2021.0206, provides relevant robust
+section-reference ideas; it does not validate this curved-path implementation.
+A locally smoothed centre path and analytic tangent replace one global PCA
+normal. Active alignments use local segment vectors including grade. The same
+plane defines preview and full-density CSV; abs(dot(p-C,n)) <= thickness/2.
+Deleted masks, captured selection and enabled limit box constrain the scope.
+Revision tokens cover file identities, sizes/times, counts/bounds, selection,
+limit and alignment; stale paths and ellipse fits are rejected.
+Irregular detection uses a supported lining reference with a broader longitudinal
+median, full-density radial departures and roughness in projected patch cells.
+Sensitivity S gives departure threshold 0.12 * 10**(-S/100) m; roughness threshold
+is half that. Default pitch 0.20 m, minimum candidate 30 points. Connected
+candidates retain original IDs and can be hidden, shown or reversibly deleted.
+Unsupported regions and small groups are retained. Source checks and save-failure
+rollback protect deletion. It is not an exhaustive defect or design check.
+
+ELLIPSES AND RING PLANES
+Wang et al. (2020), DOI 10.1016/j.optlastec.2020.106220, motivates moment frames
+and ellipse descriptions. A balanced 2D covariance frame precedes the existing
+angular-balanced RANSAC/robust fitter in section_research.py. Calibration uses
+the bounded preview; a streaming pass checks every section CSV point. Full
+2a >= 2b diameters, inliers and approximate Sampson residuals are explicit.
+Near-circular major-axis angle is marked unreliable. Undefined residual gradients
+are counted. No original points are moved, filtered or interpolated.
+Wang et al. (2025), Applied Sciences 15, 2926, DOI 10.3390/app15062926, motivates
+selected-ring covariance/SVD planes. Smallest covariance eigenvector supplies
+the normal through the centroid. Spread, rank and angular-gap checks reject
+obvious unusable selections. A physical skew ring may differ from the axis-
+perpendicular plane. Full GuSAC/TMatch automatic segmentation is not included.
+
+VALIDATION
+100 checks in 12 suites passed: 42 backend and 58 production-JavaScript checks
+with mocked HTTP/WebGL. See tests/validation_0_13_23.json and result files.
+Prior-version tests/logs in tests/ are historical, not the current release gate.
+Combined-cleaning synthetic test: 49,740 points; 100% normal lining retained,
+99.8667% added stray points flagged, 100% of a constructed 35 mm feature flagged.
+The feature result demonstrates why real departures require review. Exact IDs,
+coordinates/attributes in exports, order/batch invariance, cancellation,
+selection/deletion exclusions and failed-save rollback were checked.
+Three analytic tube cases gave maximum normal errors of 0.0625, 0.1597 and
+0.0015 degrees. Three constructed irregular patches were found, with point
+recall 100%, 100%, 92.46%; regular-point flag rate 0.1412%. Ellipse and rotated
+ring checks, full-density CSV membership and source invalidation passed.
+These results are not field accuracy or guaranteed defect detection. The full
+installed Windows app, installer execution and GPU pixels were not tested here.
+The updater performs a component import check in the installed runtime.
+
+MESHING, IMAGERY AND LEICA
+TriMe commit 3929c19c7d98a9cee67b3a4e4244659d2d08630f was built separately and
+checked on six triangle/annulus runs. It is not linked into Tunnel Studio.
+The RL mesher and calibrated stereo densification papers were reviewed; neither
+engine was added. Existing tunnel meshing is unchanged. The 0.13.22 direct RTC360
+reader is retained with its experimental calibration and validity limitations.

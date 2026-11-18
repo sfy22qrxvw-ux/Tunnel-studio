@@ -1,0 +1,37 @@
+Tunnel Studio 0.21.7
+5 November 2026
+
+Independent scan colours
+Each point-cloud scan has its own colour button in the Project Explorer and
+a Scan colour command in its context menu and Properties. Choose a solid colour,
+measured RGB, greyscale/colour intensity, elevation, automatic scan colour, or
+follow the global viewer setting. Styles are saved with the project and Undo
+restores them. Separate scans can use different styles, including separated
+pocket scans. Measured coordinates, intensity, RGB and exported attributes do
+not change. Analysis/review colours retain their meaning.
+
+Inspect each matching pocket
+In Clean > Find similar shapes, click a match's name to zoom to that object and
+load its original measured observations in full-density binary pages. Nearby
+measured lining is shown as a separately labelled context sample. Turn selection
+highlight off to inspect measured intensity. Previous/Next moves through matches;
+Back to matches restores the prior camera and frees the extra graphics buffers.
+The view does not tick removal boxes, teach the library or modify source data.
+Removal and separation still apply to ALL checked groups in the review.
+
+Whole-cloud matching/selection remains streamed with exact 64-bit original IDs.
+The 100,000-point display page size is not a cloud input limit. A 192 MiB local
+graphics budget protects the close-up viewer; an oversized compact group reports
+that limit instead of claiming a sampled view is complete. Context is sampled.
+Cancellation and superseded page requests cannot replace the current view.
+
+Cumulative from delivered 0.21.6, including the confirmed multi-example library
+and existing source-independent registered cloud, cleaning and storage changes.
+The supplied pockets1.e57 is used for measured-data checks, not automatically
+taught or bundled with this installer. Confirm its pockets against your main
+lining scan in the library before using them as matching examples.
+
+No recognition rate, survey accuracy, competitor speed comparison or execution
+of the full user project is claimed. Native Windows/WebView2 is not available
+on this build host; the installer repeats component/startup checks before
+activating the new version on Windows.

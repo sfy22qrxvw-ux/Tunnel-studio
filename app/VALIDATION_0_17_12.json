@@ -1,0 +1,32 @@
+{
+  "version": "0.17.12",
+  "created_utc": "2026-10-27T23:03:51.602955+00:00",
+  "scope": "Hide automatic previous-session projects; keep one hidden recovery; direct Storage Manager; universal import storage/source provenance.",
+  "focused_tests": {
+    "status": "passed",
+    "count": 49
+  },
+  "full_discovery": {
+    "total": 167,
+    "errors": 20,
+    "skipped": 3,
+    "errors_reason": "Linux build host lacks pye57, laspy, plyfile, pywebview and manifold3d; these dependencies exist in the existing Windows runtime and were not changed by this release."
+  },
+  "python_compile_files": 139,
+  "frontend_js_syntax": "passed",
+  "changed_file_sha256": {
+    "app/projects.py": "0b3975e20a2ad0ca899cab671a58c0724590c10bee4d74732023a491080a3e32",
+    "app/session_start.py": "34f1d5da5786be31c2d55782733f0ff0680551ed7305d16414d41e133697c69e",
+    "app/pointio.py": "35805d4bfde9f422bdc2c55cda4d4cd903b4c20193bf521a9ba8b75fcf584400",
+    "app/jobdata.py": "381e404322be4af70f6b736b796eb751fabb0011aeb3619a4172712fbf13619d",
+    "app/rtc360_native.py": "d54b5ee7cc752b1941d92f6e9b3ee027f5ae7dd88f7af8546b44e0d5e0fbc10f",
+    "app/workflows.py": "491667202fb7f9152235dd04aeb29f9996deb30c0296255d1415ce5f07496e5c",
+    "app/web/index.html": "39a5536e933104e9ce744c846938466dd15d4c3167855e09d21079e53d6bd954",
+    "app/web/ribbon.js": "ae91cc6fa1483dfde0873a4f1add220bcd28dfa82cd568f417dd018b2a82dc05",
+    "app/web/ribbon-layout.js": "4f0383870a2b98344262339719d7a4ac46a7b25bca53f95a24c404e0b6861e33",
+    "app/web/ribbon.css": "6429e1687bbbf5185c07b9d2ce5bb38178c3909c3203b935440e3bfbd3e4d57c",
+    "app/test_storage_universal_01712.py": "b5050cc0801475d35a2f1747c79123e02f14fb252fc135d8ea870446e773ba91",
+    "app/test_storage_ui_01712.py": "173d74218534f9ccf1125b200dff87c7320038bb6fd5e53342533ef5f5dce46a",
+    "app/test_import_provenance_01712.py": "c9b039be9bc2ffa1c2cd629a20bac319666967c7999653810872b252d621402f"
+  }
+}

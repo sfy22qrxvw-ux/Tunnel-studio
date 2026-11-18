@@ -36,7 +36,7 @@ def _handoff_to_named_backend():
 class DesktopBridge:
     """Small native bridge used only by the Windows desktop shell."""
     def __init__(self, preferences_path=None, on_appearance=None):
-        self.window = None
+        self._window = None
         self._tool_manager = None
         self._drop_target = None
         self._drop_handler = None
@@ -77,17 +77,17 @@ class DesktopBridge:
         # An incomplete native list must fall back as a whole; never omit files.
         if len(paths) != len(files): paths = []
         ticket = event.get('tunnelDropId')
-        self.window.evaluate_js('window.FileDropUI?.nativeDrop(' + json.dumps(paths) + ',' + json.dumps(ticket) + ')')
+        self._window.evaluate_js('window.FileDropUI?.nativeDrop(' + json.dumps(paths) + ',' + json.dumps(ticket) + ')')
 
     def _install_file_drop(self, *_args):
         try:
             from webview.dom import DOMEventHandler
-            target = self.window.dom.get_element('body')
+            target = self._window.dom.get_element('body')
             if target is None: return
             handler = DOMEventHandler(self._native_file_drop, prevent_default=True)
             target.events.drop += handler
             self._drop_target, self._drop_handler = target, handler
-            self.window.evaluate_js('window.FileDropUI?.nativeReady()')
+            self._window.evaluate_js('window.FileDropUI?.nativeReady()')
         except Exception as error:
             runtime_diagnostics.exception('Native file-drop bridge unavailable; browser file transfer remains available', error)
 
@@ -106,13 +106,13 @@ class DesktopBridge:
         return bool(self._exit_review and self._exit_review.finish(ticket, outcome))
 
     def choose_project_folder(self):
-        if self.window is None:return ''
+        if self._window is None:return ''
         import webview
-        result=self.window.create_file_dialog(webview.FOLDER_DIALOG)
+        result=self._window.create_file_dialog(webview.FOLDER_DIALOG)
         return str(result[0]) if result and not isinstance(result,str) else (result or '')
 
     def choose_export_file(self, suggested='Tunnel_Studio_export.e57', fmt='e57'):
-        if self.window is None:return {'error':'The desktop save window is unavailable.'}
+        if self._window is None:return {'error':'The desktop save window is unavailable.'}
         try:
             import webview
             from scan_export import FORMATS
@@ -128,7 +128,7 @@ class DesktopBridge:
                         options['directory'] = str(folder)
                 except (OSError, ValueError, TypeError, KeyError):
                     pass
-            result=self.window.create_file_dialog(kind,save_filename=Path(suggested).name,file_types=(f'{fmt.upper()} files (*.{fmt})',),**options)
+            result=self._window.create_file_dialog(kind,save_filename=Path(suggested).name,file_types=(f'{fmt.upper()} files (*.{fmt})',),**options)
             return {'path':str(result if isinstance(result,str) else result[0])} if result else {'cancelled':True}
         except Exception as error:return {'error':str(error)}
 
@@ -140,7 +140,7 @@ class DesktopBridge:
             return {'error': str(error)}
 
     def choose_large_file(self, kind='cloud', multiple=False):
-        if self.window is None:
+        if self._window is None:
             return []
         try:
             import webview
@@ -159,7 +159,7 @@ class DesktopBridge:
                 'cad': ('Editable model (*.dxf;*.json)',),
                 'job_mesh': ('Models / meshes (*.obj;*.zip)', 'All files (*.*)'),
             }.get(str(kind), ('All files (*.*)',))
-            result = self.window.create_file_dialog(
+            result = self._window.create_file_dialog(
                 webview.OPEN_DIALOG,
                 allow_multiple=bool(multiple),
                 file_types=filters,
@@ -205,7 +205,7 @@ def main():
                                       f'http://127.0.0.1:{http.server_port}',
                                       width=1440, height=940, min_size=(1000, 700),
                                       js_api=bridge)
-        bridge.window = window
+        bridge._window = window
         from window_chrome import WindowChrome
         appearance=bridge._appearance.get()
         bridge._chrome=WindowChrome(window,theme=appearance.get('theme'),colourway=appearance.get('palette','navy')).attach()

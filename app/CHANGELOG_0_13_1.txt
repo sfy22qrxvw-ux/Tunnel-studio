@@ -1,0 +1,29 @@
+TUNNEL STUDIO 0.13.1 - IMPORT FIXES AND CRASH DIAGNOSTICS
+12 October 2026
+
+Confirmed fixes:
+- Home > Import opens normal browser file selectors when the desktop bridge
+  is unavailable. Scans, models, alignment CSVs and ring CSVs are covered.
+- Large scans/models have a visible direct local-path route in the Import
+  dialog. Desktop importing still reads the source directly from disk.
+- A cancelled desktop picker does nothing. A failed picker exposes the local
+  path and browser selector instead of leaving the user at an error message.
+- Failed direct imports no longer display "Import complete".
+- Incomplete upload files are removed after disconnects or transfer errors.
+- Cloud vs Design has an Import design mesh button. It selects the newly
+  imported model as reference while keeping the scan choice. Comparison
+  still requires the user to press Run.
+
+Diagnostics:
+- Local runtime logs capture desktop startup failures, background exceptions,
+  unhandled thread failures and supported native fault tracebacks.
+- COLLECT_DIAGNOSTICS.bat creates a local ZIP of logs and basic system details.
+  It sends nothing automatically and excludes scan/model and project contents.
+
+Scope:
+The browser file-picker error was reproduced and corrected. The cause of the
+reported repeated application crashes has NOT yet been established on the
+user's Windows machine; this release does not claim to fix every crash.
+Create Tunnel Surface is retained as the preferred tunnel mesh workflow.
+Further hole-filling improvements, drag-and-drop and Mesh to Point Cloud are
+queued for the next feature update, not implemented by this recovery patch.

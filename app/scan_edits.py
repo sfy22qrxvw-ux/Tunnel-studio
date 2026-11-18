@@ -580,7 +580,9 @@ def group_ids(meta, group):
         with RowFile(a['point_ids_file'],'<i8',n) as ids, RowFile(a['labels_file'],'<i4',n) as labels:
             for start in range(0,n,pointio.CHUNK):
                 count=min(pointio.CHUNK,n-start)
-                use=~np.isin(labels.read(start,count),a['kept'])
+                block=labels.read(start,count)
+                use=~np.isin(block,a['kept'])
+                if a.get('deleted_cluster_ids'):use &= ~np.isin(block,a['deleted_cluster_ids'])
                 yield ids.read(start,count)[use]
         return
     before = mask(meta, group.get('before_mask') or '')
@@ -730,7 +732,7 @@ def refresh_aliases(s, item):
             item['registration_state'] = copy.deepcopy(registration)
 
 
-def apply(s, item, action, selection=None, group_id=None, reason='Selected points', selected_file=None, progress=None, commit=True, rollback_state=True, remainder=None):
+def apply(s, item, action, selection=None, group_id=None, reason='Selected points', selected_file=None, progress=None, commit=True, rollback_state=True, remainder=None, respect_limit=True):
     """One state commit per edit, including both halves of a separation."""
     progress=progress or s.progress
     if selection is not None and action in ('delete_selection','separate_selection'):
@@ -814,7 +816,7 @@ def apply(s, item, action, selection=None, group_id=None, reason='Selected point
                         points=None;ids=None
                         try:
                             ids=np.memmap(selected_file['file'],'<i8','r',shape=(selected_file['count'],))
-                            if item.get('limit_box') and item.get('limit_hide_outside',True):
+                            if respect_limit and item.get('limit_box') and item.get('limit_hide_outside',True):
                                 points=np.memmap(meta['file'],'<f8','r',shape=(meta['count'],3))
                             for i in range(0,len(ids),pointio.CHUNK):
                                 selected=ids[i:i+pointio.CHUNK]
@@ -822,11 +824,11 @@ def apply(s, item, action, selection=None, group_id=None, reason='Selected point
                                 yield selected
                         finally:_close_arrays(points,ids)
                     batches=selected_batches()
-                else: batches = jobdata.selection_ids(meta, selection, progress, visibility=item if action=='delete_selection' else None)
+                else: batches = jobdata.selection_ids(meta, selection, progress, visibility=item)
                 if action == 'separate_selection':
                     if selected_file:
                         newmeta=jobdata.extract_ids(meta,__import__('deleted_points').id_batches({'ids_file':selected_file['file'],'count':selected_file['count']}),selected_file['count'],s.WORK,item['name']+' · separated',progress)
-                    else:newmeta=jobdata.extract_selection(meta,selection,s.WORK,item['name']+' · separated',progress)
+                    else:newmeta=jobdata.extract_selection(meta,selection,s.WORK,item['name']+' · separated',progress,visibility=item)
                     created.extend(Path(newmeta[k]) for k in ('file','attributes_file','preview_file') if newmeta.get(k))
                 after, count = update_mask(meta, batches, s.WORK, 1, progress, created,derived,valid_points,derived_revision); signed_count = count
                 group = dict(id=uuid.uuid4().hex, kind='move' if newmeta else 'delete', name=reason, count=count, before_mask=before, after_mask=after, active=True, created=time.time())
@@ -956,7 +958,8 @@ def archive_cleaning(item,result):
     groups.append(dict(id=uuid.uuid4().hex,kind='delete',name='Cleaning · removed points',count=count,
         active=True,created=time.time(),archive=dict(source_meta=copy.deepcopy(result['source_meta']),
         point_ids_file=result['point_ids_file'],labels_file=result['labels_file'],
-        input_count=result['statistics']['input_points'],kept=list(result['kept']),result_revision=result['revision'])))
+        input_count=result.get('stored_point_count',result['statistics']['input_points']),
+        deleted_cluster_ids=list(result.get('deleted_cluster_ids',())),kept=list(result['kept']),result_revision=result['revision'])))
 
 
 def restore_archive(s,item,group,progress):

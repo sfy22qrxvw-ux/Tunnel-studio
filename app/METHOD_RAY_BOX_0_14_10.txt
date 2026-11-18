@@ -1,0 +1,60 @@
+Tunnel Studio ray/box lining extraction — implementation note
+24 October 2026
+
+Reference
+Xu, Y. et al. (2026), Tunnel lining point cloud extraction algorithm based on
+ray projection and box-neighborhood acceleration, Measurement 292:123609.
+DOI 10.1016/j.measurement.2026.123609.
+
+Scope and provenance
+The publisher abstract and bibliographic record were available, but the full
+paper and author code were not. This is an independent, reviewable adaptation
+of the stated ray-projection and box-neighbourhood ideas. It is not a
+reproduction and does not claim the paper's accuracy or processing speed.
+
+Method
+1. A bounded, deterministic spatial sample fits the existing supported tunnel
+   frame. This supplies station, angle and an approximate measured lining.
+2. Every selected original point is projected into a station/angle ray and a
+   radial residual box. Counts are held in a disk-backed uint32 histogram.
+3. Each radial box is assessed with its 3 by 3 station/angle neighbourhood.
+   Angular neighbours wrap at 0/360 degrees; station does not wrap.
+4. The outermost locally supported radial mode is selected. A low three percent
+   relative prominence is intentional: sparse wall returns behind a much
+   denser pipe must still be eligible. The absolute minimum-neighbour support
+   remains mandatory, and outward candidates remain visible for review.
+5. Every original point is classified against its cell's selected surface.
+   Points near that surface are suggested lining; nearer points are interior
+   candidates; farther points are outside/reflection candidates. Unsupported
+   boxes are retained.
+
+Data and performance rules
+- Input IDs and float64 coordinates are preserved.
+- No display sample is used for classification.
+- The full-density box index is disk-backed. If a very long selection would
+  exceed three million station/angle cells, station boxes widen automatically
+  and the effective size is recorded in the result.
+- Only explicit review/apply changes a scan. Cancel leaves the prior result and
+  source unchanged.
+
+QA limitations
+Use one tunnel branch containing both walls and crown. Check openings,
+cross-passages, junctions, recesses, rough SCL and outward reflections. The red
+groups are candidates, not facts. Do not use a cleaned surface for deformation
+or tolerance decisions without independent registration/control and checked
+sections. The synthetic regression scene tests preservation of wall returns
+behind a dense internal service; it is not real-scan accuracy evidence.
+
+Integration corrections in 0.15.0
+- Preserved as an alternative to the primary GuSAC cleaner and TMatch clustering.
+- Histograms use at most two bounded file mappings and overlapping station
+  windows. One-station halos preserve 3-by-3 neighbourhood results across
+  processing boundaries. Mappings close on cancellation before file cleanup.
+- Radial bin indexing and reported bin depth now use the same effective width
+  when the requested search interval is not divisible by the requested depth.
+- Source coordinate work uses 25,000-point chunks; disk capacity is checked
+  before index creation. Original selected IDs and coordinates are preserved.
+- Seven synthetic/API regression checks and two production-UI fixture checks
+  cover the recovered method. A real 629,245-point crop was also checked for
+  exact ID coverage, consistent counts and unchanged source-coordinate hash.
+  The real crop has no independent truth labels, so no accuracy is claimed.

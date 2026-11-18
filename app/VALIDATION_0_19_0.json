@@ -1,0 +1,278 @@
+{
+  "version": "0.19.0",
+  "application_tests": {
+    "tests_discovered": 496,
+    "tests_run": 496,
+    "seconds": 112.74020417300198,
+    "success": true,
+    "failures": [],
+    "errors": [],
+    "skipped": [],
+    "source_files_changed_during_tests": [],
+    "native_windows_execution": false
+  },
+  "additional_gusac_tests": {
+    "kind": "synthetic_only",
+    "paper_accuracy_reproduced": false,
+    "real_scan_validation": false,
+    "limitation": "Generated circular/gently curved geometry does not validate all services, irregular profiles, heavy occlusion, runtime on billion-point clouds or real scanner data.",
+    "tests_run": 9,
+    "failures": 0,
+    "errors": 0,
+    "numpy_version": "2.3.5",
+    "seconds": 55.847,
+    "cases": [
+      {
+        "case": "straight_cylinder_and_pipe",
+        "source": "synthetic_generated_geometry",
+        "points": 44440,
+        "wall_points": 36360,
+        "lining_retained_fraction": 1.0,
+        "obstruction_candidate_fraction": 1.0,
+        "class_counts": [
+          36360,
+          8080,
+          0,
+          0,
+          0
+        ],
+        "regional_planes": 855,
+        "seconds": 8.185
+      },
+      {
+        "case": "sparse_lining_behind_dense_service",
+        "source": "synthetic_generated_geometry",
+        "points": 98521,
+        "wall_points": 33881,
+        "lining_retained_fraction": 1.0,
+        "obstruction_candidate_fraction": 1.0,
+        "class_counts": [
+          33819,
+          64640,
+          0,
+          62,
+          0
+        ],
+        "regional_planes": 853,
+        "seconds": 10.12
+      },
+      {
+        "case": "gently_curved_branch",
+        "source": "synthetic_generated_geometry",
+        "points": 44440,
+        "wall_points": 36360,
+        "lining_retained_fraction": 1.0,
+        "obstruction_candidate_fraction": 1.0,
+        "class_counts": [
+          36088,
+          8080,
+          0,
+          272,
+          0
+        ],
+        "regional_planes": 846,
+        "seconds": 6.273
+      },
+      {
+        "case": "outward_joint_recesses",
+        "source": "synthetic_generated_geometry",
+        "points": 44440,
+        "wall_points": 36360,
+        "lining_retained_fraction": 1.0,
+        "obstruction_candidate_fraction": 1.0,
+        "class_counts": [
+          35918,
+          8080,
+          360,
+          0,
+          82
+        ],
+        "regional_planes": 831,
+        "seconds": 6.182
+      },
+      {
+        "case": "large_coordinate_offset",
+        "source": "synthetic_generated_geometry",
+        "points": 44440,
+        "wall_points": 36360,
+        "lining_retained_fraction": 1.0,
+        "obstruction_candidate_fraction": 1.0,
+        "class_counts": [
+          36360,
+          8080,
+          0,
+          0,
+          0
+        ],
+        "regional_planes": 855,
+        "seconds": 5.861
+      }
+    ]
+  },
+  "browser_checks": {
+    "bundle_monitoring_ui_result.json": {
+      "source": "/workspace/scratch/270bc034b4ff/integration_0190/app",
+      "scenarios": [
+        "Bundle ribbon, added cloud loop and joint review work without changing saved poses",
+        "Plan/elevation before-and-after preview renders the fixed and adjusted cloud samples",
+        "Apply saves all virtual poses and the loop atomically; fixed scan and raw files are unchanged; Workspace Undo restores the chain",
+        "Stop cancels bundle work without saving positions or links",
+        "Editing settings invalidates an earlier bundle review",
+        "Monitoring imports and persists separate epochs and renders downward-positive settlement",
+        "Named ring chords produce positive closure and retain user-defined review levels",
+        "CSV export includes epochs, datum, baseline and monitoring values",
+        "Printable report includes settlement, convergence and sign conventions",
+        "Monitoring data, baseline and chords survive reload; dark theme and narrow layout remain usable"
+      ],
+      "errors": [],
+      "platform": "Linux Chromium/software WebGL; synthetic scans and entered observations; real server and UI",
+      "status": "passed",
+      "browser": "153.0.8010.0"
+    },
+    "cloud_vis_ui_result.json": {
+      "source": "/workspace/scratch/270bc034b4ff/integration_0190/app",
+      "scenarios": [
+        "Cloud-to-cloud command is discoverable; six-axis tilt correction requires an explicit choice",
+        "Real ICP completes into a review preview with inlier plane statistics and no saved pose or link",
+        "Manual edits invalidate cloud statistics; local Undo and Redo restore the correct reviewed candidate",
+        "Join and lock saves a cloud link and virtual pose to disk, preserves the fixed scan and all raw XYZ bytes",
+        "Saved registration review labels plane distances separately from target residuals",
+        "Workspace Undo restores the pre-refinement poses and removes the saved cloud link",
+        "Stop refinement cancels the real background job without saving a pose",
+        "Unconverged refinement is refused and leaves the manual draft available without claiming a cloud result",
+        "RTC360 review discovers matching setup IDs and downloads a read-only XML inspection report",
+        "RTC360 review defaults to all raw setups despite one highlighted scan; readable source labels, selected scope and Show in 3D work",
+        "Positioned setups are distinguished from missing data and lead directly into pair refinement without reapplying their poses",
+        "Applying RTC360 positions persists virtual poses with provenance and one undo checkpoint; dark theme and narrow viewport remain usable"
+      ],
+      "errors": [],
+      "platform": "Linux Chromium/software WebGL; synthetic full-density XYZ; real server and UI; two-second cancellable fixture pause before normals",
+      "status": "passed",
+      "browser": "153.0.8010.0"
+    },
+    "visual_registration_ui_result.json": {
+      "source": "/workspace/scratch/270bc034b4ff/integration_0190/app",
+      "scenarios": [
+        "Plan drag changes only horizontal moving-group placement",
+        "Switching side/front elevation preserves alignment; height-only drag changes Z without shifting plan",
+        "Tilt stays locked unless explicitly enabled; Undo reverses a tilt edit",
+        "Ctrl-pan and 3D orbit change only the camera, not registration",
+        "Pick pivot, rotation steps, local Undo and Redo work across view changes",
+        "Join and lock saves a manual link and moving pose, with fixed coordinates and original XYZ files unchanged",
+        "Workspace Undo restores previous poses and removes the manual link",
+        "Cancel discards the preview without saving a transform",
+        "Pair changes invalidate Apply; selecting the same setup is rejected",
+        "Registration ribbon opens the workspace; dark theme and smaller viewport retain accessible controls",
+        "Stale-position rejection keeps the draft visible and reports reload guidance"
+      ],
+      "errors": [],
+      "platform": "Linux Chromium/software WebGL; synthetic scans; real server and UI",
+      "status": "passed",
+      "browser": "153.0.8010.0"
+    }
+  },
+  "target_registration_browser": {
+    "status": "passed",
+    "scenarios": 10,
+    "checks": [
+      "automatic common targets",
+      "fixed setup choice",
+      "2D to 3D pair transition",
+      "independent check/excluded roles",
+      "no accept gate",
+      "high-RMS target display",
+      "stale result rejection",
+      "hidden preview avoided",
+      "correspondence deletion removes target",
+      "blank manual-row deletion"
+    ]
+  },
+  "syntax": {
+    "python_files": 186,
+    "javascript_files": 51,
+    "all_syntax_passed": true
+  },
+  "synthetic_cpu_benchmark": {
+    "platform": "Linux CPU; synthetic geometry; median of three runs",
+    "records": [
+      {
+        "operation": "_largest_component",
+        "vertices": 32400,
+        "triangles": 64082,
+        "old_seconds": 0.45192966000104207,
+        "new_seconds": 0.02067337400148972,
+        "speed_ratio": 21.860469411934215,
+        "equivalent_output": true
+      },
+      {
+        "operation": "_laplacian",
+        "vertices": 32400,
+        "triangles": 64082,
+        "old_seconds": 1.084002635001525,
+        "new_seconds": 0.014041927999642212,
+        "speed_ratio": 77.197563969075,
+        "equivalent_output": true
+      },
+      {
+        "operation": "GuSAC classification",
+        "points": 44440,
+        "regions": 855,
+        "old_seconds": 0.4009079110001039,
+        "new_seconds": 0.2664850840010331,
+        "speed_ratio": 1.5044290846633266,
+        "equivalent_output": true
+      }
+    ],
+    "limits": "No Windows/GPU/field benchmark. Classification timing excludes model fitting and disk I/O. Speed varies with geometry, hardware, memory and native threading.",
+    "available_worker_limit": 8,
+    "gusac_normal_query_workers": 1
+  },
+  "native_windows_execution": false,
+  "gpu_meshing_implemented": false,
+  "field_accuracy_verified": false,
+  "actual_raw_cloud_alignment_compared": false,
+  "installer_verification_record": "TunnelStudio_0.19.0_Release_Checks.json; written after final installer extraction",
+  "remaining_issues": [
+    "Missing original R0007 attributes cache is not recovered.",
+    "Physical segmentation relative to the research paper remains unresolved.",
+    "User project deletion timing and real scan alignment have not been established."
+  ],
+  "current_browser_scenarios": 43,
+  "changed_application_sha256": {
+    "app/RELEASE_SCOPE_0_19_0.txt": "94bab3da236ac9e750b3f940e05170d83b508d5defbfeca5fd5770d1ef25b75a",
+    "app/rtc360_native_worker.py": "202ab9df43838e0939af6b5a5ceeb28d6bce11e5e196de5c95f9f5803bea6b27",
+    "app/job_api.py": "83dde841ebcf6508036140f8dce7cccaff24e7bae9220b2bf2099e98c8b96b86",
+    "app/release.py": "180eec902d87f41ca5c345b454fd9bf3a0cbf77ac0002ca5a9bb6a9b393a0572",
+    "app/gusac.py": "ec5938f185e485ca7b2dbbec2e4f1598142758c5eb97851bb945914ec3821b1d",
+    "app/registration_network.py": "066bb16761da235291cc061876b2bbeac073fb86f18e83b9e87983955b76b47a",
+    "app/compute_runtime.py": "3a91364015f3a853d32f5a376ce6fc050ad672bc6f4affeed3845b065c915913",
+    "app/tunnel_monitoring.py": "1be9e6534be5e5098743210b19c554001eff8b5dbeb5518111c83362cfce6603",
+    "app/CHANGELOG_0_19_0.txt": "a66d01bb55e16a38995228b4c6f0cedd9ec938bd50017539c72842483c17a42d",
+    "app/workflows.py": "7c776c1e4393eab0e7a4bbb50044f69771d15338d1bb88caa563f56d36c5b7bb",
+    "app/meshing.py": "a71132221e42b7475441e45fbc368356c11c276798e356f6584c856d5986eb1c",
+    "app/mesh_geometry.py": "210be0b8f1ffa82acdb747dc0819655623701411cc69c78681e4b598105d603f",
+    "app/rtc360_vis_workflow.py": "c91a834ae8bf87f3a5bb320578f1478e3c6707b7605fd06558702a3358514bc5",
+    "app/feature_selection.py": "0d20f26cf6711e4b4ddc7d5e8a1b9e2c2db74b211dbb742619abe21f9899c2f5",
+    "app/registration_workspace.py": "8bb31ff9fa2109dbb61ece62f86001e2402831760289f9ffbb8d168877943ea0",
+    "app/workspace_history.py": "03c8e39aa2943d3b38f821ada8c62c6bb6e50f368ea73e9a841ae4f9432865cd",
+    "app/bundle_workflow.py": "3244a8356637c588ed3b867a6c1a1ede19c148ba73688476e6d7ac945316a0c3",
+    "app/rtc360_names.py": "6695a09e56c32269c5e1bc9660d7525450ff50d644a6b0685675e911765b3bad",
+    "app/rtc360_vis_pose.py": "5a4e851f39baf9fa22142cf6b9d8c4e5ebd97711452a27c745b2e4faa8cbcf51",
+    "app/server.py": "ab9f61cf83b61adfd1745adb54e9445f0570c2eabc5592447a0267d4768f42d5",
+    "app/rtc360_source.py": "ce661ee0aa8c062917b021db61d9695292a8dd9535389e4a5800e7a34523cbfd",
+    "app/bundle_adjustment.py": "a02fe2ae6779d14a0037dd257a5b554c45ab6abd749266820b2e039725c39770",
+    "app/cloud_registration.py": "6367235b3e39a58e5ae1a7b9d160594dfa22e4104a0ae5e81995855f26d7ce45",
+    "app/clean_tunnel.py": "e49db1887f402ad3c3795289ed354f6a84a0a7f94d7ae802c3e5eebe81cb1fe9",
+    "app/surface_extraction.py": "4dc60347fe953114d62365d6aa6aeb57975b5e8fe738149aba913890d56a6cec",
+    "app/web/visual-registration-ui.css": "7d72f1a6c66b9984fe9c1f8d2d8c6d6278c941621936b3445d760f55f0f66d99",
+    "app/web/index.html": "1184583890abba881cce44792becb674d48335a859e8e69155561942627581f3",
+    "app/web/scan-registration-ui.js": "353fd2706d0f7622d7e7bc51f8b29feca57cbc1c9e439db19cfa49b0f6d6bd20",
+    "app/web/tunnel-monitoring-ui.js": "7857a9e9216112a828bdfa842bd5bcbf4d19e1636c40d7896b6d8445c194af55",
+    "app/web/analysis-workspaces.css": "7a4210031a0e7e188eab762b9306ea368a758415b722336475202d35706a1831",
+    "app/web/bundle-adjustment-ui.js": "7a497f03ffd44ede0c60e5f96bc4fb6744a9ee8698a2263bece397dbf748b724",
+    "app/web/visual-registration-ui.js": "9f20e3006dffb238af0c31af3c5c4f77af3ab2b34c2eb0e62618b4d6b17a7996",
+    "app/web/ribbon-layout.js": "8f19fd9619d8a38ecc399367db2476dd9a45acdcb81d2237be8cc174fd2a209c",
+    "app/web/job-ui.js": "8310d061d150dfa514d31888da3bc94f5c5dabf7d92e2942fb95ae05aa230110",
+    "app/work/checks/gusac_synthetic_report.json": "745ae1e38ebeaadc7f94cb69ebe28080978eaee3be3cb340ce36224696d11967"
+  }
+}

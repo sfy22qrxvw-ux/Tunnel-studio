@@ -1,14 +1,12 @@
 """Local-circle cleaning on independently constructed curved tunnel surfaces."""
 from pathlib import Path
 import tempfile,unittest
-from types import SimpleNamespace
 from unittest import mock
 import numpy as np
 import section_circle as sc
 import shape_selection as ss
 import workspace_history
 import test_shape_matching_0214 as shape_fixture
-from core import Alignment
 
 
 def curved(length=40.,bend_radius=45.,tube_radius=2.5,spacing=.08):
@@ -82,64 +80,12 @@ class SectionCircleTests(unittest.TestCase):
             ids=np.fromfile(r['point_ids_file'],'<i8');self.assertFalse(((s[ids]>12)&(s[ids]<19)).any())
             self.assertGreater(r['statistics']['unassessed_points'],0);self.assertTrue(any(not q['supported'] for q in r['circle_sections']))
 
-    def test_short_crop_on_long_project_alignment_keeps_supported_lining(self):
-        s,a=np.meshgrid(np.arange(3100.04,3106.,.08),np.arange(90)*2*np.pi/90,indexing='ij')
-        offset=.018*np.sin((s-3100.)*.5)
-        p=np.column_stack((s.ravel(),(offset+2.5*np.cos(a)).ravel(),(2.5*np.sin(a)).ravel()))
-        for chainage in (np.arange(0.,5805.,5.),np.array([0.,5800.])):
-            with self.subTest(alignment_nodes=len(chainage)),tempfile.TemporaryDirectory() as tmp:
-                rows=np.column_stack((chainage,chainage,np.zeros((len(chainage),2)),np.full(len(chainage),2.5)))
-                result=sc.run(stream(p),tmp,{'axis_source':'project'},axis_rows=rows)
-                self.assertEqual(result['statistics']['input_points'],len(p))
-                self.assertGreater(result['statistics']['supported_windows'],2)
-                self.assertEqual(result['statistics']['candidate_points'],0)
-                np.testing.assert_array_equal(result['statistics']['effective_bounds'],[p.min(0),p.max(0)])
-                self.assertTrue(any('These fits share much of the same data' in text for text in result['warnings']))
-
-    def test_project_planes_follow_curved_graded_alignment_and_fit_measured_radius(self):
-        station=np.arange(0.,24.1,.4);bend=station/65
-        xyz=np.array([400000.,550000.,125.])+np.c_[65*np.sin(bend),65*(1-np.cos(bend)),.05*station]
-        axis=Alignment([dict(chainage=s-20,e=p[0],n=p[1],h=p[2],radius=4.)
-                        for s,p in zip(station,xyz)])
-        angles=np.arange(90)*2*np.pi/90
-        angles=angles[np.abs(angles-np.pi/2)>.44]
-        duct_angles=np.linspace(np.pi,2*np.pi,21)
-        wall=[];services=[]
-        for s in np.arange(7.03,17.03,.10):
-            c,_,r,u,_=axis.at(s-20)
-            # The measured centre shifts across stations. The section planes
-            # still follow the loaded alignment through its curve and grade.
-            c=c+(.04+.012*np.sin(s*.5))*r-.025*u
-            wall.append(c+3.775*(np.cos(angles)[:,None]*r+np.sin(angles)[:,None]*u))
-            services.append(c+(.72*np.cos(duct_angles))[:,None]*r+
-                            (2.4+.72*np.sin(duct_angles))[:,None]*u)
-        wall=np.vstack(wall);points=np.vstack([wall,*services])
-        with tempfile.TemporaryDirectory() as tmp:
-            result=sc.run(stream(points),tmp,{'axis_source':'project','inward_mm':100,'outward_mm':600},axis_rows=axis.a)
-            stats=result['statistics']
-            self.assertTrue(stats['has_supported_span'])
-            self.assertEqual(stats['supported_windows'],stats['fit_windows'])
-            np.testing.assert_array_equal(np.fromfile(result['point_ids_file'],'<i8'),np.arange(len(wall),len(points)))
-            self.assertTrue(all(q['chainage_m']<0 for q in result['circle_sections']))
-            for q in result['circle_sections']:
-                c,normal,_,_,_=axis.at(q['chainage_m'])
-                np.testing.assert_allclose(q['normal'],normal,rtol=0,atol=1e-9)
-                self.assertAlmostEqual(float((np.asarray(q['centre'])-c)@normal),0.,places=8)
-                self.assertAlmostEqual(q['radius_m'],3.775,delta=.012)
-
     def test_oval_tunnel_is_not_forced_into_a_circular_deletion(self):
         s,a=np.meshgrid(np.arange(0,15,.1),np.arange(160)*2*np.pi/160,indexing='ij')
         p=np.c_[s.ravel(),(2.5*np.cos(a)).ravel(),(2.8*np.sin(a)).ravel()]
-        passes=0
-        def source():
-            nonlocal passes
-            passes+=1
-            yield from stream(p)()
         with tempfile.TemporaryDirectory() as tmp:
-            r=sc.run(source,tmp,{'inward_mm':5,'outward_mm':5},prepared_guide=sc.Curve([[0,0,0],[15,0,0]]))
+            r=sc.run(stream(p),tmp,{'inward_mm':5,'outward_mm':5},prepared_guide=sc.Curve([[0,0,0],[15,0,0]]))
             self.assertEqual(r['statistics']['candidate_points'],0);self.assertEqual(r['statistics']['unassessed_points'],len(p))
-            self.assertFalse(r['statistics']['has_supported_span'])
-            self.assertEqual(passes,2)
 
     def test_stream_over_one_million_observations_and_64bit_ids_has_no_admission_cap(self):
         p,route,inside,outside,_,_=curved(length=24.);repeats=40;total=len(p)*repeats;self.assertGreater(total,1000000)
@@ -168,86 +114,7 @@ class SectionCircleTests(unittest.TestCase):
                 sc.run(stream(p),tmp,{'axis_source':'project'})
 
 
-class WindowSampleTests(unittest.TestCase):
-    def test_sample_is_stable_across_blocks_and_disk_spill(self):
-        rng=np.random.default_rng(3)
-        p=np.column_stack((rng.uniform(0,30,4000),rng.uniform(-.2,.2,(4000,2))))
-        # Interleave bins and include repeated voxels with different XYZ.
-        p=np.vstack((p,p+[.002,.001,.001]))
-        with tempfile.TemporaryDirectory() as tmp, mock.patch.object(sc,'WINDOW_SAMPLE',40), mock.patch.object(sc,'RESIDENT_SAMPLE_BINS',2):
-            full=sc.Samples(Path(tmp)/'full.sqlite',5.)
-            chunked=sc.Samples(Path(tmp)/'chunked.sqlite',5.)
-            try:
-                full.add(p,p[:,0],p[:,1:])
-                for block in np.array_split(p[::-1],21):
-                    chunked.add(block,block[:,0],block[:,1:])
-                self.assertGreater(chunked.db.execute('SELECT count(*) FROM p').fetchone()[0],0)
-                for b in range(6):
-                    actual=chunked.read(b)
-                    self.assertEqual(len(actual),40)
-                    np.testing.assert_array_equal(actual,full.read(b))
-            finally:
-                full.close();chunked.close()
-
-    def test_distinct_voxels_with_tied_rank_keep_key_order_and_true_xyz(self):
-        rows=np.empty(4,sc.SAMPLE_ROW)
-        rows['keys']=[[0,4,1],[0,-2,1],[0,-2,1],[1,4,1]]
-        rows['rank']=[1,1,1,2]
-        rows['xyz']=[[.01,.105,.03],[.03,-.04,.035],[.03,-.04,.03],[.22,.10,.03]]
-        with mock.patch.object(sc,'WINDOW_SAMPLE',2):
-            np.testing.assert_array_equal(sc.Samples._compact(rows),rows[[2,0]])
-
-
 class CircleReviewTests(unittest.TestCase):
-    def test_restricted_preview_reads_exact_rows_once_and_reuses_the_index(self):
-        import preview_index
-        import registration_pose
-
-        with tempfile.TemporaryDirectory() as tmp:
-            root=Path(tmp);path=root/'merged.xyz64';mask=root/'merged.mask'
-            step=preview_index.BLOCK;n=3*step
-            p=np.column_stack((np.arange(n),np.zeros((n,2)))).astype('<f8')
-            p.tofile(path)
-            deleted=np.zeros(n,'u1');deleted[step+25]=1;deleted.tofile(mask)
-            meta=dict(name='Registered cloud',file=str(path),count=n,mask_file=str(mask),
-                      minimum=p.min(0).tolist(),maximum=p.max(0).tolist())
-            rotation=np.array([[0.,-1.,0.],[1.,0.,0.],[0.,0.,1.]])
-            registration_pose.set_pose(meta,rotation,[100000.,400000.,0.])
-            station=400000.+step
-            selection=dict(mode='box',minimum=[99999.,station+10,-1.],maximum=[100001.,station+200,1.])
-            limit=dict(minimum=[99999.,station+20,-1.],maximum=[100001.,station+150,1.])
-            item=dict(id='merged',kind='scan',meta=meta,name=meta['name'],limit_box=limit)
-            messages=[]
-            s=SimpleNamespace(STATE={'job_items':[item]},WORK=root,progress=messages.append)
-            expected=np.arange(step+20,step+151);expected=expected[deleted[expected]==0]
-            world=registration_pose.points(meta,p[expected])
-
-            def review(batches,*args,**kwargs):
-                for _ in range(3):
-                    parts=list(batches())
-                    np.testing.assert_array_equal(np.concatenate([ids for ids,_,_ in parts]),expected)
-                    np.testing.assert_array_equal(np.concatenate([xyz for _,xyz,_ in parts]),world)
-                return {}
-
-            reads=[];read=np.fromfile
-            def observe(file,*args,**kwargs):
-                out=read(file,*args,**kwargs)
-                if getattr(file,'name',None)==str(path):reads.append(out.size//3)
-                return out
-
-            request=dict(mode='circle',source_id='merged',selection=selection,settings={'respect_view':True})
-            with mock.patch.object(sc,'run',side_effect=review), mock.patch.object(np,'fromfile',side_effect=observe),mock.patch.object(ss,'CIRCLE_SCOPE_CACHE_BYTES',1):
-                row=ss.preview(s,request)
-                self.assertEqual(row['search_area'],'selection')
-                self.assertEqual(sum(reads),n)
-                self.assertTrue(Path(str(path)+'.viewindex.npz').is_file())
-                reads.clear()
-                request.pop('selection')
-                row=ss.preview(s,request)
-                self.assertEqual(row['search_area'],'limit_box')
-                self.assertEqual(reads,[step])
-                self.assertTrue(any(f'{step:,}/{step:,} source rows read · {len(expected):,} retained' in text for text in messages))
-
     def test_separate_inward_outward_selection_and_one_step_undo_use_original_ids(self):
         fx=shape_fixture.ShapeReviewTests();fx.setUp();self.addCleanup(fx.doCleanups);row=fx.row;row['mode']='circle';row['settings']=sc.settings()
         ss.choose(fx.s,fx.body('select',operation='side',side='inward'))

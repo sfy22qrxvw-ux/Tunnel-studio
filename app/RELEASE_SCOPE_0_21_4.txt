@@ -1,0 +1,52 @@
+Tunnel Studio 0.21.4 | Whole-cloud geometric example selection
+
+Cumulative source/runtime baseline: the verified delivered 0.21.3 installer.
+No scan, project, exported user data or private browser screenshot is packaged.
+
+shape_matching.py learns a supported lining with the existing measured-reference
+engine. A bounded, spatially balanced calibration sample is not a source-cloud
+admission limit. Every retained original observation is then read to accumulate
+sparse lining-offset cells in a temporary SQLite database with bounded caches.
+The example's largest connected off-lining footprint and depth field form a
+geometric template. Overlapping FFT windows compare occupancy/edge support and
+RMS depth agreement, including quarter turns and the circular map seam.
+
+A compact object's surrounding empty band constrains its extent. Continuing
+services allow extension past the example's ends, then follow connected cells
+within its depth range. Attached branches with similar offsets can connect;
+review the results. Sampling gaps of one map cell are bridged in the matching
+representation. Only original measured records are selectable: no generated
+map cell is written into a point cloud. Each final original point must still
+pass the chosen side and lining-offset thresholds.
+
+Full-density candidate IDs and review flags are disk-backed. Selection/refinement
+reads and point gathers are bounded to 100,000 records. Public previews are bounded
+to 60,000 actual sampled points. These bounds do not limit source points or edit
+selection size. Exact source-revision validation precedes publication and edits.
+The existing scan_edits and workspace-history transaction publishes removal or
+separation; failed saves/cancellation discard incomplete operation assets.
+
+The example map can be up to 512 cells on a side; larger physical examples need a
+coarser grid or a shorter service section. This is a bounded working-resolution
+requirement, not a one-million-point input limit. Whole-cloud search uses the
+full retained source unless the optional view-filter restriction is selected.
+A usable lining reference needs one supported tunnel branch, walls and crown;
+unsupported areas stay unselected. Cross passages, occlusion, deformed/rough
+lining, differing object sizes and incomplete views can reduce matching quality.
+
+Research attribution
+Shi, S. et al. (2021). Research and Engineering Implementation of Laser Point Cloud
+3D Target Recognition Algorithm in Complex Scene. J. Phys.: Conf. Ser. 1828 012155.
+DOI: 10.1088/1742-6596/1828/1/012155. Height/template-feature ideas only.
+Zhang, K. et al. (2026). Automatic Detection Method for Shield Tunnel Segment
+Dislocation Based on Facility Point Cloud Removal and Segment Segmentation.
+Sensors 26, 4901. DOI: 10.3390/s26154901. Lining-offset idea only; its trained
+PointNet++ network is not supplied or reproduced. No published accuracy claim
+is transferred to this independent implementation. Scores are not probabilities.
+
+Validation uses constructed geometry and production HTTP/browser paths,
+including 1,134,000 distinct original IDs and 64-bit IDs above 2^31. Those checks
+establish implementation behaviour, not field object-recognition accuracy.
+Native Windows/WebView2 and Damian's actual 921-million-point project remain
+untested here. Source coordinates/attributes are not rewritten. Geometric
+matching is not survey control and does not infer missing wall surfaces.

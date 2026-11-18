@@ -1,0 +1,7 @@
+Tunnel Studio 0.2.1 bundled Windows preview.
+
+Source modules are included in this app folder; release.py holds the current version.
+Use the sibling runtime on Windows, or requirements-desktop.txt for source development.
+Native launcher source is in windows/launcher.c and version.rc.
+Program files and user project data are separate. Read README_FIRST.txt in the root.
+Tests: python -m unittest discover -p "test_*.py" -v

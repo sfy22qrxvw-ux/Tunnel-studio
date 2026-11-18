@@ -17,6 +17,7 @@ UUID = r'[0-9a-f]{32}'
 INTERNAL = r'(?:xyz64|attr32|analysis64|mask|surface_ids|surface_labels|selection|patch_ids|preview64|vertices64|faces32|faceflags8|face_flags|faceflags|vcolour32|feature_ids|feature_labels|feature_selected|feature_xyz64|section\.preview64|inspection64|results64|design-results|inspection-results|xyz64\.viewindex\.npz)'
 CACHE = re.compile(UUID + r'\.' + INTERNAL + r'\Z', re.I)
 UNPACKED = re.compile(r'[0-9]{4,6}\.' + INTERNAL + r'\Z', re.I)
+MESH_TEMP = re.compile(r'mesh-analysis\.analysis64\.' + UUID + r'\.tmp\Z', re.I)
 MESH_FOLDER = re.compile(r'mesh-' + UUID + r'\Z', re.I)
 SHAPE_FOLDER = re.compile(r'shape-' + UUID + r'\Z', re.I)
 INSPECT_FOLDER = re.compile(r'inspect-' + UUID + r'\Z', re.I)
@@ -68,7 +69,7 @@ def owned_name(root, path):
     if len(folders)==2 and SHAPE_FOLDER.fullmatch(folders[0]) and INSPECT_FOLDER.fullmatch(folders[1]):
         return rel.name in {'object.xyz64','object.ids','object.selection','object.intensity32','context.xyz64'}
     if not folders or (len(folders)==1 and MESH_FOLDER.fullmatch(folders[0])):
-        return bool(CACHE.fullmatch(rel.name))
+        return bool(CACHE.fullmatch(rel.name) or (folders and MESH_TEMP.fullmatch(rel.name)))
     if len(folders)==2 and ASSET_FOLDER.fullmatch(folders[0]) and folders[1]=='assets':
         return bool(UNPACKED.fullmatch(rel.name))
     return False
@@ -120,7 +121,11 @@ def files_in(root,warnings):
             with os.scandir(folder) as entries:
                 for entry in entries:
                     path=Path(entry.path)
-                    try:info=entry.stat(follow_symlinks=False)
+                    try:
+                        info=entry.stat(follow_symlinks=False)
+                        # Windows directory entries can omit file identity and link count.
+                        if stat.S_ISREG(info.st_mode) and not info.st_nlink and not is_link(info):
+                            info=path.lstat()
                     except FileNotFoundError:continue
                     except OSError as err:
                         warnings.append(f'Could not stat {path}: {err}');continue

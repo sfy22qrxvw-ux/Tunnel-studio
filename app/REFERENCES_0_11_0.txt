@@ -1,0 +1,108 @@
+TUNNEL STUDIO 0.11.0 — METHODS AND FORMULA PROVENANCE
+All geometric input coordinates are in metres. Vertices are stored as float64.
+Temporary local centring is restored before writing a result or exporting OBJ.
+Each face contains exactly three integer vertex indices. Degenerate and duplicate
+faces are removed; invalid indices stop the operation.
+
+SUPPLIED SOURCES REVIEWED
+1. https://github.com/Fazi743/Mesh_Generation
+   Inspected commit aabc3bebbfb56509f522d0c277251642e513eef5.
+   The project and the pasted notebook workflow are useful practical references
+   for normal estimation, Open3D Poisson reconstruction, Taubin smoothing,
+   simplification and connected components. The repository carries Apache 2.0.
+   These operations use independent integration with Open3D in Tunnel Studio;
+   no Point2Mesh network weights or training code are bundled.
+   The pasted snippet translates its mesh to the origin. Tunnel Studio restores
+   the offset so the result stays in the project's survey coordinate system.
+2. User-supplied triangle.pdf: Hanocka, Metzer, Giryes and Cohen-Or,
+   'Point2Mesh: A Self-Prior for Deformable Meshes', 2020.
+   DOI: https://doi.org/10.1145/3386569.3392415
+   Reviewed explicit triangles, area-weighted sampling (§3.2), reconstruction
+   losses and coarse-to-fine deformation. Its learned MeshCNN optimisation and
+   beam-gap loss are NOT implemented here. Equation 2 uses unsquared distances.
+3. User-supplied Deep Learning for 3D Point Clouds.pdf:
+   relevant sections on Chamfer/EMD (printed pp. 73–75; equation 3.3) and
+   sampling (printed pp. 100–103) were reviewed. This release uses normalized
+   squared Chamfer as a sampled diagnostic, not the paper's unsquared loss.
+
+PRIMARY IMPLEMENTATION REFERENCES
+https://www.open3d.org/docs/release/tutorial/geometry/surface_reconstruction.html
+https://www.open3d.org/docs/release/python_api/open3d.geometry.TriangleMesh.html
+https://docs.scipy.org/doc/scipy/reference/generated/scipy.spatial.Delaunay.html
+https://scikit-image.org/docs/stable/api/skimage.measure.html#skimage.measure.marching_cubes
+Open3D 0.20.0 and scikit-image 0.26.0 were used for the synthetic checks.
+A compatible CPython 3.13 Windows x64 Open3D 0.20 wheel was found. This does
+not constitute testing its execution inside the installed Windows application.
+
+1 — PLANAR DELAUNAY
+Centred points q_i = p_i - mean(p). SVD supplies two principal in-plane axes.
+Project to u_i = [q_i·e_1, q_i·e_2] and Delaunay-triangulate this 2D set.
+Faces keep the measured 3D vertex coordinates. Duplicate projected points are
+filtered; a maximum 3D edge-length filter avoids overly long connections.
+Suitable for local near-planar surfaces, not an entire tube or folded surface.
+
+2 — PERIODIC CYLINDRICAL DELAUNAY
+Estimate a tube frame with PCA and the similarity of the two radial variances.
+For local (s,y,z), theta = atan2(z,y). Aggregate occupied axial/angular cells.
+Triangulate (s, r*theta), including copies offset by ±2*pi*r. Retain the central
+revolution and reject excessive angular spans and long 3D edges.
+This bridges ordinary irregular point sampling and handles the angular seam;
+it is not a reconstruction of an arbitrary branching network.
+
+3 — THREE-DIMENSIONAL ALPHA SHAPE
+Compute Delaunay tetrahedra. For a tetrahedron p_0,...,p_3, define d_i=p_i-p_0.
+Solve 2*[d_1;d_2;d_3]*c = [|d_1|²,|d_2|²,|d_3|²]. Its circumradius R=|c|.
+Retain non-degenerate tetrahedra with R <= alpha. A triangle appearing in only
+one retained tetrahedron is a boundary face, oriented away from that tetrahedron.
+Alpha is a radius in metres here, not a squared radius. Alpha=0 chooses an initial
+75th-percentile circumradius estimate; that heuristic requires visual review.
+A larger alpha generally joins more of the volume and can fill real openings.
+
+4 — SCREENED POISSON (OPEN3D)
+Normals are estimated with local neighbours and oriented consistently.
+The underlying Poisson field equation is Laplacian(chi)=divergence(V), where V
+is derived from oriented normals. Screened Poisson adds a point interpolation
+constraint; Open3D performs the reconstruction and extracts triangle faces.
+Depth is limited to 5–10 for this integration; higher depth increases memory.
+No density trimming is silently applied. Extrapolated regions need inspection.
+
+5 — BALL PIVOTING (OPEN3D)
+A ball of radius rho pivots about existing edges to connect oriented samples
+into triangles. The implementation estimates normals consistently and uses
+radii [rho, 2*rho]. Automatic rho uses spacing measured against the full working
+cloud, rather than an artificially thinned neighbourhood tree.
+
+6 — MARCHING CUBES (SCIKIT-IMAGE)
+An occupancy voxel field is smoothed and an isosurface is extracted. Linear
+edge interpolation uses t=(iso-f_0)/(f_1-f_0) between voxel samples.
+This application's field is not a signed-distance field; scanning only a wall
+can produce an occupancy shell with thickness. Voxel size is an approximation.
+
+7 — TAUBIN SMOOTHING AND QUADRIC REDUCTION
+Uniform graph Laplacian: L(v_i) = mean(neighbours(v_i)) - v_i.
+Each Taubin iteration applies v <- v + 0.5*L(v), then v <- v - 0.53*L(v).
+Both passes recompute the Laplacian. This reduces ordinary smoothing shrinkage;
+it does not guarantee zero shrinkage or survey accuracy.
+Open3D quadric decimation collapses edges using plane-distance error quadrics.
+For homogeneous plane pi=(a,b,c,d), Q is formed from sums of pi*pi^T and vertex
+cost is [x,y,z,1]*Q*[x,y,z,1]^T. The requested triangle count is a target.
+
+8 — SURFACE SAMPLING AND FIT DIAGNOSTICS
+Triangle area A = |(b-a) cross (c-a)|/2. Choose triangles with probability
+A_i/sum(A). Uniform barycentric sampling then draws points over their interiors.
+For working source subset P and sampled surface S:
+CD² = 0.5 * [mean_p(min_s |p-s|²) + mean_s(min_p |s-p|²)].
+Units: m². This is normalized squared Chamfer with a fixed random seed.
+Separately, mesh-sample-to-cloud RMS = sqrt(mean_s(min_p |s-p|²)), using all
+working cloud points in this second metric. P95 is also retained in metadata.
+These are approximate sampled point-set distances, not exact point-to-triangle
+surface distances, full original-cloud validation, signed errors or acceptance
+criteria. Working-point and surface-sample counts are recorded.
+
+9 — TOPOLOGY AND HOLE CLOSURE
+Count undirected occurrences of each mesh edge. One occurrence is a boundary;
+more than two is a non-manifold edge. Surface area sums triangle areas.
+Ear clipping attempts simple boundary loops that are nearly planar and no longer
+than 2,000 vertices; concave planar loops are triangulated without a centre fan.
+Skipped loops remain open. Edge counts do not detect every non-manifold vertex,
+self-intersection or overlapping triangle, and do not certify watertightness.

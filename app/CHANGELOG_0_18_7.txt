@@ -1,0 +1,27 @@
+Tunnel Studio 0.18.7
+1 November 2026
+
+- Save exact point deletions without compulsory whole-cloud XYZ/attribute or
+  analysis-statistics passes. Calculate exact analytical properties when needed.
+- Create a new reversible mask only after the selection changes a real point;
+  count existing exclusions while copying the required mask spans.
+- Preserve exact retained counts through Undo/Redo, active aliases and verified
+  portable saves without presenting conservative display bounds as exact bounds.
+- Count only retained points in newly prepared analysis totals while keeping
+  original-row projections available for Undo and restoration.
+- Complete Delete after the actual save and local display update; retain the
+  current camera and refine the current point view independently in the background.
+- Reuse uploaded XYZ/RGB geometry for point deletion and selection; update compact
+  visibility flags and keep the progress bar from resizing the 3D framebuffer.
+- Serialize repeated deletes and reject late previews that precede a saved edit.
+- Keep an existing analysis visible during deletion and prevent an old cached
+  normal view from restoring deleted display points.
+- Preserve independent registered clouds, survey analyses and meshes when points
+  in an original setup are edited or an original setup is removed.
+- Label such registered clouds as saved results; automatic whole-bundle analysis
+  uses current original setup masks. Registration changes retain freshness checks.
+- Make setup-view controls follow Light, Dark and Follow Windows themes.
+- Retain cumulative registration, rendering, geometry, analysis and installer
+  lifecycle corrections from the verified 0.18.6 application and Windows runtime.
+
+See RELEASE_SCOPE_0_18_7.txt and VALIDATION_0_18_7.json for evidence and limits.

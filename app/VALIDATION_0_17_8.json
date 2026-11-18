@@ -1,0 +1,30 @@
+{
+  "version": "0.17.8",
+  "scope": "Cumulative virtual registration and bulk permanent deletion with shared-runtime Windows updater architecture.",
+  "changes": [
+    "Retains transform-only virtual registration for long RTC360 registration chains",
+    "Retains multi-scan single-pass permanent point compaction",
+    "Shared Windows runtime migration using same-volume directory move and junction",
+    "Application-only update payload; no full runtime copy per release"
+  ],
+  "tests": {
+    "focused_application": "17 passed, 3 subtests passed",
+    "focused_files": [
+      "test_registration_virtual_0176.py",
+      "test_permanent_points_0177.py",
+      "test_registration_storage_0175.py",
+      "test_project_storage.py"
+    ],
+    "updater_validation": [
+      "payload SHA256 verification",
+      "shared runtime python.exe/pythonw.exe checks",
+      "staged activation before CurrentInstall switch",
+      "previous-release junction fallback design",
+      "ZIP CRC verification"
+    ]
+  },
+  "limits": [
+    "The Linux build host cannot execute Windows junction/registry/shortcut operations end-to-end.",
+    "A future release requiring a different bundled Python/native runtime must update the shared runtime explicitly."
+  ]
+}

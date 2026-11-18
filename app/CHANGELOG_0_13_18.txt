@@ -1,0 +1,114 @@
+TUNNEL STUDIO 0.13.18
+Registered cloud merge and 3D editing improvements
+14 October 2026
+
+INSTALL
+Save your project and close Tunnel Studio. Extract the whole ZIP into a new
+folder, run UPDATE_TUNNEL_STUDIO.bat, and restart. Confirm version 0.13.18.
+If using browser mode, refresh the page after restarting the application.
+The updater backs up application files; RESTORE_PREVIOUS_VERSION.bat restores
+them. Existing imported scans do not need to be imported again.
+
+ONE CLOUD AFTER REGISTRATION
+After reviewing your target fit, click Apply geometry. The connected setups
+are positioned, then their retained full-density points are combined into
+one editable Registered cloud. Progress shows positioning and merging.
+The result excludes deleted points; temporary hidden areas and limit boxes
+are view filters, so they do not discard points from the merged result.
+Colour and intensity are preserved where present. Overlapping measurements
+are retained; this merge does not resample or remove duplicate measurements.
+
+The merged cloud appears as one collapsed item in Scans & models. Completed
+connections disappear from the 3D view and Geometry & references. Expand the
+cloud to access the original setups, their scanner views, photographs and
+named targets. Original setups are initially hidden to avoid drawing the
+same points twice. Show all uses the merged cloud, not its hidden children.
+The registration data remains saved and is available in Match two scans if
+you later want to review or improve it.
+
+Only the connected registered group is merged. Unconnected setups remain
+separate until registered. Adding another setup and applying again rebuilds
+the combined cloud. An edited previous merged result is retained, hidden
+under the new result as Previous result, so its edits are not lost. The new
+merge uses retained points from the original setups; edits to an earlier
+merged copy are not automatically transferred to a later merge.
+Deleting or restoring points in the merged cloud does not edit its original
+setup caches. Removing the merged item restores the originals to the list.
+Merge needs disk space for an additional full-density cache. Cancellation or
+a failed merge rolls back that Apply operation instead of saving half a result.
+
+POLYGON SELECTION THAT SURVIVES MOVING THE VIEW
+In the normal 3D workspace, choose Polygon select and click outline corners.
+Zoom with the wheel; Shift-drag or right-drag to pan; Alt-drag to rotate.
+Placed corners stay attached to the original selection plane while the view
+moves. You can also switch to Orbit / Pan and return to Polygon select to
+continue the same outline. Use Backspace / Undo corner to remove the last
+corner. Finish with Enter, double-click, Finish polygon or the first corner.
+Escape / Clear cancels the outline. The freehand Lasso option remains separate.
+
+Delete selected moves the full-density points inside the completed volume
+from visible, unlocked scans into the one Deleted points folder. Hide outside
+still restricts edits to the saved limit box. Restore or Undo remains available.
+The polygon is a volume through the original drawing plane, not a surface
+lasso. If that plane is viewed edge-on, turn the view back before adding corners.
+Use normal 3D view for area editing; setup view remains for scanner navigation
+and point/target picking.
+
+REOPEN AN EXISTING LIMIT BOX
+Double-click or double-tap a saved box edge or corner to edit it again.
+The existing position, rotation, dimensions and Hide outside setting are kept.
+White corners resize; cyan face handles move a face; orange edge handles rotate.
+Save box / done finishes editing. Double-clicking another visible box selects
+its owning cloud before reopening it. Escape cancels a drag or finishes editing.
+
+CHOOSE WHICH TARGET COORDINATES TO KEEP
+1. Open Solve geometry / Match two scans and select the two scans to connect.
+2. Check the target pairs and their Fit / Check / Exclude roles.
+3. For each reference target, use Keep coordinates to choose the first or
+   second scan's measured coordinates. Leave other rows on Allow adjustment.
+4. Click Solve geometry. Review the residuals and the list of coordinates kept.
+5. Tick the review confirmation, then click Apply geometry to position and merge.
+
+Full 3D needs three or more non-collinear references and fit pairs. Keep vertical
+can use two horizontally separated references and fit pairs; confirm both scans
+already share the same Z/up direction. Two arbitrary points cannot determine
+full 3D orientation. Survey control coordinates are optional.
+Reference coordinates may come from either scan, including a mixture. They
+are held by rigid-motion constraints; unheld coordinates move with their scan.
+Check targets cannot fix coordinates. Too few or poorly spread references
+produce an explanation before anything is applied. The fixed-setup dropdown
+has been replaced by these per-target choices. Changing choices invalidates
+the pending review; references are recorded in the saved solution.
+
+Already-connected pairs support adding loop links or refitting the direct
+link. Connected scans adjust together using recorded target pairs. Review all
+residuals: lower total error does not guarantee every individual link improves.
+Source scales stay fixed. Before registration is completed, scan expand arrows
+show connections, status, available RMS and target pairs. After merging, the
+cloud's arrow opens the original setups instead; completed connections stay hidden.
+
+IMAGES / POINTS SLIDER FIX
+The slider works in Photographs and Point cloud modes when photographs are
+attached. Dragging it switches the display automatically; no need to choose
+Both first. Moving away from photographs loads a point preview once if needed.
+Keep dragging while loading: the latest requested value is used. Once ready,
+slider changes reuse loaded data without camera movement or repeated loads.
+At either endpoint only that layer is drawn. The middle blends both layers.
+Failed loading keeps the available layer and provides retry feedback. Closing
+setup view during loading cannot reopen it. Missing photographs disable blending
+with an explanation. Measured picking, setup spheres and contrast remain available.
+
+VALIDATION
+All 18 focused suites passed, plus syntax checks on 50 Python and 21 JavaScript
+files. Tests cover slider modes/retry (17 cases), target references (8), rigid
+and vertical/network fits, full-density merge/cancellation/rollback (7), point
+editing/restoration (12), polygon navigation (5), box editing (16), setup access,
+hidden completed links and the production HTTP page/script routes.
+The saved Leica database inventory was checked with synthetic scan data.
+
+UI checks use JSDOM, simulated APIs/image completion and mocked WebGL. Actual
+Windows/WebView input and GPU pixels were not tested here. Earlier full-scan
+and photograph reports are retained as history, not repeated release claims.
+This updates an existing desktop installation; some backend tests stub modules
+provided by that base installation. See tests/validation_0_13_18.json and
+ tests/run_0_13_18/ for current results.

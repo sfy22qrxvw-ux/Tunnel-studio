@@ -1,0 +1,85 @@
+TUNNEL STUDIO 0.13.6
+Clear cleaning groups, an interactive limit box and a section locator
+13 October 2026
+
+LIMIT BOX: DOUBLE-CLICK A CORNER TO EDIT
+Double-click any of the eight corners to open the box editor. It stays beside
+the main viewport, so the scan can still be rotated, panned and zoomed.
+
+White square corners resize the box with the opposite corner fixed. Cyan
+circle handles move one face while keeping the opposite face fixed. Orange
+diamond handles on the edges rotate the box about its centre. Use edges in
+different directions to rotate about all three box axes; hold Shift for
+15-degree steps. A face looking directly towards the camera can be moved
+in depth by dragging its handle vertically. The centre and sizes can also
+be entered numerically without losing the box's current rotation.
+
+Hide outside is a checkbox beside Limit box and in its editor. It is off for
+a new box. On shows only the inside of the box and keeps point editing and
+cleaning inside it. Off restores the entire scan and editing scope without
+removing the box. The outline updates during dragging; point clipping updates
+on release, avoiding a full-density reload for every mouse movement.
+
+Save box / done or Escape finishes editing. Double-click a corner to resume.
+Escape during a drag cancels that movement. Use Remove box to discard it.
+The box applies to the visible scan items, not mesh models. Existing saved
+boxes retain their prior clipping behaviour until Hide outside is changed.
+
+The backend stores centre, three perpendicular axes and three dimensions.
+Preview, cleaning, copying, separating, deleting and scan sections use the
+same rotated boundary, preserving the original survey coordinates and
+attributes. Turning Hide outside off removes that editing restriction.
+
+CROSS-SECTIONS: DRAG THE CUTTING LINE
+Cross-section now shows the selected scan in a top view on the left and the
+computed cross-section on the right. Drag the yellow line or click the scan
+to choose a position. The line and position number update immediately; the
+full-density section is calculated once you release. The yellow band shows
+the chosen thickness. A range slider, numeric position and arrow keys provide
+fine adjustment. No alignment is needed. Horizontal cuts use a labelled side
+view so you can move the slice up and down.
+
+Drag the title bar to move the cross-section window, or its bottom-right corner
+to resize it. Reset position restores its default position and size. The limit
+box and estimated-alignment windows can be moved in the same way.
+
+The locator is a bounded scan overview (up to 40,000 displayed points), while
+the section and CSV use retained full-density points. The cutting frame stays
+fixed between slices, avoiding a new direction estimate or preliminary full
+scan pass each time the line moves. Current selection and active limit-box
+restrictions still apply. Old results are visibly dimmed while the position
+changes, and the CSV link becomes available after a successful calculation.
+
+CLEANING: TWO CLEAR GROUPS
+Review now shows green Tunnel / keep and red Noise / remove, with full-density
+point totals. Tunnel only, Noise only and Both change visibility without
+changing which points are kept. Selected pieces remain magenta and retain a
+separate result-group badge, so selection cannot be confused with membership.
+
+Individual pieces are inside an optional Review individual pieces panel.
+They are parts of the same result, not separate files. Keep as tunnel and
+Mark as noise / remove let you correct the proposed membership. The method
+explanation states what the chosen cleaner does; noise cleaning does not
+automatically identify every object or establish which surface is the lining.
+
+Create one tunnel scan combines all green points into one scan named
+"Tunnel · <source>". Hide source after creating is optional and checked by
+default, preventing the source and result from obscuring one another. Other
+scans are left alone. The scan list identifies the result with a green badge.
+The two exports are named Tunnel_Studio_Tunnel_Kept and
+Tunnel_Studio_Noise_Removed, with the chosen point-cloud extension.
+
+VALIDATION
+126 automated production-UI checks and 52 Python checks passed, including
+gesture cancellation, fixed-plane section placement, one-pass section export,
+rotated-volume inclusion, group counts, one combined
+output, export names, save rollback and source coordinate/attribute retention.
+All payload digests, Python syntax and JavaScript syntax were checked.
+Tests use synthetic point data and local API/WebGL fixtures. Windows input,
+final GPU pixels and classification/performance on the user's real scan were
+not tested here. The cleaning classifiers themselves are unchanged.
+
+INSTALL
+Save your project, close Tunnel Studio, extract this entire ZIP and run
+UPDATE_TUNNEL_STUDIO.bat. Check that the app shows 0.13.6; in browser mode,
+refresh after the server restarts. This cumulative update includes prior fixes.

@@ -1,0 +1,19 @@
+Tunnel Studio 0.19.0
+
+- Joint bundle adjustment of scan poses, shared targets and sampled surfaces;
+  loop candidate validation, plan/elevation review, atomic Apply and Undo.
+- Removed the former 30-scan/2,000-target-pair restriction in favour of explicit
+  sample and sparse residual budgets. Tested beyond the old boundary.
+- RTC360 review defaults to all raw setups, separates positioned/protected/
+  unavailable statuses, reveals their 3D positions and opens cloud refinement.
+- Readable raw setup labels preserve source names, stable IDs and custom names.
+- Bounded parallel noise tiles, resource-aware native CPU workers, compiled
+  mesh connectivity/smoothing and batched GuSAC normal queries.
+- Process/memory counter failures no longer interrupt resource-aware compute.
+- Saved monitoring epochs, displacement/settlement/convergence trends, baseline
+  and gap handling, CSV/chart export and printable reports.
+- Existing registration, selection, deletion, results and theme fixes retained.
+
+No GPU meshing engine, automatic full-job unlinked registration, survey-accuracy
+certification, missing-attribute reconstruction or paper-exact segmentation is
+claimed. Detailed implementation boundaries are in RELEASE_SCOPE_0_19_0.txt.

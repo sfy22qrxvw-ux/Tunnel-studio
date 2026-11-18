@@ -1,0 +1,39 @@
+TUNNEL STUDIO 0.13.8 - AUTOMATIC TARGET CENTRES / INTENSITY DETAIL
+13 October 2026
+
+BLACK-AND-WHITE TARGETS
+- No target-size field, question or required dimension. Find target centres
+  and Pick & fit centre both use automatic support scales.
+- Looks for the common centre of four alternating black/white quadrants,
+  using scan intensity and RGB brightness with local contrast normalisation.
+- Original retained points contribute to contrast nomination. Local fits
+  remain bounded for memory; fitted patterns are checked on original density.
+- Stronger diagonal-edge, planarity and scale-consistency checks reduce
+  tunnel-seam false positives. Suggestions remain subject to review.
+- Switching the selected scan now updates the target-search source correctly.
+- Fitted centres appear in the main 3D view; Inspect loads local detail.
+- Search progress and completion remain visible in the main workspace.
+
+CLEARER POINT DISPLAY
+- Zoomed views load original points in the camera region before applying the
+  display budget. Small features no longer rely solely on a fixed global sample.
+- Detailed intensity view and View > Load detail here provide manual refresh.
+- Contrast and Brightness sliders adjust the point display immediately.
+  Detection adjusts local contrast independently; source attributes are intact.
+- Closer zoom for small targets. Fit returns to the whole-scene overview.
+- In one tested area of the supplied 10,125,420-point E57, the old preview
+  showed 144 points; local detail showed 7,314 at the same display budget.
+
+VALIDATION / REMAINING CHECK
+Known-centre tests cover unknown target scales, rotations, tilted planes,
+very weak contrast, RGB fallback, stripes, edges, texture, partial targets,
+point masks, detail display and UI/source/progress behaviour.
+
+The full supplied E57 was traversed in about 56 seconds in this environment.
+The final search returned zero suggestions after rejecting seam patterns.
+This does NOT establish that the scan contains no targets, or that the user's
+missed Leica targets are fixed. A labelled target location or small E57 crop
+in that coordinate frame is still required to verify real-target detection
+and centre agreement. Native Windows installation / GPU pixels are untested.
+
+This is a cumulative update and retains all 0.13.7 functionality.

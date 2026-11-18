@@ -1,0 +1,1684 @@
+{
+  "version": "0.16.1",
+  "date": "2026-10-26",
+  "timezone": "Europe/London",
+  "scope": "Focused startup and shared metadata persistence repair over the complete 0.16.0 baseline.",
+  "passed": true,
+  "backend_and_transaction_tests": 111,
+  "browser_scenarios": 8,
+  "browser_and_archive_checks": 9,
+  "test_results": [
+    {
+      "id": "test_project_storage.ProjectStorageTests.test_cancel_during_metadata_export_keeps_previous_portable",
+      "outcome": "passed",
+      "seconds": 0.0616
+    },
+    {
+      "id": "test_project_storage.ProjectStorageTests.test_failed_atomic_replace_preserves_original_and_cleans_temporary",
+      "outcome": "passed",
+      "seconds": 0.0084
+    },
+    {
+      "id": "test_project_storage.ProjectStorageTests.test_guard_counts_utf8_bytes_and_accepts_exact_boundary",
+      "outcome": "passed",
+      "seconds": 0.0044
+    },
+    {
+      "id": "test_project_storage.ProjectStorageTests.test_invalid_numbers_never_replace_previous_snapshot",
+      "outcome": "passed",
+      "seconds": 0.011
+    },
+    {
+      "id": "test_project_storage.ProjectStorageTests.test_large_string_and_numeric_lists_use_bounded_sink_writes",
+      "outcome": "passed",
+      "seconds": 0.3463
+    },
+    {
+      "id": "test_project_storage.ProjectStorageTests.test_oversized_portable_write_preserves_previous_destination",
+      "outcome": "passed",
+      "seconds": 0.0052
+    },
+    {
+      "id": "test_project_storage.ProjectStorageTests.test_portable_guard_uses_uncompressed_size_and_cleans_import",
+      "outcome": "passed",
+      "seconds": 0.0026
+    },
+    {
+      "id": "test_project_storage.ProjectStorageTests.test_unicode_and_float64_metadata_roundtrip_exactly",
+      "outcome": "passed",
+      "seconds": 0.0051
+    },
+    {
+      "id": "test_startup.StartupTests.test_existing_session_does_not_start_competing_recovery",
+      "outcome": "passed",
+      "seconds": 0.0049
+    },
+    {
+      "id": "test_startup.StartupTests.test_failed_bridge_does_not_acquire_or_restore_workspace",
+      "outcome": "passed",
+      "seconds": 0.0035
+    },
+    {
+      "id": "test_startup.StartupTests.test_failed_window_releases_workspace_before_offering_recovery",
+      "outcome": "passed",
+      "seconds": 0.0034
+    },
+    {
+      "id": "test_desktop_backend.BackendImportTests.test_actual_pywebview_import_when_package_guilib_is_none",
+      "outcome": "passed",
+      "seconds": 0.0974
+    },
+    {
+      "id": "test_desktop_backend.BackendImportTests.test_reject_legacy_renderer_with_a_specific_error",
+      "outcome": "passed",
+      "seconds": 0.0018
+    },
+    {
+      "id": "test_update.UpdateTests.test_activation_keeps_previous_and_survey",
+      "outcome": "passed",
+      "seconds": 0.0065
+    },
+    {
+      "id": "test_update.UpdateTests.test_corrupt_payload_stops_before_activation",
+      "outcome": "passed",
+      "seconds": 0.0141
+    },
+    {
+      "id": "test_update.UpdateTests.test_failed_components_stop_before_activation",
+      "outcome": "passed",
+      "seconds": 0.0084
+    },
+    {
+      "id": "test_update.UpdateTests.test_failed_pointer_write_rolls_back_previous",
+      "outcome": "passed",
+      "seconds": 0.0057
+    },
+    {
+      "id": "test_update.UpdateTests.test_reject_path_escape_and_wrong_version",
+      "outcome": "passed",
+      "seconds": 0.0041
+    },
+    {
+      "id": "test_core.GeometryTests.test_chainage_frame_and_end_rejection",
+      "outcome": "passed",
+      "seconds": 0.0038
+    },
+    {
+      "id": "test_core.GeometryTests.test_circle_offset_is_not_ovality",
+      "outcome": "passed",
+      "seconds": 0.0289
+    },
+    {
+      "id": "test_core.GeometryTests.test_creep_sign_and_reference",
+      "outcome": "passed",
+      "seconds": 0.0045
+    },
+    {
+      "id": "test_core.GeometryTests.test_joint_detection_and_smooth_negative_control",
+      "outcome": "passed",
+      "seconds": 0.8229
+    },
+    {
+      "id": "test_core.GeometryTests.test_known_ellipse",
+      "outcome": "passed",
+      "seconds": 0.0295
+    },
+    {
+      "id": "test_core.GeometryTests.test_partial_arc_withheld",
+      "outcome": "passed",
+      "seconds": 0.0092
+    },
+    {
+      "id": "test_core.GeometryTests.test_polyline_projection_matches_brute_force",
+      "outcome": "passed",
+      "seconds": 0.0123
+    },
+    {
+      "id": "test_core.ReaderTests.test_ascii_and_binary_ply",
+      "outcome": "passed",
+      "seconds": 0.0133
+    },
+    {
+      "id": "test_core.ReaderTests.test_e57_pose_invalid_and_multiple_chunks",
+      "outcome": "passed",
+      "seconds": 0.1432
+    },
+    {
+      "id": "test_core.ReaderTests.test_las_and_laz_scale_offset",
+      "outcome": "passed",
+      "seconds": 0.2694
+    },
+    {
+      "id": "test_core.ReaderTests.test_malformed_file_does_not_leave_partial_cache",
+      "outcome": "passed",
+      "seconds": 0.0015
+    },
+    {
+      "id": "test_core.ReaderTests.test_text_formats_and_header_mapping",
+      "outcome": "passed",
+      "seconds": 0.0089
+    },
+    {
+      "id": "test_jobs.JobTests.test_cancel_scan_discards_partial_import",
+      "outcome": "passed",
+      "seconds": 0.0137
+    },
+    {
+      "id": "test_jobs.JobTests.test_e57_setups_import_separately",
+      "outcome": "passed",
+      "seconds": 1.7446
+    },
+    {
+      "id": "test_jobs.JobTests.test_invalid_mesh_cancellation_and_disk_check_leave_no_assets",
+      "outcome": "passed",
+      "seconds": 0.028
+    },
+    {
+      "id": "test_jobs.JobTests.test_job_preview_global_cap_visibility_and_mask",
+      "outcome": "passed",
+      "seconds": 0.0372
+    },
+    {
+      "id": "test_jobs.JobTests.test_obj_float64_topology_zip_and_portable",
+      "outcome": "passed",
+      "seconds": 0.0123
+    },
+    {
+      "id": "test_jobs.JobTests.test_registration_pairs_survive_switching_setup",
+      "outcome": "passed",
+      "seconds": 0.0305
+    },
+    {
+      "id": "test_features.FeatureTests.test_full_density_delete_undo_export_and_hidden",
+      "outcome": "passed",
+      "seconds": 0.2476
+    },
+    {
+      "id": "test_features.FeatureTests.test_heatmap_signs_count_and_mesh_methods",
+      "outcome": "passed",
+      "seconds": 6.6413
+    },
+    {
+      "id": "test_features.FeatureTests.test_nearest_and_idw_are_distinct",
+      "outcome": "passed",
+      "seconds": 0.0288
+    },
+    {
+      "id": "test_features.FeatureTests.test_primitive_and_transform",
+      "outcome": "passed",
+      "seconds": 0.0237
+    },
+    {
+      "id": "test_features.FeatureTests.test_report_escaping_and_sparse_sections",
+      "outcome": "passed",
+      "seconds": 0.0736
+    },
+    {
+      "id": "test_project_compatibility.ProjectCompatibilityTests.test_all_missing_core_assets_reject_and_preserve_active_state_and_index",
+      "outcome": "passed",
+      "seconds": 0.0139
+    },
+    {
+      "id": "test_project_compatibility.ProjectCompatibilityTests.test_ambiguous_legacy_basename_is_not_guessed",
+      "outcome": "passed",
+      "seconds": 0.0086
+    },
+    {
+      "id": "test_project_compatibility.ProjectCompatibilityTests.test_broken_undo_transition_does_not_skip_to_an_older_mask",
+      "outcome": "passed",
+      "seconds": 0.0076
+    },
+    {
+      "id": "test_project_compatibility.ProjectCompatibilityTests.test_cancellation_during_unpack_removes_partial_import_keeps_current",
+      "outcome": "passed",
+      "seconds": 0.0283
+    },
+    {
+      "id": "test_project_compatibility.ProjectCompatibilityTests.test_cancelled_validation_is_not_treated_as_damaged_optional_data",
+      "outcome": "passed",
+      "seconds": 0.4507
+    },
+    {
+      "id": "test_project_compatibility.ProjectCompatibilityTests.test_current_save_close_reopen_preserves_all_assets_and_tmatch_metadata",
+      "outcome": "passed",
+      "seconds": 0.3118
+    },
+    {
+      "id": "test_project_compatibility.ProjectCompatibilityTests.test_damaged_cleaning_id_cache_quarantines_result_preserves_raw_scans",
+      "outcome": "passed",
+      "seconds": 0.0256
+    },
+    {
+      "id": "test_project_compatibility.ProjectCompatibilityTests.test_damaged_zip_member_recovers_other_scan_without_full_asset_reads",
+      "outcome": "passed",
+      "seconds": 0.0131
+    },
+    {
+      "id": "test_project_compatibility.ProjectCompatibilityTests.test_future_format_and_traversal_reject_without_changing_project",
+      "outcome": "passed",
+      "seconds": 0.0328
+    },
+    {
+      "id": "test_project_compatibility.ProjectCompatibilityTests.test_invalid_named_open_does_not_mutate_ui_or_create_snapshot",
+      "outcome": "passed",
+      "seconds": 0.0212
+    },
+    {
+      "id": "test_project_compatibility.ProjectCompatibilityTests.test_late_save_failure_restores_memory_disk_and_removes_pending_assets",
+      "outcome": "passed",
+      "seconds": 0.0508
+    },
+    {
+      "id": "test_project_compatibility.ProjectCompatibilityTests.test_legacy_cloud_without_alignment_is_retained_as_scene_scan",
+      "outcome": "passed",
+      "seconds": 0.0149
+    },
+    {
+      "id": "test_project_compatibility.ProjectCompatibilityTests.test_legacy_missing_bounds_rebuilds_from_all_coordinates",
+      "outcome": "passed",
+      "seconds": 0.0648
+    },
+    {
+      "id": "test_project_compatibility.ProjectCompatibilityTests.test_legacy_raw_json_snapshot_with_colocated_cache",
+      "outcome": "passed",
+      "seconds": 0.009
+    },
+    {
+      "id": "test_project_compatibility.ProjectCompatibilityTests.test_legacy_v0_windows_references_and_dict_alignment_rows",
+      "outcome": "passed",
+      "seconds": 0.0103
+    },
+    {
+      "id": "test_project_compatibility.ProjectCompatibilityTests.test_manifest_guard_and_untrusted_cleanup_marker_preserve_existing_files",
+      "outcome": "passed",
+      "seconds": 0.0071
+    },
+    {
+      "id": "test_project_compatibility.ProjectCompatibilityTests.test_missing_automatic_cache_preserves_reviewed_result_and_disables_reset",
+      "outcome": "passed",
+      "seconds": 0.019
+    },
+    {
+      "id": "test_project_compatibility.ProjectCompatibilityTests.test_missing_current_mask_quarantines_scan_without_resurrecting_points",
+      "outcome": "passed",
+      "seconds": 0.0105
+    },
+    {
+      "id": "test_project_compatibility.ProjectCompatibilityTests.test_missing_derived_cache_preserves_current_scan_masks_and_alignment",
+      "outcome": "passed",
+      "seconds": 0.0178
+    },
+    {
+      "id": "test_project_compatibility.ProjectCompatibilityTests.test_named_open_same_id_does_not_overwrite_requested_snapshot",
+      "outcome": "passed",
+      "seconds": 0.0287
+    },
+    {
+      "id": "test_project_compatibility.ProjectCompatibilityTests.test_new_project_failed_previous_save_leaves_workspace_untouched",
+      "outcome": "passed",
+      "seconds": 0.0177
+    },
+    {
+      "id": "test_project_compatibility.ProjectCompatibilityTests.test_new_project_saves_previous_and_empties_workspace",
+      "outcome": "passed",
+      "seconds": 0.0239
+    },
+    {
+      "id": "test_project_compatibility.ProjectCompatibilityTests.test_optional_preview_colour_photo_recovery_preserves_geometry",
+      "outcome": "passed",
+      "seconds": 0.0082
+    },
+    {
+      "id": "test_project_compatibility.ProjectCompatibilityTests.test_recovered_project_can_save_and_reopen_without_missing_dependencies",
+      "outcome": "passed",
+      "seconds": 0.0211
+    },
+    {
+      "id": "test_project_compatibility.ProjectCompatibilityTests.test_retained_properties_follow_the_exact_mask_and_stale_counts_are_invalidated",
+      "outcome": "passed",
+      "seconds": 0.0188
+    },
+    {
+      "id": "test_project_compatibility.ProjectCompatibilityTests.test_separated_child_undo_masks_use_the_child_point_count",
+      "outcome": "passed",
+      "seconds": 0.0084
+    },
+    {
+      "id": "test_project_compatibility.ProjectCompatibilityTests.test_single_asset_copy_checks_cancellation_and_preserves_old_export",
+      "outcome": "passed",
+      "seconds": 0.0021
+    },
+    {
+      "id": "test_inspection_workflow.InspectionWorkflowTests.test_all_six_modes_on_imported_edited_inputs_and_real_results",
+      "outcome": "passed",
+      "seconds": 2.3723
+    },
+    {
+      "id": "test_inspection_workflow.InspectionWorkflowTests.test_cad_dxf_and_model_json_readback_remain_usable_and_editable",
+      "outcome": "passed",
+      "seconds": 0.6929
+    },
+    {
+      "id": "test_inspection_workflow.InspectionWorkflowTests.test_cloud_csv_edit_undo_redo_export_reopen",
+      "outcome": "passed",
+      "seconds": 0.2097
+    },
+    {
+      "id": "test_inspection_workflow.InspectionWorkflowTests.test_cloud_e57_edit_export_reopen",
+      "outcome": "passed",
+      "seconds": 0.8189
+    },
+    {
+      "id": "test_inspection_workflow.InspectionWorkflowTests.test_cloud_las_edit_export_reopen",
+      "outcome": "passed",
+      "seconds": 0.1599
+    },
+    {
+      "id": "test_inspection_workflow.InspectionWorkflowTests.test_cloud_laz_edit_export_reopen",
+      "outcome": "passed",
+      "seconds": 0.1882
+    },
+    {
+      "id": "test_inspection_workflow.InspectionWorkflowTests.test_cloud_ply_edit_export_reopen",
+      "outcome": "passed",
+      "seconds": 0.271
+    },
+    {
+      "id": "test_inspection_workflow.InspectionWorkflowTests.test_cloud_pts_edit_export_reopen",
+      "outcome": "passed",
+      "seconds": 0.2298
+    },
+    {
+      "id": "test_inspection_workflow.InspectionWorkflowTests.test_cloud_xyz_edit_export_reopen",
+      "outcome": "passed",
+      "seconds": 0.1868
+    },
+    {
+      "id": "test_inspection_workflow.InspectionWorkflowTests.test_failed_and_cancelled_analysis_preserve_previous_real_result",
+      "outcome": "passed",
+      "seconds": 0.2883
+    },
+    {
+      "id": "test_inspection_workflow.InspectionWorkflowTests.test_obj_export_readback_preserves_all_vertices_faces_and_coordinates",
+      "outcome": "passed",
+      "seconds": 0.1357
+    },
+    {
+      "id": "test_inspection_workflow.InspectionWorkflowTests.test_portable_project_reopens_edited_scan_inspection_cache_and_editable_cad",
+      "outcome": "passed",
+      "seconds": 0.4148
+    },
+    {
+      "id": "test_export_destination.ExportDestinationTests.test_cancelled_copy_keeps_existing_destination_and_prepared_export",
+      "outcome": "passed",
+      "seconds": 0.0025
+    },
+    {
+      "id": "test_export_destination.ExportDestinationTests.test_destination_changed_during_copy_is_not_overwritten",
+      "outcome": "passed",
+      "seconds": 0.0049
+    },
+    {
+      "id": "test_export_destination.ExportDestinationTests.test_existing_directory_is_rejected_before_extension_is_added",
+      "outcome": "passed",
+      "seconds": 0.0015
+    },
+    {
+      "id": "test_export_destination.ExportDestinationTests.test_existing_file_needs_fresh_overwrite_version_before_atomic_replacement",
+      "outcome": "passed",
+      "seconds": 0.0047
+    },
+    {
+      "id": "test_export_destination.ExportDestinationTests.test_full_path_spaces_quotes_and_selected_extension_use_production_endpoint",
+      "outcome": "passed",
+      "seconds": 0.0063
+    },
+    {
+      "id": "test_export_destination.ExportDestinationTests.test_malformed_missing_internal_and_original_destinations_are_rejected",
+      "outcome": "passed",
+      "seconds": 0.0023
+    },
+    {
+      "id": "test_export_destination.ExportDestinationTests.test_overwrite_confirmation_survives_actual_javascript_json_roundtrip",
+      "outcome": "passed",
+      "seconds": 0.1043
+    },
+    {
+      "id": "test_export_destination.NativeChooserContractTests.test_native_cancel_error_missing_window_and_legacy_dialog_are_explicit",
+      "outcome": "passed",
+      "seconds": 0.0014
+    },
+    {
+      "id": "test_export_destination.NativeChooserContractTests.test_native_string_and_list_paths_are_normalised_without_altering_spaces",
+      "outcome": "passed",
+      "seconds": 0.0003
+    },
+    {
+      "id": "test_startup_large_metadata.StartupLargeMetadataTests.test_damaged_autosave_is_preserved_and_opens_empty",
+      "outcome": "passed"
+    },
+    {
+      "id": "test_startup_large_metadata.StartupLargeMetadataTests.test_empty_autosave_commit_failure_keeps_original_and_recovery",
+      "outcome": "passed"
+    },
+    {
+      "id": "test_startup_large_metadata.StartupLargeMetadataTests.test_metadata_resource_limit_rejects_named_replace_without_partial_write",
+      "outcome": "passed"
+    },
+    {
+      "id": "test_startup_large_metadata.StartupLargeMetadataTests.test_nonfinite_late_metadata_preserves_previous_named_snapshot",
+      "outcome": "passed"
+    },
+    {
+      "id": "test_startup_large_metadata.StartupLargeMetadataTests.test_oversize_guard_at_startup_preserves_raw_and_starts_empty",
+      "outcome": "passed"
+    },
+    {
+      "id": "test_startup_large_metadata.StartupLargeMetadataTests.test_portable_metadata_cancellation_keeps_previous_export",
+      "outcome": "passed"
+    },
+    {
+      "id": "test_startup_large_metadata.StartupLargeMetadataTests.test_real_20mb_plus_startup_named_reopen_and_portable_roundtrip",
+      "outcome": "passed"
+    },
+    {
+      "id": "test_startup_large_metadata.StartupLargeMetadataTests.test_secondary_named_snapshot_failure_opens_empty_after_exact_recovery",
+      "outcome": "passed"
+    },
+    {
+      "id": "test_startup_large_metadata.StartupLargeMetadataTests.test_unicode_metadata_roundtrips_across_stream_boundaries",
+      "outcome": "passed"
+    },
+    {
+      "id": "test_startup_large_metadata.StartupLargeMetadataTests.test_unwritable_recovery_destination_never_clears_current_autosave",
+      "outcome": "passed"
+    },
+    {
+      "id": "test_installer.InstallerTests.test_active_application_blocks_installation",
+      "outcome": "passed"
+    },
+    {
+      "id": "test_installer.InstallerTests.test_component_failure_preserves_active_version",
+      "outcome": "passed"
+    },
+    {
+      "id": "test_installer.InstallerTests.test_damaged_payload_never_activates",
+      "outcome": "passed"
+    },
+    {
+      "id": "test_installer.InstallerTests.test_install_preserves_data_previous_release_and_index",
+      "outcome": "passed"
+    },
+    {
+      "id": "test_installer.InstallerTests.test_install_preserves_oversized_workspace_and_backup_byte_for_byte",
+      "outcome": "passed"
+    },
+    {
+      "id": "test_installer.InstallerTests.test_installer_leaves_staging_directory_before_activation",
+      "outcome": "passed"
+    },
+    {
+      "id": "test_installer.InstallerTests.test_marker_failure_rolls_back_both_directories",
+      "outcome": "passed"
+    },
+    {
+      "id": "test_installer.InstallerTests.test_path_traversal_rejected",
+      "outcome": "passed"
+    },
+    {
+      "id": "test_installer.InstallerTests.test_reinstall_retains_previous_same_version",
+      "outcome": "passed"
+    },
+    {
+      "id": "test_installer.InstallerTests.test_startup_metadata_self_check_failure_preserves_user_workspace_and_release",
+      "outcome": "passed"
+    },
+    {
+      "id": "test_installer.InstallerTests.test_startup_self_check_refuses_another_workspace_before_writing",
+      "outcome": "passed"
+    },
+    {
+      "id": "test_installer.InstallerTests.test_startup_self_check_refuses_existing_project_before_writing",
+      "outcome": "passed"
+    }
+  ],
+  "gates": {
+    "focused_backend": {
+      "release": "0.16.1",
+      "tests_run": 89,
+      "unique_tests": 89,
+      "passed": 89,
+      "failures": 0,
+      "errors": 0,
+      "skips": 0,
+      "seconds": 20.466,
+      "python": "3.12.14",
+      "platform": "Linux-6.18.55-x86_64-with-glibc2.39",
+      "modules": [
+        {
+          "file": "app/test_project_storage.py",
+          "tests": 8
+        },
+        {
+          "file": "app/test_startup.py",
+          "tests": 3
+        },
+        {
+          "file": "app/test_desktop_backend.py",
+          "tests": 2
+        },
+        {
+          "file": "app/test_update.py",
+          "tests": 5
+        },
+        {
+          "file": "app/test_core.py",
+          "tests": 12
+        },
+        {
+          "file": "app/test_jobs.py",
+          "tests": 6
+        },
+        {
+          "file": "app/test_features.py",
+          "tests": 5
+        },
+        {
+          "file": "work/checks/test_project_compatibility.py",
+          "tests": 27
+        },
+        {
+          "file": "work/checks/test_inspection_workflow.py",
+          "tests": 12
+        },
+        {
+          "file": "work/checks/test_export_destination.py",
+          "tests": 9
+        }
+      ],
+      "test_results": [
+        {
+          "id": "test_project_storage.ProjectStorageTests.test_cancel_during_metadata_export_keeps_previous_portable",
+          "outcome": "passed",
+          "seconds": 0.0616
+        },
+        {
+          "id": "test_project_storage.ProjectStorageTests.test_failed_atomic_replace_preserves_original_and_cleans_temporary",
+          "outcome": "passed",
+          "seconds": 0.0084
+        },
+        {
+          "id": "test_project_storage.ProjectStorageTests.test_guard_counts_utf8_bytes_and_accepts_exact_boundary",
+          "outcome": "passed",
+          "seconds": 0.0044
+        },
+        {
+          "id": "test_project_storage.ProjectStorageTests.test_invalid_numbers_never_replace_previous_snapshot",
+          "outcome": "passed",
+          "seconds": 0.011
+        },
+        {
+          "id": "test_project_storage.ProjectStorageTests.test_large_string_and_numeric_lists_use_bounded_sink_writes",
+          "outcome": "passed",
+          "seconds": 0.3463
+        },
+        {
+          "id": "test_project_storage.ProjectStorageTests.test_oversized_portable_write_preserves_previous_destination",
+          "outcome": "passed",
+          "seconds": 0.0052
+        },
+        {
+          "id": "test_project_storage.ProjectStorageTests.test_portable_guard_uses_uncompressed_size_and_cleans_import",
+          "outcome": "passed",
+          "seconds": 0.0026
+        },
+        {
+          "id": "test_project_storage.ProjectStorageTests.test_unicode_and_float64_metadata_roundtrip_exactly",
+          "outcome": "passed",
+          "seconds": 0.0051
+        },
+        {
+          "id": "test_startup.StartupTests.test_existing_session_does_not_start_competing_recovery",
+          "outcome": "passed",
+          "seconds": 0.0049
+        },
+        {
+          "id": "test_startup.StartupTests.test_failed_bridge_does_not_acquire_or_restore_workspace",
+          "outcome": "passed",
+          "seconds": 0.0035
+        },
+        {
+          "id": "test_startup.StartupTests.test_failed_window_releases_workspace_before_offering_recovery",
+          "outcome": "passed",
+          "seconds": 0.0034
+        },
+        {
+          "id": "test_desktop_backend.BackendImportTests.test_actual_pywebview_import_when_package_guilib_is_none",
+          "outcome": "passed",
+          "seconds": 0.0974
+        },
+        {
+          "id": "test_desktop_backend.BackendImportTests.test_reject_legacy_renderer_with_a_specific_error",
+          "outcome": "passed",
+          "seconds": 0.0018
+        },
+        {
+          "id": "test_update.UpdateTests.test_activation_keeps_previous_and_survey",
+          "outcome": "passed",
+          "seconds": 0.0065
+        },
+        {
+          "id": "test_update.UpdateTests.test_corrupt_payload_stops_before_activation",
+          "outcome": "passed",
+          "seconds": 0.0141
+        },
+        {
+          "id": "test_update.UpdateTests.test_failed_components_stop_before_activation",
+          "outcome": "passed",
+          "seconds": 0.0084
+        },
+        {
+          "id": "test_update.UpdateTests.test_failed_pointer_write_rolls_back_previous",
+          "outcome": "passed",
+          "seconds": 0.0057
+        },
+        {
+          "id": "test_update.UpdateTests.test_reject_path_escape_and_wrong_version",
+          "outcome": "passed",
+          "seconds": 0.0041
+        },
+        {
+          "id": "test_core.GeometryTests.test_chainage_frame_and_end_rejection",
+          "outcome": "passed",
+          "seconds": 0.0038
+        },
+        {
+          "id": "test_core.GeometryTests.test_circle_offset_is_not_ovality",
+          "outcome": "passed",
+          "seconds": 0.0289
+        },
+        {
+          "id": "test_core.GeometryTests.test_creep_sign_and_reference",
+          "outcome": "passed",
+          "seconds": 0.0045
+        },
+        {
+          "id": "test_core.GeometryTests.test_joint_detection_and_smooth_negative_control",
+          "outcome": "passed",
+          "seconds": 0.8229
+        },
+        {
+          "id": "test_core.GeometryTests.test_known_ellipse",
+          "outcome": "passed",
+          "seconds": 0.0295
+        },
+        {
+          "id": "test_core.GeometryTests.test_partial_arc_withheld",
+          "outcome": "passed",
+          "seconds": 0.0092
+        },
+        {
+          "id": "test_core.GeometryTests.test_polyline_projection_matches_brute_force",
+          "outcome": "passed",
+          "seconds": 0.0123
+        },
+        {
+          "id": "test_core.ReaderTests.test_ascii_and_binary_ply",
+          "outcome": "passed",
+          "seconds": 0.0133
+        },
+        {
+          "id": "test_core.ReaderTests.test_e57_pose_invalid_and_multiple_chunks",
+          "outcome": "passed",
+          "seconds": 0.1432
+        },
+        {
+          "id": "test_core.ReaderTests.test_las_and_laz_scale_offset",
+          "outcome": "passed",
+          "seconds": 0.2694
+        },
+        {
+          "id": "test_core.ReaderTests.test_malformed_file_does_not_leave_partial_cache",
+          "outcome": "passed",
+          "seconds": 0.0015
+        },
+        {
+          "id": "test_core.ReaderTests.test_text_formats_and_header_mapping",
+          "outcome": "passed",
+          "seconds": 0.0089
+        },
+        {
+          "id": "test_jobs.JobTests.test_cancel_scan_discards_partial_import",
+          "outcome": "passed",
+          "seconds": 0.0137
+        },
+        {
+          "id": "test_jobs.JobTests.test_e57_setups_import_separately",
+          "outcome": "passed",
+          "seconds": 1.7446
+        },
+        {
+          "id": "test_jobs.JobTests.test_invalid_mesh_cancellation_and_disk_check_leave_no_assets",
+          "outcome": "passed",
+          "seconds": 0.028
+        },
+        {
+          "id": "test_jobs.JobTests.test_job_preview_global_cap_visibility_and_mask",
+          "outcome": "passed",
+          "seconds": 0.0372
+        },
+        {
+          "id": "test_jobs.JobTests.test_obj_float64_topology_zip_and_portable",
+          "outcome": "passed",
+          "seconds": 0.0123
+        },
+        {
+          "id": "test_jobs.JobTests.test_registration_pairs_survive_switching_setup",
+          "outcome": "passed",
+          "seconds": 0.0305
+        },
+        {
+          "id": "test_features.FeatureTests.test_full_density_delete_undo_export_and_hidden",
+          "outcome": "passed",
+          "seconds": 0.2476
+        },
+        {
+          "id": "test_features.FeatureTests.test_heatmap_signs_count_and_mesh_methods",
+          "outcome": "passed",
+          "seconds": 6.6413
+        },
+        {
+          "id": "test_features.FeatureTests.test_nearest_and_idw_are_distinct",
+          "outcome": "passed",
+          "seconds": 0.0288
+        },
+        {
+          "id": "test_features.FeatureTests.test_primitive_and_transform",
+          "outcome": "passed",
+          "seconds": 0.0237
+        },
+        {
+          "id": "test_features.FeatureTests.test_report_escaping_and_sparse_sections",
+          "outcome": "passed",
+          "seconds": 0.0736
+        },
+        {
+          "id": "test_project_compatibility.ProjectCompatibilityTests.test_all_missing_core_assets_reject_and_preserve_active_state_and_index",
+          "outcome": "passed",
+          "seconds": 0.0139
+        },
+        {
+          "id": "test_project_compatibility.ProjectCompatibilityTests.test_ambiguous_legacy_basename_is_not_guessed",
+          "outcome": "passed",
+          "seconds": 0.0086
+        },
+        {
+          "id": "test_project_compatibility.ProjectCompatibilityTests.test_broken_undo_transition_does_not_skip_to_an_older_mask",
+          "outcome": "passed",
+          "seconds": 0.0076
+        },
+        {
+          "id": "test_project_compatibility.ProjectCompatibilityTests.test_cancellation_during_unpack_removes_partial_import_keeps_current",
+          "outcome": "passed",
+          "seconds": 0.0283
+        },
+        {
+          "id": "test_project_compatibility.ProjectCompatibilityTests.test_cancelled_validation_is_not_treated_as_damaged_optional_data",
+          "outcome": "passed",
+          "seconds": 0.4507
+        },
+        {
+          "id": "test_project_compatibility.ProjectCompatibilityTests.test_current_save_close_reopen_preserves_all_assets_and_tmatch_metadata",
+          "outcome": "passed",
+          "seconds": 0.3118
+        },
+        {
+          "id": "test_project_compatibility.ProjectCompatibilityTests.test_damaged_cleaning_id_cache_quarantines_result_preserves_raw_scans",
+          "outcome": "passed",
+          "seconds": 0.0256
+        },
+        {
+          "id": "test_project_compatibility.ProjectCompatibilityTests.test_damaged_zip_member_recovers_other_scan_without_full_asset_reads",
+          "outcome": "passed",
+          "seconds": 0.0131
+        },
+        {
+          "id": "test_project_compatibility.ProjectCompatibilityTests.test_future_format_and_traversal_reject_without_changing_project",
+          "outcome": "passed",
+          "seconds": 0.0328
+        },
+        {
+          "id": "test_project_compatibility.ProjectCompatibilityTests.test_invalid_named_open_does_not_mutate_ui_or_create_snapshot",
+          "outcome": "passed",
+          "seconds": 0.0212
+        },
+        {
+          "id": "test_project_compatibility.ProjectCompatibilityTests.test_late_save_failure_restores_memory_disk_and_removes_pending_assets",
+          "outcome": "passed",
+          "seconds": 0.0508
+        },
+        {
+          "id": "test_project_compatibility.ProjectCompatibilityTests.test_legacy_cloud_without_alignment_is_retained_as_scene_scan",
+          "outcome": "passed",
+          "seconds": 0.0149
+        },
+        {
+          "id": "test_project_compatibility.ProjectCompatibilityTests.test_legacy_missing_bounds_rebuilds_from_all_coordinates",
+          "outcome": "passed",
+          "seconds": 0.0648
+        },
+        {
+          "id": "test_project_compatibility.ProjectCompatibilityTests.test_legacy_raw_json_snapshot_with_colocated_cache",
+          "outcome": "passed",
+          "seconds": 0.009
+        },
+        {
+          "id": "test_project_compatibility.ProjectCompatibilityTests.test_legacy_v0_windows_references_and_dict_alignment_rows",
+          "outcome": "passed",
+          "seconds": 0.0103
+        },
+        {
+          "id": "test_project_compatibility.ProjectCompatibilityTests.test_manifest_guard_and_untrusted_cleanup_marker_preserve_existing_files",
+          "outcome": "passed",
+          "seconds": 0.0071
+        },
+        {
+          "id": "test_project_compatibility.ProjectCompatibilityTests.test_missing_automatic_cache_preserves_reviewed_result_and_disables_reset",
+          "outcome": "passed",
+          "seconds": 0.019
+        },
+        {
+          "id": "test_project_compatibility.ProjectCompatibilityTests.test_missing_current_mask_quarantines_scan_without_resurrecting_points",
+          "outcome": "passed",
+          "seconds": 0.0105
+        },
+        {
+          "id": "test_project_compatibility.ProjectCompatibilityTests.test_missing_derived_cache_preserves_current_scan_masks_and_alignment",
+          "outcome": "passed",
+          "seconds": 0.0178
+        },
+        {
+          "id": "test_project_compatibility.ProjectCompatibilityTests.test_named_open_same_id_does_not_overwrite_requested_snapshot",
+          "outcome": "passed",
+          "seconds": 0.0287
+        },
+        {
+          "id": "test_project_compatibility.ProjectCompatibilityTests.test_new_project_failed_previous_save_leaves_workspace_untouched",
+          "outcome": "passed",
+          "seconds": 0.0177
+        },
+        {
+          "id": "test_project_compatibility.ProjectCompatibilityTests.test_new_project_saves_previous_and_empties_workspace",
+          "outcome": "passed",
+          "seconds": 0.0239
+        },
+        {
+          "id": "test_project_compatibility.ProjectCompatibilityTests.test_optional_preview_colour_photo_recovery_preserves_geometry",
+          "outcome": "passed",
+          "seconds": 0.0082
+        },
+        {
+          "id": "test_project_compatibility.ProjectCompatibilityTests.test_recovered_project_can_save_and_reopen_without_missing_dependencies",
+          "outcome": "passed",
+          "seconds": 0.0211
+        },
+        {
+          "id": "test_project_compatibility.ProjectCompatibilityTests.test_retained_properties_follow_the_exact_mask_and_stale_counts_are_invalidated",
+          "outcome": "passed",
+          "seconds": 0.0188
+        },
+        {
+          "id": "test_project_compatibility.ProjectCompatibilityTests.test_separated_child_undo_masks_use_the_child_point_count",
+          "outcome": "passed",
+          "seconds": 0.0084
+        },
+        {
+          "id": "test_project_compatibility.ProjectCompatibilityTests.test_single_asset_copy_checks_cancellation_and_preserves_old_export",
+          "outcome": "passed",
+          "seconds": 0.0021
+        },
+        {
+          "id": "test_inspection_workflow.InspectionWorkflowTests.test_all_six_modes_on_imported_edited_inputs_and_real_results",
+          "outcome": "passed",
+          "seconds": 2.3723
+        },
+        {
+          "id": "test_inspection_workflow.InspectionWorkflowTests.test_cad_dxf_and_model_json_readback_remain_usable_and_editable",
+          "outcome": "passed",
+          "seconds": 0.6929
+        },
+        {
+          "id": "test_inspection_workflow.InspectionWorkflowTests.test_cloud_csv_edit_undo_redo_export_reopen",
+          "outcome": "passed",
+          "seconds": 0.2097
+        },
+        {
+          "id": "test_inspection_workflow.InspectionWorkflowTests.test_cloud_e57_edit_export_reopen",
+          "outcome": "passed",
+          "seconds": 0.8189
+        },
+        {
+          "id": "test_inspection_workflow.InspectionWorkflowTests.test_cloud_las_edit_export_reopen",
+          "outcome": "passed",
+          "seconds": 0.1599
+        },
+        {
+          "id": "test_inspection_workflow.InspectionWorkflowTests.test_cloud_laz_edit_export_reopen",
+          "outcome": "passed",
+          "seconds": 0.1882
+        },
+        {
+          "id": "test_inspection_workflow.InspectionWorkflowTests.test_cloud_ply_edit_export_reopen",
+          "outcome": "passed",
+          "seconds": 0.271
+        },
+        {
+          "id": "test_inspection_workflow.InspectionWorkflowTests.test_cloud_pts_edit_export_reopen",
+          "outcome": "passed",
+          "seconds": 0.2298
+        },
+        {
+          "id": "test_inspection_workflow.InspectionWorkflowTests.test_cloud_xyz_edit_export_reopen",
+          "outcome": "passed",
+          "seconds": 0.1868
+        },
+        {
+          "id": "test_inspection_workflow.InspectionWorkflowTests.test_failed_and_cancelled_analysis_preserve_previous_real_result",
+          "outcome": "passed",
+          "seconds": 0.2883
+        },
+        {
+          "id": "test_inspection_workflow.InspectionWorkflowTests.test_obj_export_readback_preserves_all_vertices_faces_and_coordinates",
+          "outcome": "passed",
+          "seconds": 0.1357
+        },
+        {
+          "id": "test_inspection_workflow.InspectionWorkflowTests.test_portable_project_reopens_edited_scan_inspection_cache_and_editable_cad",
+          "outcome": "passed",
+          "seconds": 0.4148
+        },
+        {
+          "id": "test_export_destination.ExportDestinationTests.test_cancelled_copy_keeps_existing_destination_and_prepared_export",
+          "outcome": "passed",
+          "seconds": 0.0025
+        },
+        {
+          "id": "test_export_destination.ExportDestinationTests.test_destination_changed_during_copy_is_not_overwritten",
+          "outcome": "passed",
+          "seconds": 0.0049
+        },
+        {
+          "id": "test_export_destination.ExportDestinationTests.test_existing_directory_is_rejected_before_extension_is_added",
+          "outcome": "passed",
+          "seconds": 0.0015
+        },
+        {
+          "id": "test_export_destination.ExportDestinationTests.test_existing_file_needs_fresh_overwrite_version_before_atomic_replacement",
+          "outcome": "passed",
+          "seconds": 0.0047
+        },
+        {
+          "id": "test_export_destination.ExportDestinationTests.test_full_path_spaces_quotes_and_selected_extension_use_production_endpoint",
+          "outcome": "passed",
+          "seconds": 0.0063
+        },
+        {
+          "id": "test_export_destination.ExportDestinationTests.test_malformed_missing_internal_and_original_destinations_are_rejected",
+          "outcome": "passed",
+          "seconds": 0.0023
+        },
+        {
+          "id": "test_export_destination.ExportDestinationTests.test_overwrite_confirmation_survives_actual_javascript_json_roundtrip",
+          "outcome": "passed",
+          "seconds": 0.1043
+        },
+        {
+          "id": "test_export_destination.NativeChooserContractTests.test_native_cancel_error_missing_window_and_legacy_dialog_are_explicit",
+          "outcome": "passed",
+          "seconds": 0.0014
+        },
+        {
+          "id": "test_export_destination.NativeChooserContractTests.test_native_string_and_list_paths_are_normalised_without_altering_spaces",
+          "outcome": "passed",
+          "seconds": 0.0003
+        }
+      ],
+      "failure_details": [],
+      "scope": "Current generated persistence/startup, import/edit/export, six-mode inspection workflow and destination regressions. No native Windows or user-project execution claim."
+    },
+    "large_metadata_independent": {
+      "tests": 10,
+      "failures": 0,
+      "errors": 0,
+      "passed": true,
+      "checks": [
+        "test_damaged_autosave_is_preserved_and_opens_empty",
+        "test_empty_autosave_commit_failure_keeps_original_and_recovery",
+        "test_metadata_resource_limit_rejects_named_replace_without_partial_write",
+        "test_nonfinite_late_metadata_preserves_previous_named_snapshot",
+        "test_oversize_guard_at_startup_preserves_raw_and_starts_empty",
+        "test_portable_metadata_cancellation_keeps_previous_export",
+        "test_real_20mb_plus_startup_named_reopen_and_portable_roundtrip",
+        "test_secondary_named_snapshot_failure_opens_empty_after_exact_recovery",
+        "test_unicode_metadata_roundtrips_across_stream_boundaries",
+        "test_unwritable_recovery_destination_never_clears_current_autosave"
+      ],
+      "fixture": {
+        "legacy_autosave_bytes": 26598279,
+        "cluster_count": 45000,
+        "original_points": 45003,
+        "masked_points": 3,
+        "retained_points": 45000
+      },
+      "scope": "Generated >20 MB duplicated-patch metadata and real small scan/mask/label caches; production startup/save/open/portable/rollback paths. The user project was unavailable. No Windows/WebView2 execution or 550-million-point benchmark.",
+      "runs": [
+        {
+          "report": "startup_large_metadata_report.json",
+          "tests": 7,
+          "seconds": 85.51
+        },
+        {
+          "report": "startup_large_metadata_extras_report.json",
+          "tests": 4,
+          "seconds": 0.168
+        }
+      ],
+      "duplicate_executions_counted_once": [
+        "test_metadata_resource_limit_rejects_named_replace_without_partial_write"
+      ],
+      "baseline_expected_failure": "startup_large_metadata_baseline_report.json",
+      "source_hashes": {
+        "app/projects.py": "7065e3d4355cb31b56557c8b5da5388581128771b3bb248833320372be591c1b",
+        "app/session_start.py": "eef284234e82e0e6e467578341d6978e82620ba73c634f57ebbb224087967d66",
+        "app/server.py": "1208a4f0bde998c41b9661f10c7517d5e3602035a057fe4837b9b98425529497",
+        "app/workflows.py": "de13d6055019463eb2ffb7dbb2f5780fbec45fa27fe05c78583c90fab976821f",
+        "work/checks/test_startup_large_metadata.py": "0d1c9adc4d64c17ebe19e48b653ea5b19d9c7e7e03a05b9f7049958359569f42"
+      }
+    },
+    "actual_browser": {
+      "release": "0.16.1",
+      "executed_at": "2026-10-26T18:43:33.845Z",
+      "passed": true,
+      "checks": [
+        {
+          "name": "Production startup opens an empty 0.16.1 workspace after preserving an actual >20 MB legacy autosave",
+          "passed": true,
+          "legacy_autosave_bytes": 26598911
+        },
+        {
+          "name": "Visible Open restores the previous session with all 45,000 groups, retained points, CAD point and existing edit",
+          "passed": true
+        },
+        {
+          "name": "Save As commits the oversized restored project through the visible project dialog",
+          "passed": true
+        },
+        {
+          "name": "New project and visible Open restore the same complete saved grouping result",
+          "passed": true
+        },
+        {
+          "name": "Complete portable project saves through the actual format and destination controls",
+          "passed": true,
+          "portable_bytes": 26195092
+        },
+        {
+          "name": "Portable project reopens through the actual browser file-import flow without losing groups or edits",
+          "passed": true
+        },
+        {
+          "name": "Optional startup snapshot failure shows the recovery path in a visible modal and leaves the workspace usable",
+          "passed": true
+        },
+        {
+          "name": "No uncaught browser JavaScript errors during startup, recovery, project transitions or export",
+          "passed": true
+        },
+        {
+          "name": "Independent disk, portable archive and raw recovery hashes preserve clusters, original coordinates, masks, IDs, labels and explicit saved snapshot",
+          "passed": true
+        }
+      ],
+      "errors": [],
+      "scope": "Actual Chromium with production localhost API, generated 20 MB-plus clustering metadata and Linux software WebGL. No native Windows/WebView2 or user-project execution.",
+      "fixture": {
+        "legacy_autosave_bytes": 26598911,
+        "legacy_autosave_sha256": "48a3818e9ea7b5d5f5dfa8f3c49fa5691ec9248148f73da1d555ee906d0c1ddd",
+        "original_points": 45003,
+        "retained_points": 45000,
+        "clusters": 45000,
+        "portable_bytes": 26195092,
+        "assets_sha256": {
+          "measured.xyz64": "378ed1cac576d016fc41f4499af38275d2f2ef242fb8fdc3f8a6c66b67003c72",
+          "current.mask": "870a69bacdd71006fd4371440a9bd01558045458cd9084bbf5f810a2c8d05e02",
+          "patches.ids64": "c95eb95e8c72636aa1c768f576f7fbff69bf67afa0ab67b5c2042286d7559309",
+          "patches.labels32": "c8ac371e96bc409a6cdc772077bf327d891734ed439089ccbaef2f0a72d832e9"
+        }
+      },
+      "seconds": 326.632,
+      "timing_observations": {
+        "source": "Production job_status.json snapshots read during this same browser run; intervals are backend jobs, not complete UI timings.",
+        "project_open": {
+          "started_at": 1793040008.151799,
+          "finished_at": 1793040040.830284,
+          "seconds": 32.678485
+        },
+        "portable_export": {
+          "started_at": 1793040165.515636,
+          "finished_at": 1793040190.521076,
+          "seconds": 25.00544
+        },
+        "list_and_refresh": "Not separately instrumented. Large-group project transitions and UI refreshes were observed to take tens of seconds on this shared host.",
+        "limitation": "This is a correctness/recovery gate, not a controlled performance benchmark, SMRG speed improvement or UI responsiveness claim."
+      },
+      "earlier_attempts": [
+        {
+          "report": "ui_startup_large_metadata_sandbox_attempt.json",
+          "reason": "Sandbox denied localhost socket creation before browser execution; rerun with authorized loopback access."
+        },
+        {
+          "report": "ui_startup_large_metadata_fixture_attempt.json",
+          "reason": "Generated backend-only CAD record lacked required production revision/layer/geometry fields. Test fixture completed using cad_api.empty/object_record and cad_geometry.build; no production fix was required."
+        }
+      ]
+    },
+    "installer_transactions": {
+      "release": "0.16.1",
+      "suite": "installer transactions and startup isolation",
+      "test_ids": [
+        "test_installer.InstallerTests.test_active_application_blocks_installation",
+        "test_installer.InstallerTests.test_component_failure_preserves_active_version",
+        "test_installer.InstallerTests.test_damaged_payload_never_activates",
+        "test_installer.InstallerTests.test_install_preserves_data_previous_release_and_index",
+        "test_installer.InstallerTests.test_install_preserves_oversized_workspace_and_backup_byte_for_byte",
+        "test_installer.InstallerTests.test_installer_leaves_staging_directory_before_activation",
+        "test_installer.InstallerTests.test_marker_failure_rolls_back_both_directories",
+        "test_installer.InstallerTests.test_path_traversal_rejected",
+        "test_installer.InstallerTests.test_reinstall_retains_previous_same_version",
+        "test_installer.InstallerTests.test_startup_metadata_self_check_failure_preserves_user_workspace_and_release",
+        "test_installer.InstallerTests.test_startup_self_check_refuses_another_workspace_before_writing",
+        "test_installer.InstallerTests.test_startup_self_check_refuses_existing_project_before_writing"
+      ],
+      "tests_run": 12,
+      "failures": [],
+      "errors": [],
+      "skipped": [],
+      "passed": true,
+      "elapsed_seconds": 0.4649153029968147,
+      "native_windows_execution": false,
+      "scope": "Installer activation checks on Linux. Includes complete preservation and backup of a >20 MB existing project.json, rejection of nonisolated/existing self-check workspaces, and activation refusal on startup-check failure. No native Windows runtime claim."
+    },
+    "isolated_startup_self_check": {
+      "empty_workspace_persisted": true,
+      "fixture_data": "Synthetic metadata only; no scan points or user project paths.",
+      "fixture_metadata_bytes": 21000132,
+      "fixture_sha256": "17cac654d49c88fa4788d5c400cc118f4f61b5f9e83c5db05f9742b3cabfab4c",
+      "isolated_workspace_verified": true,
+      "passed": true,
+      "previous_autosave_bytes_preserved": true,
+      "previous_session_named_snapshot_reopened": true,
+      "recovery_sha256": "17cac654d49c88fa4788d5c400cc118f4f61b5f9e83c5db05f9742b3cabfab4c",
+      "saved_metadata_content_sha256": "fc9156a834667ae1d729e9e6280b7326f218fb854e2671d23120645bb7485ba8",
+      "startup_opened_blank": true,
+      "elapsed_seconds": 4.595096561999526,
+      "runtime": "/workspace/scratch/bab272ca555f/tmp/inspection_runtime/bin/python",
+      "host": "Linux-6.18.55-x86_64-with-glibc2.39",
+      "native_windows_execution": false,
+      "scope": "The same oversized-metadata self-check body used before installer activation, executed on Linux with the matching dependency runtime. Native Windows execution occurs when the installer runs on Windows.",
+      "source_hashes": {
+        "packaging/startup_smoke.py": "59c2562ccda52b90bf84712f0f23d9d074021cae921087c63b6e3532b4e4d411",
+        "packaging/windows_installer.py": "9f548d1d6b6de1f375bf89c66ead2952e4d6e9e550d5a23cd0abcafef355b0f7",
+        "app/projects.py": "7065e3d4355cb31b56557c8b5da5388581128771b3bb248833320372be591c1b",
+        "app/session_start.py": "eef284234e82e0e6e467578341d6978e82620ba73c634f57ebbb224087967d66",
+        "app/server.py": "1208a4f0bde998c41b9661f10c7517d5e3602035a057fe4837b9b98425529497"
+      }
+    }
+  },
+  "old_version_reproduction": {
+    "scope": "Frozen packaged 0.16.0 source baseline; generated valid duplicated cluster metadata exceeding20,000,000bytes, not the user project.",
+    "source": "work/build_0_16_0/stage/payload/app",
+    "test": "StartupLargeMetadataTests.test_real_20mb_plus_startup_named_reopen_and_portable_roundtrip",
+    "status": "expected_failure_reproduced",
+    "seconds": 33.725,
+    "exception": "ValueError: Project metadata exceeds the supported 20 MB manifest size. The previous saved snapshot is unchanged.",
+    "call_chain": [
+      "server.start_empty",
+      "session_start.begin",
+      "projects.save_named"
+    ],
+    "tests": 1,
+    "errors": 1,
+    "production_changes_applied_to_baseline": false
+  },
+  "current_python_syntax": {
+    "files": 128,
+    "failures": 0,
+    "paths": [
+      "app/alignment_model.py",
+      "app/analysis_tools.py",
+      "app/browser_mode.py",
+      "app/cad_api.py",
+      "app/cad_geometry.py",
+      "app/checker_evidence.py",
+      "app/clean_tunnel.py",
+      "app/combined_denoising.py",
+      "app/core.py",
+      "app/demo_targets.py",
+      "app/design_api.py",
+      "app/design_compare.py",
+      "app/desktop.py",
+      "app/detached_windows.py",
+      "app/detail_preview.py",
+      "app/e57_setup_photos.py",
+      "app/e57_worker.py",
+      "app/editing.py",
+      "app/exchange.py",
+      "app/gusac.py",
+      "app/heatmap.py",
+      "app/hspca_codec.py",
+      "app/hspca_import.py",
+      "app/hspca_worker.py",
+      "app/inspection.py",
+      "app/inspection_api.py",
+      "app/inspection_geometry.py",
+      "app/inspection_points.py",
+      "app/install_bundle.py",
+      "app/install_windows.py",
+      "app/irregular_surfaces.py",
+      "app/job_api.py",
+      "app/jobdata.py",
+      "app/joint_scan.py",
+      "app/large_sections.py",
+      "app/leica_bridge.py",
+      "app/leica_e57_worker.py",
+      "app/leica_project.py",
+      "app/lining_features.py",
+      "app/lining_tiles.py",
+      "app/mask_storage.py",
+      "app/mesh_geometry.py",
+      "app/mesh_preview.py",
+      "app/mesh_repair.py",
+      "app/mesh_to_cloud.py",
+      "app/meshing.py",
+      "app/native_progress.py",
+      "app/ply_ascii.py",
+      "app/pointio.py",
+      "app/preview_index.py",
+      "app/preview_store.py",
+      "app/project_maintenance.py",
+      "app/project_validation.py",
+      "app/projects.py",
+      "app/ray_box_extraction.py",
+      "app/reflection_cleaning.py",
+      "app/registered_cloud.py",
+      "app/registration.py",
+      "app/registration_network.py",
+      "app/registration_references.py",
+      "app/registration_workspace.py",
+      "app/release.py",
+      "app/reporting.py",
+      "app/ring_creep.py",
+      "app/ring_suggestions.py",
+      "app/rtc360_folder.py",
+      "app/rtc360_image_probe.py",
+      "app/rtc360_native.py",
+      "app/rtc360_native_worker.py",
+      "app/rtc360_optics.py",
+      "app/rtc360_scan_probe.py",
+      "app/rtc360_source.py",
+      "app/runtime_diagnostics.py",
+      "app/scan_compaction.py",
+      "app/scan_edits.py",
+      "app/scan_export.py",
+      "app/scan_geometry.py",
+      "app/scene_objects.py",
+      "app/section_api.py",
+      "app/section_path.py",
+      "app/section_research.py",
+      "app/section_shape.py",
+      "app/server.py",
+      "app/session_start.py",
+      "app/setup_camera.py",
+      "app/setup_photo_codec.py",
+      "app/setup_photos.py",
+      "app/setup_view.py",
+      "app/startup_support.py",
+      "app/structures.py",
+      "app/surface_api.py",
+      "app/surface_demo.py",
+      "app/surface_extraction.py",
+      "app/surface_streaming.py",
+      "app/target_ops.py",
+      "app/target_search.py",
+      "app/target_thumbnail.py",
+      "app/test_core.py",
+      "app/test_desktop_backend.py",
+      "app/test_features.py",
+      "app/test_inspection.py",
+      "app/test_inspection_geometry.py",
+      "app/test_inspection_points.py",
+      "app/test_jobs.py",
+      "app/test_mesh_to_cloud.py",
+      "app/test_project_storage.py",
+      "app/test_ray_box.py",
+      "app/test_registration.py",
+      "app/test_startup.py",
+      "app/test_surface.py",
+      "app/test_update.py",
+      "app/tmatch.py",
+      "app/tunnel_axis_fit.py",
+      "app/tunnel_designer.py",
+      "app/tunnel_lining.py",
+      "app/tunnel_surface.py",
+      "app/upload_io.py",
+      "app/work/checks/test_gusac.py",
+      "app/workflows.py",
+      "app/workspace_history.py",
+      "app/workspace_tools.py",
+      "packaging/build_windows.py",
+      "packaging/finalize_validation.py",
+      "packaging/finalize_validation_0_16_0.py",
+      "packaging/startup_smoke.py",
+      "packaging/test_installer.py",
+      "packaging/verify_windows.py",
+      "packaging/windows_installer.py"
+    ]
+  },
+  "baseline_correspondence": {
+    "version": "0.16.0",
+    "removed_application_files": [],
+    "modified_application_files": [
+      "projects.py",
+      "release.py",
+      "server.py",
+      "session_start.py",
+      "windows/launcher.c",
+      "windows/version.rc",
+      "workflows.py"
+    ],
+    "added_application_files": [
+      "RELEASE_SCOPE_0_16_1.txt",
+      "test_project_storage.py"
+    ],
+    "web_files_changed": []
+  },
+  "application_files": {
+    "CHANGELOG_0_10_0.txt": "cd9fe8f1e015c5015265ef4c177b700e3ae2d24ef9a22be18d12347881517733",
+    "CHANGELOG_0_11_0.txt": "a6fc42f5f61b81ae548fdb8df5cc75e1b9ed73fa825a4d47f0e3a4baaf46e52e",
+    "CHANGELOG_0_11_1.txt": "ec29473b57321931e084d32d1428002bee21e9fda67d5ab41f49a887481113d9",
+    "CHANGELOG_0_12_0.txt": "c5ccd3672b3e96f86f7f3609a2c68031cb0b0f23700e492de32011afd0a6a974",
+    "CHANGELOG_0_13_0.txt": "53cddb686c55ac2d3935bec800621c96a95962a9f1eda16acfde047948739ab9",
+    "CHANGELOG_0_13_1.txt": "ef63b461eeab95bda638ed4bcdf49bf5b63c200a48e6a7c3cef6762c226d641b",
+    "CHANGELOG_0_13_10.txt": "9912b041b7e021cc06e897cc5410ef715a425e0ef552dfd52a1d82e40c4ae99d",
+    "CHANGELOG_0_13_11.txt": "add7ac7cde66ed60ce947d70b73b8733667bba3363a106fbb123693b117e6658",
+    "CHANGELOG_0_13_12.txt": "5a0ad1380df3715c2237a7d723dafec46f03fc23c50d39bc23cf1b491f211dd3",
+    "CHANGELOG_0_13_13.txt": "c321557abf96f04ba0a903014668625fe0b49e3287fc44e39d1003e4af88398c",
+    "CHANGELOG_0_13_14.txt": "56a517d6b93fe64ee02ce5ad7a2b48a8202e8c2ffe7245d355328760c64cc433",
+    "CHANGELOG_0_13_15.txt": "91dfa43c80c4fa7ae6153f2d3e7500766f58155e78bcc789780aac248beca572",
+    "CHANGELOG_0_13_16.txt": "deb9b5900d4c13c93d776097cb54a522d6d3702f0a4ddae7ad8bd0e9971722f5",
+    "CHANGELOG_0_13_17.txt": "994902b852924cb5009375aa2f35c5d781dea2294100814201658f36468235a3",
+    "CHANGELOG_0_13_18.txt": "fa34d06cdcb88bfb4a8128de7c600e8a752c8724c11d8546d7a7916b77491a07",
+    "CHANGELOG_0_13_19.txt": "7afe0ed7ba23acef8514da67e4602b70b51789808b417290bc6604c1ba69aa26",
+    "CHANGELOG_0_13_2.txt": "f79ccac4f63d252ee016e5e5cbbcff3cf486604f2ada1746077d79a8c8570710",
+    "CHANGELOG_0_13_20.txt": "530174cf44275b1b323e377b77e3ebc512f3ca5e89323a28fe3d8570d8083aa0",
+    "CHANGELOG_0_13_22.txt": "24955ca548649359043669e34d2e35d6840d569bd778e01509b987e36dffeb82",
+    "CHANGELOG_0_13_23.txt": "1577dbbd64acf88b80b8d3fce4cf0c8344e765a12db5731669afe43aa0829f4e",
+    "CHANGELOG_0_13_24.txt": "328bf049b3cada3d09f42cf93f7ca494bde874a913a7909ff9483bd576f4f0a8",
+    "CHANGELOG_0_13_25.txt": "e861e7a79016f60ad5a5102cf5f4a55327b9c9571d78c653793ac1bca4fedea9",
+    "CHANGELOG_0_13_3.txt": "a9c7965dce1d60beb4398c04831d68f03dc1d9c5f044031f41dcc19657ff4088",
+    "CHANGELOG_0_13_4.txt": "863c5f9330d88aef08c2b9923477c7686fbc2e3d46706a45396c2773cfc43bf9",
+    "CHANGELOG_0_13_5.txt": "d728e0e55b67073fbc5118f6b47c0bc66ea256e14b7394634dd3d6317e87e059",
+    "CHANGELOG_0_13_6.txt": "62a0381da37171301367d70274e84ccc9dcb15d1a29ea3bfb5136c9cbc1deee6",
+    "CHANGELOG_0_13_7.txt": "6b08ea4679a14552868391c98f980a531f52d1a173d0eec47becaf7ee2a60675",
+    "CHANGELOG_0_13_8.txt": "884254764d3599f3b119cb5a10c1357c1c4b5ef177e99d05b86fce2c9b0df1cc",
+    "CHANGELOG_0_13_9.txt": "db3dc0fea8c73b136963f8e77b3b5eb3c9192ba62f8cad74e5261c33c6556387",
+    "CHANGELOG_0_14_0.txt": "e271e9dbeaf8cf56e9b2e129c445169bab53c2200681e78692f8185c46daa483",
+    "CHANGELOG_0_14_1.txt": "3d54f167d9a04733c9774855054b67174a55c1dbeb3295a11a4561cdfe012d48",
+    "CHANGELOG_0_14_2.txt": "12c6b14a2ac36434bddb91020ed55d72048486c92add7eec39475239d641bdf9",
+    "CHANGELOG_0_14_3.txt": "bdf7f36c71bea71f2fb043739c84a0cad31a32936c5e52c72a82eda306db210b",
+    "CHANGELOG_0_15_0.txt": "e2fcf5a7aa15971e9ef237af2ec6297b8cf9507185db34b7b6fd129e42dbdc6e",
+    "CHANGELOG_0_6_0.txt": "3ffd82d54212c05651e61d1a82f52a179cb42af0032f158d2080293e779d3f20",
+    "CHANGELOG_0_7_0.txt": "384a99c04a1283829aae635551a893bff044aa0a665912388d70461efa92e498",
+    "CHANGELOG_0_7_1.txt": "61342c2884ba6d07d7515b96f2723f962bf0aaf4098a36dceb19bedd8339afe1",
+    "CHANGELOG_0_7_2.txt": "8750f98b6747b3e5a77a9f631fffb595f12ee3bbadb1cdd2a5e6d5cb2c399b3a",
+    "CHANGELOG_0_8_0.txt": "8d4be7bfa0f09b4faea642b3020b0f51632f6756bc6458e6d413a1c6652713ff",
+    "CHANGELOG_0_9_0.txt": "d30282814729dadd10d2ef939f3583fe6e141c47b4c70927ddc40b339e911c6e",
+    "CLEAN_TUNNEL_METHOD_0_12_0.txt": "7c8297a9ba77c27d56de4a807347fbb142249d18e3c0ab20c1c366a6e88af52b",
+    "COPYRIGHT.txt": "1cbc46f6b41f915bc53cbb533dd4a90e912f9ce154660fc2ddc9022639865f06",
+    "DEVELOPMENT.txt": "aba6e97d16e7eb5c38cf019743dd1238208d73b4f5e95c7ef034a517042e7a80",
+    "DEVELOPMENT_0_3_0.txt": "a175375283cd58faf43c92929882e129fff8ff1aee642e1ebe6c1ebebe743de4",
+    "GUSAC_TMATCH_METHOD_0_15_0.txt": "d544b438e3c5d63e1c95a0d5a1a27c17409ce07a8779b0d97b8bf14dfbacd5f5",
+    "MESH_TO_CLOUD_0_15_0.txt": "417a948b9d9ac1e26dcb97d4362e5ea49ffeb7d1f48106f37d8ea229b74f4d5d",
+    "METHODS_0_13_0.txt": "1e67b4e6bfe1738df4ffbce02e5c5d13549bd5955fc1134ef0e47c95ec12e226",
+    "METHODS_0_13_22.txt": "71a72b075af34b1792f4378b4c4ce25ddef82346945b73aece852195292f7d6b",
+    "METHODS_0_13_23.txt": "9eb9340fc77b1688cf5a49fcf5cad6a150a3b6a9907deaa55a92233f770f988d",
+    "METHODS_0_13_24.txt": "0feb5de8426df9b5e09002bf8ff46f8ebe00c26a25a4f7469105593c62a4b55b",
+    "METHODS_0_13_25.txt": "479a5275f01e3cfdd0ca6e3a389b6f925fac90a9e9d30ec694bb5baed5e35f8c",
+    "METHODS_0_13_4.txt": "7c64a3dd539728524f2674858c5979ad6ff7a1a8d7180614604c33550304d1db",
+    "METHODS_0_13_6.txt": "e2bad2959340193c7f6927eee886fdb9726d0dd2aff9aa99ff8f66aeb208532a",
+    "METHODS_0_13_7.txt": "8bb48b9fbdfceb103c96a12669b446a5dc97adfe0059a47cb1b425330df19717",
+    "METHODS_0_13_8.txt": "a0674a8841f8ff70671b77aa11e842a4356e5383e2625e28f1d1927690d6f233",
+    "METHODS_0_14_2.txt": "c58835ba5c351104cfb0091b6293ef2a9b659050b60db7f960bf1908f320087d",
+    "METHODS_0_14_3.txt": "fc684379664bc2f25323ffde1c6f44b80be4656fa87bc9b5c6627465116c9e8b",
+    "METHOD_RAY_BOX_0_14_10.txt": "4e8ef4078a43c617dd58a21f0077cac6d3744d38630afc4505b648be39c5791c",
+    "REFERENCES_0_10_0.txt": "50deef0c3eb14a09099677b0588c82bd90642231346f17db42a77b93ececa6ee",
+    "REFERENCES_0_11_0.txt": "60e5e294b6d1b8b0c69097c4eb375d05353ea53c025afc70313aba499044b856",
+    "RELEASE_SCOPE_0_15_0.txt": "a4bb77cc76890286f6b4740e5362a94d139216bb6f58a7cacd6416ec9a4b6b2f",
+    "RELEASE_SCOPE_0_16_0.txt": "c43b2eb65ca5e242fe471c64b51d5aa6a8e78633ae8223f63243cad6110867f4",
+    "RELEASE_SCOPE_0_16_1.txt": "e068720dc47a30b8cb7aab7f2bfd1509794dc4bc73ac715e6d23cdefd47235ce",
+    "SECTION_METHOD_0_12_0.txt": "77c4fcc39213d47406289dcd4a579e29517d01791af152400aff754160968dd4",
+    "SURFACE_METHOD_0_4_0.txt": "8bf37b8b2f799c58802bbd82be8c527ad78b8ba60ee9deb5ed4f0c035d0271c6",
+    "TARGET_DETECTION_REVIEW_0_12_0.txt": "25eb208e23e4f224af6b37d8ce3c392f2704e548489b25e5474b5c507598f402",
+    "TEST_RESULTS.txt": "bc11330c55380427b52cea1820f04c18001ed2ded0bc02c682744055097b57fb",
+    "TEST_RESULTS_0_5_0.txt": "e2eaf5c2787a46428d0b05b96a949eeeb54a1814295892c29e6810a4c0d231cc",
+    "THIRD_PARTY_NOTICES.txt": "d537040165dc369b81a3d5e9a3f2e3f82f1dc727a03ec4c31e340a94cae1189b",
+    "UPDATE_GUIDE_0_4_0.txt": "a141711194c103bd66f23a0024defd17254248f1dae038ba36008fcff0c9296b",
+    "UPDATE_GUIDE_0_5_0.txt": "ecbebbb46d1c308994719278f7cd676afe6b22f2679b16d29ed5a5dae7054ad2",
+    "VALIDATION_0_15_0.json": "fe4eb08c4678c2e4fa8c41a942389834a7fecb63cec7a31c0a96446928dfa1ac",
+    "VALIDATION_0_16_0.json": "133667e61dea4958c9e0130f65ff9aa9d3ff16c72f0eae8b46d4a2e13072acba",
+    "WEEKEND_CHECKLIST.txt": "c389c9c3794952686b26766379839ea25934cba55a7a18a6e4821a898d7a18ca",
+    "alignment_model.py": "a9780ebb8b4d2d8349c141b470fcb87455d69d215e1db41f92ce72a4716db2c5",
+    "analysis_tools.py": "b633c75f2a073c22dbb5be219682473063f9f5450c8274f13a80a0901c891cec",
+    "browser_mode.py": "8a08e27d90815e1a520fce0f36b3887c75c8fa612909f514ef5d197ebe4183ea",
+    "cad_api.py": "fd38bbc18ccb5c3e3414491d33d70f8f15f99618d06126a2ee1df7629731e231",
+    "cad_geometry.py": "7b2c63170142bbba87fc4e54009a31f4c2bedac28fe1c0a60e50de7f80ee2939",
+    "checker_evidence.py": "8c75aea056870cdba10b917f4ec82d2ff0ba926e720b86016c5e6221f2bf6aa9",
+    "clean_tunnel.py": "ca4e88d150a7778b2f58ed7f31455c1195d02fad3b3da46306aef6899962ab61",
+    "combined_denoising.py": "18a73ac7d3dead224149e15359ecddcebb3218f7d7f0595d805a2c22fd7146cc",
+    "core.py": "5ee5f6cddbfee97f54a378dbdf4252f0b402cc1b4454561ead2f1bffca582024",
+    "demo_targets.py": "41037ceba4e2b298b5f88245c997a91954814bbb2a19bb7bce359f74af53f5cb",
+    "design_api.py": "304e22b46b030097e3a3d30b9286737a522c894595261f529efff4dc30e390d0",
+    "design_compare.py": "f3b0bb7b040713d5327e1a72aeb171670e6c581d1b53893ad578ed1c27ac3675",
+    "desktop.py": "47906d8b5fb0046b2ea0e7026a62ca4de4f250161a28f6603f40266c71d8d584",
+    "detached_windows.py": "4bdfb1245073705a90b2d752c84095c0fb629209caf61198f1301bfbe5184163",
+    "detail_preview.py": "8ded0ebc1530f7d3f9778ef641aa74026d5028a709f4ef56b673b56a7f6925fc",
+    "e57_setup_photos.py": "34918a0b456763cf5f017825a0052be1807de9d9bf20c82e541d3bd7a3e57f0e",
+    "e57_worker.py": "76b12b19977809efbb1fb21c0d4e97a12c8da4a22d903deb7c4f1d895e22d61e",
+    "editing.py": "45cf3d7c4bc9114eb72a854759258f8c66e538ab7d34c507a2a81ccbe1591fd9",
+    "examples/SAMPLE_SURVEY_REPORT.html": "4f87e8b9cc1fdc353a9a987ebd482571a731d2c747ffd9db22861ff3d52125e9",
+    "examples/SAMPLE_SURVEY_REPORT.pdf": "df1f91eb749fd6cefd7a08a1cf9c212022176473623903613878565aa54d69f6",
+    "examples/alignment_template.csv": "9dc65c5a3a506161d72efdcd258fabd5b85c7b3ba680ba891fc2699fc1da8f5f",
+    "examples/control_template.csv": "aa2d00ae10d0ea62a3173b18db56540491c81f2f023fbb23c8cfba9cb3fd6f2c",
+    "examples/demo_alignment.csv": "c970fddbad074ab7cd9c83a4bf8d627a0f2fb61fec73470e6ec0e593aeb49f21",
+    "examples/demo_rings.csv": "efa9a04b483a730afc7bb319657cfb9419f8344275e16bf7880bdc8be1c62fc7",
+    "examples/points_template.csv": "bb8d2542567ef04ffe817aca925ac616df5096a85481fdb3fe037f1f4d557b1d",
+    "examples/ring_template.csv": "a52e713d60ebd07ea16c6252ade025a29ab2d0d997d5eb6048ca6ee45fee52df",
+    "exchange.py": "15ba5bb19352a43787fa74819ae1ec728a63f80e65db39ad1623e4daf479e7fc",
+    "gusac.py": "340a0e762cba92d429d959a874cb1b497817e06a6d6c084bc535777e84b938cd",
+    "heatmap.py": "83650ba586989909009ee614efe2baf7ff591b5e8d0b6568bb71dcb4a88d7c26",
+    "hspca_codec.py": "cf83ded72ad7af93c0e17a3087051ffc5dcce8d04c49e6c31e9038b134105023",
+    "hspca_import.py": "55eab9f6d403eb4f21cc0ebb4669ad2c47bde13712ffb916fb1b2e1838ccf32c",
+    "hspca_worker.py": "9d660223deb20bb87b2296cfa47160140877ccc3751c420ed51cf087ab678143",
+    "inspection.py": "ec090186c37686668b202a3ce51e297aac8ec31eb0884d1d2c42d752c99c5432",
+    "inspection_api.py": "8cb17bbe9948d9264a453f1f300289d311db337fde3e03feaa52a9841ded6b8b",
+    "inspection_geometry.py": "72634d7917c94e824576dbbbeecfbbf3d7956f2462ae67da13b19fab6afc1de3",
+    "inspection_points.py": "384ec40bdb109a86bcaf21d05172b0f05426497ae387a1e774f5359803032246",
+    "install_bundle.py": "2c5dfcac212dbbd4c4fe0e14dc223d500ad023d513af7d27b8090c9dacb4b8e0",
+    "install_windows.py": "b395d8de5a690e74c8b1ee381d6f442e85555971369d076e4c2eecbb6882276b",
+    "irregular_surfaces.py": "ea94aa7290f4702553fc0b956583053aaacaccd121e7f619fc1770c71fde3357",
+    "job_api.py": "bf108ebdae4f72e03436421670c4603bd2c1548e12b79146f52f1c1b69dafe3a",
+    "jobdata.py": "6d37844132b74846788362c225b01c771bf292de43c0cab3e090941335b3214a",
+    "joint_scan.py": "24f0f325c2bb0990b74f4a9ec22a5aabd906bfe39aea2813155bfc008e3da11b",
+    "large_sections.py": "8100090f33b5183fef761ff87a1915da6bb4fdeabd1038428be336add7ecf626",
+    "leica_bridge.py": "1b1339a15947de9c4121a80182ffdb9e18b82526bd2b9d1e4b25052826f5aebd",
+    "leica_e57_worker.py": "06b6ca2bac9f9df51934ae20669b1e733be05f750f6880930afa26532c3c61b5",
+    "leica_project.py": "c5bd0199528f8e78525859640841a6b72eb9a8b97f26f92888b9c511b7c0c672",
+    "lining_features.py": "e95da5c807853e0285d86953e8c54ff18f764cebb011ecf2c81a771678b4815c",
+    "lining_tiles.py": "9c0d269cff1372ce6ea512d387dac6ab5972b24c1670b12e7be9f3efaa88323f",
+    "mask_storage.py": "370be2197171fc141d6df7c82c566518897b8104376690f49a8dd1d78d12878c",
+    "mesh_geometry.py": "587fc5198023d21b26ff2ca376e508f6a2d7abac89b7d3763da313553a43e9ae",
+    "mesh_preview.py": "a2891f1146cb826360b28b158f2752cb793e76fccf7aee0314867a2784d05c28",
+    "mesh_repair.py": "3922ecb533fa0c3fb43d256de70950dbecf367e7bb653d4aa2233070d9b1c647",
+    "mesh_to_cloud.py": "c96fa93e00186d177d2a6ad2b4594eb6a2b70c129ecdf2fc6ed16af3fca5d9c6",
+    "meshing.py": "41b90650ec92d498ee0b370bf11ccaf704c69693f52a7014cea8540545dbc3ef",
+    "native_progress.py": "cda89d86278832d36f9753b36096a36e4d48f035d07d975381f4bdba7dbf3867",
+    "ply_ascii.py": "aa741a8ba3627897b84daf2a8b55d7e805560c963a9b0752e534de6708c99252",
+    "pointio.py": "6dc23a865d3c33ab8b806e5950b6cd9f87e0a2f5f00780429cacc108ce42ee5c",
+    "preview_3d.png": "6d7d5768ed2d46b60dbcf8877e243a6b52079355bba146484cb69cea1a742072",
+    "preview_heatmap.png": "5c0a1bcb7fd5ea4321dcd226905f7e58ae2e94918caf56c6e60a8d51d5dbceed",
+    "preview_index.py": "32a816a3228371f49271c212cbb8aaffdf141754f63fd36cde91039323199335",
+    "preview_store.py": "fd6bffa65426f54d9fd75a0e46ebd6e1a40a400a70ca6a84410ede889e10e2c2",
+    "project_maintenance.py": "baf795a1758943924bba61b5e1a08e993a2f51e0e494ebe4d5f101cb0e0954fc",
+    "project_validation.py": "4ebe43b7ecbffa34db59266f44834db26b31c8fb14fedda8aa6071c5ca3358d1",
+    "projects.py": "7065e3d4355cb31b56557c8b5da5388581128771b3bb248833320372be591c1b",
+    "ray_box_extraction.py": "dce44a9b42f5feb36e5d3a7cf03bbf70af30f7f711a2ba9d8430946df4bc4fce",
+    "reflection_cleaning.py": "6334cc3efa39f38688fc033b1fcc099795c06b7448b332be4d40b47efcc923c5",
+    "registered_cloud.py": "92f5fdfe301df57ab0c8ee2e7dc1e388d1e43985e36b86d302bb912a5157c23c",
+    "registration.py": "2a5871bf23315fe5ab14caa0ca697a6da0860aa2404dd07d9dc5d943ea9b4628",
+    "registration_network.py": "e5b929175f9b6ba719442ba1901015df7a8fba3d1b67a69a53ed7d283633e163",
+    "registration_references.py": "fd3d6618dde24db277c1813c013751d6e86d4bb2e385adce4f13442e2112ca85",
+    "registration_workspace.py": "91ac371c49e641321d367b188f9dbf45f8afd75f1772432a1ffc7b85e97b6688",
+    "release.py": "6b80dc5e247ee0a5aebbeba736aaa812cce65a5d1ee7d30f9b5f00db6c834bc7",
+    "reporting.py": "56185da652cf8198b79da836a6a10cf0011823a10b354f13b46ebf0287a95b53",
+    "requirements-desktop.txt": "89e2f0fc59ad44c88a3b2a20bc1026ecbf9185c73d888c547d1c86e684f0fe1b",
+    "requirements.txt": "318975e04056bf18adf20564cbc4e4b7f515db0e7c23d691a950139e626bfa68",
+    "ring_creep.py": "2a3c1958f2b5bcca538bd704f481942b00ef82f4b97b275c7abe2e18fa611c26",
+    "ring_suggestions.py": "b1b08ba5203fb156e620e1946b7a27bd06aa5177c9e1bd7902c83196412f2c12",
+    "rtc360_folder.py": "2a4049941899c99b79b15e8772cd7d6dbdf418407b0b06df2fa2925e9edfa87a",
+    "rtc360_image_probe.py": "ef447454b6d380a2fc7400be3f8126b8ba1c32cbeced141f592ee2944b28440d",
+    "rtc360_native.py": "90a3c37e5f32d15636b51b66d3de890e62db8bca10c03262cbadc39c6f25ff70",
+    "rtc360_native_worker.py": "366c9ad04159067fa05e2885295b55c856539c6fb0d32081c58ccf007023245f",
+    "rtc360_optics.py": "6b1b32523f51fbf85c847be89da0f9e87031a505cb58f2bcb99ceb4c2bdac3ed",
+    "rtc360_scan_probe.py": "a37757982a38fd11e9449654d280d62da726a2111359844b43796083ab2da737",
+    "rtc360_source.py": "1b8d4f2049fec205b8fbd3813030920b34560385bca160fbdcb3ba232d8c9e73",
+    "runtime_diagnostics.py": "a8d25d081cacb1fa30f0e2557da25f54e13b2278860242cb74d7d54ff565c97e",
+    "scan_compaction.py": "2532d33d51a1f2b7884d297d929ef57a7a9e5320ac4cfc94aa28d382f0848887",
+    "scan_edits.py": "a6a3dd68bda4208f3ae4c7bf2a5b7b63b8600da8049ef72052f3ef9c6578cea4",
+    "scan_export.py": "93b6aed46bab5fce4eacd591db937a8f339484794570a3b987418785e52ede1e",
+    "scan_geometry.py": "60270cee4090b550ce909d02255d0d579dd503a21f1370ec947bc06defc0b931",
+    "scene_objects.py": "add4622a10c3b9cc4eed88f309504b5f2aff2fd3eabc034c021466dcdc6cd455",
+    "section_api.py": "2ece54be96e483c6fc01afa752611285a6d5a883304084258bbdf0f97814b41e",
+    "section_path.py": "a55322f67860f4d6b3f0f1f4f683369f5f9188f44437a56d7b0cced354cb769d",
+    "section_research.py": "e6ef5f66c1659b30cdb56bab91e1ce3a2f282ee6eabfd930fe18424806e7c24f",
+    "section_shape.py": "e441079a452f9062936f91f2a5053405dc970603c914736e6a2655012ebc5576",
+    "server.py": "1208a4f0bde998c41b9661f10c7517d5e3602035a057fe4837b9b98425529497",
+    "session_start.py": "eef284234e82e0e6e467578341d6978e82620ba73c634f57ebbb224087967d66",
+    "setup_camera.py": "dbdad22ad6c38d6e58533cada3db2b462bc44c79f786533e3bcbc1b9edd5b9d5",
+    "setup_photo_codec.py": "ca7b7e180991d69ea7fd90339d61ce74f61f0cfdab7724ebaba1a6e1b01ca1d6",
+    "setup_photos.py": "90dd7881dc6a85c351919f4de67abd87e9c904220ec4479397e83fe6cdf58603",
+    "setup_view.py": "1addf1c115fb1cb7ccf5f8ddd279f32ab591d97d9cc519486950add5b7b513fe",
+    "startup_support.py": "7768d113d19e47751040c8303f5f6c7eb8d1be2933616138961c00cf5b02e7b7",
+    "structures.py": "9c01a8be100497dd1bf6a50bf13315e0dc60ac6d62c04552bd9a456a01500572",
+    "surface_api.py": "c75790b16116a28e7f75d168230b5a10f6ea78f649f191bce3b7a5d49ea6742a",
+    "surface_demo.py": "5f46da1ee0fef968dc4c8f799c1ee6d7c0c27d4203eeb95b8a0c2507d51f64dc",
+    "surface_extraction.py": "9dfe8f1145d382fdd51e28d50d751f981f5e1ee7bfb07e55a2d3b1b94ef45757",
+    "surface_streaming.py": "bc4544688a61bd1fd36e02df03ddb4e7e8f315057773fdac0458f8b4cf0c4810",
+    "target_ops.py": "3ad3303a85e6588c643fdc489c8330c067013f6edb778745f8e4b5f4c96afdd3",
+    "target_search.py": "7f49adb80dcdb06bb765c4e85399f191b5e133bb1c645df392d01ec3d0d6d791",
+    "target_thumbnail.py": "face7434722c5f283ce509801bf5e9d2efad7fef7cc6ae0629822b8713dc660a",
+    "test_core.py": "047c7463cc8608cacff33b4022e22baa67ae6e6ea6504d89bc8e46ee7d0418da",
+    "test_desktop_backend.py": "a2ffa0f889d551fdef53ff6a37ea43a316afcaa28fc435b2c9ddaf16f7e34ed3",
+    "test_features.py": "930d6df54459ccfbff5ade0665b23b27252a93529fc77eec411cf343c19c4516",
+    "test_inspection.py": "64d3032ff2caf3328093cd608b37c94585dd437e539ee41e60aeb8f6103255a1",
+    "test_inspection_geometry.py": "66a02d825d0417dc8969b5f06990efbc3228b002e4d990cfa2dad6897c130e05",
+    "test_inspection_points.py": "c174461e4dc6d2f918c838f70054bcd9b4bc0a4b4c76d6fd03dda39ae08298dd",
+    "test_jobs.py": "98bd957a3bc7b9cac869a3d0c1ebb8d28bf5af2c2eb0c265311af0b87b192e99",
+    "test_mesh_to_cloud.py": "95a5d69d60b890fb796dd5d4deb43823f6e2d3230eeb8a7b86941378088748fc",
+    "test_project_storage.py": "284df14ed0ab080f9b0720aa3c9a086aeeb73067f9ec186585cf180f8efb5868",
+    "test_ray_box.py": "ae83c2550f36676c31c3f7212e3b73b81bc7229e28901c130f6e420d7b0545ab",
+    "test_registration.py": "f9a426aa25d4255753f00decac5f2ad1b6847589d9a61c3285427931ea755693",
+    "test_startup.py": "2f34db8e59e5d9f26e9b2a025610405e72a783d1c9b046e7d9fedc7d94c5e443",
+    "test_surface.py": "6b59139c3ab716db8221e15b2d3f10bf9ddfdf4d4d6cf27fc0f42f4d387437f7",
+    "test_update.py": "ce636e96c8f527827dfa74cb985c9b89847c9568aec6d43194ab26a62671875d",
+    "tmatch.py": "0cfcc1078af13401ca603f6676aca3999c7786508b102bdcd627f7f0a2d9ca86",
+    "tunnel_axis_fit.py": "b098101170ce6dae70a1fae7d6edde09d94219031b3c7a3edf227f3f016a96a2",
+    "tunnel_designer.py": "ef4e98309448229b82a79008016f4f857dd794370a72e0142a621e4dec031cfa",
+    "tunnel_lining.py": "3081bcafaf2c1278302fcd77a34c5e96b36b1b16a5f227f9cd953edab6cae06a",
+    "tunnel_surface.py": "1b78ff7752a2fd53edd6af530c666579248b5277d87e1de416eb8c0d204f437b",
+    "upload_io.py": "60307819dcfcdd6017b97bc93b9a605d4e95ff423e343feb5ae04ce4212ac1e7",
+    "web/alignment-editor-ui.js": "d34081e191ecff5d92cac2e7cd42d5b097985da9610da9e6c3ee9f9991dad309",
+    "web/alignment-hub.js": "adf31cc2086b2b75ce021aea2e0124fd33f149c41f789ee9b62f6b2e5b66d9cd",
+    "web/app.js": "7027be293803cd31c6d232fed8043efd0b8da1bd3c8787c01be1467cc531dd83",
+    "web/cad-math.js": "3c2d8272f86673c7475ec9f008ae1df4621ef8ec0a86a04f6b2a2231ef014cac",
+    "web/cad-ui.js": "9c604eef8127765f197dfecee62ce0f377beb19792f24fcaa3119fa19bee71fd",
+    "web/cad.css": "7a85a9b033e95a717903433b658213e571700cf175c20f5b72c23788f686ee7e",
+    "web/cleaning-help.js": "e6f7128f8260a027292a31dc79441ea9472a559f85edc2401cae23ed62f3d53f",
+    "web/design-ui.js": "909bf96e63fbf562737b6fb4e2e000e5ee60fac0cdcaa0aef77e1dcc3342144a",
+    "web/detached-client.js": "a6225c0c7e87424344d669c11a1e9ffe7dfcae60c3bc53650ab1cabfc0859af4",
+    "web/detached-ui.js": "129d9c6ce6d4dbc71c72258204016282ee52312d43d01bbc81fac6c9872bbe8f",
+    "web/detached.html": "f3762c59486e7be9902f77cad67bd1eae7ddbdb682b48e5d017280208a19d7f5",
+    "web/export-ui.js": "e86f20a525c605ca0a7f1972b3467d04b1886ae7f6ca20aa4de093811a7ec713",
+    "web/file-drop-ui.js": "f2b2b2d96cd6308bd3188dcff8fc3569bdbca81f5cab33d1b21d9f200cc17975",
+    "web/heatmap-ui.js": "e1b4e1d0034f315b53372d42148a180026991432e11e36af46fc9daccf2d2524",
+    "web/history-ui.js": "108a2e587ce579499d12f9ad55a3c9d257c5e9e80c0d0768a2bf6dbca3e98d6e",
+    "web/index.html": "f4287e90b6f36b69d97e01d2e2062e8130eae17143d88b9c34ce001c7fc6c1e6",
+    "web/inspection-ui.css": "98aada7f625790740396ed4fe64c2ae43d8795bf3dc47a584c9c405df2231e33",
+    "web/inspection-ui.js": "197d9bd5d14bf448bb55de9e83f801bc9cea1949b41a8c5320a95ef1c0fe8a62",
+    "web/job-ui.js": "29f16234302d67b268a22be0f22fe9c4c75cdff77d4007f0ddcdd752f3d42235",
+    "web/job.css": "52fdf258fc4865dd2f56a6ce37afbcf8a73513bfa68dc84480c553070ee267b7",
+    "web/joint-ui.js": "62852da3d34e97ed94510f526488468d711fa9659055276b8e6aa565a9abd693",
+    "web/leica-bridge-ui.js": "5d84d1a1d626ecf149f58692eff8e72f086902dc94da9c8b0c36b29aca458655",
+    "web/limit-box-ui.js": "25b23659269b235ce7febaf9d0aadf46ff3bd77b9723b2e74688e943f2c28331",
+    "web/mesh-repair-ui.js": "c915690f4a4f17e8496c3bc4d85d58932f9729d3384f1c692384e8477d5c15d6",
+    "web/mesh-to-cloud-ui.js": "5a0c0ba55fccdf20959cc2961f1880036819e7663548711e68c7bf29166a1b66",
+    "web/registration-ui.js": "24e29b91a3898e18fc05876d8c6e14e4a6c3f6a53697566f529604104547fa66",
+    "web/ribbon.css": "bbe31f02a4fe7f084b698c96318da4bd99c1e968d9544fe804b088d2be8d5dcb",
+    "web/ribbon.js": "92d9273e19f99acba5ed06c30aaaacaf2c275dc57afc069f49b244941b5ed34e",
+    "web/ring-creep-ui.js": "e113adc43ce2ca4487893741600f098c03d8e3354eb24b9dcbd2cb7631b83dd9",
+    "web/scan-registration-ui.js": "a0d157b9930980b0d9e0a6aea1acb5fbe2497282cf75949aac319b8442302096",
+    "web/scan-tools-ui.js": "70b12d25150d4837053df7adec425d5579ed04f66d18270de46bb45123f9ae66",
+    "web/scene-objects-ui.js": "57368a1b8d04471fd1e42b64c7456b872a2d5192990d6f9d197db765dc04f7df",
+    "web/section-locator-ui.js": "c0880cae8ff19e37d12cde2b6d55827c8e98287fe971d9cbfdc92ae7d59a549b",
+    "web/section-plot-ui.js": "f9106ea662d2f16247abf4bb93e4014968fe0cd254c4e7f11dd5edc4e41ec23c",
+    "web/section-research-ui.js": "50cd6be4c19930a80d36f29665b87cf8f3226d25b40ad8f1a3ac4c88fe44133e",
+    "web/setup-backdrop.js": "f0c5921f0b85a75c75f80c312dbe524aaed5bc99a01a95157d751d1c8f65a701",
+    "web/setup-camera-ui.js": "ca0048c9c5d4e1929b31caded03e189f49cc8d6576fe197d7424be3d7d6ddd15",
+    "web/setup-photo-viewer.js": "1eb7bf8f02904f50473296dcebab71beea5a31f0bc8d286865c51f72938688fd",
+    "web/style.css": "59e259b597d37c30f77183c47dd11f277837d9b27c8be4b6343685dd61b5adc6",
+    "web/surface-ui.js": "ba0874fcc2c4e06e4b454f39b371b052cc4c98933ce15ae6d95ede52c6dfb97a",
+    "web/surface.css": "152fa39a079989330b144fe2158c51be7a016e7e2b4a16ad7b9c17d6076ee9e9",
+    "web/tunnel-designer-ui.js": "5263a84efc87730cd109bc6098df7458c365db9e5bf84af0e60ce312c3d4fd3a",
+    "web/tunnel.ico": "703a4b80cfa64e8419482e1a2e68f60ca2b0087ff8bd94d0b707108f794cce6f",
+    "web/ui-icons.js": "e6d1f371c0eb62942d0da80f397043532cb187ba72ec0d01386f06a9bdcb4a0a",
+    "web/work-status-ui.js": "25552d7a4e2b1c894a775cc564d1c1228e0bbf2f745bcbfc3e1a6b9313c00470",
+    "web/workspace-ui.js": "4a82a13e1862a5f82b5100db00f09c897cf4f74108879f8552939e45585a368f",
+    "windows/launcher.c": "4e1336f1cd7f7e0f285b38631dbf7d5f5796cb9d3f432961aeb00ca2f6b13382",
+    "windows/version.rc": "07a7179a27c7485895bdef4e474b144ea9711c21f57bad231cdc24fe8b8fb3e1",
+    "work/checks/gusac_synthetic_report.json": "c4d9c446ef697e2b914c8bdd1120d41a8f1ea99c4a8fb163f8058b20158dfa67",
+    "work/checks/test_gusac.py": "2fe73c4acb181f829fa8aaa3d33518aeb00c475f7bcd740e7e952d021ce0c688",
+    "workflows.py": "de13d6055019463eb2ffb7dbb2f5780fbec45fa27fe05c78583c90fab976821f",
+    "workspace_history.py": "0c068e3a91b6e6ba2bb92a3eaac29416473ca5c728db1fd08c4757383fcd6453",
+    "workspace_tools.py": "4721dbf0885e5de7e1441cde51ccd891a53888451f65b41d57a055707b5d0781"
+  },
+  "packaging_files": {
+    "TunnelStudio.nsi": "e39c8d307773fe3d726ab875a44293948f7c5870ab81391007471d470d96d49c",
+    "build_windows.py": "c1b729fdfe08dad3e02435f07101139ba8b6aef72db7ccdf8bdba08674422c99",
+    "finalize_validation.py": "3c20d5737ed72cc6aaa184a4d8ba82483e57bfd32e739a30fdde0ad96b5cbeda",
+    "finalize_validation_0_16_0.py": "4ba5a40eeafc1c8dda33c920c13108425db0cf3c71c06811ed6c8681dce2d251",
+    "launcher.c": "74f709845dd16ce24af17584916f45a4b71d0e46e6f2c4095a5aa051ea09fca2",
+    "launcher.rc": "92f39f2401c9968b178afdc08d2098dcbc962020e0b1bb7dc80d0d202a742b03",
+    "source_provenance.json": "ebafee48ac73ffb70afd196111cfd284459fd54a21dd4ca91c4aa428da7425eb",
+    "startup_smoke.py": "59c2562ccda52b90bf84712f0f23d9d074021cae921087c63b6e3532b4e4d411",
+    "test_installer.py": "260ed795e1a1bba832ca3969075e8726398cf82b0970f09beacafb683d31bd58",
+    "verify_windows.py": "12b4d7566ca4075ec5ed1c0a15565867a07183f3b4c59e67e2613e4277eebe23",
+    "windows_installer.py": "9f548d1d6b6de1f375bf89c66ead2952e4d6e9e550d5a23cd0abcafef355b0f7"
+  },
+  "host": "Linux-6.18.55-x86_64-with-glibc2.39",
+  "limitations": [
+    "Actual user project and desktop_error.txt were not attached.",
+    "Generated 26.6 MB metadata fixture is not a 550-million-point workload.",
+    "No native Windows/WebView2/GPU execution on the build host.",
+    "256 MB metadata guard and bounded writes do not certify whole-desktop 7 GB RAM.",
+    "Broader ribbon/cleaning/geometry/measurement release remains outstanding."
+  ]
+}

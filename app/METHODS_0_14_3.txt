@@ -1,0 +1,165 @@
+TUNNEL STUDIO 0.14.3 — LINING FEATURE METHODS
+17 October 2026. Copyright (c) 2026 Damian Gulczynski.
+Independent implementation, with research attribution. No author code or trained
+weights were copied. Published detection rates and millimetre errors have not
+been reproduced by this software.
+
+SOURCES READ
+Four supplied PDFs represent three distinct papers. The two copies of the
+Wang joint-extraction paper are byte-identical.
+
+1. Ji et al. (2022), Precise Positioning Method of Moving Laser Point Cloud in
+   Shield Tunnel Based on Bolt Hole Extraction. Remote Sensing 14, 4791.
+   https://doi.org/10.3390/rs14194791
+   Cylindrical projection, adaptive cloth simulation, DBSCAN, mean-shift centres
+   and a project-specific bolt layout for ring/block positioning.
+2. Wang et al. (2025), Extraction and location of subway shield tunnel segment
+   joints from RMLS point clouds. International Journal of Digital Earth 18(1).
+   https://doi.org/10.1080/17538947.2025.2528627
+   Cross-section residual filtering, locally adaptive intensity valleys and
+   normal/curvature support for straight and inclined between-segment joints.
+3. Zhang et al. (2026), Automatic Detection Method for Shield Tunnel Segment
+   Dislocation Based on Facility Point Cloud Removal and Segment Segmentation.
+   Sensors 26, 4901. https://doi.org/10.3390/s26154901
+   Offset-enriched trained PointNet++, local plane/normal bolt extraction,
+   bolt-template seam positioning and common-reference dislocation measurement.
+
+WHAT IS IMPLEMENTED, AND WHAT IS AN ADAPTATION
+The papers mainly use ordered mobile scans. Tunnel Studio also handles static
+and merged scans; it reconstructs a measured station/circumference map rather
+than assuming scan-line order, scanner trajectory or a particular ring design.
+No universally best detector exists independently of scan spacing, noise,
+material, coverage and segment design. The following original combination has
+explicit review and missing-evidence handling.
+
+1. Robust lining reference and non-lining candidates
+Use the existing RANSAC-seeded cylinder fit, local section centres and a measured
+angular profile, followed by section-balanced longitudinal calibration. All
+coordinates are local float64 during fitting. This accommodates measured floor
+profiles better than rejecting every departure from an ideal circular cylinder;
+it remains a one-branch, near-circular tunnel method, not an arbitrary topology
+classifier. Check crown, walls and floor in the review.
+
+Signed radial distance is positive outward, into a recess. Supported inward
+points farther than the keep band (default 60 mm) are interior candidates.
+Outward points beyond the recess allowance (default 250 mm) are a distinct
+review group. Unsupported regions are retained. This is a geometric separation,
+not semantic identification of equipment, rock, reflections or structural defects.
+Only the Non-lining task automatically suggests excluding these two groups;
+all detection tasks retain every group initially. Source changes require the
+existing reviewed apply operation. Original coordinates and available attributes
+are not rewritten by analysis.
+
+2. Bounded full-density unwrapped maps
+A bounded deterministic sample of actual points calibrates the lining. Every
+selected retained original point then contributes to the map where lining
+support and the keep/recess bands allow. Map cells carry occupancy, mean signed
+depth and finite mean intensity. Missing cells are not treated as valleys.
+Fast: 40 mm cells, up to 80,000 calibration points, 80 robust-fit trials.
+Detailed: 20 mm cells, up to 160,000 calibration points, 180 trials.
+More detailed: 10 mm cells, up to 280,000 calibration points, 320 trials.
+The actual calibration sample may be smaller. Finer maps cannot recover detail
+absent from the scan and are NOT accuracy specifications. Full-density labels
+and exports are independent of the calibration cap.
+
+Maps are capped at 2,000,000 cells. Oversized selections stop with an explicit
+request for a shorter section or Fast; resolution is never silently coarsened.
+Classification runs in 25,000-point chunks with cancellation checks. Spatial
+sampling, model fitting and feature stages also check cancellation. Existing
+background execution is retained; a performance guarantee for every machine or
+scan size is not possible.
+
+3. Bolt-hole candidates
+Subtract an occupancy-normalised Gaussian local background (200 mm sigma) of
+clipped reference residuals. Positive local depth must exceed both the user
+minimum (12 mm default) and four robust noise scales (1.4826 MAD). A minimum
+local occupancy prevents unsupported isolated cells from becoming features.
+This is a depth-field adaptation; it is NOT the paper's CSF solver or its dual
+local-plane/PCA-normal test.
+
+DBSCAN uses occupied recess-cell centres with minPts=3. Euclidean epsilon is
+1.8 times map spacing adjusted for observed occupancy, capped at four cells.
+Periodic copies connect features across the unwrap cut. Sparse maps therefore
+do not break long seams into spurious compact bolt candidates. Components must
+fit the maximum diameter (350 mm default), aspect ratio <=3.5 and occupancy
+compactness >=0.08. Gaussian mean-shift (up to 12 iterations) locates each centre.
+These are compact recess candidates: drainage holes or other small recesses can
+look similar. A hole connected to a seam or incompletely observed can be missed.
+The exported centre is the projected mouth on the fitted lining. A separate
+point_centroid is the mean of assigned original points; depth is recorded too.
+No assumed bolt count, six-block template or project-specific bolt pair spacing.
+
+4. Ring seams and longitudinal / between-segment seams
+Seam evidence combines measured outward-depth valleys and, when usable,
+locally dark intensity valleys. Intensity uses local normalised smoothing,
+robust MAD contrast and measured neighbours on both sides in either map
+coordinate. Missing/constant intensity falls back explicitly to geometry.
+This implements the paper's complementary intensity/shape principle, not a
+literal transcription of its formulas. It does not implement PCA normal-
+curvature ratios. Low intensity alone is not a confirmed structural joint.
+
+Ring seeds use angular coverage votes. RANSAC fits
+  station(theta) = c + b*cos(theta) + d*sin(theta)
+which represents a tilted ring plane in the local cylinder frame. At least 40%
+of 36 angular sectors must support a fit. Current limits: seed separation 350 mm,
+seed neighbourhood +/-350 mm and tilt amplitude <=450 mm. These are configurable
+in code, not inferred universal construction dimensions. Extreme wedge rings,
+very close seams and large bends may be missed. The fitting band is the larger
+of 25 mm and 1.5 map cells. Ring names are ordered by local station.
+
+Within each observed ring interval, periodic RANSAC fits arc = intercept + slope
+* (station-midpoint). This permits sloping key-segment joints and separate,
+staggered layouts in neighbouring rings. At least six of ten station bins and
+eight measured cells must support each line. Absolute arc slope <=1; at most
+24 lines per interval. Fit RMS and coverage describe fit support, NOT survey
+accuracy. Fitted 3D guide curves can span unobserved gaps and are labelled as
+candidates; the point groups contain measured original points only.
+
+5. Segment candidates
+Two ring boundaries and at least two non-crossing between-segment seams define
+regions. Intersecting or implausibly close line fits do not produce panels.
+No equal-angle fallback or assumed number of segments is used. Missing seams
+can merge several physical segments into one region; every region is therefore
+named a segment candidate. Areas outside complete intervals remain unassigned.
+In All features, individually detected bolt and seam cells take precedence over
+panel labels; the remaining panel points form each segment group. The Segments
+task runs seam analysis directly, without a bolt-template assumption.
+
+6. Review, location and export
+Four named ribbon commands: Bolt holes, Non-lining, Seams, Segments. Setup also
+provides All lining features. Each has Fast / Detailed / More detailed.
+Colours distinguish retained groups; magenta is selection, red is exclusion.
+Search named rows, isolate a group or right-click > Export highlighted. That
+exports the group's original full-density points using the existing formats.
+CSV exports feature metadata and world-coordinate guide vertices; JSON includes
+features, settings, support statistics, local frame and review groups. Bolt
+markers and seam guides also appear in Geometry & references, where the existing
+properties and object export tools apply. They become unavailable when the
+source scan mask/file changes, and are replaced by the next analysis result.
+Export useful results before rerunning another task.
+
+Station values are local fitted-axis coordinates, NOT design chainage. Ring
+interval numbering is local to this selection, NOT installed ring numbers.
+Angle is measured in the exported local u/v frame, NOT geographic bearing.
+The original world coordinates are retained for downstream CAD/model use.
+
+NOT IMPLEMENTED OR CLAIMED
+No trained PointNet++ facility model: weights, training labels and a validated
+static-scan domain adaptation were not supplied. No design-specific moving
+bolt-template matcher without actual segment/bolt drawings. No CSF solver, no
+paper's PCA-normal classifier, no automatic structural diagnosis, and no new
+segment dislocation measurement. Existing analysis tools remain separate.
+No reproduced field precision, no guaranteed complete extraction and no promise
+of zero lag. Thresholds require tuning to the actual tunnel and scanner.
+
+VALIDATION
+See tests/validation_0_14_3.json and tests/lining_validation_0_14_3.json.
+Known constructed scenes test bolt count/position, periodic wrap, tilted ring
+planes, inclined longitudinal seams, segment regions, optional intensity,
+plain-wall and occlusion negative controls, all three presets and full IDs.
+API tests cover rotated large survey coordinates, existing exclusions, selected
+areas, conservative defaults, CSV metadata/coordinates, stale guides, cancellation
+and save rollback. Existing cleaning, review and installer rollback tests run
+again. Chromium checks use production UI and WebGL with synthetic API data;
+Windows/WebView2, the installed base application's reader binaries and Damian's
+actual labelled scans have not been tested in this environment.

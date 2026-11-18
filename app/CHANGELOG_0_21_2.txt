@@ -1,0 +1,20 @@
+Tunnel Studio 0.21.2
+4 November 2026
+
+Completed registered clouds remain after source-bundle deletion
+The Project Explorer keeps a materialised Registered cloud outside its source
+bundle. Older projects are corrected when their item inventory is read. Source
+setups remain accessible under the joined-scan bundle, with their individual
+setup views, target links and visibility controls.
+
+Delete source bundle reviews the original setups and explicitly lists any
+Registered cloud that will be kept. The deletion transaction preserves the
+stored merged cloud, independent cleaned clouds, point-edit masks, meshes and
+saved analyses that remain in the project. Source provenance records report
+removed setups without retaining obsolete source-cache paths as dependencies.
+A result that the user explicitly selects can still be deleted separately.
+
+Show, Hide, Fit and Export of a source bundle operate on its source setups.
+The registered output and original setups remain alternative views of the
+same overlapping observations. Point coordinates and counts are unchanged by
+these explorer grouping and visibility controls.

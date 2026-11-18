@@ -1,0 +1,14 @@
+Tunnel Studio 0.18.8 release scope
+2026-11-02
+
+This customer-preview release packages the cumulative application from the exact delivered 0.18.7 installer plus manual visual registration, mesh-source selection, labelled bolt-recess point selection and live transparent point-to-plane measurement changes.
+
+Manual registration follows a fixed/moving visual alignment workflow with plan and elevation views, a 3D check, a selectable rotation pivot, fine steps, local draft Undo/Redo and Join and lock. It is manual rigid alignment, not automatic cloud-to-cloud refinement. Preview samples are bounded; original scan coordinates are not rewritten. Leica-specific sensor constraints and automatic ICP refinement are outside this change. A link in a cyclic registration graph cannot be independently repositioned without first resolving the other connecting links.
+
+Bolt-hole selection operates on point groups already labelled by the analysis. It does not improve the detector, recover undetected holes or guarantee field accuracy. The bounded detail preview is separate from the complete original-ID selection used for deletion.
+
+Hover snapping uses currently visible displayed scan points. Confirmation recovers the original coordinate. This is not a global nearest-neighbour search through every undisplayed point in a large survey.
+
+The reported R0007 missing .attr32 cache cannot be recreated without matching source data and remains unresolved. Physical segment recognition and rendering relative to the research paper remain unresolved. The 0.18.7 performance and retained-result fixes are preserved and regression-tested; elapsed time and segmentation quality on the user's actual multi-scan project have not been verified here.
+
+Validation uses synthetic fixtures and Linux Chromium/software WebGL. Installer integrity, lifecycle and production startup checks are run on the build host. Native Windows/WebView2 execution and the user's GPU have not been tested on this host. The installer repeats bundled component checks on Windows before activation. Final installer hash and extraction verification are recorded separately in TunnelStudio_0.18.8_Release_Checks.json.

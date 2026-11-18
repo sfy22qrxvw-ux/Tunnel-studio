@@ -1,0 +1,11 @@
+TUNNEL STUDIO 0.17.8 — SHARED RUNTIME / FAST CUMULATIVE UPDATER
+
+- Cumulative application release: retains 0.17.6 transform-only virtual registration for long RTC360 registration chains and 0.17.7 multi-scan faster permanent point removal.
+- Registration Apply Geometry remains transform-only. It does not create a transformed XYZ copy or an automatic merged cloud for every accepted link.
+- Permanent remove deleted points retains multi-scan batch selection, sequential atomic compaction, 1,000,000-point streaming blocks and single-pass preview generation.
+- The Windows updater no longer copies the complete existing Python/native runtime into every new version folder.
+- On first use of the new updater architecture, the existing runtime directory is moved on the same drive into a shared Tunnel Studio runtime location and the previous release receives a Windows directory junction back to it. This is a filesystem metadata move rather than a multi-hundred-megabyte copy.
+- New releases use the same verified shared runtime through a junction and install only the small application payload plus launcher metadata.
+- Existing survey/project data under %LOCALAPPDATA%\TunnelStudio is not moved or rewritten by the updater.
+- The previous application release remains usable as a fallback because its runtime path is preserved through the junction.
+- If shared-runtime preparation cannot be completed safely, the updater stops before activating 0.17.8 and records UPDATE_ERROR.txt.

@@ -118,6 +118,12 @@ def saved_boxes(s,source):
     scans={x['id']:x.get('limit_box') for x in s.STATE.get('job_items',[]) if x.get('kind')=='scan'}
     return [scans.get(ident) for ident in scan_ids(source)]
 
+def scope_members(s, source):
+    rows = parts(source['meta'])
+    return [dict(id=row.get('id') or source['id'], name=row.get('name', source['name']),
+                 boxed=bool(box)) for row, box in zip(rows, saved_boxes(s, source))]
+
+
 def processing_scope(s,source,mode='auto',selection=None):
     """Resolve a world-space area against the actual scans in this source."""
     if mode not in ('auto','selection','limit','whole'):
@@ -147,23 +153,22 @@ def blocks(meta, counters=None, progress=lambda message: None, cancel=lambda: Fa
     total = int(meta['count'])
     for index,row in enumerate(parts(meta)):
         m = row['meta']; n = int(m['count'])
-        if scope:
-            limit=scope['limits'][index]
-            spec=scope['selection'] or limit
-            if spec is not None:
-                visible=dict(limit_box=limit) if scope['selection'] and limit else None
-                label=scope_label(scope);included=0
-                def report(message):
-                    if cancel():raise jobdata.Cancelled('Analysis cancelled. The previous result is unchanged.')
-                    progress(f'{label} · {message}')
-                for ids,q in jobdata.selection_rows(m,spec,report,visibility=visible):
-                    ids=ids.astype(np.uint64)+offset
-                    for start in range(0,len(ids),block):
-                        stop=min(start+block,len(ids));p=q[start:stop];batch=ids[start:stop]
-                        if counters is not None:counters['retained_points']+=len(batch)
-                        included+=len(batch)
-                        progress(f'{label} · {row["name"]} · {included:,} retained points in area')
-                        yield batch,p
+        limit = scope['limits'][index] if scope else None
+        spec = (scope['selection'] or limit) if scope else None
+        if spec is not None:
+            visible=dict(limit_box=limit) if scope['selection'] and limit else None
+            label=scope_label(scope);included=0
+            def report(message):
+                if cancel():raise jobdata.Cancelled('Analysis cancelled. The previous result is unchanged.')
+                progress(f'{label} · {message}')
+            for ids,q in jobdata.selection_rows(m,spec,report,visibility=visible):
+                ids=ids.astype(np.uint64)+offset
+                for start in range(0,len(ids),block):
+                    stop=min(start+block,len(ids));p=q[start:stop];batch=ids[start:stop]
+                    if counters is not None:counters['retained_points']+=len(batch)
+                    included+=len(batch)
+                    progress(f'{label} · {row["name"]} · {included:,} retained points in area')
+                    yield batch,p
             offset+=n
             continue
         source = Path(m['file']); mask_path = Path(m['mask_file']) if m.get('mask_file') else None

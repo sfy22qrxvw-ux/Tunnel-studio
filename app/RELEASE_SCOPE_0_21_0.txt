@@ -1,0 +1,39 @@
+Tunnel Studio 0.21.0 | Survey workflows and point display
+
+The complete 0.20.0 PERFORMANCE application is the baseline for this release.
+Prior project and cache formats continue to use the same Windows runtime.
+
+Bolt reconstruction operates on actual mesh boundary loops. An opening must
+pass extent, topology, surrounding-wall and overlap checks. Reconstructed faces
+are estimates. Repair supports up to two million vertices and two million faces
+per source mesh. Selecting a fitted recess marker in a cloud by itself does not
+create a mesh boundary.
+
+Tunnel volume is the enclosed internal void for one continuous bore. A valid
+alignment must pass through both end contours. The end cuts replace only the
+portals. Damage elsewhere in the measured reach must be repaired first.
+Measurements retain the project chainages and numerical results. A separate
+outer surface would be required to measure lining material volume.
+
+Section convergence uses independent observations in a declared common datum.
+Cuts use the same alignment planes. Up to 32 stations can be reviewed together.
+Each fit samples a maximum of 32,000 retained wall points at its station, with
+support and residual checks. The reported chord changes are fitted quantities.
+Registration, scan coverage and changes in the observed lining can affect them.
+
+Ring sectors are an interpretation of the configured layout. The confidence
+labels count supported sides. A high label does not establish dimensional
+accuracy or independently verify the installed number of physical segments.
+Counts concern panels containing classified scan points. Ring numbers are local
+to the analysis. An opening in the measured ring sequence can span multiple
+physical rings. Examine measured joint coverage before using the divisions.
+
+Viewer level of detail affects display density. File coordinates, point IDs and
+full-density processing continue to use the original working assets. Graphics
+checks on the build host use software WebGL. Native Windows/WebView2, the user
+GPU and the user's real 921-million-point tunnel are field validation items.
+
+Save portable copy in... writes a copy of the project and its available linked
+assets at the chosen destination. It leaves the current working data in the
+displayed data folder. Changing drives for all live caches and moving existing
+shared project data are separate storage-management tasks for a later release.

@@ -1,0 +1,79 @@
+Tunnel Studio 0.17.4 — direct RTC360 raw-folder target registration
+
+PURPOSE
+The required production workflow is the original RTC360 job/setup folder -> Tunnel
+Studio. REGISTER 360 and E57 are comparison/reference data only and are not runtime
+requirements for import, target fitting, registration, editing or export.
+
+REAL SAMPLE USED FOR RELEASE CHECKS
+Three supplied raw RTC360 setup folders were inspected directly:
+  27-sFHX
+  32-n2GG
+  37-bcCv
+Each contains 21 scan slices and the RTC360 setup metadata required by the native
+reader. Inspecting their parent job folder discovers all three setups separately.
+The source folders are never rewritten.
+
+The supplied REGISTER 360 database was read only as an independent reference. It
+contains the corresponding setups 240808 27-95- 27 / 32 / 37, sphere observations
+and final setup poses. The known physical sphere diameter supplied by the user is
+198.8 mm (99.4 mm radius). The database's fitted sphere radii are diagnostic rather
+than ground truth and include visibly poorer individual fits; Tunnel Studio therefore
+uses the user-entered nominal diameter for the new sphere-centre fit.
+
+RAW RTC360 DISPLAY
+The previous quick raw preview could use a one-dimensional fixed stride through a
+structured scanner raster. Regular row/column sampling can alias under such a stride
+and make a dense scan look striped, sparse or broken. RTC360 raw scans now bypass
+that legacy preview in quick display and use the same spatially balanced deterministic
+sample from the full float64 cache as normal scan previews. Processing continues to
+use the complete retained raw point cache; the display sample does not change source
+coordinates or registration calculations.
+
+This is a display/sampling correction, not a claim that Tunnel Studio reproduces every
+Leica factory validity/filtering/calibration convention. The independent raw decoder
+still retains every positive finite reconstructed range that it supports. Unknown Leica
+validity flags are not guessed or silently used to delete measurements. Point RGB/HDR
+and exact factory optical/thermal corrections remain limitations documented by the raw
+reader.
+
+SURVEY TARGET TYPES
+Registration -> Survey targets explicitly separates:
+  1. Sphere · known diameter
+  2. B&W HDS · known size
+  3. B&W · automatic size
+
+Sphere fitting is assisted rather than a blind full-scene search: pick a measured point
+on the visible sphere, enter the physical diameter, and Tunnel Studio gathers original
+full-density local points. The nominal radius is fixed during robust centre refinement.
+A free-radius fit is reported only as a diagnostic. Residual RMS/median, local support,
+directional coverage, plane-versus-sphere curvature and fitted-radius difference are
+used to reject flat surfaces and weak accidental fits. The default sphere diameter for
+this validated sample is 198.8 mm; it remains editable for other jobs.
+
+A persistent conservative spatial index limits repeated sphere fitting to original-row
+blocks that intersect the local target neighbourhood. Every candidate original point is
+then tested against the exact spherical neighbourhood; the index never supplies
+replacement points or changes the accepted coordinates.
+
+B&W known-size fitting retains the existing plane/intensity checker model and
+full-density validation. The default UI size is 152.4 mm (6 inch) as a convenient
+starting value for the HDS 6-inch product discussed with the user; it is editable because
+other Leica jobs may use different printed targets. Automatic multi-scale B&W search
+remains available. Suggested centres always require review.
+
+REGISTRATION
+Target fitting remains separate from target matching and rigid registration. Full 3D
+requires at least three non-collinear Fit correspondences. Independent Check targets do
+not determine the transformation. The optional 0.17.3 suspect-match review remains
+available and requires redundancy before recommending exclusions. Scale stays fixed at
+1. REGISTER 360 cloud-to-cloud results are not injected into the Tunnel Studio solve.
+
+VALIDATION LIMITS
+The Linux build host can inspect the user's real RTC360 folder metadata and exercise
+all portable fitting/registration code, but the Windows-only raw scan codec cannot be
+executed here. Consequently this release does NOT claim that the new raw view has been
+visually verified on the user's Windows GPU or that sphere centres have been fitted from
+the supplied raw scan bytes in this environment. Those are the first field checks for the
+user after installing/updating. The reduced E57 and REGISTER 360 files remain reference
+material, not hidden prerequisites.

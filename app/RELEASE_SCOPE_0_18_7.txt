@@ -1,0 +1,114 @@
+Tunnel Studio 0.18.7 — point deletion and independent saved results
+1 November 2026
+
+Release basis
+
+This cumulative application starts from the exact delivered
+TunnelStudio_Setup_0.18.6_x64.exe (244,768,744 bytes), SHA256
+2d397e0e7d3db707e1351f0ae2b30659503bc6a965a8e52f2b232ba9664af5d6.
+All 20,001 listed Windows runtime files remain unchanged. Prior source, release
+notes and validation reports remain bundled as historical records.
+
+Point deletion
+
+An ordinary point edit selects original point identities and commits immutable
+reversible exclusion masks. The commit no longer calculates all retained XYZ
+bounds, all attribute statistics or all prepared-analysis rows before finishing.
+Exact remaining counts are recorded separately from exact analytical properties.
+Small proven interior edits may update an existing exact properties cache;
+boundary or larger edits defer bounds/channel calculations until a caller needs
+them. Conservative display bounds never replace exact analytical bounds.
+
+Empty selections and already-applied point identities create no mask. When a
+prior mask must be copied, its exact excluded count is collected in that existing
+bounded copy pass. Selection, counts and saved masks still cover original points,
+including points absent from the viewport preview. Multi-scan deletion retains
+one transaction and one workspace Undo step. Cancellation or failed saving rolls
+back metadata and removes newly created masks while preserving source files.
+
+The existing active analysis projection remains available. A proven count of
+points within alignment ends can be updated from the changed original rows.
+If its revision cannot be proved, only that informational total is unavailable;
+the projection and exact current mask remain usable for analytical computation.
+New projections count retained finite rows within the alignment during their
+existing bounded reading pass. Projection rows for excluded points are still
+written so later restoration does not require projecting the source again.
+
+New retained-count metadata is bound to source/mask file revisions. Portable
+save/reopen reuses it only after matching asset digests calculated during the
+existing copy passes. Stale caches and changed archive assets cannot acquire a
+new exact-looking count merely because their paths changed. Inspection input
+fingerprints ignore these metadata-only caches while retaining geometry checks.
+
+Interactive display
+
+Delete immediately hides the selected displayed points. Success is reported only
+after the backend has saved the exact edit. The viewer then compacts its current
+CPU display rows and updates inventory without waiting for a whole-scene download.
+Uploaded XYZ/RGB geometry stays in place: a compact byte stream controls selection
+highlights and deleted-point visibility, while a row map preserves original GPU
+identities across successive edits. A fresh preview replaces that geometry when
+it is ready. The operation-progress bar overlays the viewport instead of resizing
+and reallocating its framebuffer whenever an operation starts or finishes.
+The current camera and local detail view remain in place. Refinement runs in the
+background and cannot overwrite a later edit, setup or analysis view. An analysis
+that finishes while deletion is saving retains an updated normal-view snapshot.
+
+Repeated Delete commands are serialized before they can alter pending-hide
+state. Failure restores the prior visible points. The viewport remains sampled;
+the backend edit is full-density. Actual selection and saved-mask work still
+depend on source layout, point count, mask allocation and storage performance.
+The flat byte-mask format remains compatible with existing saved projects,
+exports and analytical readers. Dense previously edited masks may still require
+copying large allocated spans for a reversible edit.
+
+Independent registered clouds and saved analysis
+
+The reproduced defect used 11 original setups, a separately built registered
+cloud, a prepared survey analysis, a saved cloud/mesh comparison and a mesh.
+Deleting one point from an original setup used to retire the independent
+registered cloud at the next inventory refresh and clear the active analysis.
+The registered XYZ and result files themselves had not changed.
+
+Original point-mask edits and original-item removal now preserve those independent
+saved objects and their active analysis links. The registered cloud records which
+source setups were edited or removed and is described as a saved registered
+cloud. Explicitly selecting it uses its saved points. Automatic whole-project or
+bundle analysis uses the current original setups and masks, including before an
+inventory refresh. Undoing the source edit clears the difference when its source
+revision matches again. Removing an original item can reclaim its exclusive files
+while preserving independently owned merged, analysis and mesh files.
+
+Changing the registration pose, replacing source coordinate caches or applying a
+new registration retains the existing archived/stale checks. This correction does
+not silently relabel old coordinates as the new registration. Existing already
+archived results are not automatically revived without evidence of their input
+state. Historical files that a prior operation actually removed are not restored
+by installing an update.
+
+Setup-view appearance
+
+The setup bar, input controls, status text, blend output and keyboard focus use
+the same theme variables as the application. Light, Dark and Follow Windows
+were inspected, including a Windows-following scheme change while the setup was
+open. These controls do not recolour measured point data or scanner photographs.
+
+Validation and practical limits
+
+Use VALIDATION_0_18_7.json for exact test results and timing scope. Backend timing
+uses actual synthetic XYZ/attribute/mask files and includes workspace history and
+atomic metadata save. An intentionally poor block index measures the remaining
+exact-selection cost. Browser tests use production UI/API code, delayed preview
+responses, actual mask checks and software WebGL on Linux.
+
+Native Windows installation, WebView2 and the user's RTX GPU/tunnel data were not
+available on the build host. These timings do not establish a universal deletion
+latency, a seven-GB process memory ceiling or billion-point throughput. Previously
+reported full-input algorithm changes are retained; this update does not establish
+semantic segmentation/classification/bolt accuracy on every real survey.
+
+The full installer is built from the frozen source, independently extracted and
+compared to its manifest, source and unchanged runtime. The real startup/component
+command is executed against staged and extracted application code on Linux. The
+Windows installer repeats its bundled-component checks before activation and
+preserves the previous release and survey workspace if those checks fail.

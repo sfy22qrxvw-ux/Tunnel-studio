@@ -1,0 +1,78 @@
+Tunnel Studio 0.19.0 release scope
+
+Global bundle adjustment and loop closure
+The sparse joint least-squares system has scan pose variables, explicit shared
+physical target XYZ variables and direct point-to-plane surface constraints.
+Each target observation is counted once, even when the target appears on
+several links. Fit/check roles cannot be mixed for the same observation.
+Both scans of a surface link may move. Existing keep-vertical and held-coordinate
+constraints remain supported through the registration compatibility entry point.
+One datum is fixed; scale stays one and rotations stay proper.
+
+The dedicated UI operates on an existing connected group. Make pairwise target,
+cloud or manual links first. It is not automatic global registration of arbitrary
+unlinked scans. Potential loop suggestions use bounding-box overlap only; the
+user chooses each candidate and its surfaces must pass independent ICP overlap,
+convergence and six-axis observability checks before the joint adjustment.
+Weak individual loop geometry may be refused even when other global constraints
+could potentially resolve it. Repetitive tunnel geometry can still yield a
+wrong local minimum; independent checks and visual inspection are necessary.
+
+Streaming sampling budgets, total/per setup:
+Fast: 500,000 / 15,000; Balanced: 1,500,000 / 30,000;
+High: 3,000,000 / 60,000. All retained points are eligible during bounded reads.
+Maximum scalar residual budget: 600,000. At least 500 distinct cloud matches
+are needed per surface-only link. Surface weights are engineering weights, not
+instrument covariance. Sparse rank/conditioning checks refuse singular solves.
+The default iteration limit is 20, configurable up to 50 through the API.
+No survey accuracy or probability follows from RMS, median or maximum residual.
+
+Drafts stay separate from saved poses. Source, mask, pose and topology changes
+invalidate Apply. Apply is transactional and uses existing virtual registration;
+raw XYZ and attributes are not rewritten. Stop and failed saves preserve the
+previous state. One Workspace Undo reverses the accepted bundle.
+
+RTC360 review and scan labels
+All raw setups are reviewed by default, independently of the highlighted scan.
+Ready, already positioned, protected and unavailable statuses are distinguished.
+Show reviewed setups changes visibility only, then frames their world bounds.
+The refinement shortcut opens a pair from the same scanner job; the user can
+choose another pair. It does not silently register every setup in the job.
+Unchanged owned initial poses remain idempotent. Existing registration links
+and independently edited poses are preserved. Pose decoding and tilt compensation
+are unchanged; this workflow change does not establish field alignment accuracy.
+Bare numeric labels use a meaningful source folder or a Setup prefix, retaining
+the recorded name and setup ID. Custom names are never automatically replaced.
+
+CPU processing
+Bounded independent noise tiles use a thread pool with deterministic ordered
+commits, complete support halos and memory-aware concurrency. Native queries
+inside parallel tiles stay single-threaded to avoid nested oversubscription.
+Poisson/native large queries use conservative worker limits, at most eight.
+Mesh component selection and vertex smoothing use compiled SciPy sparse kernels.
+GuSAC near-wall PCA queries are batched; its model fitting remains serial.
+Tiny normal blocks stay single-threaded based on measured thread overhead.
+There is no new GPU reconstruction and no claim that every job is parallel.
+Synthetic timing results are operation-specific, not end-to-end field timings.
+
+Time-series monitoring
+CSV observations use epoch, ring_id, point_id, e, n, h; coordinates in metres,
+ISO dates or timestamps with explicit timezones, and one declared project datum.
+Optional sigma_e_mm, sigma_n_mm and sigma_h_mm propagate independent epoch errors.
+The assumptions exclude network/control correlations and are not accuracy claims.
+Same physical IDs are compared directly; no best fit between survey epochs.
+Positive settlement is downward; positive convergence is chord shortening.
+Rates use actual elapsed days. Missing observations produce gaps, not zeros;
+rates do not bridge missing observations. Baseline changes preserve source values.
+The CSV limit is 16 MiB / 100,000 observations; report rows are capped at 300,000.
+Named 3D or horizontal chords, optional review thresholds, CSV, chart PNG and
+printable HTML are supported. Thresholds do not trigger automated notifications.
+This is entered-survey time-series monitoring, not automatic cloud deformation
+tracking or complete Amberg Geotechnics functionality.
+
+Verification and limits
+See VALIDATION_0_19_0.json and the separate release checks for actual test outcomes.
+Linux numerical/browser/installer-structure checks do not validate native Windows
+or WebView2, hardware GPU behaviour, field metrology or the full user's project.
+Missing R0007 attributes, physical segment recognition/rendering against the
+research paper, and full-project deletion timing remain unresolved.

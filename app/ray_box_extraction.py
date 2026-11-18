@@ -122,6 +122,23 @@ def _surface_from_histogram(hist,centres,minimum,progress,cancel):
     return target,support
 
 
+def _corroborated_surface(target, keep):
+    """Require agreement with two nearby boxes and use the inward estimate."""
+    padded = np.pad(target, ((1, 1), (0, 0)), constant_values=np.nan)
+    nearby = (
+        padded[:-2], padded[2:],
+        np.roll(target, 1, axis=1), np.roll(target, -1, axis=1),
+    )
+    votes = np.zeros(target.shape, np.uint8)
+    conservative = target.copy()
+    for neighbour in nearby:
+        agrees = np.abs(neighbour - target) <= keep
+        votes += agrees
+        np.minimum(conservative, neighbour, out=conservative, where=agrees)
+    conservative[votes < 2] = np.nan
+    return conservative
+
+
 def run_batches(batches,ids_path,labels_path,settings,progress,cancel):
     started=time.monotonic();sample_spacing=max(.02,min(.075,float(settings.get('resolution',.2))*.25))
     original_batches=batches
@@ -138,6 +155,7 @@ def run_batches(batches,ids_path,labels_path,settings,progress,cancel):
     depth=float(settings.get('ray_depth_mm',20))/1000;nbins=max(2,int(math.ceil((inward+outward)/depth)))
     edges=np.linspace(-inward,outward,nbins+1);depth=float(edges[1]-edges[0]);centres=((edges[:-1]+edges[1:])/2).astype(np.float32)
     minimum=int(settings.get('ray_min_points',4));keep=float(settings.get('ray_keep_mm',60))/1000
+    interior_only = settings.get('ray_interior_only', 0) == 1
     work=Path(ids_path).parent
     needed=nstation*nangle*nbins*4+total*12
     if needed>shutil.disk_usage(work).free-50_000_000:
@@ -157,6 +175,8 @@ def run_batches(batches,ids_path,labels_path,settings,progress,cancel):
             target,support=hist.surface(centres,minimum,progress,cancel)
         finally:
             hist.close()
+        if interior_only:
+            pipe_surface = _corroborated_surface(target, keep)
         supported_boxes=int(np.isfinite(target).sum());counts=np.zeros(4,np.int64);sums=np.zeros((4,3));written=0
         with open(ids_path,'wb') as idsout,open(labels_path,'wb') as labout:
             for ids,points,_ in batches():
@@ -166,13 +186,24 @@ def run_batches(batches,ids_path,labels_path,settings,progress,cancel):
                 shell=np.zeros(len(points),float);shell[valid]=residual[valid]-target[station[valid],angular[valid]]
                 labels[valid&(np.abs(shell)<=keep)]=0
                 labels[valid&(shell < -keep)]=1
-                labels[valid&(shell > keep)]=2
+                if interior_only:
+                    # Wall returns beyond the fitted surface can be genuine lining.
+                    # Quantisation can shift the bin centre by half a radial box.
+                    labels[labels == 1] = 3
+                    box_station, box_angle = station[valid], angular[valid]
+                    guarded_shell = residual[valid] - pipe_surface[box_station, box_angle]
+                    labels[np.flatnonzero(valid)[guarded_shell < -(keep + depth / 2)]] = 1
+                else:
+                    labels[valid&(shell > keep)]=2
                 np.asarray(ids,dtype='<i8').tofile(idsout);labels.astype('<i4').tofile(labout);written+=len(ids)
                 for k in range(4):
                     use=labels==k;counts[k]+=int(use.sum());sums[k]+=np.asarray(points)[use].sum(0)
     if written!=total:raise ValueError('The scan selection changed during ray/box extraction. Run it again.')
     if counts[0]<50:raise ValueError('Too few original points match the ray-supported lining. Include both walls and crown of one branch, or use the existing Clean tunnel method.')
     names=['Ray-supported tunnel lining','Interior objects before lining · review','Outside surface / possible reflections · review','Unsupported ray boxes · retained']
+    if interior_only:
+        names[1] = 'Pipes / interior objects ? review'
+        names[3] = 'Outward returns and uncertain areas ? retained'
     rows=[dict(id=k,name=names[k],points=int(counts[k]),supervoxels=0,centre=(sums[k]/counts[k]).tolist(),linearity=0.,planar_fraction=0.,overlap=0.,automatic_keep=k in (0,3)) for k in range(4) if counts[k]]
     kept=[k for k in (0,3) if counts[k]]
     return dict(kept=kept,clusters=rows,research_dois=[DOI],statistics=dict(input_points=total,unique_points=None,duplicate_locations=None,supervoxels=0,expected_supervoxels=0,merge_passes=0,initial_edges=0,removed_edges=0,retained_edges=0,clusters=len(rows),kept_points=int(counts[0]+counts[3]),noise_points=0,noise_candidates=int(counts[1]+counts[2]),calibration_points=len(sample),fitted_sections=len(model['nodes']),reference_radius_m=model['radius'],ray_station_m=station_step,ray_angle_deg=360/nangle,ray_depth_mm=depth*1000,ray_keep_mm=keep*1000,ray_boxes=nstation*nangle,supported_ray_boxes=supported_boxes,unsupported_points=int(counts[3]),box_histogram_bins=nbins,strategy='outward radial modes with 3x3 station/angle box support; all original points classified',seconds=round(time.monotonic()-started,3)),warnings=[

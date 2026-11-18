@@ -1,0 +1,11 @@
+TUNNEL STUDIO 0.17.12 — CLEAN PROJECT HISTORY / UNIVERSAL STORAGE
+
+- Startup recovery is hidden again. Tunnel Studio no longer creates a normal named "— previous session ..." project every time the app starts.
+- Existing automatically generated previous-session named snapshots are retired from the Open Project list without deleting any point/cache files. Their tiny JSON manifests are moved to diagnostics for audit only and no longer keep stale caches marked shared.
+- Only the newest hidden startup-recovery manifest protects cache data. Older hidden recovery metadata is pruned/ignored so historical sessions cannot pin hundreds of gigabytes indefinitely.
+- Home now has a direct Storage manager command; storage management is not only reached through Open Project.
+- Storage Manager shows current imported scan/model cache usage with source format and source name.
+- The same reference-aware ownership rules apply across E57, LAS/LAZ, PLY, PTS, XYZ/TXT/CSV, Leica HSPCA, direct RTC360 raw setups, OBJ/ZIP meshes and portable-project assets.
+- DXF/model JSON, alignments, ring observations and survey-control imports are primarily project metadata and follow the same project-delete lifecycle.
+- New file imports record source name/path/format/size/mtime metadata where applicable. Original source files outside the Tunnel Studio data directory are never deleted by project cleanup.
+- Existing 0.17.6 virtual registration, 0.17.7 bulk permanent deletion, 0.17.8 fast shared-runtime updater and 0.17.11 background project purge remain cumulative.

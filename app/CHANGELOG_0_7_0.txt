@@ -1,0 +1,62 @@
+TUNNEL STUDIO 0.7.0 — SINGLE WORKSPACE / EDITING RELEASE
+
+Released: 10 October 2026
+
+MAIN WORKSPACE
+- Reworked the application around one persistent 3D workspace.
+- Removed the visible secondary workspace strip (Job Workspace / 3D Tunnel / Registration / Extract Surface / etc.).
+- Registration, surface extraction, analysis, modelling and reporting now open from the main top ribbon and use dockable/resizable tool panels while the same 3D scene remains visible.
+- Reduced header/whitespace and removed the large information strip below the scan so the 3D viewport gets substantially more space.
+- Existing scan/setup panel remains resizable/collapsible; active tool panel can now also be resized.
+- Maximise 3D remains available.
+
+IMPORT
+- One visible Import command in the main ribbon is now the single entry point.
+- Unified importer offers Scan / point cloud, Model / mesh, Alignment / design, Ring observations, Survey control and Portable project.
+- Removed visible duplicate Browse scan / Add small scans / OBJ model / local-path import controls from the main workspace.
+- Importing and viewing a scan does NOT require an alignment. Alignment is requested only when an alignment-dependent analysis is started.
+- Large scans continue to use the stable direct-from-disk import workflow introduced in 0.5.5.
+
+3D EDITING AND SELECTION
+- Fixed screen box selection so it selects full-density points whose projection lies inside the drawn screen rectangle rather than an unrelated axis-aligned world box.
+- Added freehand polygon/lasso selection for irregular tunnel geometry.
+- Selection is highlighted in the main 3D view and remains tied to the camera used when it was drawn.
+- Added Invert selection and Clear selection.
+- Added Hide selected, Isolate selected, Show all points, Delete selected, Undo and Redo.
+- Added Separate selection to new scan item for workflows such as splitting a T-shaped main tunnel / cross-passage scan. The original scan is preserved by default.
+- Point editing and separation operate on full-density cached data, not only the displayed preview.
+
+SURFACE EXTRACTION
+- Extract Tunnel Surface can use the current 3D box/lasso selection directly.
+- Large selected areas are processed in safe internal batches; the user no longer needs to know the point count beforehand and the selected area is not rejected because it exceeds the old total processing cap.
+- UI wording now describes internal batches rather than implying a user point limit.
+- Technical extraction settings remain under Advanced.
+- Clear inspection now clears the visual inspection/highlight state.
+
+REGISTRATION / TARGETS
+- Registration is now an optional ribbon tool rather than a separate primary workspace.
+- Detected black-and-white target candidates are drawn as visible cross markers with labels in the main 3D scene.
+- Target review/solve controls remain available in the registration side tool panel.
+- Already registered scans can simply stay in the main workspace; registration tools do not need to be used.
+
+DISPLAY
+- Display detail remains percentage based (1–100%). 100% means the viewer's safe maximum detail, not blindly loading every point of a multi-gigabyte scan into WebView.
+- Full-density data remains on disk for editing/processing.
+- E57 RGB is used for point display when complete RGB values are available.
+
+LONG OPERATIONS
+- Added a visible Stop button for long-running operations. Cancellation is requested at safe checkpoints so original survey data is not overwritten.
+- Progress display now shows stage text, percentage where measurable, elapsed time, and an estimated time remaining when there is enough progress information.
+- When ETA cannot be estimated reliably, the UI says it is estimating rather than inventing a precise time.
+- The native progress window remains independent of the WebView so large-file progress can still be seen if the browser renderer is busy.
+
+MESSAGES AND USABILITY
+- Important failures continue to use a prominent central message dialog rather than being easy to miss at the top of the page.
+- Analysis actions explain when an alignment is actually required.
+- General ready/status wording now reflects the single-workspace ribbon workflow.
+
+KNOWN LIMITATIONS
+- E57 panorama/scanner photographs and scanner acquisition grids are not yet displayed. Point RGB is supported when present.
+- The 3D viewer uses a safe sampled/LOD-style display budget; processing uses full-density cached data.
+- Black-and-white target detection is an assisted workflow and target centres/residuals must still be reviewed by a surveyor before applying a registration.
+- Surface extraction remains a prototype workflow and results must be independently checked before project use.

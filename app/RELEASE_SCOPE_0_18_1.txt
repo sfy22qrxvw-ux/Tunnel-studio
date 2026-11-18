@@ -1,0 +1,24 @@
+Tunnel Studio 0.18.1 - scope
+
+Maintenance update over delivered 0.18.0. One behavioural correction: saved
+section comparisons require consistent extraction and fitting settings before
+calculation. This protects against preprocessing changes appearing as measured
+shape change. It does not estimate uncertainty or automatically align epochs.
+
+The six-paper review retains existing documented method choices and records
+which publication steps are adapted, unsuitable for direct copying or absent.
+Current cloud-to-cloud distance remains unsigned nearest measured-point gap.
+Current robust ellipse fitting uses angular-balanced representatives with
+retained-input residual checks; it is not full-point equal-weight optimization.
+SMRG's local selection guard and all prior documented practical limits remain.
+
+Tests:233 application tests, 156 Python syntax parses,47 JavaScript syntax checks,
+four controlled method demonstrations and separate installer activation/hash
+checks. No native Windows or real full-size tunnel run was performed here.
+Do not interpret publication statistics or synthetic numerical exactness as
+RTC360 field accuracy, structural acceptance limits or a7 GB process-tree guarantee.
+
+An old reference missing wall band, design radius or fit threshold must be
+recreated. Existing compatible baselines continue to work. To intentionally
+change filtering, choose consistent settings for both baseline and current
+section rather than compare unlike calculations.

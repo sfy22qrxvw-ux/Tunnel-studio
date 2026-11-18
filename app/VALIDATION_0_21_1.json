@@ -1,0 +1,120 @@
+{
+  "version": "0.21.1",
+  "base_version": "0.21.0",
+  "date": "2026-11-04",
+  "application_tests": {
+    "tests_discovered": 601,
+    "tests_run": 601,
+    "seconds": 68.55334391099859,
+    "success": true,
+    "failures": [],
+    "errors": [],
+    "skipped": [],
+    "source_files_changed_during_tests": [],
+    "native_windows_execution": false
+  },
+  "syntax": {
+    "python_files": 216,
+    "javascript_files": 65,
+    "passed": true
+  },
+  "browser_scenario_groups": 36,
+  "browser_reports": {
+    "cleanup_dialog_ui": {
+      "scenarios": [
+        "No preselected files. Selections from different pages and categories survive filtering; the exact two paths and combined size appear before any apply.",
+        "Changing a reviewed selection returns to the list. A stale receipt clears all selection and requires fresh review.",
+        "Close review only shows temporary and reproducible categories. Continue without cleanup and Escape never apply and return distinct outcomes.",
+        "During a commit the dialog suppresses dismissal and exposes its committing state to native close. A matching receipt enables Continue only after completion.",
+        "Partial removal is disclosed and cannot acknowledge successful cleanup. The user can re-inspect disk contents."
+      ],
+      "errors": [],
+      "platform": "Linux Chromium, production application UI with controlled candidate listings, stale/partial receipts and held commits.",
+      "status": "passed"
+    },
+    "desktop_close_ui": {
+      "checks": [
+        "Missing native bridge returns control to the original close path.",
+        "Repeated title-bar Close shares one prompt. Keeping the project open and skipping cleanup never send a deletion request.",
+        "Only an explicit file selection, review and confirmation remove a file. Exit waits during commit and resumes when Continue is chosen.",
+        "Title-bar Close keeps an unrelated existing storage review open."
+      ],
+      "errors": [],
+      "platform": "Linux headless Chromium, production close dialog and dispatcher, simulated native callback and synthetic file inventory",
+      "passed": true
+    },
+    "folder_reveal_copy_ui": {
+      "scenarios": [
+        "Open project enables Open data folder before native injection, sends the fixed-path backend request, handles OS failure, and detects a native bridge arriving while the dialog is open.",
+        "Copy path supplies the exact current working directory.",
+        "Confirmed organised copy runs the real copy job, validates scan and mesh assets in destination categories, creates a separate named project, and preserves the original.",
+        "Home > Close project offers optional cleanup. Keep project open retains the active project; Continue without cleanup resets the workspace and sends zero deletion requests."
+      ],
+      "errors": [],
+      "platform": "Linux Chromium, actual application and synthetic project assets, simulated native picker and folder reveal",
+      "status": "passed"
+    },
+    "gis_categories_ui": {
+      "scenarios": [
+        "Active dedicated workspace opens the shapefile controls and browser path fallback accepts a main .shp.",
+        "Real copy job lists the source name, six members and exact direction to the family on disk. All member filenames and bytes match the sources."
+      ],
+      "errors": [],
+      "platform": "Linux Chromium/software WebGL, real server with synthetic shapefile component bytes",
+      "status": "passed"
+    },
+    "selected_ownership_ui": {
+      "scenarios": [
+        "Paginated choices are unique; only registered produced exports/reports/demo and unreferenced caches or inactive named records are eligible.",
+        "Exit review preselects no files. Skipping the close review issues zero deletion requests and preserves data.",
+        "Deleting one named snapshot removes exactly its manifest. Exclusive caches can be selected in a subsequent review, while the remaining project still protects shared outputs.",
+        "Overwriting a recognised old export with different bytes of equal length invalidates its receipt and refuses the stale deletion.",
+        "Choosing just a generated report and a demo file deletes exactly those assets, leaving the user-replaced export and all still-unselected working caches intact."
+      ],
+      "errors": [],
+      "platform": "Temporary synthetic project assets, real application HTTP routes and Linux Chromium. No production data.",
+      "status": "passed"
+    },
+    "storage_inventory_ui": {
+      "scenarios": [
+        "Opening the storage manager enables disk inspection without starting a full directory scan.",
+        "Workspace size and drive free space are distinct, and both the working and installation paths are visible.",
+        "Exact large-file paths, sizes, type and cleanup status distinguish the original E57 from the recognised unused analysis cache.",
+        "Search and pagination cover all file paths, including a 1-byte shared cache omitted from the largest 100. Both project names and the full cache path appear without a second inventory scan.",
+        "Actual selective-cleanup list and signed file review expose the individual 17 KB unreferenced analysis cache and preserve the source export. Cancel leaves both files intact.",
+        "Incomplete inventory shows a partial total and a warning, and disables the shortcut to unused-cache cleanup.",
+        "Dismissed scans cannot repopulate a reopened project dialog. All inventory and inspection actions leave source files intact."
+      ],
+      "errors": [],
+      "platform": "Linux Chromium, real local application with a temporary workspace. Final two cases inject incomplete or delayed inventory replies.",
+      "status": "passed"
+    },
+    "storage_ownership_ui": {
+      "scenarios": [
+        "Current project guarded in the picker. Single retired project preview counts only its owned cache.",
+        "Cancel at review preserves the old project record and its exclusive output.",
+        "Unreadable saved metadata blocks a previously reviewed destructive operation.",
+        "Equal-byte replacement of the reviewed orphan set requires a new review and removes nothing.",
+        "Confirmed multi-project removal quarantines the old-only union once and preserves shared/live/undo/recovery files and protected or unknown inputs byte-for-byte.",
+        "Reviewed unreferenced-data cleanup removes exactly the generated orphan. The active project, portable copy, executable, original input, unrelated folder/file, hard link and symlink survive."
+      ],
+      "errors": [],
+      "platform": "Temporary synthetic project assets, real application HTTP routes and Linux Chromium. No production data.",
+      "status": "passed"
+    },
+    "workspace_folders_ui": {
+      "status": "passed",
+      "scenarios": [
+        "New project creates a dedicated named folder, previews the destination and distinguishes next launch from the active project.",
+        "Restart uses the chosen folder for actual project data. Open project exposes the current folder and physical categories.",
+        "Switching back selects the original shared workspace after restart and preserves both data folders."
+      ],
+      "errors": [],
+      "environment": "Linux Chromium with real server and manual destination fallback"
+    }
+  },
+  "windows_explorer_and_close_callbacks": "Simulated during validation on Linux Chromium with real local application/server. Native Windows execution not performed.",
+  "original_user_project_inspected": false,
+  "original_user_data_deleted": false,
+  "storage_estimates": "Actual ownership and reclaimable bytes are calculated locally when requested. An old export without verifiable producer information may require manual review. Restored files held by Undo, recovery and other projects remain protected from automatic cleanup."
+}

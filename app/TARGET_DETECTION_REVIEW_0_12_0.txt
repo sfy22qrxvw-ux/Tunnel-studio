@@ -1,0 +1,35 @@
+TARGET DETECTION — CURRENT FINDINGS (10 OCTOBER 2026)
+
+The user reports many detections, none at their actual black-and-white targets.
+This is an unresolved detection-quality issue. It is not fixed by Clean Tunnel.
+
+Display detail changes only the points drawn in the viewport. The detector reads
+the original cache independently, but the existing search is not an exhaustive
+full-density classifier:
+- Every input chunk is traversed.
+- Candidate nomination samples at most 60,000 points per chunk.
+- It retains up to 28 high-contrast cells per channel/chunk and 500 nominations.
+- Gathering assigns each point to its nearest nominated seed, within 0.92 times
+  target size; overlapping neighbourhoods can therefore split a printed target.
+- It keeps at most the first 35,000 assigned points per nominated patch.
+- The fitter caps its input at 30,000 points and trims to a dominant plane.
+- A permissive partial checker score can accept three observed quadrants.
+- At most 100 suggestions are returned. Suggestions are unreviewed, not IDs.
+
+0.12 corrects misleading full-density messages and records sampling/patch limits.
+It does NOT claim to fix detection precision or remove the algorithmic limits.
+
+Next evidence needed: a close-up of the real target, printed width/diameter,
+a small original scan crop containing that target and ordinary nearby wall,
+with intensity and/or RGB preserved; ideally more than one range/incidence.
+A screenshot helps establish the pattern; original points support validation.
+
+Next detector work: full overlapping spatial neighbourhoods, spatially balanced
+proposal fitting followed by full-point validation, stronger four-quadrant and
+cross-edge evidence, a check of expected physical dimensions, tests against
+stripes/shadows/joints/random texture, and separate partial-target/manual modes.
+Tune against held-out real targets and negative patches; compare centre error,
+precision/recall and support, not simply the number of detections.
+
+The supplied Wang & Zha paper concerns geometric cloud registration keypoints,
+not an algorithm for identifying printed black-and-white survey markers.

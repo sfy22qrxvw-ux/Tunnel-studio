@@ -1,0 +1,43 @@
+TUNNEL STUDIO 0.13.3 - EXTRACT TUNNEL REVIEW FIXES
+12 October 2026
+
+Fixed and improved
+- Review now has separate Select and Keep columns. Selecting a row no longer
+  changes which full-density points are included in the cleaned output.
+- Added Keep, Remove, Hide, Show and Isolate for selected clusters, including
+  multiple selection. Hide/Show only affect the preview. Remove excludes a
+  cluster from the cleaned output; Keep restores it without reprocessing.
+- Click a displayed cluster in the main 3D view to select it; Ctrl-click toggles
+  additional clusters. Inspect focuses the main viewport, replacing the old
+  behaviour that moved an invisible secondary preview.
+- Main Edit Hide/Delete and the Delete key operate on cleaning selections
+  during Review. Delete without a review selection cannot remove the source
+  scan. Modal dialogs retain their keyboard input.
+- Next/Previous clusters are clearly labelled as table pagination. A separate
+  Continue to Output action is available above and below the Review controls.
+- Output explains the required review confirmation. Empty kept results explain
+  why creation is unavailable. Background output failures keep Output open
+  with an error and retry controls; success returns to the scene.
+- Failed review saves restore controls and show the failure in the visible
+  review panel. New results clear obsolete selections and visibility filters.
+- Includes the 0.13.2 Escape and Clean Tunnel source/run-button corrections.
+
+Scope
+The noise, envelope and SMRG extraction algorithms are unchanged. The fix is
+shared by all three methods. Target recognition and the display point cap are
+unchanged. The original source cloud is not overwritten by cluster decisions.
+A tiny cluster can be absent from the sampled preview; a clear message then
+explains this and its full-density Keep/Remove decisions remain available.
+Visibility choices and selected rows are temporary UI state; kept/excluded
+cluster decisions are stored with the extraction result.
+
+Validation
+60 production-JavaScript checks passed (31 existing integration checks,
+13 Clean Tunnel/Escape checks and 16 Review checks). The first 11 Review cases
+were recorded failing against 0.13.2 before implementing the new controls.
+Eight Python workflow checks passed, including full-density cluster decisions,
+coordinate/attribute preservation, source immutability and failure rollback.
+The UI uses JSDOM with a stateful mocked API and WebGL. Python checks use real
+cache IO and production workflow functions, with narrow test doubles for
+base-only modules. Windows installation, GPU pixels and the user's SMRG
+classification have not been validated in this environment.

@@ -1,0 +1,122 @@
+{
+  "version": "0.18.9",
+  "application_tests": {
+    "tests_discovered": 476,
+    "tests_run": 476,
+    "seconds": 188.43305833400154,
+    "success": true,
+    "failures": [],
+    "errors": [],
+    "skipped": [],
+    "source_files_changed_during_tests": [],
+    "native_windows_execution": false
+  },
+  "browser_checks": {
+    "cloud_vis_ui_result.json": {
+      "source": "/workspace/scratch/270bc034b4ff/integration_0189/app",
+      "scenarios": [
+        "Cloud-to-cloud command is discoverable; six-axis tilt correction requires an explicit choice",
+        "Real ICP completes into a review preview with inlier plane statistics and no saved pose or link",
+        "Manual edits invalidate cloud statistics; local Undo and Redo restore the correct reviewed candidate",
+        "Join and lock saves a cloud link and virtual pose to disk, preserves the fixed scan and all raw XYZ bytes",
+        "Saved registration review labels plane distances separately from target residuals",
+        "Workspace Undo restores the pre-refinement poses and removes the saved cloud link",
+        "Stop refinement cancels the real background job without saving a pose",
+        "Unconverged refinement is refused and leaves the manual draft available without claiming a cloud result",
+        "RTC360 review discovers matching setup IDs and downloads a read-only XML inspection report",
+        "Applying RTC360 positions persists virtual poses with provenance and one undo checkpoint; dark theme and narrow viewport remain usable"
+      ],
+      "errors": [],
+      "platform": "Linux Chromium/software WebGL; synthetic full-density XYZ; real server and UI; two-second cancellable fixture pause before normals",
+      "status": "passed",
+      "browser": "153.0.8010.0"
+    },
+    "visual_registration_ui_result.json": {
+      "source": "/workspace/scratch/270bc034b4ff/integration_0189/app",
+      "scenarios": [
+        "Plan drag changes only horizontal moving-group placement",
+        "Switching side/front elevation preserves alignment; height-only drag changes Z without shifting plan",
+        "Tilt stays locked unless explicitly enabled; Undo reverses a tilt edit",
+        "Ctrl-pan and 3D orbit change only the camera, not registration",
+        "Pick pivot, rotation steps, local Undo and Redo work across view changes",
+        "Join and lock saves a manual link and moving pose, with fixed coordinates and original XYZ files unchanged",
+        "Workspace Undo restores previous poses and removes the manual link",
+        "Cancel discards the preview without saving a transform",
+        "Pair changes invalidate Apply; selecting the same setup is rejected",
+        "Registration ribbon opens the workspace; dark theme and smaller viewport retain accessible controls",
+        "Stale-position rejection keeps the draft visible and reports reload guidance"
+      ],
+      "errors": [],
+      "platform": "Linux Chromium/software WebGL; synthetic scans; real server and UI",
+      "status": "passed",
+      "browser": "153.0.8010.0"
+    }
+  },
+  "real_metadata_check": {
+    "passed": true,
+    "source_setup_positions_sha256": "d8136dcce8969400a649298138bb151d8a848d4b60d5a39573537f2aee1c052b",
+    "source_job_xml_sha256": "907ec9eff22c214ab298313f2da9928c0408eb88453e37de15cc19365532158f",
+    "source_setup_xml_sha256": "9a38bed4a102341f0c5213cff306b5361fd3bfb2e460648004e5d346291175d2",
+    "records": 16,
+    "all_rotations_proper": true,
+    "matched_setup_id": "244b7642-cfcc-4600-9ad1-575433358fa8",
+    "matched_owner_job": "a44dcce9-132e-4520-aefc-e8345cb8c898",
+    "matched_setup_name": "42",
+    "job_name": "231023-SC-D1",
+    "decoded_translation_m": [
+      -67.5397,
+      -38.1829,
+      -2.25243
+    ],
+    "cache_frame_point_check_max_error_m": 4.440892098500626e-16,
+    "tilt_compensated_vertical_error": 1.8193226083903784e-08,
+    "raw_point_cloud_alignment_compared": false,
+    "note": "Actual uploaded metadata; synthetic vectors only for coordinate-frame math. Field accuracy is not established."
+  },
+  "synthetic_performance": {
+    "streamed_generated_points": 20000000,
+    "sample_cap": 75000,
+    "generated_stream_seconds": 1.3394731439984753,
+    "reference_points": 150000,
+    "moving_points": 75000,
+    "normal_seconds": 0.8875679789998685,
+    "solve_seconds": 1.220426474003034,
+    "iterations": 5,
+    "seconds_per_iteration": 0.24408529480060678,
+    "rms_mm": 0.22839339928938765,
+    "peak_process_rss_mib": 126.796875,
+    "synthetic_only": true,
+    "field_disk_io_measured": false,
+    "native_windows_execution": false
+  },
+  "syntax": {
+    "python_files": 181,
+    "javascript_files": 49,
+    "all_syntax_passed": true
+  },
+  "changed_application_sha256": {
+    "app/release.py": "056305596fe60226beeac3212936746d7e48927f47cf92762b18f7ff09f958dc",
+    "app/CHANGELOG_0_18_9.txt": "fbb293600a480445557d69c4662fd8cc2b1079d2f18b3a6de7afbeb61b096517",
+    "app/rtc360_vis_workflow.py": "b30c537e2ab182e859575e4807640b8db9f9ed64105cf03b427111c1f240d23e",
+    "app/registration_workspace.py": "2d9cb62acb86f0c6f238da40a4e1482756abd7d9abf8fe7adc9944415a176290",
+    "app/workspace_history.py": "8fe61b28108220c8886bda3ef3d498ac3ee5a4a93dfd4f235e60cdafd9fb345a",
+    "app/rtc360_vis_pose.py": "9aff728b5c893d78a45692f953197606e52219749d3794fed47c1f3c20a45d3b",
+    "app/cloud_registration.py": "d2b0223308a15e50a3023ae766688afdc5cfb5f0fde73e34dc175db78f4bc15f",
+    "app/visual_registration.py": "627cdd8c2e56a1e2d80809088050319ae405c7ade4d11be05f10033572763153",
+    "app/rtc360_vis_probe.py": "0fba1cd901dc6693274aaefef808b17517e82653da497a50a558ecd30e0c8b4e",
+    "app/RELEASE_SCOPE_0_18_9.txt": "437fb7a04b94d101ae184e8cab518e1d0e9e561341fb0521e16ac03c6d709697",
+    "app/cloud_registration_workflow.py": "b81de4e44051299a8ab4fab19e3cd66b801b00013ae7b7a87016d90dc5ab41e9",
+    "app/web/visual-registration-ui.css": "920d8ef115a9720b431287f05272458a291b2a9268a0a3cea750eff5ace8eaba",
+    "app/web/scan-registration-ui.js": "1066f80d8fcaef9712baa5f241f896e96ed7ea2c81fcd77abcfc6bc4b3f87b83",
+    "app/web/visual-registration-ui.js": "d52f56bde0da0206d5a379d592a848635bcf6325dc69e30589a7a2b073ed2c17",
+    "app/web/ribbon-layout.js": "64bc80115b3d62c7742c4a22c3dc3d5029a376f3328335b3d558499186a61fbc"
+  },
+  "native_windows_execution": false,
+  "field_accuracy_verified": false,
+  "installer_verification_record": "TunnelStudio_0.18.9_Release_Checks.json; written after final installer extraction",
+  "remaining_issues": [
+    "Missing original R0007 attributes cache is not recovered.",
+    "Physical segmentation relative to the research paper remains unresolved.",
+    "User project deletion timing and field alignment accuracy have not been established."
+  ]
+}

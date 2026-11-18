@@ -1,0 +1,76 @@
+TUNNEL STUDIO 0.13.14
+Scanner position in the main 3D viewport
+14 October 2026
+
+INSTALL
+1. Save your project and close Tunnel Studio completely.
+2. Extract the whole ZIP into a new folder.
+3. Double-click UPDATE_TUNNEL_STUDIO.bat.
+4. Confirm version 0.13.14 after restart. Refresh browser mode if needed.
+
+This updates the existing Windows installation and includes earlier updates.
+The updater backs up application files; RESTORE_PREVIOUS_VERSION.bat restores
+the previous application files. Original scans are not bundled in this ZIP.
+
+VIEW THE POINT CLOUD FROM EACH SETUP
+Select an individual Leica scan in Scans & models and click Go to setup view.
+The existing main 3D viewport moves to that scanner's position and displays
+that setup's point cloud. A compact control strip appears above the viewport.
+No separate setup window opens. This replaces the earlier photograph dialog.
+
+Drag to look around. Use the mouse wheel to zoom. The camera stays at the
+scanner position. Choose another scan from Setup to move to that scanner.
+More detail here requests additional display points in the viewing direction.
+Return to normal 3D restores your previous camera and normal scene display.
+Your saved scan visibility settings are preserved.
+
+The scanner view respects deleted points, hidden regions and the current
+limit box. If these exclude the points you want, return to normal 3D and
+adjust them. Panning, area selection and editing the limit box use normal 3D.
+Fit resets the setup heading and zoom while keeping the scanner position.
+
+PICK AND NAME TARGETS IN THE SAME VIEWPORT
+Click Pick cloud point, then click a displayed cloud point. Its original
+measured XYZ appears below the setup controls. Enter a Target name and click
+Save target. Use matching names for the same physical target in other scans.
+Each saved target belongs to the setup from which it was picked.
+
+Fit target centre opens the existing registration tool beside the viewport
+and starts the checker-centre fit at the picked point. A manually saved
+point is not automatically a fitted checker centre. Review the fitted result.
+
+Switching setups or leaving the view discards late point responses. A target
+save already requested retains its original scan, name and measured point.
+Changing a setup's geometry or retained points invalidates its open view;
+reopen it to use the updated data and scanner position.
+
+DISPLAY DETAIL AND SUPPORTED SETUPS
+The display uses a bounded sample of the retained cloud, up to the existing
+one-million-point display budget. Original measured points are retained for
+processing and point recovery. A broad sample stays available while looking
+around; extra display detail is concentrated in the current view direction.
+Point lookup recovers coordinates from the original source, not the rounded
+GPU display buffer. This does not guarantee target-centre accuracy.
+
+This setup-camera release supports the individual native Leica HSPCA scans
+already supported by the importer. Project imports use their saved scanner
+positions and orientations; supported standalone setup files use their local
+scanner origin. Arbitrary formats or E57 setup poses are not added here.
+Photographs are not required for this point-cloud view.
+
+VALIDATION
+All 16 focused suites passed, including main-viewport perspective projection,
+fixed scanner position, behind-camera rejection, scan switching, target
+ownership, return to normal 3D, and existing measurement/registration checks.
+Python and JavaScript syntax checks passed. See tests/validation_0_13_14.json.
+
+The backend also generated a bounded preview from the supplied 36,694,551-
+point scan and recovered an exact original float64 XYZ/index from a preview
+pick. See tests/real_setup_camera_0_13_14.json. This was a local warm-cache
+check, not a measurement of Windows rendering or device performance.
+
+UI checks use JSDOM, simulated APIs and mocked WebGL. Real Windows/WebView
+rendering, mouse feel and GPU performance still need checking on your machine.
+Numerical tests stub installed-base modules unavailable in this workspace.
+Earlier release reports are retained as history; only the checks listed for
+0.13.14 were rerun for this release.

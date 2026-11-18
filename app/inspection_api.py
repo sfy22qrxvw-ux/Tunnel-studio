@@ -97,7 +97,9 @@ def options(s):
         resolved = resolve(s, item['id'])
         modes = [name for name, spec in inspection.MODES.items() if spec[1] == item['kind']]
         row=_row(resolved,modes)
-        if resolved['kind']=='scan':row['has_limit_box']=any(analysis_sources.saved_boxes(s,resolved))
+        if resolved['kind']=='scan':
+            row['source_members']=analysis_sources.scope_members(s,resolved)
+            row['has_limit_box']=any(m['boxed'] for m in row['source_members'])
         sources.append(row)
         row = _row(resolved, _reference_modes(resolved))
         if item['kind'] == 'mesh':

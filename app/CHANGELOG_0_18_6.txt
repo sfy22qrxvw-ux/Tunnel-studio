@@ -1,0 +1,26 @@
+Tunnel Studio 0.18.6
+1 November 2026
+
+- Open measured RGB/intensity overviews before fine viewport detail completes.
+- Refresh setup detail automatically after navigation, zoom and viewport resize.
+- Reuse source-colour and completed-detail caches; stop abandoned display reads.
+- Open legacy edited projects without a full XYZ/attribute metadata pass; update
+  exact remaining counts from bounded deletion-mask reads in the background.
+- Preserve valid retained metadata when synchronizing the active scan alias.
+- Buffer deterministic detail sampling and build missing block indexes in the
+  same bounded reading pass, preserving selected original point IDs and colours.
+- Send inspection/design display points as typed binary arrays and avoid repeated
+  flattening, base-cloud uploads and hidden preview/section requests.
+- Keep analysis visible if a previous cloud request finishes late; resume missing
+  cloud detail when the analysis view is restored.
+- Include usable target fits immediately, retain high-RMS finite results with
+  their numerical warnings, and delete targets with their linked pairs.
+- Automatically match common target names; select a fixed setup and register in
+  one action with immediate application, residual reporting and Undo.
+- Preserve per-link 2D/3D constraints, independent checks/exclusions and rotated
+  vertical directions across multi-setup alignment, re-solving and save/reopen.
+- Roll back the complete registration action on cancellation, failed solving,
+  failed state saving or failed application.
+- Retain the verified 0.18.5 Windows runtime and installer lifecycle protection.
+
+See RELEASE_SCOPE_0_18_6.txt and VALIDATION_0_18_6.json for evidence and limits.

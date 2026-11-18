@@ -285,7 +285,9 @@ def prepare_data(s,data):
             surf=copy.deepcopy(surf);surf['source_meta']=r.meta(surf['source_meta'],name='Cleaning source')
             n=surf['statistics']['input_points']
             if type(n) is not int or not 1<=n<=surf['source_meta']['count']:raise ValueError('Invalid cleaning result point count.')
-            for key,width in (('point_ids_file',8),('labels_file',4)):surf[key]=r.cache(surf.get(key),n,width)
+            stored=surf.get('stored_point_count',n)
+            if type(stored) is not int or not n<=stored<=surf['source_meta']['count']:raise ValueError('Invalid saved cleaning result size.')
+            for key,width in (('point_ids_file',8),('labels_file',4)):surf[key]=r.cache(surf.get(key),stored,width)
             from project_validation import validate_surface
             validate_surface(surf,s.WORK,s.progress)
             outputs={}
@@ -295,7 +297,7 @@ def prepare_data(s,data):
             surf['outputs']=outputs
             if surf.get('automatic'):
                 try:
-                    auto=surf['automatic'];auto['labels_file']=r.cache(auto.get('labels_file'),n,4)
+                    auto=surf['automatic'];auto['labels_file']=r.cache(auto.get('labels_file'),stored,4)
                     valid={-1,*[c['id'] for c in auto['clusters']]}
                     if not set(auto['kept'])<=valid:raise ValueError('Invalid automatic cleaning cluster labels.')
                     if auto['labels_file']!=surf['labels_file'] or auto['clusters']!=surf['clusters']:validate_surface({**surf,**auto},s.WORK,s.progress)

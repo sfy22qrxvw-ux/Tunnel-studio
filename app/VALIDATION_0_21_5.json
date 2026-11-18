@@ -1,0 +1,114 @@
+{
+  "version": "0.21.5",
+  "base_version": "0.21.4",
+  "date": "2026-11-05",
+  "application_tests": {
+    "tests_discovered": 643,
+    "tests_run": 643,
+    "seconds": 129.0496279049985,
+    "success": true,
+    "failures": [],
+    "errors": [],
+    "skipped": [],
+    "source_files_changed_during_tests": [],
+    "native_windows_execution": false
+  },
+  "syntax": {
+    "python_files": 227,
+    "javascript_files": 67,
+    "passed": true
+  },
+  "browser_checks": {
+    "circle_clean_ui.json": {
+      "scenarios": [
+        "Clean / Local circles fits the full 1,125,000-observation curved cloud, defaults to overlapping 5 m windows, preserves every good-wall observation at the tested 8 mm bands and preselects no candidates.",
+        "View circle displays only the local fitting window along its perpendicular frame; Reverse view looks from the other end without changing inward/outward classification or source selection.",
+        "Independent inward / outward / both / clear controls use exact original observation IDs across the whole cloud, with the expected signed departures and no sampled-only edits.",
+        "Separate selected writes unchanged original XYZ observations into the child, masks only the reviewed source IDs and reverses both changes with one workspace Undo.",
+        "Confirmed removal edits only the exact reviewed inward/outward masks; one Undo restores all observations and original files stay byte-identical.",
+        "Stop during a replacement circle fit preserves the last completed review, current project items and immutable source observations."
+      ],
+      "errors": [],
+      "platform": "Linux Chromium/software WebGL; production HTTP application and 1,125,000 independently constructed curved-tunnel observations.",
+      "status": "passed"
+    },
+    "shape_matching_ui.json": {
+      "scenarios": [
+        "A pointer-drawn example searches all 1,134,000 retained observations through real lining calibration, with no local workload cap; original XYZ and attributes remain byte-identical.",
+        "Select all / Clear selection update exact original IDs and preview colours while removal remains disabled for an empty selection.",
+        "Separate selected creates a full-density child with unchanged original coordinates, masks only the reviewed source IDs and reverses the entire edit with one workspace Undo.",
+        "Lasso and Polygon pointer gestures capture examples through the real selection callback; polygon finishing preserves the whole-cloud search scope.",
+        "Stop during a new whole-cloud search preserves the previous completed review, immutable source files and current project items."
+      ],
+      "errors": [],
+      "platform": "Linux Chromium/software WebGL; production server and 1,134,000 synthetic original observations.",
+      "status": "passed"
+    },
+    "bolt_scope_ui.json": {
+      "scenarios": [
+        "Whole-cloud recess runs without a seed or local budget, fits the real synthetic tunnel, classifies every retained point and selects measured candidate point groups.",
+        "Whole-cloud raised runs without a seed or local budget, fits the real synthetic tunnel, classifies every retained point and selects measured candidate point groups.",
+        "Whole-cloud departures runs without a seed or local budget, fits the real synthetic tunnel, classifies every retained point and selects measured candidate point groups.",
+        "Reviewed both-sided departures separate into a new scan with an exact source mask; one Undo restores the source and removes the child item.",
+        "Local scope retains its explicit neighbourhood budget and seed requirement; recessed-pocket labels describe depth into a dip."
+      ],
+      "errors": [],
+      "platform": "Linux Chromium/software WebGL; production server, real lining fitting and streamed original IDs on a synthetic tunnel.",
+      "status": "passed"
+    },
+    "deleted_restore_ui.json": {
+      "scenarios": [
+        "The export context option adds the measured wall within the same drawn area while leaving original exclusions and scans unchanged.",
+        "A drawn deleted-point area exports through the normal XYZ save dialog at original density, without restoring points or changing source groups.",
+        "box selection restores only the drawn deleted area, leaves the other group intact, and is reversible in one Undo.",
+        "lasso selection restores only the drawn deleted area, leaves the other group intact, and is reversible in one Undo.",
+        "polygon selection restores only the drawn deleted area, leaves the other group intact, and is reversible in one Undo.",
+        "brush selection restores only the drawn deleted area, leaves the other group intact, and is reversible in one Undo.",
+        "Ribbon Restore selected handles posed cleaning archives as a separate four-point scan; unselected exclusions stay archived and Back to scan reloads current retained points.",
+        "Saved group remainders and independently restored scans survive a browser/workspace reload."
+      ],
+      "errors": [],
+      "platform": "Linux Chromium, software WebGL, production HTTP routes and immutable synthetic XYZ/attributes.",
+      "status": "passed"
+    },
+    "bundle_independence_ui.json": {
+      "scenarios": [
+        "Opening an old project places the completed registered cloud and cleaned tunnel outside the 16-setup source bundle.",
+        "Bundle deletion review selects only the 16 source setups and explicitly identifies the registered cloud being kept.",
+        "Confirmed source-bundle deletion retains both full clouds and the cleaned tunnel edit mask byte for byte.",
+        "Workspace reload and named saved-project manifest retain the two independent cloud items after source removal.",
+        "Explicitly selecting the registered result still permits its own separate reviewed deletion."
+      ],
+      "errors": [],
+      "platform": "Linux Chromium/software WebGL; real API, 16 synthetic setups, saved cloud files and retained-point mask.",
+      "status": "passed"
+    },
+    "merged_cleaning_ui.json": {
+      "status": "passed",
+      "scenarios": 10,
+      "checks": [
+        "16-scan connected component without bundle adjustment",
+        "selection-sensitive availability",
+        "missing-setup guard",
+        "matched merge receipt selects Registered cloud",
+        "existing cache controls preserved",
+        "disk preflight",
+        "cancelled merge retains prior selection",
+        "stale receipt rejection",
+        "failed job retains prior selection",
+        "duplicate-job exclusion"
+      ]
+    }
+  },
+  "browser_scenario_groups": 39,
+  "fixture": "Production HTTP application and Chromium/software WebGL. New circle review uses 1,125,000 original observations independently constructed on an analytic curved tunnel, with known inward/outward departures. It checks local-axis viewing/reversal, side selection, exact-coordinate separation, reviewed removal, Undo, cancellation and immutable original hashes. Existing shape, deleted-point and bundle workflows are exercised separately.",
+  "algorithm": "A smooth local 3D centreline and moving perpendicular frames; three thin-section guide refinements followed by robust angularly balanced circle fits in default 5 m windows at 50% overlap. Supported offsets/radii blend between windows. All retained source observations are classified in bounded blocks with 64-bit IDs. Fitting uses bounded disk-backed calibration samples; that sample budget is not an input admission limit.",
+  "acceptance": "Final fit requires at least 240 degrees of angular support, at least 45% circle consensus, and fitted-support RMS no greater than 35% of the tighter inward/outward keep band. Neighbouring unsupported fits leave the affected points unassessed and retained. Constructed half-wall and oval examples are deliberately rejected. These checks do not establish field or survey accuracy.",
+  "semantics": "Preview changes no scan and preselects no departures. Inward is toward the fitted tunnel centre, outward is away from it, independent of viewing direction. Selection, removal and separation use full-density original point IDs. Workspace Undo reverses source masks and child creation. Previous cleaning methods remain available.",
+  "original_user_data_deleted": false,
+  "native_windows_execution": false,
+  "native_webview2_execution": false,
+  "user_921_million_point_project_tested": false,
+  "field_cleaning_accuracy_established": false,
+  "recovery_limit": "Good lining excluded by earlier cleaning must be restored before fitting. Permanently removed observations cannot be reconstructed by this update."
+}

@@ -1,0 +1,146 @@
+TUNNEL STUDIO 0.13.7
+Cleaner scans, visible analysis and interactive 3D geometry
+13 October 2026
+
+INSTALL
+Close Tunnel Studio completely. Extract this ZIP to a folder, then run
+UPDATE_TUNNEL_STUDIO.bat. The updater finds the existing Windows installation,
+backs up changed application files and checks the installed components.
+It preserves projects and full-density scan caches. This is a cumulative
+update for your existing Tunnel Studio installation, not a standalone app.
+
+CLEAN TUNNEL
+In Clean Tunnel, choose "Clean tunnel - keep lining, remove objects".
+This is now the default for new cleaning work. Select one tunnel branch with
+both walls and the crown, then Extract lining. The selection and optional
+Hide outside limit box still define the exact processing area.
+
+The cleaner now learns one supported lining model across the whole area.
+It no longer fits unrelated tunnel envelopes to arbitrary input batches.
+Every original point is checked against the model. Dense interior objects
+can therefore be rejected even if they have many close neighbours.
+
+Green = suggested tunnel lining. Red groups identify interior objects,
+outside/stray points, and areas with insufficient support to decide reliably.
+Review and keep any real details that you need before Create one tunnel scan.
+No missing geometry is invented, and cleaning is separate from meshing.
+
+The visible distance setting starts at 0.08 m (8 cm). Reduce it to remove
+points nearer the lining; increase it to retain a wider band of detail.
+Fast / Detailed / Fine control model detail, not survey accuracy.
+Remove stray points only remains available for small patches and sparse
+noise. SMRG remains a separate surface-patch grouping option.
+
+SCAN-DERIVED ALIGNMENT: PLAN AND ELEVATION EDITING
+A selection without a clear dominant direction now produces a tentative
+guess when there is usable geometry. It tries alternative directions and
+uses unverified slice centres where circular fits are unsupported. The
+confidence message explains the uncertainty; review the branch it follows.
+
+The pink polyline is visible in 3D and in two linked editors:
+- Plan: drag a node to change Easting and Northing.
+- Elevation: drag a node vertically to change Height.
+- Drag the background to pan; wheel to zoom; Fit both views restores extents.
+- Arrows move the selected node by 0.01 m; Shift uses 0.10 m.
+- Edit exact coordinates and radius in the table if preferred.
+
+Moving a node recalculates chainage along the polyline. Escape cancels the
+current drag. Save changes stores the edited line. Review the line and tick
+the review checkbox before Use for chainage. It remains a scan estimate;
+use the actual design for design comparisons. Cross-sections still work
+without an alignment. Coincident or too-few points cannot form a guess.
+
+SCANS & MODELS: CREATED GEOMETRY
+Scan-derived alignment is the new name for Guess alignment. New lines and
+cross-section planes remain in Scans & models, alongside the active alignment,
+limit boxes, reference structures, targets, ring candidates and the current
+3D deviation result. Select a row for its information and controls. Fit brings
+it into view; the eye changes visibility; double-click opens its editor.
+Earlier-version current alignment/section results are also listed. Results
+that earlier versions already discarded cannot be recovered by this update.
+
+LIVE LIMIT BOX
+With Hide outside enabled, the displayed scan is clipped as a face, corner or
+rotation handle moves. Expanding the box reveals points immediately. This uses
+a bounded display sample while editing; the full-density boundary is saved
+on release. Turning Hide outside off restores the full scan view.
+
+CLEAR ANALYSIS PROGRESS
+Use for analysis immediately shows Preparing scan for analysis in the main
+viewport, updates point progress and confirms the scan is ready. Errors remain
+visible. A native progress window is also requested on Windows. This prepares
+chainage analysis; it does not silently start a design acceptance calculation.
+
+3D DEVIATION HEAT MAP
+Analyse > Heatmap now colours the 3D point cloud. Choose its source scan and
+actual design alignment or imported design mesh, then Generate 3D heat map.
+No start chainage is needed. Rotate and zoom the main view. Continuous signed
+colouring uses blue negative, green zero and red positive; tolerance colouring
+is also available. Change the colour scale in mm without rerunning comparison.
+Unsigned mesh distance uses green-to-red; face-normal sign follows mesh winding.
+The comparison band defaults to off. All retained finite points are assessed;
+points outside the design extent or ambiguous signs are counted separately.
+The display remains sampled, and the number displayed is stated. The actual
+design is required: a scan-derived alignment is not accepted as design truth.
+The old unwrapped 2D map is under an optional expandable section; its blank
+chainage fields now default to the alignment extent instead of reporting start.
+
+RING CANDIDATES IN THE MAIN SCAN
+Click a candidate row or Show in 3D to centre it and highlight its ring yellow
+in the main scan. Purple means suggested, green means kept. Candidates remain
+review suggestions, not accepted ring-face survey measurements. If the tool
+panel overlaps the scan, use its Float or dock controls to move it aside.
+
+LARGE DESIGN SECTIONS
+The old message meant the slice exceeded a two-million-point memory guard;
+it did not mean the scan was corrupt. Interactive design sections now recover
+from that guard using disk-backed chunks. Radial statistics and section CSV
+include every retained slice point in the stated wall band. Only the display
+is sampled (up to 6,000 points). Dense-section fits use full-density 1-degree
+median bins and a documented robust ellipse fit; the result states the method.
+The fallback needs free disk space, and large exports can still take time.
+The separate report-builder base component is unchanged. Avoid junctions or
+multiple branches intersecting one cutting plane when interpreting a section.
+
+CROSS-SECTION ZOOM
+Wheel over the computed section to zoom about the pointer. Drag to pan.
+Use + / minus / Fit section, or keyboard + / minus / 0. U and V use equal
+scales and a distance bar. Zoom is retained while moving along the same
+cutting frame; changing the source or frame fits the new section.
+
+UNDO / REDO
+Visible Undo and Redo buttons show the next action in their tooltip.
+Ctrl+Z undoes; Ctrl+Y or Ctrl+Shift+Z redoes. Text inputs keep their normal
+text-edit undo. A complete node drag counts as one step; node edits can also
+be undone in the alignment window before saving.
+
+Workspace history covers recent point edits, separation/copy, visibility,
+limit boxes, cleaning runs and review decisions, cleaned-scan creation,
+alignment changes, scene-item removal, imports, and model/target edits.
+An action affecting multiple visible scans is grouped into one undo step.
+Undo restores cached geometry references and decisions without reimporting
+or changing the original files. Redo restores the same result.
+
+The last 30 workspace actions are available during the current app session.
+New/open project and application restart start a new workspace history.
+Undo does not erase exported files, reverse a named project save, or undo
+camera navigation/preferences. Reports/exports are marked for regeneration
+after restoration. A new edit clears the redo branch. An unavailable cache
+or failed save leaves the current workspace and history unchanged.
+
+VALIDATION
+Your E57 sample was read at all 10,125,420 points, with scanner pose,
+intensity and RGB. The new default cleaner suggested 9,868,812 lining
+points and 256,608 review/removal candidates. The entire cleaned output
+was checked against the original points and attributes, and the source
+caches were unchanged. These counts are not an accuracy score: the real
+scan has no labelled ground truth. The model is intended for one roughly
+circular branch and can misclassify openings, protrusions or missing lining.
+
+150 UI and 96 Python checks passed, covering labelled geometry, real cache IO, UI gestures,
+undo/redo, and previous box/section/edit workflows. See tests for results.
+Windows installation, native WebView2 input and final GPU/layout pixels
+cannot be verified in this environment. Two additional Open3D-dependent
+checks were unavailable because that engine is not installed here. Mesh design
+comparison still requires Open3D in the installed application. Previous notes remain
+included as historical information.

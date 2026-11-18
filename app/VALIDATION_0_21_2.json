@@ -1,0 +1,60 @@
+{
+  "version": "0.21.2",
+  "base_version": "0.21.1",
+  "date": "2026-11-04",
+  "application_tests": {
+    "tests_discovered": 605,
+    "tests_run": 605,
+    "seconds": 69.72267557600026,
+    "success": true,
+    "failures": [],
+    "errors": [],
+    "skipped": [],
+    "source_files_changed_during_tests": [],
+    "native_windows_execution": false
+  },
+  "syntax": {
+    "python_files": 217,
+    "javascript_files": 65,
+    "passed": true
+  },
+  "browser_checks": {
+    "bundle_independence_ui.json": {
+      "scenarios": [
+        "Opening an old project places the completed registered cloud and cleaned tunnel outside the 16-setup source bundle.",
+        "Bundle deletion review selects only the 16 source setups and explicitly identifies the registered cloud being kept.",
+        "Confirmed source-bundle deletion retains both full clouds and the cleaned tunnel edit mask byte for byte.",
+        "Workspace reload and named saved-project manifest retain the two independent cloud items after source removal.",
+        "Explicitly selecting the registered result still permits its own separate reviewed deletion."
+      ],
+      "errors": [],
+      "platform": "Linux Chromium/software WebGL; real API, 16 synthetic setups, saved cloud files and retained-point mask.",
+      "status": "passed"
+    },
+    "merged_cleaning_ui.json": {
+      "status": "passed",
+      "scenarios": 10,
+      "checks": [
+        "16-scan connected component without bundle adjustment",
+        "selection-sensitive availability",
+        "missing-setup guard",
+        "matched merge receipt selects Registered cloud",
+        "existing cache controls preserved",
+        "disk preflight",
+        "cancelled merge retains prior selection",
+        "stale receipt rejection",
+        "failed job retains prior selection",
+        "duplicate-job exclusion"
+      ]
+    }
+  },
+  "browser_scenario_groups": 15,
+  "fixture": "16 joined synthetic setups, physically materialised registered and cleaned clouds, saved point-exclusion masks and original file hashes.",
+  "semantics": "Bundle removal selects source setups and explicitly assigned bundle contents. Completed registered clouds stay outside automatic bundle ownership. An explicitly selected result can still be deleted.",
+  "preserved_outputs": "Registered XYZ/attributes, independent cleaned XYZ/mask, saved mesh, analysis and inspection survive source-bundle deletion and named project reopening in the regression.",
+  "original_user_data_deleted": false,
+  "native_windows_execution": false,
+  "native_webview2_execution": false,
+  "user_921_million_point_project_tested": false,
+  "recovery_limit": "Pre-existing permanently removed caches cannot be recreated by this patch."
+}

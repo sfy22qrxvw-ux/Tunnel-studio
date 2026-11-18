@@ -1,0 +1,76 @@
+TUNNEL STUDIO 0.16.1 — STARTUP / LARGE PROJECT METADATA REPAIR
+26 October 2026 (Europe/London)
+
+PURPOSE
+Repair the startup error:
+"Project metadata exceeds the supported 20 MB manifest size.
+The previous saved snapshot is unchanged."
+
+In 0.16.0 the current workspace autosave had no 20 MB limit, but its named
+snapshot writer, reader, portable-project route and restore check did. Startup
+attempted to make a named copy of the previous autosave. A valid autosave above
+20 MB therefore raised an exception before the survey window could open.
+
+CHANGES
+- A shared 256,000,000-byte metadata resource guard replaces the inconsistent
+  20 MB checks across autosave, named save/read, restore and portable projects.
+  This is a serialized project-metadata limit, not a scan-size or point limit.
+- JSON is written in bounded UTF-8 buffers to a temporary file, flushed and
+  replaced atomically. Failed encoding, size checks or replacement leave the
+  previous file in place. This reduces serialization copies; the application
+  still holds expanded metadata objects in memory.
+- Portable project metadata is written incrementally, with cancellation
+  opportunities during large metadata exports. Incomplete exports are removed
+  and an existing destination remains unchanged.
+- Startup preserves the original autosave in startup_recovery before creating
+  a separate named previous-session snapshot. The raw copy uses bounded file
+  copying and is flushed to disk before the active workspace can be cleared.
+- If that optional named snapshot cannot be made after the raw copy succeeds,
+  startup opens an empty workspace and shows a warning identifying the retained
+  recovery file. If the raw copy cannot be preserved, startup stops before
+  replacing the existing workspace. Failed empty-state commits restore memory.
+- The installer runs a synthetic 21 MB startup/reopen check in a newly created
+  temporary workspace before activating the release. The check does not open or
+  change the user's survey workspace. Failure keeps the previous release.
+
+REOPENING THE PREVIOUS SESSION
+Close Tunnel Studio and install 0.16.1. Start the application, then choose
+Home > Open project and open the entry ending with "previous session" and the
+latest date/time. Existing explicitly saved projects remain listed separately.
+Startup intentionally opens an empty project; the previous survey is reopened
+through this command. Do not delete the data directory to repair this error.
+
+VERIFICATION
+See VALIDATION_0_16_1.json for the current-source check inventory and evidence.
+The exact 20 MB startup exception was reproduced against the frozen 0.16.0
+installer source using a generated 26,598,279-byte autosave. It contains 45,000
+patch records plus their automatic-reset copy, file-backed points, a deletion
+mask, original IDs, labels, geometry, history and UI metadata.
+The repaired code passes startup, named save/open, autosave, portable export
+and portable import with this fixture. Previous explicit snapshots and all
+point/mask/ID/label files are verified by independent hashes.
+
+The focused regressions also cover ordinary project compatibility/recovery,
+import/edit/export, the six comparison workflows, destination handling,
+transaction rollback, Unicode, invalid numbers and cancellation. Actual browser
+tests and installer payload verification are recorded separately from backend
+checks. The installer payload retains the verified 0.16.0 runtime.
+
+LIMITS AND RELEASE SCOPE
+This is a focused repair built on the complete 0.16.0 application. The further
+ribbon redesign, dedicated protruding-bolt workflow, SMRG quality/performance
+improvements, best-fit geometry/seeded growth and additional measurements remain
+authorized outstanding development. They are not delivered by this repair.
+
+The user's desktop_error.txt and actual failing project were not attached; a
+local Windows path alone does not provide access to those files. Testing
+reproduces the reported code failure with generated metadata and small valid
+scan assets, not the user's exact 550-million-point project. No native Windows,
+WebView2 or GPU run was performed on the Linux build host. The installer itself
+runs its isolated component/startup check when executed on Windows.
+
+Metadata above the new 256 MB guard is preserved as a raw recovery file and
+reported with a warning at startup; this release does not claim it can reopen
+unlimited metadata. The guard and streaming buffers are not a measured 7 GB
+whole-desktop memory guarantee. No original scan coordinates are downsampled,
+rewritten or deleted by the startup repair.

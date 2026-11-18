@@ -1,0 +1,56 @@
+{
+  "version": "0.18.5",
+  "date": "2026-10-30",
+  "scope": "One stable installed-program entry, owned legacy-entry migration, safe obsolete program cleanup and safe uninstall.",
+  "cause": "Prior installers wrote HKCU Uninstall/TunnelStudio-<version> and retained every version directory.",
+  "new_windows_entry": {
+    "key": "HKCU\\Software\\Microsoft\\Windows\\CurrentVersion\\Uninstall\\TunnelStudio",
+    "display_name": "Tunnel Studio",
+    "display_version": "0.18.5"
+  },
+  "installer_tests": {
+    "tests": 83,
+    "seconds": 4.749,
+    "failures": 0,
+    "errors": 0,
+    "skipped": 0,
+    "result": "OK",
+    "platform": "Linux"
+  },
+  "registry_testing": "Actual registry policy and rollback logic with typed, case-insensitive fake HKCU; explicit native adapter flags checked. No native Windows registry execution.",
+  "filesystem_testing": "Actual temporary files, manifests, hashes, version directories, activation, deletion and process locks; survey sentinels compared byte for byte.",
+  "startup_testing": "Retained real-process 21 MB hidden-recovery startup regression plus staged/extracted full component command gates.",
+  "upgrade_transaction": [
+    "NSIS writes new uninstaller into staging before activation.",
+    "Payload hash verification and isolated actual application startup check precede all release/registry mutation.",
+    "Workspace process lock covers activation, registration and old-program cleanup.",
+    "Stable entry and CurrentInstall publish/readback together; failures restore typed registry state, marker bytes and directories.",
+    "Owned version-specific entries retire only after new stable registration succeeds.",
+    "Keep current and exact prior active release; same-version reinstall remaps prior to its renamed backup.",
+    "Ambiguous prior state preserves older folders; postcommit cleanup errors are warnings and do not claim failed activation."
+  ],
+  "file_cleanup": [
+    "Canonical current-user program releases tree only; matching manifest/version/publisher anchors required.",
+    "Delete only unchanged manifest-listed regular program files; verify path components, hashes and file identity.",
+    "Preserve configured survey workspace, source/cache formats, all unlisted and modified files.",
+    "Manifest-owned unchanged numpy arrays under runtime are library resources and can be removed.",
+    "No symlink/junction/reparse traversal and no recursive deletion of installed release folders.",
+    "Ownership anchors and unverified generated files may remain; removed_bytes means logical sizes, not guaranteed physical free space."
+  ],
+  "uninstall": [
+    "Same workspace lock and path/data-overlap checks protect removal.",
+    "Pending owned-file deletion retains registry/uninstaller/manifest for retry.",
+    "Stable/vendor/matching-owned-legacy registration removal is transactional.",
+    "An old or backup uninstaller cannot remove current registration, marker or shared shortcuts.",
+    "Only an exact verified generated receipt permits final uninstaller/anchor removal."
+  ],
+  "application_algorithm_files_unchanged_from_0_18_4": true,
+  "application_changed_files": [
+    "app/release.py"
+  ],
+  "survey_data_changed": false,
+  "runtime_baseline": "0.17.3; all 20,001 functional runtime files remain byte-identical.",
+  "native_windows_execution": false,
+  "native_windows_webview2_gpu_execution": false,
+  "retained_application_evidence": "0.18.3 validation: 331 application tests, browser and geometry/mesh/alignment/registration evidence. 0.18.4 installer startup correction retained. No new survey algorithm accuracy claim."
+}

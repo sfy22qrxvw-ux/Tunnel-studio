@@ -1,0 +1,148 @@
+TUNNEL STUDIO 0.13.0 — EQUATIONS AND IMPLEMENTATION
+Coordinates: metres; reported deviations: millimetres.
+12 October 2026
+
+1. JOINED TUNNEL LINING SURFACE
+An estimated orthonormal PCA frame maps each working point p to
+    (s,u,v) = (p-c) A
+    r = sqrt(u^2+v^2), theta = atan2(v,u).
+The axis choice minimises dissimilarity of the two radial covariance
+eigenvalues, with a small axial-contrast preference. This is an estimated
+frame, not a surveyed alignment.
+
+Axial/angle cells supply median observed radius r_ij. Grid vertices are
+    v_ij = c + A [s_i, r_ij cos(theta_j), r_ij sin(theta_j)]^T.
+Adjacent valid cells share vertex indices; each grid quadrilateral supplies
+two faces. Angle connectivity wraps at 360 degrees, without duplicating the
+seam. Axial ends are not capped. Maximum edge filtering can leave openings.
+
+Interpolation uses linear radius between supported endpoints in an axial
+column or periodic angular row. Endpoint separation must be no greater than
+the entered gap limit; radial difference must also be within that limit.
+Angular separation uses the estimated median radius times angle.
+Only one pass from originally occupied cells is used, so filling cannot
+progressively grow across a large unmeasured region.
+At least 60% aggregate angular coverage is required; this does not certify
+coverage at every station. Grid size is limited to 750,000 cells.
+Median cell fit changes geometry. Working-point sampling, grid resolution
+and unremoved internal objects affect the result. No accuracy tolerance is
+inferred from triangle count.
+
+2. CIRCULAR ALIGNMENT COMPARISON
+For every retained finite point p and candidate 3D segment a -> b:
+    t_raw = ((p-a) dot (b-a)) / ||b-a||^2
+    t = clip(t_raw,0,1)
+    c = a + t(b-a)
+Select the segment with the minimum ||p-c||.
+Interpolate supplied station labels and design radius:
+    station = (1-t) station_a + t station_b
+    R = (1-t) R_a + t R_b
+    d = ||p-c|| - R.
+For an interior projection this is sqrt(right^2+up^2)-R in the
+alignment-normal section. d_mm = 1000 d.
+Positive means outside the circular design; negative means inside.
+Points beyond the first/last endpoint tangent are excluded.
+
+The polyline is subdivided into pieces no longer than 2 m without changing
+its geometry. A midpoint KD-tree bounds the exact segment search:
+every candidate closer than distance D must have its midpoint within
+D + maximum half-segment length. Distances are then evaluated explicitly.
+The limit is 250,000 subdivided segments. Highly ambiguous, far-away queries
+with excessive candidates stop with a positioning/extent message.
+
+This mode uses nearest 3D segments. Earlier tunnel section tools use their
+existing plan-based stationing convention; results can differ on steep,
+curved or folded alignments. It is radial deviation from a polyline circular
+design, not exact shortest distance to a swept curved/tapered surface.
+Exact clothoids, analytic curves and station equations are not implemented.
+
+3. IMPORTED TRIANGLE DESIGN
+q = argmin over the full reference triangle surface of ||p-q||.
+Unsigned distance: d = ||p-q||.
+Optional oriented-face distance:
+    d_signed = sign((p-q) dot n) ||p-q||,
+where n is the nearest triangle's unit normal.
+
+Nearest-point queries use Open3D RaycastingScene.compute_closest_points,
+including triangle interiors and edges. Source and design are translated
+to a shared local origin before the Float32 engine query, avoiding loss of
+millimetres solely from large world-coordinate offsets. The reference's
+local Float32 coordinate step is reported; reference and query extents incompatible with
+one-tenth of the requested tolerance is rejected.
+All original triangle faces are used; no display simplification is used.
+
+The optional sign is a local normal-side convention, not solid occupancy.
+Inconsistent winding flips signs. A non-zero tangential displacement with
+near-zero normal projection has an ambiguous sign and is excluded.
+No watertightness, self-intersection or structural acceptability certificate
+is provided by this distance calculation.
+
+4. STATISTICS AND COLOURS
+An explicit band B admits |d| <= B; B=0 switches this exclusion off.
+Source-mask deletions and non-finite points are excluded. Display-hidden
+regions do not change the source point set.
+For the N admitted points:
+    mean = sum(d_i)/N
+    RMS = sqrt(sum(d_i^2)/N)
+    within = count(|d_i| <= tolerance)
+    below = count(d_i < -tolerance)
+    above = count(d_i > tolerance)
+Percentiles use all admitted values (linear percentile interpolation).
+P95 absolute is percentile_95(|d_i|), distinct from signed P95.
+Threshold equality is included within tolerance, with a 1 nanometre
+numerical allowance on tolerance/band comparisons. No density/area weighting
+is applied: these are point-weighted statistics, not surface-area percentages.
+The colour preview is sampled to at most 100,000 points; statistics are not.
+Green = within, red = above, blue = below (signed modes).
+CSV retains original source index, XYZ, distance, chainage where applicable
+and whether the point was included, band-excluded or outside/ambiguous.
+Deleted/non-finite rows are counted but not exported as comparison records.
+
+5. CONNECTED SOLID PREVIEW
+A reduced preview is built using quadric edge collapse rather than selecting
+individual unrelated faces. Edge-connected components are allocated separate
+budgets and processed independently; small pieces are retained where the
+display budget permits. Boundary weight is 10. A split or over-budget
+reduction stops with an explanation instead of reverting to perforated faces.
+Cache keys include file path, size, modification time, counts and budget.
+Derived display arrays are bounded; original mesh caches and OBJ export stay
+complete. Simplification may move vertices or change fine detail. A target
+triangle count is not a maximum deviation guarantee or topology certificate.
+
+6. CHECKER TARGET EVIDENCE
+The existing robust plane/contrast fitter is retained. Nominated balls now
+overlap independently. Fixed source-row hash priorities select a bounded
+sample across all chunks, replacing first-record truncation.
+Whole-scan nomination remains limited to 60,000 sample points per chunk,
+28 contrast cells per channel/chunk, 500 nominations and 100 final suggestions.
+A two-million-point aggregate patch budget sets per-patch sample limits
+between 2,000 and 35,000 points; fitting uses at most 30,000 points.
+
+Each fitted frame is validated on original finite points within a disc of
+radius 0.46 times the entered printed size, near the fitted plane.
+Transition strips |u| or |v| < 0.025 times size are excluded from contrast
+checks. Contrast z is mapped to [-1,1] using the fit's common robust range.
+A fixed 8x8 spatial grid weights occupied cells equally within each quadrant.
+
+Each quadrant needs at least 5 observations in 3 spatial cells and spread
+of at least 0.14 times size in both in-plane directions.
+Required quadrant signed contrast >=0.25, agreement >=0.68, mean checker
+score >=0.55. Checker score must beat constant and single-edge alternatives
+by at least 0.20. These thresholds are independent implementation choices
+tested synthetically, not a calibrated marker probability.
+A fixed fitted frame passes a second original-density check before return.
+Only the fitting/nomination stages are sampled; that is not an exhaustive
+full-density recognition claim. Plane RMS is not target-centre uncertainty.
+
+7. PRIMARY IMPLEMENTATION REFERENCES
+Open3D TriangleMesh simplification and connected components:
+https://www.open3d.org/docs/release/python_api/open3d.geometry.TriangleMesh.html
+Open3D closest-point queries and signed-distance assumptions:
+https://www.open3d.org/docs/release/python_api/open3d.t.geometry.RaycastingScene.html
+SciPy radius neighbourhood queries:
+https://docs.scipy.org/doc/scipy/reference/generated/scipy.spatial.cKDTree.query_ball_point.html
+
+The earlier supplied research papers remain documented in the 0.12.0 research
+notes. This release's grid, segment search and checker gates are independent
+implementations; it does not claim to reproduce a proprietary Leica engine,
+the IPCMS sphere-packing algorithm or surveyed marker-recognition accuracy.

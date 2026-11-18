@@ -1,0 +1,27 @@
+Tunnel Studio 0.18.2 - 30 October 2026
+
+- Registered preview picks now agree with the pose-aware source revision and
+  recover exact original point identities in the correct registered frame.
+  Local block pruning uses the inverse pose; precise tests and visibility
+  predicates use world coordinates. Bounded owned reads close on cancellation.
+- Round protruding fittings use actual planar diameter rather than a box
+  diagonal. Elongation is measured in the component principal frame. Duplicate
+  returns preserve IDs but cannot fabricate distinct spatial support.
+- E57 import handles intensity/colour validity flags through libE57 buffers,
+  preserving wide colour values and applying the declared scan pose once.
+- Flat or quantized intensity backgrounds no longer disable contrasting seams.
+  Shallow seam depth has an independent 4 mm setting, with an adaptive four-MAD
+  noise gate; bolt/recess depth retains its separate 12 mm default.
+- Seam fits require concentration relative to their flanks and revalidation
+  after refinement. A conflicting local boundary no longer discards every
+  independent panel in the same observed ring interval.
+- Incomplete or width-inconsistent classification bands are withheld locally,
+  preserving independently supported separated bands elsewhere.
+- Exact connectivity uses fewer indexed cell-range probes without altering
+  original-coordinate edge tests. No new input-point cutoff is introduced.
+- Analyse exposes Segment panels directly. Lining clusters explicitly describes
+  connected groups, with a direct route to measured seam segmentation. Empty,
+  partial and single-component results have explicit review diagnostics.
+
+
+See RELEASE_SCOPE_0_18_2.txt and VALIDATION_0_18_2.json for actual scan outcomes, evidence and remaining limits.

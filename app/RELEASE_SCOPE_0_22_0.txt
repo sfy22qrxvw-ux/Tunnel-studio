@@ -1,0 +1,51 @@
+Tunnel Studio 0.22.0 | Local measured reference and modern readable workspace
+
+Cumulative baseline: the verified delivered 0.21.7 source and unchanged runtime.
+No private scan, project data, screenshots or shape-library examples are bundled.
+
+shape_lining.py fits a separate measured background for shape selection. The
+existing tunnel frame still supplies station, angle and section centres/radii.
+A bounded spatial calibration sample becomes a periodic cKDTree in station/arc
+coordinates. Batches of at most 384 queries fit weighted local quadratics from
+at most 256 neighbours; 90 mm central disks and robust residual weights reduce
+compact-object contamination. A 1.5 m maximum measured-neighbour distance,
+minimum support, normal-matrix conditioning and residual checks refuse ambiguous
+patches. A periodic grid has at most 350,000 nodes. Its resolution is a background
+working scale, not a source admission limit or reconstructed survey surface.
+
+Original observations use bilinear interpolation only where all contributing
+patches have support. Existing longitudinal reference remains an explicit
+alternative. No source points, attributes, masks or virtual poses are changed
+by fitting or preview. Cancellation is checked between bounded patch batches
+and original-point blocks, retaining the prior completed review. Only summary
+counts/residuals enter review metadata; the fitted grid does not inflate project
+manifests. The existing cleaning, meshing and registration engines are retained.
+
+compact_shapes.py compares 90-degree depth-pattern variants when principal
+directions are ambiguous for nearly square/round footprints and rotations are
+enabled. It retains the existing scale, footprint, symmetric support and depth
+limits. Detection does not automatically teach the library. Matching output
+still consists of exact original int64 identities; overlaps have one owner.
+
+Each detection reports eight circumference regions with processed, supported,
+off-lining and matched observation counts. These are pipeline diagnostics, not
+physical pocket counts, detection confidence or a semantic ground truth. View
+filters are explicitly identified. Crown/invert use the fitted cross-section
+frame relative to project height; near-vertical axes use neutral sector names.
+
+workspace-modern.css provides a shared application palette for dialogs, tool
+panels, selected rows, statistic cards, kept/excluded states and detached review.
+Theme colour pairs are checked together rather than changing text alone. The
+appearance control uses the existing per-PC persistence and native bridge.
+Native job progress reads those preferences before opening. Scan/display buffers,
+data colours, graph colours and exported measurements are not restyled.
+
+Constructed tests reproduce a missed upper pocket under gradual crown variation
+and verify recovery at all eight positions, preserved original coordinates and
+unchanged ordinary wall observations. Other tests cover missing wall support,
+degenerate patches, cancellation, bounded queries, registered world frames,
+quarter turns and native colour pairs. Browser checks exercise real production
+dialogs/cleaning reviews and controlled detached-window transport. Native Windows
+and WebView2, the complete user project and field recognition accuracy are not
+established by these checks. The installer repeats its own component/startup
+validation before activation on Windows.

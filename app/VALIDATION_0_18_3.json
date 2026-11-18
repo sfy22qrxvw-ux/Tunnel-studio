@@ -1,0 +1,2128 @@
+{
+  "version": "0.18.3",
+  "date_utc": "2026-10-30",
+  "baseline_application_version": "0.18.2",
+  "source_baseline": "Delivered canonical source version 20",
+  "source_baseline_sha256": "e664bb931bb8b1c296b5876547430d6462c512ea2afda66c7f1ef29ab3d7177b",
+  "scope": "Reviewed Explorer disk reclamation; grouped selectable references; immediate displayed-point deletion and atomic multi-scan masks; snapped planes; bounded whole-input geometry; full-range ring detection and heatmaps; mesh pose guards.",
+  "application_tests": {
+    "tests": 331,
+    "seconds": 46.326,
+    "failures": 0,
+    "errors": 0,
+    "skipped": 0,
+    "result": "OK",
+    "platform": "Linux"
+  },
+  "new_regression_tests_since_0182": 58,
+  "syntax": {
+    "application_python_files_parsed": 163,
+    "packaging_python_files_parsed": 7,
+    "python_files_parsed": 170,
+    "javascript_files_checked": 48,
+    "result": "OK"
+  },
+  "focused_suites": {
+    "registration_storage_regression": {
+      "tests": 45,
+      "seconds": 1.099,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 0,
+      "result": "OK",
+      "platform": "Linux"
+    },
+    "backend_scope_regression": {
+      "tests": 90,
+      "seconds": 9.491,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 0,
+      "result": "OK",
+      "platform": "Linux"
+    },
+    "whole_cloud_workflows": {
+      "tests": 27,
+      "seconds": 5.084,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 0,
+      "result": "OK",
+      "platform": "Linux"
+    },
+    "joint_range_regression": {
+      "tests": 15,
+      "seconds": 1.418,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 0,
+      "result": "OK",
+      "platform": "Linux"
+    },
+    "geometry": {
+      "tests": 12,
+      "seconds": 2.366,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 0,
+      "result": "OK",
+      "platform": "Linux"
+    },
+    "explorer_deletion": {
+      "tests": 25,
+      "seconds": 0.366,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 0,
+      "result": "OK",
+      "platform": "Linux"
+    },
+    "alignment_range": {
+      "tests": 4,
+      "seconds": 25.482,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 0,
+      "result": "OK",
+      "platform": "Linux"
+    }
+  },
+  "focused_suite_counts_overlap": true,
+  "browser_workflow": {
+    "platform": "Linux Chromium; Windows file handles/native WebView2 require Windows execution",
+    "browser": "156.0.8078.80",
+    "steps": [
+      {
+        "flow": "group_select_3d_ctrl_select_delete_undo",
+        "group_size": 3,
+        "selected_3d_guides": [
+          "lining:seams:1",
+          "lining:seams:3"
+        ],
+        "removed": 2,
+        "freed_bytes": 0,
+        "source_unchanged": true
+      },
+      {
+        "flow": "3d_guide_selection_during_surface_review",
+        "references_only": true
+      },
+      {
+        "flow": "immediate_gpu_hide_atomic_mask_delete_undo",
+        "display": {
+          "flags": 2304,
+          "yellow": 3596
+        },
+        "pending": {
+          "pending": true,
+          "flags": 2304,
+          "yellow": 0,
+          "error": 0
+        },
+        "original_points_removed_then_restored": 2304,
+        "batch_requests": 1
+      },
+      {
+        "flow": "point_delete_request_failure_rolls_back_preview",
+        "original_points_unchanged": true
+      },
+      {
+        "flow": "point_delete_cancelled_job_rolls_back_preview",
+        "simulated_cancel_response": true,
+        "original_points_unchanged": true
+      },
+      {
+        "flow": "three_original_point_plane_hover_preview_apply",
+        "statistics": {
+          "method": "Plane through three accepted points",
+          "points": 3,
+          "rms_mm": 0,
+          "mean_absolute_mm": 0,
+          "max_absolute_mm": 0,
+          "mean_signed_mm": 0,
+          "normal": [
+            -0.02998051899192692,
+            -0.01998701266128365,
+            0.9993506330642176
+          ],
+          "centre": [
+            179999.51440734588,
+            398999.90625,
+            49.98355722037666
+          ],
+          "width_m": 3.5953668237964607,
+          "height_m": 4.063311688319788,
+          "picked_points": [
+            [
+              179997.71875,
+              398997.875,
+              49.8890625
+            ],
+            [
+              180001.3125,
+              398997.875,
+              49.996875
+            ],
+            [
+              179997.71875,
+              399001.9375,
+              49.9703125
+            ]
+          ],
+          "all_selected_points": false,
+          "original_coordinates_changed": false,
+          "point_sources": [
+            {
+              "source_id": "11097be512204104b9ea6bbfa0efe309",
+              "source_revision": "/workspace/scratch/0d497fbe0eff/validation/explorer_ui_0183/ui_data/fixture0.xyz64||pose:[[[1.0,0.0,0.0],[0.0,1.0,0.0],[0.0,0.0,1.0]],[180000.0,399000.0,50.0]]",
+              "index": 15475
+            },
+            {
+              "source_id": "11097be512204104b9ea6bbfa0efe309",
+              "source_revision": "/workspace/scratch/0d497fbe0eff/validation/explorer_ui_0183/ui_data/fixture0.xyz64||pose:[[[1.0,0.0,0.0],[0.0,1.0,0.0],[0.0,0.0,1.0]],[180000.0,399000.0,50.0]]",
+              "index": 15590
+            },
+            {
+              "source_id": "11097be512204104b9ea6bbfa0efe309",
+              "source_revision": "/workspace/scratch/0d497fbe0eff/validation/explorer_ui_0183/ui_data/fixture0.xyz64||pose:[[[1.0,0.0,0.0],[0.0,1.0,0.0],[0.0,0.0,1.0]],[180000.0,399000.0,50.0]]",
+              "index": 48885
+            }
+          ]
+        },
+        "model_id": "cad:9f679d91b1cd43dd9c9cd2750cc04731"
+      },
+      {
+        "flow": "draw_point_area_best_fit_plane",
+        "points": 2304,
+        "rms_mm": 3.5022185173776792e-12
+      },
+      {
+        "flow": "full_scan_poor_cylinder_preview",
+        "points": 12000,
+        "rms_mm": 291.98312781246227,
+        "rms_to_radius_percent": 9.700339200469418,
+        "quality": "poor"
+      },
+      {
+        "flow": "mixed_cad_reference_scan_delete_review",
+        "items": 3,
+        "cancel_kept_all_items": true
+      },
+      {
+        "flow": "physical_explorer_scan_delete",
+        "review": {
+          "revision": "07a1316ffeefdac38a3d5e06c35972399b05f276b7ce14a4ad51f598760c4767",
+          "item_count": 1,
+          "items": [
+            {
+              "id": "3af6a9cfba9b4b8c964d2acf26fb5a3d",
+              "name": "Disposable scan fixture",
+              "kind": "scan"
+            }
+          ],
+          "exclusive_files": 7,
+          "exclusive_bytes": 10569554,
+          "shared_files": 0,
+          "shared_bytes": 0,
+          "external_files": 1,
+          "history_cleared": true,
+          "updates_saved_project": false,
+          "original_imports_preserved": true
+        },
+        "report": {
+          "revision": "07a1316ffeefdac38a3d5e06c35972399b05f276b7ce14a4ad51f598760c4767",
+          "item_count": 1,
+          "items": [
+            {
+              "id": "3af6a9cfba9b4b8c964d2acf26fb5a3d",
+              "name": "Disposable scan fixture",
+              "kind": "scan"
+            }
+          ],
+          "exclusive_files": 7,
+          "exclusive_bytes": 10569554,
+          "shared_files": 0,
+          "shared_bytes": 0,
+          "external_files": 1,
+          "history_cleared": true,
+          "updates_saved_project": false,
+          "original_imports_preserved": true,
+          "transaction_id": "items_be55a71134704791b6b33cd51e451ed2",
+          "removed_count": 1,
+          "freed_bytes": 10569554,
+          "pending_bytes": 0,
+          "purge_pending": false
+        },
+        "owned_paths_removed": true,
+        "external_original_kept": true,
+        "unselected_scan_kept": true
+      }
+    ],
+    "page_errors": [],
+    "http_errors": []
+  },
+  "synthetic_full_input_geometry": {
+    "kind": "synthetic full-input geometry validation",
+    "original_points": 3100123,
+    "retained_points": 3100120,
+    "cylinder_statistics": {
+      "points": 3100120,
+      "rms_mm": 2.0393894773007896e-08,
+      "mean_absolute_mm": 1.599916498481811e-08,
+      "max_absolute_mm": 6.019806875201539e-08,
+      "mean_signed_mm": -3.421298443188864e-13,
+      "all_selected_points": true,
+      "angular_coverage_degrees": 360.0,
+      "method": "Geometric least-squares cylinder; initialization sample, full-data refinement and residuals",
+      "axis": [
+        0.310170640791565,
+        0.8204513724163973,
+        0.4802642179998424
+      ],
+      "base": [
+        449987.5931743684,
+        329967.18194510334,
+        -39.21056872000724
+      ],
+      "radius_m": 3.400000000000002,
+      "height_m": 80.00000000005997,
+      "initialization_points": 16000,
+      "refinement_steps": 1,
+      "converged": true,
+      "fit_quality": "good",
+      "rms_to_radius_percent": 5.998204345002318e-10,
+      "poor_fit_threshold_percent": 5.0,
+      "point_block_size": 100000,
+      "processing": "Bounded original-point reads and disk-backed full-selection fit",
+      "input_point_limit": null,
+      "original_coordinates_changed": false
+    },
+    "plane_statistics": {
+      "points": 3100120,
+      "rms_mm": 2404.120810033538,
+      "mean_absolute_mm": 2164.4515173412606,
+      "max_absolute_mm": 3399.990767615509,
+      "mean_signed_mm": 1.500170298195594e-08,
+      "all_selected_points": true,
+      "method": "Orthogonal least-squares plane; all selected retained points",
+      "normal": [
+        0.36381196121537623,
+        -0.5691623846787663,
+        0.7373567906674501
+      ],
+      "centre": [
+        450000.0000000009,
+        329999.99036868213,
+        -20.00743436799846
+      ],
+      "eigenvalues": [
+        5.779796869236379,
+        5.780203059250837,
+        533.374605933491
+      ],
+      "width_m": 33.05107070490445,
+      "height_m": 77.67442246447136,
+      "point_block_size": 100000,
+      "processing": "Bounded original-point reads and disk-backed full-selection fit",
+      "input_point_limit": null,
+      "original_coordinates_changed": false
+    },
+    "point_read_block_max": 100000,
+    "source_sha256": "d7bf538c214aca2cc9d25cbbd0b2b969b6a43a5c41503aa977bcad31a36becb6",
+    "source_unchanged": true,
+    "whole_file_mappings": 0,
+    "seconds": 2.1586345809992054,
+    "native_windows_execution": false,
+    "real_tunnel_accuracy_claim": false
+  },
+  "actual_full_input_cylinder": {
+    "source_name": "D2 27-95 1 registered_Full.e57",
+    "source_count": 5921285,
+    "request": {
+      "operation": "fit_cylinder",
+      "request": {
+        "ids": [
+          "actual_registered"
+        ],
+        "whole": true
+      }
+    },
+    "source_before": {
+      "file": {
+        "path": "/workspace/scratch/0d497fbe0eff/validation/segmentation_0182/real_cache/0fa19ac275e748bb854532ad7fdcbfdc.xyz64",
+        "bytes": 142110840,
+        "sha256": "38cc17e4f6b27b5ee5edcd9514132cfe50f25d59abd990a759f51d9cbc4c38bb"
+      },
+      "attributes_file": {
+        "path": "/workspace/scratch/0d497fbe0eff/validation/segmentation_0182/real_cache/0fa19ac275e748bb854532ad7fdcbfdc.attr32",
+        "bytes": 94740560,
+        "sha256": "01a9639e4245c92b6bb0f773434fe70555bbcea6f6ba48f7b1e8302757744e8a"
+      },
+      "preview_file": {
+        "path": "/workspace/scratch/0d497fbe0eff/validation/segmentation_0182/real_cache/3bdf4e36de1345e6addaa70437b66c1c.preview64",
+        "bytes": 5921304,
+        "sha256": "6dd65f7e7865e1164428946f7198c24c967c4bf5a8c81495bbdad8b4418f1fa9"
+      }
+    },
+    "imported_e57_sha256": "634493d50a2fcff7409a8dc434ba74bb28097fa4a23647080d038e539d4737cd",
+    "expected_coordinate_sha256": "38cc17e4f6b27b5ee5edcd9514132cfe50f25d59abd990a759f51d9cbc4c38bb",
+    "environment": {
+      "platform": "linux",
+      "python": "3.12.14",
+      "openblas_threads": "1"
+    },
+    "scope": "Readonly imported original-coordinate cache; isolated server state and temporary fit spool; no Apply.",
+    "outcome": "valid_preview",
+    "statistics": {
+      "points": 5921285,
+      "rms_mm": 549.4623482967427,
+      "mean_absolute_mm": 379.37593864676114,
+      "max_absolute_mm": 2373.0531409367686,
+      "mean_signed_mm": 2.4147097119064933e-10,
+      "all_selected_points": true,
+      "angular_coverage_degrees": 360.0,
+      "method": "Geometric least-squares cylinder; initialization sample, full-data refinement and residuals",
+      "axis": [
+        0.17667628489723478,
+        0.9839377507105402,
+        0.025534155196407546
+      ],
+      "base": [
+        -13.895712891636284,
+        -78.23291731448028,
+        0.11408949795161183
+      ],
+      "radius_m": 3.538141435015183,
+      "height_m": 140.4907532678136,
+      "initialization_points": 16000,
+      "refinement_steps": 4,
+      "converged": true,
+      "fit_quality": "poor",
+      "rms_to_radius_percent": 15.529688634235866,
+      "poor_fit_threshold_percent": 5.0,
+      "point_block_size": 100000,
+      "processing": "Bounded original-point reads and disk-backed full-selection fit",
+      "input_point_limit": null,
+      "original_coordinates_changed": false
+    },
+    "warnings": [
+      "Poor cylinder fit: RMS deviation is 549.46 mm (15.53% of the 3.5381 m radius), above the 5% poor-fit threshold. This best-fit approximation may not describe the tunnel lining. Inspect the residuals and dimensions before adding or using the model.",
+      "The fitted cylinder is a finite analytic model bounded by the observed axial extent. Its end caps and unobserved side are model geometry, not measured lining."
+    ],
+    "model_vertices": 192,
+    "model_faces": 380,
+    "poor_fit_warning_present": true,
+    "fit_seconds": 5.452510050003184,
+    "diagnostics": {
+      "max_rows_per_read": 100000,
+      "read_calls": 16660,
+      "full_system_passes": 8,
+      "selected_retained_points": 5921285,
+      "centre": [
+        -1.438878385121681,
+        -9.37819085219077,
+        2.231218540022211
+      ],
+      "covariance": [
+        [
+          18.524263570154105,
+          64.14636140475633,
+          1.7905455439516071
+        ],
+        [
+          64.14636140475633,
+          362.395205039662,
+          9.655211823043096
+        ],
+        [
+          1.7905455439516071,
+          9.655211823043096,
+          6.016330978387865
+        ]
+      ],
+      "source_revision": "321c3aae5448b1b4134e6750ce0705747ac451dbd9bfbcd91686d28cba3c1822",
+      "candidate_full_input_diagnostics": {
+        "points": 5921285,
+        "rms_mm": 549.4623482967427,
+        "mean_absolute_mm": 379.37593864676114,
+        "max_absolute_mm": 2373.0531409367686,
+        "mean_signed_mm": 2.4147097119064933e-10,
+        "all_selected_points": true,
+        "angular_coverage_degrees": 360.0,
+        "centre": [
+          -1.5276483676121335,
+          -9.353239459076041,
+          1.9015850818626472
+        ],
+        "axis": [
+          0.17667628489723478,
+          0.9839377507105402,
+          0.025534155196407546
+        ],
+        "radius_m": 3.538141435015183,
+        "height_m": 140.4907532678136
+      }
+    },
+    "phases": [
+      "Checking D2 27-95 1 registered_Full.e57: 100,000 / 5,921,285 original points",
+      "Checking D2 27-95 1 registered_Full.e57: 200,000 / 5,921,285 original points",
+      "Checking D2 27-95 1 registered_Full.e57: 300,000 / 5,921,285 original points",
+      "Checking D2 27-95 1 registered_Full.e57: 400,000 / 5,921,285 original points",
+      "Checking D2 27-95 1 registered_Full.e57: 500,000 / 5,921,285 original points",
+      "Checking D2 27-95 1 registered_Full.e57: 600,000 / 5,921,285 original points",
+      "Checking D2 27-95 1 registered_Full.e57: 700,000 / 5,921,285 original points",
+      "Checking D2 27-95 1 registered_Full.e57: 800,000 / 5,921,285 original points",
+      "Checking D2 27-95 1 registered_Full.e57: 900,000 / 5,921,285 original points",
+      "Checking D2 27-95 1 registered_Full.e57: 1,000,000 / 5,921,285 original points",
+      "Checking D2 27-95 1 registered_Full.e57: 1,100,000 / 5,921,285 original points",
+      "Checking D2 27-95 1 registered_Full.e57: 1,200,000 / 5,921,285 original points",
+      "Checking D2 27-95 1 registered_Full.e57: 1,300,000 / 5,921,285 original points",
+      "Checking D2 27-95 1 registered_Full.e57: 1,400,000 / 5,921,285 original points",
+      "Checking D2 27-95 1 registered_Full.e57: 1,500,000 / 5,921,285 original points",
+      "Checking D2 27-95 1 registered_Full.e57: 1,600,000 / 5,921,285 original points",
+      "Checking D2 27-95 1 registered_Full.e57: 1,700,000 / 5,921,285 original points",
+      "Checking D2 27-95 1 registered_Full.e57: 1,800,000 / 5,921,285 original points",
+      "Checking D2 27-95 1 registered_Full.e57: 1,900,000 / 5,921,285 original points",
+      "Checking D2 27-95 1 registered_Full.e57: 2,000,000 / 5,921,285 original points",
+      "Checking D2 27-95 1 registered_Full.e57: 2,100,000 / 5,921,285 original points",
+      "Checking D2 27-95 1 registered_Full.e57: 2,200,000 / 5,921,285 original points",
+      "Checking D2 27-95 1 registered_Full.e57: 2,300,000 / 5,921,285 original points",
+      "Checking D2 27-95 1 registered_Full.e57: 2,400,000 / 5,921,285 original points",
+      "Checking D2 27-95 1 registered_Full.e57: 2,500,000 / 5,921,285 original points",
+      "Checking D2 27-95 1 registered_Full.e57: 2,600,000 / 5,921,285 original points",
+      "Checking D2 27-95 1 registered_Full.e57: 2,700,000 / 5,921,285 original points",
+      "Checking D2 27-95 1 registered_Full.e57: 2,800,000 / 5,921,285 original points",
+      "Checking D2 27-95 1 registered_Full.e57: 2,900,000 / 5,921,285 original points",
+      "Checking D2 27-95 1 registered_Full.e57: 3,000,000 / 5,921,285 original points",
+      "Checking D2 27-95 1 registered_Full.e57: 3,100,000 / 5,921,285 original points",
+      "Checking D2 27-95 1 registered_Full.e57: 3,200,000 / 5,921,285 original points",
+      "Checking D2 27-95 1 registered_Full.e57: 3,300,000 / 5,921,285 original points",
+      "Checking D2 27-95 1 registered_Full.e57: 3,400,000 / 5,921,285 original points",
+      "Checking D2 27-95 1 registered_Full.e57: 3,500,000 / 5,921,285 original points",
+      "Checking D2 27-95 1 registered_Full.e57: 3,600,000 / 5,921,285 original points",
+      "Checking D2 27-95 1 registered_Full.e57: 3,700,000 / 5,921,285 original points",
+      "Checking D2 27-95 1 registered_Full.e57: 3,800,000 / 5,921,285 original points",
+      "Checking D2 27-95 1 registered_Full.e57: 3,900,000 / 5,921,285 original points",
+      "Checking D2 27-95 1 registered_Full.e57: 4,000,000 / 5,921,285 original points",
+      "Checking D2 27-95 1 registered_Full.e57: 4,100,000 / 5,921,285 original points",
+      "Checking D2 27-95 1 registered_Full.e57: 4,200,000 / 5,921,285 original points",
+      "Checking D2 27-95 1 registered_Full.e57: 4,300,000 / 5,921,285 original points",
+      "Checking D2 27-95 1 registered_Full.e57: 4,400,000 / 5,921,285 original points",
+      "Checking D2 27-95 1 registered_Full.e57: 4,500,000 / 5,921,285 original points",
+      "Checking D2 27-95 1 registered_Full.e57: 4,600,000 / 5,921,285 original points",
+      "Checking D2 27-95 1 registered_Full.e57: 4,700,000 / 5,921,285 original points",
+      "Checking D2 27-95 1 registered_Full.e57: 4,800,000 / 5,921,285 original points",
+      "Checking D2 27-95 1 registered_Full.e57: 4,900,000 / 5,921,285 original points",
+      "Checking D2 27-95 1 registered_Full.e57: 5,000,000 / 5,921,285 original points",
+      "Checking D2 27-95 1 registered_Full.e57: 5,100,000 / 5,921,285 original points",
+      "Checking D2 27-95 1 registered_Full.e57: 5,200,000 / 5,921,285 original points",
+      "Checking D2 27-95 1 registered_Full.e57: 5,300,000 / 5,921,285 original points",
+      "Checking D2 27-95 1 registered_Full.e57: 5,400,000 / 5,921,285 original points",
+      "Checking D2 27-95 1 registered_Full.e57: 5,500,000 / 5,921,285 original points",
+      "Checking D2 27-95 1 registered_Full.e57: 5,600,000 / 5,921,285 original points",
+      "Checking D2 27-95 1 registered_Full.e57: 5,700,000 / 5,921,285 original points",
+      "Checking D2 27-95 1 registered_Full.e57: 5,800,000 / 5,921,285 original points",
+      "Checking D2 27-95 1 registered_Full.e57: 5,900,000 / 5,921,285 original points",
+      "Checking D2 27-95 1 registered_Full.e57: 5,921,285 / 5,921,285 original points",
+      "Finding cylinder direction",
+      "Refining cylinder against all selected points",
+      "Checking cylinder refinement 1",
+      "Refining cylinder",
+      "Checking cylinder refinement 2",
+      "Refining cylinder",
+      "Checking cylinder refinement 3",
+      "Refining cylinder",
+      "Checking cylinder refinement 4",
+      "Measuring full-data fit residuals",
+      "Preparing editable geometry preview\u2026"
+    ],
+    "process_peak_rss_kib": 98052,
+    "source_after": {
+      "file": {
+        "bytes": 142110840,
+        "sha256": "38cc17e4f6b27b5ee5edcd9514132cfe50f25d59abd990a759f51d9cbc4c38bb"
+      },
+      "attributes_file": {
+        "bytes": 94740560,
+        "sha256": "01a9639e4245c92b6bb0f773434fe70555bbcea6f6ba48f7b1e8302757744e8a"
+      },
+      "preview_file": {
+        "bytes": 5921304,
+        "sha256": "6dd65f7e7865e1164428946f7198c24c967c4bf5a8c81495bbdad8b4418f1fa9"
+      }
+    },
+    "all_source_files_unchanged": true,
+    "all_source_points_selected": true,
+    "all_source_points_measured": true,
+    "coordinate_hash_matches_original_import": true,
+    "remaining_spools": [],
+    "source_sha256": {
+      "geometry_tools.py": "a70325bb4ed67361b00b2fcd670ff33e733cb9f5069770ac3315bac4e49c181f",
+      "bounded_rows.py": "4607168c8451dce1fb124cc63da7937cbbb132b44b088c64c6a2b35fb767816a",
+      "workspace_tools.py": "78aa3981866344eba3b3a83bcd55ec823b5b6fe99a3a60b4139008907c24fd9e"
+    }
+  },
+  "current_mesh_engine_execution": {
+    "release": "0.18.3",
+    "purpose": "Fresh production mesh-engine execution gate",
+    "platform": "Linux-6.18.57-x86_64-with-glibc2.39",
+    "python": "3.12.14",
+    "package_versions": {
+      "numpy": "2.3.5",
+      "scipy": "1.17.0",
+      "open3d": "0.20.0",
+      "scikit-image": "0.26.0"
+    },
+    "entrypoint": "mesh_workflows.create_from_scan",
+    "no_app_patches": true,
+    "source_sha256_before": {
+      "meshing.py": "acab62187752331bfd37edd64e9702d91822f042bfd04ad70d03e7d4b62b51f0",
+      "mesh_geometry.py": "463a595b9c456639329391502d386c2d78e9573fe1a55eb4eebc8f9af207e27c",
+      "mesh_sampling.py": "23976028d870b1567414d8d2302f43dd929a5f9cc1657c12f454238f245013b1",
+      "tunnel_surface.py": "8b1844dcce5c805fcbc279604c08bda8ac0d07050f3874461f3ef5361191a4c6",
+      "mesh_workflows.py": "2cd9625eac08427aa88809604173c4c43076aed3654f8ac71b933b13ae75be2a",
+      "registration_pose.py": "29c440988411b186873d836cec59a5de1a7544b28d2154278d4000ba6bc72b46",
+      "jobdata.py": "5d8c19783ba3631f5bd2c89afb0106ab7a85613660db8e123f2581c56492651e",
+      "job_api.py": "57218901be685012596f766a3fe6e6fc691f9badf2148004a2cf4e1b3530f822"
+    },
+    "checks": [
+      {
+        "method": "tunnel_surface",
+        "passed": true,
+        "production_path": "mesh_workflows.create_from_scan -> meshing.create",
+        "mocked_geometry": false,
+        "fixture": "tube",
+        "source_points": 36180,
+        "masked_points": 3,
+        "retained_source_points": 36177,
+        "working_points": 36177,
+        "processed_points": 36177,
+        "vertices": 29158,
+        "triangles": 57954,
+        "reconstruction_seconds": 0.29757684400101425,
+        "analytic_vertex_surface_p95_m": 1.74009618465476e-06,
+        "fixture_regression_bound_m": 0.1,
+        "minimum_triangle_area_m2": 0.005233937161548772,
+        "output_vertex_bounds_world": [
+          [
+            429994.48207569384,
+            279992.4239514892,
+            115.55893004503318
+          ],
+          [
+            430005.7648378099,
+            280009.55135602155,
+            125.0693884827032
+          ]
+        ],
+        "registration_rotation": [
+          [
+            0.9323273456060345,
+            -0.35209279401963595,
+            0.08244019065147945
+          ],
+          [
+            0.361615431964962,
+            0.9077758055611578,
+            -0.21254967937539945
+          ],
+          [
+            0.0,
+            0.2279775235351884,
+            0.9736663950053749
+          ]
+        ],
+        "registration_translation": [
+          430000.123456789,
+          280000.987654321,
+          120.314159265
+        ],
+        "source_sha256": {
+          "measured.xyz64": "8db47d2d57a087d66cdc10e500d43735941db5e4efa0055f7364bf58913d2d69",
+          "measured.attr32": "5025e997dfb8bc0f949814424cc25a82ba2ac46dced43144b1f6569d1c6473ee",
+          "measured.mask": "32fdaaf5b9eeae50894497b041d70c7759bf9eb15f3c35d150d66f6b17891303"
+        },
+        "source_bytes_unchanged": true,
+        "source_metadata_unchanged": true,
+        "world_frame_verified": true,
+        "float64_vertex_file": true,
+        "complete_mesh_persisted": true,
+        "settings": {
+          "name": "Current tunnel_surface",
+          "engine": "tunnel_surface",
+          "quality": "balanced",
+          "step": 0.1,
+          "degrees": 2,
+          "max_edge": 0,
+          "smoothing": 0,
+          "sampling_distance": 0,
+          "noise_gap": 0,
+          "hole_handling": "preserve",
+          "hole_size": 0.5,
+          "poisson_depth": 6,
+          "tunnel_gap": 0.25
+        },
+        "summary": {
+          "area_m2": 303.33917734812985,
+          "boundary_edges": 362,
+          "nonmanifold_edges": 0,
+          "connected_components": 1,
+          "largest_component_triangles": 57954,
+          "largest_component_triangle_fraction": 1.0,
+          "largest_component_area_fraction": 1.0000000000000042,
+          "isolated_triangles": 0,
+          "orientation_conflict_edges": 0,
+          "surface_status": "connected",
+          "review_required": false,
+          "review_reasons": [],
+          "triangle_quality_mean": 0.8650951999449845,
+          "triangle_quality_min": 0.8650936361075184,
+          "triangle_quality_p05": 0.8650939492638416,
+          "triangle_quality_note": "Q = 4 sqrt(3) area / sum(edge length squared). 1 is equilateral; 0 is degenerate. Shape quality is not surface accuracy.",
+          "edge_closed": false,
+          "topology_note": "Components are triangles joined through shared edges. Open boundary edges can be intentional portals or measurement limits. These checks do not test self-intersections or certify watertightness or measurement coverage.",
+          "point_spacing_m": 0.07999999999094314,
+          "effective_max_edge_m": 0.36194663760933027,
+          "sampled_chamfer_m2": 0.008722380097682298,
+          "mesh_sample_to_cloud_rms_m": 0.044883966457594356,
+          "mesh_sample_to_cloud_p95_m": 0.07275343421806783,
+          "mesh_fit_samples": 12000,
+          "cloud_fit_samples": 9720,
+          "fit_note": "Area-weighted surface samples; normalized squared Chamfer = half the sum of directional mean squared nearest-neighbour distances. Approximate, not exact point-to-triangle deviation. Reference points are bounded spatial representatives of retained measurements; this is not full-density survey deviation.",
+          "method": "tunnel_surface",
+          "source_points": 36177,
+          "sampled_points": 36177,
+          "processed_points": 36177,
+          "fit_reference_points": 29158,
+          "vertices": 29158,
+          "triangles": 57954,
+          "requested_spacing_m": 0.1,
+          "frame": "Shared-vertex radial lining grid / PCA",
+          "spacing_m": 0.09996972926611342,
+          "angular_step_deg": 2.0,
+          "grid_rows": 216,
+          "grid_columns": 180,
+          "observed_cells": 29158,
+          "meshed_observed_cells": 29158,
+          "observed_cell_coverage_fraction": 1.0,
+          "interpolated_cells": 0,
+          "gap_limit_m": 0.25,
+          "smoothing": "None; median radius per occupied cell",
+          "triangles_before_edge_limit": 57954,
+          "triangles_removed_by_edge_limit": 0,
+          "support_coverage_note": "Fraction of measured grid cells used by at least one triangle. This measures measured-support retention; it does not certify that an unmeasured region is complete.",
+          "warning": "One approximately straight branch; grid vertices are fitted positions. Small gaps are interpolated in one pass only up to the stated local distance. Large gaps and ends stay open. For curved tunnels use Alignment-grid; separate junctions and clean equipment first. Radial medians do not identify services when services dominate a cell.",
+          "support_mode": "full_retained_grid",
+          "finite_source_points": 36177,
+          "source_passes": 2,
+          "grid_reservoir_per_cell": 17,
+          "grid_fit_samples": 36177,
+          "approximate_median_cells": 0,
+          "exact_median_cells": 29158,
+          "grid_boundary_roundoff_m": 4.657412809999772e-10,
+          "measured_axial_extent_m": [
+            -8.000028455522042,
+            8.000028455604998
+          ],
+          "pca_variance": [
+            21.545510837447704,
+            4.499759049513853,
+            4.500489725965551
+          ],
+          "median_approximation": "Exact support counts from every finite retained measurement; median of up to 17 reproducibly sampled measured radii per cell. Cells within that capacity use the exact median. Reservoir priorities use original point IDs, independent of input chunk boundaries. Larger cells use an approximate median.",
+          "point_spacing_note": "Estimated distance between spatially distributed measured fit-reference points, not full-source point spacing.",
+          "quality_preset": "balanced",
+          "preview": false,
+          "creation_engine": "tunnel_surface",
+          "source_item_id": "ddd8831c06bc48e99960719c9471d279",
+          "source_name": "Registered tube",
+          "source_geometry_revision": "/tmp/ts0183-mesh-tunnel_surface-bpa4ov2a/measured.xyz64|/tmp/ts0183-mesh-tunnel_surface-bpa4ov2a/measured.mask|pose:[[[0.9323273456060345,-0.35209279401963595,0.08244019065147945],[0.361615431964962,0.9077758055611578,-0.21254967937539945],[0.0,0.2279775235351884,0.9736663950053749]],[430000.123456789,280000.987654321,120.314159265]]",
+          "source_scope": "all retained points"
+        },
+        "progress_tail": [
+          "Joining measured lining cells and bounded small gaps\u2026",
+          "Writing mesh: 29,158 vertices \u00b7 57,954 triangles",
+          "Checking triangle surface against spatially distributed measured reference points\u2026",
+          "Triangle geometry, connected surfaces and measured support checked",
+          "Saving joined triangle faces and mesh result\u2026"
+        ],
+        "elapsed_seconds": 0.31837992800137727
+      },
+      {
+        "method": "auto_scan",
+        "passed": true,
+        "production_path": "mesh_workflows.create_from_scan -> meshing.create",
+        "mocked_geometry": false,
+        "fixture": "plane",
+        "source_points": 2867,
+        "masked_points": 3,
+        "retained_source_points": 2864,
+        "working_points": 2864,
+        "processed_points": 2864,
+        "vertices": 2864,
+        "triangles": 5666,
+        "reconstruction_seconds": 0.0656179239958874,
+        "analytic_vertex_surface_p95_m": 6.836794630740221e-12,
+        "fixture_regression_bound_m": 1e-06,
+        "minimum_triangle_area_m2": 1.625593835519103e-12,
+        "output_vertex_bounds_world": [
+          [
+            429996.62228916417,
+            279998.087256414,
+            119.85820421792963
+          ],
+          [
+            430003.62462441385,
+            280003.888052228,
+            120.77011431207038
+          ]
+        ],
+        "registration_rotation": [
+          [
+            0.9323273456060345,
+            -0.35209279401963595,
+            0.08244019065147945
+          ],
+          [
+            0.361615431964962,
+            0.9077758055611578,
+            -0.21254967937539945
+          ],
+          [
+            0.0,
+            0.2279775235351884,
+            0.9736663950053749
+          ]
+        ],
+        "registration_translation": [
+          430000.123456789,
+          280000.987654321,
+          120.314159265
+        ],
+        "source_sha256": {
+          "measured.xyz64": "e2c3037016cd5ff2ef0944aba8c5583f65444379e0e78413412a03906c1f7761",
+          "measured.attr32": "dfc57f16cb3dc5276d1b1f0e4d6eaccfe2d740057613227034081c17d14108d7",
+          "measured.mask": "50d795e597ba193ac1b279afaff7dbec172a7cd208d0a7f004e2805fc1829344"
+        },
+        "source_bytes_unchanged": true,
+        "source_metadata_unchanged": true,
+        "world_frame_verified": true,
+        "float64_vertex_file": true,
+        "complete_mesh_persisted": true,
+        "settings": {
+          "name": "Current auto_scan",
+          "engine": "auto_scan",
+          "quality": "balanced",
+          "step": 0.1,
+          "degrees": 2,
+          "max_edge": 0,
+          "smoothing": 0,
+          "sampling_distance": 0,
+          "noise_gap": 0,
+          "hole_handling": "preserve",
+          "hole_size": 0.5,
+          "poisson_depth": 6,
+          "tunnel_gap": 0.25
+        },
+        "summary": {
+          "area_m2": 24.00000000041223,
+          "boundary_edges": 60,
+          "nonmanifold_edges": 0,
+          "connected_components": 1,
+          "largest_component_triangles": 5666,
+          "largest_component_triangle_fraction": 1.0,
+          "largest_component_area_fraction": 1.0000000000000075,
+          "isolated_triangles": 0,
+          "orientation_conflict_edges": 0,
+          "surface_status": "connected",
+          "review_required": false,
+          "review_reasons": [],
+          "triangle_quality_mean": 0.8349336370869153,
+          "triangle_quality_min": 3.743767980355968e-11,
+          "triangle_quality_p05": 0.8576354911702992,
+          "triangle_quality_note": "Q = 4 sqrt(3) area / sum(edge length squared). 1 is equilateral; 0 is degenerate. Shape quality is not surface accuracy.",
+          "edge_closed": false,
+          "topology_note": "Components are triangles joined through shared edges. Open boundary edges can be intentional portals or measurement limits. These checks do not test self-intersections or certify watertightness or measurement coverage.",
+          "point_spacing_m": 0.08695652171869106,
+          "effective_max_edge_m": 0.5217391303121464,
+          "sampled_chamfer_m2": 0.0010630744542434072,
+          "mesh_sample_to_cloud_rms_m": 0.03807902287284833,
+          "mesh_sample_to_cloud_p95_m": 0.056074591493060454,
+          "mesh_fit_samples": 12000,
+          "cloud_fit_samples": 2864,
+          "fit_note": "Area-weighted surface samples; normalized squared Chamfer = half the sum of directional mean squared nearest-neighbour distances. Approximate, not exact point-to-triangle deviation. Reference points are bounded spatial representatives of retained measurements; this is not full-density survey deviation.",
+          "method": "auto_scan",
+          "source_points": 2864,
+          "sampled_points": 2864,
+          "processed_points": 2864,
+          "fit_reference_points": 2864,
+          "vertices": 2864,
+          "triangles": 5666,
+          "support_mode": "spatial_representatives",
+          "finite_source_points": 2864,
+          "source_passes": 2,
+          "sampling_cell_m": 0.01268486941909285,
+          "working_voxels": 2864,
+          "sampling_budget_limited": false,
+          "sampling_note": "One unchanged measured XYZ row nearest each retained voxel centre. Voxel priorities bound working memory without weighting the sample towards dense scanner setups. The reported cell size is a sampling resolution, not an accuracy guarantee.",
+          "frame": "Best-fit PCA plane",
+          "pca_variance": [
+            3.099218926369921,
+            1.3904455896455288,
+            2.0575184478804854e-16
+          ],
+          "triangles_before_edge_limit": 5695,
+          "triangles_removed_by_edge_limit": 28,
+          "warning": "",
+          "auto_choice": "delaunay",
+          "quality_preset": "balanced",
+          "preview": false,
+          "creation_engine": "auto_scan",
+          "source_item_id": "68c3847ad4474560a13367cb3275f3a6",
+          "source_name": "Registered plane",
+          "source_geometry_revision": "/tmp/ts0183-mesh-auto_scan-ppzz62mz/measured.xyz64|/tmp/ts0183-mesh-auto_scan-ppzz62mz/measured.mask|pose:[[[0.9323273456060345,-0.35209279401963595,0.08244019065147945],[0.361615431964962,0.9077758055611578,-0.21254967937539945],[0.0,0.2279775235351884,0.9736663950053749]],[430000.123456789,280000.987654321,120.314159265]]",
+          "source_scope": "all retained points"
+        },
+        "progress_tail": [
+          "Running planar Delaunay on 2,864 sampled points",
+          "Writing mesh: 2,864 vertices \u00b7 5,666 triangles",
+          "Checking triangle surface against spatially distributed measured reference points\u2026",
+          "Triangle geometry, connected surfaces and measured support checked",
+          "Saving joined triangle faces and mesh result\u2026"
+        ],
+        "elapsed_seconds": 0.07092817900411319
+      },
+      {
+        "method": "pca_tunnel",
+        "passed": true,
+        "production_path": "mesh_workflows.create_from_scan -> meshing.create",
+        "mocked_geometry": false,
+        "fixture": "tube",
+        "source_points": 36180,
+        "masked_points": 3,
+        "retained_source_points": 36177,
+        "working_points": 36177,
+        "processed_points": 36177,
+        "vertices": 28977,
+        "triangles": 57602,
+        "reconstruction_seconds": 1.4478303859941661,
+        "analytic_vertex_surface_p95_m": 2.8763569304146542e-11,
+        "fixture_regression_bound_m": 0.1,
+        "minimum_triangle_area_m2": 0.00019133847248360158,
+        "output_vertex_bounds_world": [
+          [
+            429994.49920252094,
+            279992.5034299382,
+            115.57845899264377
+          ],
+          [
+            430005.7336273453,
+            280009.508189736,
+            125.05897863829763
+          ]
+        ],
+        "registration_rotation": [
+          [
+            0.9323273456060345,
+            -0.35209279401963595,
+            0.08244019065147945
+          ],
+          [
+            0.361615431964962,
+            0.9077758055611578,
+            -0.21254967937539945
+          ],
+          [
+            0.0,
+            0.2279775235351884,
+            0.9736663950053749
+          ]
+        ],
+        "registration_translation": [
+          430000.123456789,
+          280000.987654321,
+          120.314159265
+        ],
+        "source_sha256": {
+          "measured.xyz64": "8db47d2d57a087d66cdc10e500d43735941db5e4efa0055f7364bf58913d2d69",
+          "measured.attr32": "5025e997dfb8bc0f949814424cc25a82ba2ac46dced43144b1f6569d1c6473ee",
+          "measured.mask": "32fdaaf5b9eeae50894497b041d70c7759bf9eb15f3c35d150d66f6b17891303"
+        },
+        "source_bytes_unchanged": true,
+        "source_metadata_unchanged": true,
+        "world_frame_verified": true,
+        "float64_vertex_file": true,
+        "complete_mesh_persisted": true,
+        "settings": {
+          "name": "Current pca_tunnel",
+          "engine": "pca_tunnel",
+          "quality": "balanced",
+          "step": 0.1,
+          "degrees": 2,
+          "max_edge": 0,
+          "smoothing": 0,
+          "sampling_distance": 0,
+          "noise_gap": 0,
+          "hole_handling": "preserve",
+          "hole_size": 0.5,
+          "poisson_depth": 6,
+          "tunnel_gap": 0.25
+        },
+        "summary": {
+          "area_m2": 300.82577957025984,
+          "boundary_edges": 352,
+          "nonmanifold_edges": 0,
+          "connected_components": 1,
+          "largest_component_triangles": 57602,
+          "largest_component_triangle_fraction": 1.0,
+          "largest_component_area_fraction": 0.9999999999999951,
+          "isolated_triangles": 0,
+          "orientation_conflict_edges": 0,
+          "surface_status": "connected",
+          "review_required": false,
+          "review_reasons": [],
+          "triangle_quality_mean": 0.8468378431900804,
+          "triangle_quality_min": 0.020153325944843866,
+          "triangle_quality_p05": 0.8355636780338649,
+          "triangle_quality_note": "Q = 4 sqrt(3) area / sum(edge length squared). 1 is equilateral; 0 is degenerate. Shape quality is not surface accuracy.",
+          "edge_closed": false,
+          "topology_note": "Components are triangles joined through shared edges. Open boundary edges can be intentional portals or measurement limits. These checks do not test self-intersections or certify watertightness or measurement coverage.",
+          "point_spacing_m": 0.07999999999094314,
+          "effective_max_edge_m": 0.4799999999456588,
+          "sampled_chamfer_m2": 0.011290694675959813,
+          "mesh_sample_to_cloud_rms_m": 0.037945748984374555,
+          "mesh_sample_to_cloud_p95_m": 0.056305924040698146,
+          "mesh_fit_samples": 12000,
+          "cloud_fit_samples": 9045,
+          "fit_note": "Area-weighted surface samples; normalized squared Chamfer = half the sum of directional mean squared nearest-neighbour distances. Approximate, not exact point-to-triangle deviation. Reference points are bounded spatial representatives of retained measurements; this is not full-density survey deviation.",
+          "method": "pca_tunnel",
+          "source_points": 36177,
+          "sampled_points": 36177,
+          "processed_points": 36177,
+          "fit_reference_points": 36177,
+          "vertices": 28977,
+          "triangles": 57602,
+          "support_mode": "spatial_representatives",
+          "finite_source_points": 36177,
+          "source_passes": 2,
+          "sampling_cell_m": 0.03762750708941197,
+          "working_voxels": 36177,
+          "sampling_budget_limited": false,
+          "sampling_note": "One unchanged measured XYZ row nearest each retained voxel centre. Voxel priorities bound working memory without weighting the sample towards dense scanner setups. The reported cell size is a sampling resolution, not an accuracy guarantee.",
+          "frame": "Periodic cylindrical Delaunay / PCA",
+          "pca_variance": [
+            21.5455108374477,
+            4.499759049513853,
+            4.50048972596555
+          ],
+          "spacing_m": 0.1,
+          "angular_step_deg": 2.0,
+          "triangles_before_edge_limit": 57772,
+          "triangles_removed_by_edge_limit": 170,
+          "warning": "For a single approximately straight tunnel branch. Edge limit controls bridging across missing measurements.",
+          "quality_preset": "balanced",
+          "preview": false,
+          "creation_engine": "pca_tunnel",
+          "source_item_id": "d63f9cb4c2a34cb3b0a20303ac1b89b4",
+          "source_name": "Registered tube",
+          "source_geometry_revision": "/tmp/ts0183-mesh-pca_tunnel-1flg8evz/measured.xyz64|/tmp/ts0183-mesh-pca_tunnel-1flg8evz/measured.mask|pose:[[[0.9323273456060345,-0.35209279401963595,0.08244019065147945],[0.361615431964962,0.9077758055611578,-0.21254967937539945],[0.0,0.2279775235351884,0.9736663950053749]],[430000.123456789,280000.987654321,120.314159265]]",
+          "source_scope": "all retained points"
+        },
+        "progress_tail": [
+          "Triangulating cylindrical surface \u00b7 28,977 occupied cells",
+          "Writing mesh: 28,977 vertices \u00b7 57,602 triangles",
+          "Checking triangle surface against spatially distributed measured reference points\u2026",
+          "Triangle geometry, connected surfaces and measured support checked",
+          "Saving joined triangle faces and mesh result\u2026"
+        ],
+        "elapsed_seconds": 1.4702379259979352
+      },
+      {
+        "method": "watertight_tunnel",
+        "passed": true,
+        "production_path": "mesh_workflows.create_from_scan -> meshing.create",
+        "mocked_geometry": false,
+        "fixture": "tube",
+        "source_points": 36180,
+        "masked_points": 3,
+        "retained_source_points": 36177,
+        "working_points": 36177,
+        "processed_points": 36177,
+        "vertices": 28977,
+        "triangles": 57602,
+        "reconstruction_seconds": 1.3704497440048726,
+        "analytic_vertex_surface_p95_m": 2.8763569304146542e-11,
+        "fixture_regression_bound_m": 0.1,
+        "minimum_triangle_area_m2": 0.00019133847248360158,
+        "output_vertex_bounds_world": [
+          [
+            429994.49920252094,
+            279992.5034299382,
+            115.57845899264377
+          ],
+          [
+            430005.7336273453,
+            280009.508189736,
+            125.05897863829763
+          ]
+        ],
+        "registration_rotation": [
+          [
+            0.9323273456060345,
+            -0.35209279401963595,
+            0.08244019065147945
+          ],
+          [
+            0.361615431964962,
+            0.9077758055611578,
+            -0.21254967937539945
+          ],
+          [
+            0.0,
+            0.2279775235351884,
+            0.9736663950053749
+          ]
+        ],
+        "registration_translation": [
+          430000.123456789,
+          280000.987654321,
+          120.314159265
+        ],
+        "source_sha256": {
+          "measured.xyz64": "8db47d2d57a087d66cdc10e500d43735941db5e4efa0055f7364bf58913d2d69",
+          "measured.attr32": "5025e997dfb8bc0f949814424cc25a82ba2ac46dced43144b1f6569d1c6473ee",
+          "measured.mask": "32fdaaf5b9eeae50894497b041d70c7759bf9eb15f3c35d150d66f6b17891303"
+        },
+        "source_bytes_unchanged": true,
+        "source_metadata_unchanged": true,
+        "world_frame_verified": true,
+        "float64_vertex_file": true,
+        "complete_mesh_persisted": true,
+        "settings": {
+          "name": "Current watertight_tunnel",
+          "engine": "watertight_tunnel",
+          "quality": "balanced",
+          "step": 0.1,
+          "degrees": 2,
+          "max_edge": 0,
+          "smoothing": 0,
+          "sampling_distance": 0,
+          "noise_gap": 0,
+          "hole_handling": "preserve",
+          "hole_size": 0.5,
+          "poisson_depth": 6,
+          "tunnel_gap": 0.25
+        },
+        "summary": {
+          "area_m2": 300.82577957025984,
+          "boundary_edges": 352,
+          "nonmanifold_edges": 0,
+          "connected_components": 1,
+          "largest_component_triangles": 57602,
+          "largest_component_triangle_fraction": 1.0,
+          "largest_component_area_fraction": 0.9999999999999951,
+          "isolated_triangles": 0,
+          "orientation_conflict_edges": 0,
+          "surface_status": "connected",
+          "review_required": false,
+          "review_reasons": [],
+          "triangle_quality_mean": 0.8468378431900804,
+          "triangle_quality_min": 0.020153325944843866,
+          "triangle_quality_p05": 0.8355636780338649,
+          "triangle_quality_note": "Q = 4 sqrt(3) area / sum(edge length squared). 1 is equilateral; 0 is degenerate. Shape quality is not surface accuracy.",
+          "edge_closed": false,
+          "topology_note": "Components are triangles joined through shared edges. Open boundary edges can be intentional portals or measurement limits. These checks do not test self-intersections or certify watertightness or measurement coverage.",
+          "point_spacing_m": 0.07999999999094314,
+          "effective_max_edge_m": 0.4799999999456588,
+          "sampled_chamfer_m2": 0.011290694675959813,
+          "mesh_sample_to_cloud_rms_m": 0.037945748984374555,
+          "mesh_sample_to_cloud_p95_m": 0.056305924040698146,
+          "mesh_fit_samples": 12000,
+          "cloud_fit_samples": 9045,
+          "fit_note": "Area-weighted surface samples; normalized squared Chamfer = half the sum of directional mean squared nearest-neighbour distances. Approximate, not exact point-to-triangle deviation. Reference points are bounded spatial representatives of retained measurements; this is not full-density survey deviation.",
+          "method": "watertight_tunnel",
+          "source_points": 36177,
+          "sampled_points": 36177,
+          "processed_points": 36177,
+          "fit_reference_points": 36177,
+          "vertices": 28977,
+          "triangles": 57602,
+          "support_mode": "spatial_representatives",
+          "finite_source_points": 36177,
+          "source_passes": 2,
+          "sampling_cell_m": 0.03762750708941197,
+          "working_voxels": 36177,
+          "sampling_budget_limited": false,
+          "sampling_note": "One unchanged measured XYZ row nearest each retained voxel centre. Voxel priorities bound working memory without weighting the sample towards dense scanner setups. The reported cell size is a sampling resolution, not an accuracy guarantee.",
+          "frame": "Periodic cylindrical Delaunay / PCA",
+          "pca_variance": [
+            21.5455108374477,
+            4.499759049513853,
+            4.50048972596555
+          ],
+          "spacing_m": 0.1,
+          "angular_step_deg": 2.0,
+          "triangles_before_edge_limit": 57772,
+          "triangles_removed_by_edge_limit": 170,
+          "warning": "The selected hole-handling control governs local caps. Portals and unsupported large openings remain open. Review boundary/non-manifold counts; the result is not certified watertight.",
+          "quality_preset": "balanced",
+          "preview": false,
+          "creation_engine": "watertight_tunnel",
+          "source_item_id": "35e50823bba54f41b9d44c477aa465ad",
+          "source_name": "Registered tube",
+          "source_geometry_revision": "/tmp/ts0183-mesh-watertight_tunnel-j5rautwh/measured.xyz64|/tmp/ts0183-mesh-watertight_tunnel-j5rautwh/measured.mask|pose:[[[0.9323273456060345,-0.35209279401963595,0.08244019065147945],[0.361615431964962,0.9077758055611578,-0.21254967937539945],[0.0,0.2279775235351884,0.9736663950053749]],[430000.123456789,280000.987654321,120.314159265]]",
+          "source_scope": "all retained points"
+        },
+        "progress_tail": [
+          "Triangulating cylindrical surface \u00b7 28,977 occupied cells",
+          "Writing mesh: 28,977 vertices \u00b7 57,602 triangles",
+          "Checking triangle surface against spatially distributed measured reference points\u2026",
+          "Triangle geometry, connected surfaces and measured support checked",
+          "Saving joined triangle faces and mesh result\u2026"
+        ],
+        "elapsed_seconds": 1.392757737005013
+      },
+      {
+        "method": "delaunay",
+        "passed": true,
+        "production_path": "mesh_workflows.create_from_scan -> meshing.create",
+        "mocked_geometry": false,
+        "fixture": "plane",
+        "source_points": 2867,
+        "masked_points": 3,
+        "retained_source_points": 2864,
+        "working_points": 2864,
+        "processed_points": 2864,
+        "vertices": 2864,
+        "triangles": 5666,
+        "reconstruction_seconds": 0.0577383470008499,
+        "analytic_vertex_surface_p95_m": 6.836794630740221e-12,
+        "fixture_regression_bound_m": 1e-06,
+        "minimum_triangle_area_m2": 1.625593835519103e-12,
+        "output_vertex_bounds_world": [
+          [
+            429996.62228916417,
+            279998.087256414,
+            119.85820421792963
+          ],
+          [
+            430003.62462441385,
+            280003.888052228,
+            120.77011431207038
+          ]
+        ],
+        "registration_rotation": [
+          [
+            0.9323273456060345,
+            -0.35209279401963595,
+            0.08244019065147945
+          ],
+          [
+            0.361615431964962,
+            0.9077758055611578,
+            -0.21254967937539945
+          ],
+          [
+            0.0,
+            0.2279775235351884,
+            0.9736663950053749
+          ]
+        ],
+        "registration_translation": [
+          430000.123456789,
+          280000.987654321,
+          120.314159265
+        ],
+        "source_sha256": {
+          "measured.xyz64": "e2c3037016cd5ff2ef0944aba8c5583f65444379e0e78413412a03906c1f7761",
+          "measured.attr32": "dfc57f16cb3dc5276d1b1f0e4d6eaccfe2d740057613227034081c17d14108d7",
+          "measured.mask": "50d795e597ba193ac1b279afaff7dbec172a7cd208d0a7f004e2805fc1829344"
+        },
+        "source_bytes_unchanged": true,
+        "source_metadata_unchanged": true,
+        "world_frame_verified": true,
+        "float64_vertex_file": true,
+        "complete_mesh_persisted": true,
+        "settings": {
+          "name": "Current delaunay",
+          "engine": "delaunay",
+          "quality": "balanced",
+          "step": 0.1,
+          "degrees": 2,
+          "max_edge": 0,
+          "smoothing": 0,
+          "sampling_distance": 0,
+          "noise_gap": 0,
+          "hole_handling": "preserve",
+          "hole_size": 0.5,
+          "poisson_depth": 6,
+          "tunnel_gap": 0.25
+        },
+        "summary": {
+          "area_m2": 24.00000000041223,
+          "boundary_edges": 60,
+          "nonmanifold_edges": 0,
+          "connected_components": 1,
+          "largest_component_triangles": 5666,
+          "largest_component_triangle_fraction": 1.0,
+          "largest_component_area_fraction": 1.0000000000000075,
+          "isolated_triangles": 0,
+          "orientation_conflict_edges": 0,
+          "surface_status": "connected",
+          "review_required": false,
+          "review_reasons": [],
+          "triangle_quality_mean": 0.8349336370869153,
+          "triangle_quality_min": 3.743767980355968e-11,
+          "triangle_quality_p05": 0.8576354911702992,
+          "triangle_quality_note": "Q = 4 sqrt(3) area / sum(edge length squared). 1 is equilateral; 0 is degenerate. Shape quality is not surface accuracy.",
+          "edge_closed": false,
+          "topology_note": "Components are triangles joined through shared edges. Open boundary edges can be intentional portals or measurement limits. These checks do not test self-intersections or certify watertightness or measurement coverage.",
+          "point_spacing_m": 0.08695652171869106,
+          "effective_max_edge_m": 0.5217391303121464,
+          "sampled_chamfer_m2": 0.0010630744542434072,
+          "mesh_sample_to_cloud_rms_m": 0.03807902287284833,
+          "mesh_sample_to_cloud_p95_m": 0.056074591493060454,
+          "mesh_fit_samples": 12000,
+          "cloud_fit_samples": 2864,
+          "fit_note": "Area-weighted surface samples; normalized squared Chamfer = half the sum of directional mean squared nearest-neighbour distances. Approximate, not exact point-to-triangle deviation. Reference points are bounded spatial representatives of retained measurements; this is not full-density survey deviation.",
+          "method": "delaunay",
+          "source_points": 2864,
+          "sampled_points": 2864,
+          "processed_points": 2864,
+          "fit_reference_points": 2864,
+          "vertices": 2864,
+          "triangles": 5666,
+          "support_mode": "spatial_representatives",
+          "finite_source_points": 2864,
+          "source_passes": 2,
+          "sampling_cell_m": 0.01268486941909285,
+          "working_voxels": 2864,
+          "sampling_budget_limited": false,
+          "sampling_note": "One unchanged measured XYZ row nearest each retained voxel centre. Voxel priorities bound working memory without weighting the sample towards dense scanner setups. The reported cell size is a sampling resolution, not an accuracy guarantee.",
+          "frame": "Best-fit PCA plane",
+          "pca_variance": [
+            3.099218926369921,
+            1.3904455896455288,
+            2.0575184478804854e-16
+          ],
+          "triangles_before_edge_limit": 5695,
+          "triangles_removed_by_edge_limit": 28,
+          "warning": "",
+          "quality_preset": "balanced",
+          "preview": false,
+          "creation_engine": "delaunay",
+          "source_item_id": "025144f9fc3e44daad39171438aa7173",
+          "source_name": "Registered plane",
+          "source_geometry_revision": "/tmp/ts0183-mesh-delaunay-1vtdgcg7/measured.xyz64|/tmp/ts0183-mesh-delaunay-1vtdgcg7/measured.mask|pose:[[[0.9323273456060345,-0.35209279401963595,0.08244019065147945],[0.361615431964962,0.9077758055611578,-0.21254967937539945],[0.0,0.2279775235351884,0.9736663950053749]],[430000.123456789,280000.987654321,120.314159265]]",
+          "source_scope": "all retained points"
+        },
+        "progress_tail": [
+          "Running planar Delaunay on 2,864 sampled points",
+          "Writing mesh: 2,864 vertices \u00b7 5,666 triangles",
+          "Checking triangle surface against spatially distributed measured reference points\u2026",
+          "Triangle geometry, connected surfaces and measured support checked",
+          "Saving joined triangle faces and mesh result\u2026"
+        ],
+        "elapsed_seconds": 0.062111653001920786
+      },
+      {
+        "method": "convex_hull",
+        "passed": true,
+        "production_path": "mesh_workflows.create_from_scan -> meshing.create",
+        "mocked_geometry": false,
+        "fixture": "sphere",
+        "source_points": 6000,
+        "masked_points": 3,
+        "retained_source_points": 5997,
+        "working_points": 5997,
+        "processed_points": 5997,
+        "vertices": 5997,
+        "triangles": 11990,
+        "reconstruction_seconds": 0.09836500600067666,
+        "analytic_vertex_surface_p95_m": 2.649835906254338e-11,
+        "fixture_regression_bound_m": 0.06,
+        "minimum_triangle_area_m2": 0.003446028436845814,
+        "output_vertex_bounds_world": [
+          [
+            429998.12376378785,
+            279998.987837715,
+            118.31474182568863
+          ],
+          [
+            430002.1230961367,
+            280002.9875900901,
+            122.31363712106234
+          ]
+        ],
+        "registration_rotation": [
+          [
+            0.9323273456060345,
+            -0.35209279401963595,
+            0.08244019065147945
+          ],
+          [
+            0.361615431964962,
+            0.9077758055611578,
+            -0.21254967937539945
+          ],
+          [
+            0.0,
+            0.2279775235351884,
+            0.9736663950053749
+          ]
+        ],
+        "registration_translation": [
+          430000.123456789,
+          280000.987654321,
+          120.314159265
+        ],
+        "source_sha256": {
+          "measured.xyz64": "2f9c227503555d0446981a6b7e2afba9e8e8948dc139236704207346859e54fa",
+          "measured.attr32": "84a55a10b26bd7882f801fa41fbe787ea79126722639ea352b8061b7a1c2fce6",
+          "measured.mask": "4997cec9c055fdb3f53e192ae8739f06ef1332f284e6933d76b24ee992940540"
+        },
+        "source_bytes_unchanged": true,
+        "source_metadata_unchanged": true,
+        "world_frame_verified": true,
+        "float64_vertex_file": true,
+        "complete_mesh_persisted": true,
+        "settings": {
+          "name": "Current convex_hull",
+          "engine": "convex_hull",
+          "quality": "balanced",
+          "step": 0.1,
+          "degrees": 2,
+          "max_edge": 0,
+          "smoothing": 0,
+          "sampling_distance": 0,
+          "noise_gap": 0,
+          "hole_handling": "preserve",
+          "hole_size": 0.5,
+          "poisson_depth": 6,
+          "tunnel_gap": 0.25
+        },
+        "summary": {
+          "area_m2": 50.23942782805845,
+          "boundary_edges": 0,
+          "nonmanifold_edges": 0,
+          "connected_components": 1,
+          "largest_component_triangles": 11990,
+          "largest_component_triangle_fraction": 1.0,
+          "largest_component_area_fraction": 0.9999999999999997,
+          "isolated_triangles": 0,
+          "orientation_conflict_edges": 0,
+          "surface_status": "connected",
+          "review_required": false,
+          "review_reasons": [],
+          "triangle_quality_mean": 0.9447921528680453,
+          "triangle_quality_min": 0.6183472752243866,
+          "triangle_quality_p05": 0.8799915834456624,
+          "triangle_quality_note": "Q = 4 sqrt(3) area / sum(edge length squared). 1 is equilateral; 0 is degenerate. Shape quality is not surface accuracy.",
+          "edge_closed": true,
+          "topology_note": "Components are triangles joined through shared edges. Open boundary edges can be intentional portals or measurement limits. These checks do not test self-intersections or certify watertightness or measurement coverage.",
+          "point_spacing_m": 0.08672903853033044,
+          "effective_max_edge_m": 0.0,
+          "sampled_chamfer_m2": 0.001354363251415342,
+          "mesh_sample_to_cloud_rms_m": 0.0369760124950811,
+          "mesh_sample_to_cloud_p95_m": 0.05311096110608996,
+          "mesh_fit_samples": 12000,
+          "cloud_fit_samples": 5997,
+          "fit_note": "Area-weighted surface samples; normalized squared Chamfer = half the sum of directional mean squared nearest-neighbour distances. Approximate, not exact point-to-triangle deviation. Reference points are bounded spatial representatives of retained measurements; this is not full-density survey deviation.",
+          "method": "convex_hull",
+          "source_points": 5997,
+          "sampled_points": 5997,
+          "processed_points": 5997,
+          "fit_reference_points": 5997,
+          "vertices": 5997,
+          "triangles": 11990,
+          "support_mode": "spatial_representatives",
+          "finite_source_points": 5997,
+          "source_passes": 2,
+          "sampling_cell_m": 0.01215082666778574,
+          "working_voxels": 5997,
+          "sampling_budget_limited": false,
+          "sampling_note": "One unchanged measured XYZ row nearest each retained voxel centre. Voxel priorities bound working memory without weighting the sample towards dense scanner setups. The reported cell size is a sampling resolution, not an accuracy guarantee.",
+          "warning": "Convex hull fills concavities and openings. It is a rough envelope, not a faithful tunnel/cross-passage surface.",
+          "quality_preset": "balanced",
+          "preview": false,
+          "creation_engine": "convex_hull",
+          "source_item_id": "34591f38eb364f5cb771f41585a7a98e",
+          "source_name": "Registered sphere",
+          "source_geometry_revision": "/tmp/ts0183-mesh-convex_hull-sd7nbwv7/measured.xyz64|/tmp/ts0183-mesh-convex_hull-sd7nbwv7/measured.mask|pose:[[[0.9323273456060345,-0.35209279401963595,0.08244019065147945],[0.361615431964962,0.9077758055611578,-0.21254967937539945],[0.0,0.2279775235351884,0.9736663950053749]],[430000.123456789,280000.987654321,120.314159265]]",
+          "source_scope": "all retained points"
+        },
+        "progress_tail": [
+          "Computing convex hull from 5,997 sampled points",
+          "Writing mesh: 5,997 vertices \u00b7 11,990 triangles",
+          "Checking triangle surface against spatially distributed measured reference points\u2026",
+          "Triangle geometry, connected surfaces and measured support checked",
+          "Saving joined triangle faces and mesh result\u2026"
+        ],
+        "elapsed_seconds": 0.10577158999512903
+      },
+      {
+        "method": "alpha_shape",
+        "passed": true,
+        "production_path": "mesh_workflows.create_from_scan -> meshing.create",
+        "mocked_geometry": false,
+        "fixture": "sphere",
+        "source_points": 6000,
+        "masked_points": 3,
+        "retained_source_points": 5997,
+        "working_points": 5997,
+        "processed_points": 5997,
+        "vertices": 5997,
+        "triangles": 11990,
+        "reconstruction_seconds": 0.2541938719950849,
+        "analytic_vertex_surface_p95_m": 2.649835906254338e-11,
+        "fixture_regression_bound_m": 0.06,
+        "minimum_triangle_area_m2": 0.003446028436845814,
+        "output_vertex_bounds_world": [
+          [
+            429998.12376378785,
+            279998.987837715,
+            118.31474182568863
+          ],
+          [
+            430002.1230961367,
+            280002.9875900901,
+            122.31363712106234
+          ]
+        ],
+        "registration_rotation": [
+          [
+            0.9323273456060345,
+            -0.35209279401963595,
+            0.08244019065147945
+          ],
+          [
+            0.361615431964962,
+            0.9077758055611578,
+            -0.21254967937539945
+          ],
+          [
+            0.0,
+            0.2279775235351884,
+            0.9736663950053749
+          ]
+        ],
+        "registration_translation": [
+          430000.123456789,
+          280000.987654321,
+          120.314159265
+        ],
+        "source_sha256": {
+          "measured.xyz64": "2f9c227503555d0446981a6b7e2afba9e8e8948dc139236704207346859e54fa",
+          "measured.attr32": "84a55a10b26bd7882f801fa41fbe787ea79126722639ea352b8061b7a1c2fce6",
+          "measured.mask": "4997cec9c055fdb3f53e192ae8739f06ef1332f284e6933d76b24ee992940540"
+        },
+        "source_bytes_unchanged": true,
+        "source_metadata_unchanged": true,
+        "world_frame_verified": true,
+        "float64_vertex_file": true,
+        "complete_mesh_persisted": true,
+        "settings": {
+          "name": "Current alpha_shape",
+          "engine": "alpha_shape",
+          "quality": "balanced",
+          "step": 0.1,
+          "degrees": 2,
+          "max_edge": 0,
+          "smoothing": 0,
+          "sampling_distance": 0,
+          "noise_gap": 0,
+          "hole_handling": "preserve",
+          "hole_size": 0.5,
+          "poisson_depth": 6,
+          "tunnel_gap": 0.25,
+          "alpha_radius": 2.2
+        },
+        "summary": {
+          "area_m2": 50.23942782805845,
+          "boundary_edges": 0,
+          "nonmanifold_edges": 0,
+          "connected_components": 1,
+          "largest_component_triangles": 11990,
+          "largest_component_triangle_fraction": 1.0,
+          "largest_component_area_fraction": 1.0000000000000022,
+          "isolated_triangles": 0,
+          "orientation_conflict_edges": 0,
+          "surface_status": "connected",
+          "review_required": false,
+          "review_reasons": [],
+          "triangle_quality_mean": 0.9447921528680453,
+          "triangle_quality_min": 0.6183472752243866,
+          "triangle_quality_p05": 0.8799915834456624,
+          "triangle_quality_note": "Q = 4 sqrt(3) area / sum(edge length squared). 1 is equilateral; 0 is degenerate. Shape quality is not surface accuracy.",
+          "edge_closed": true,
+          "topology_note": "Components are triangles joined through shared edges. Open boundary edges can be intentional portals or measurement limits. These checks do not test self-intersections or certify watertightness or measurement coverage.",
+          "point_spacing_m": 0.08672903853033044,
+          "effective_max_edge_m": 0.0,
+          "sampled_chamfer_m2": 0.0013509958238702574,
+          "mesh_sample_to_cloud_rms_m": 0.03699702047050617,
+          "mesh_sample_to_cloud_p95_m": 0.053219841679030544,
+          "mesh_fit_samples": 12000,
+          "cloud_fit_samples": 5997,
+          "fit_note": "Area-weighted surface samples; normalized squared Chamfer = half the sum of directional mean squared nearest-neighbour distances. Approximate, not exact point-to-triangle deviation. Reference points are bounded spatial representatives of retained measurements; this is not full-density survey deviation.",
+          "method": "alpha_shape",
+          "source_points": 5997,
+          "sampled_points": 5997,
+          "processed_points": 5997,
+          "fit_reference_points": 5997,
+          "vertices": 5997,
+          "triangles": 11990,
+          "support_mode": "spatial_representatives",
+          "finite_source_points": 5997,
+          "source_passes": 2,
+          "sampling_cell_m": 0.03037706666946435,
+          "working_voxels": 5997,
+          "sampling_budget_limited": false,
+          "sampling_note": "One unchanged measured XYZ row nearest each retained voxel centre. Voxel priorities bound working memory without weighting the sample towards dense scanner setups. The reported cell size is a sampling resolution, not an accuracy guarantee.",
+          "alpha_radius_m": 2.2,
+          "warning": "Alpha Shape is the boundary of retained tetrahedra. Radius controls bridging; inspect gaps, concavities and edge counts.",
+          "triangles_before_edge_limit": 11990,
+          "triangles_removed_by_edge_limit": 0,
+          "quality_preset": "balanced",
+          "preview": false,
+          "creation_engine": "alpha_shape",
+          "source_item_id": "ce8b9caad09e482ca40124a98b6183dd",
+          "source_name": "Registered sphere",
+          "source_geometry_revision": "/tmp/ts0183-mesh-alpha_shape-n3l8g_cb/measured.xyz64|/tmp/ts0183-mesh-alpha_shape-n3l8g_cb/measured.mask|pose:[[[0.9323273456060345,-0.35209279401963595,0.08244019065147945],[0.361615431964962,0.9077758055611578,-0.21254967937539945],[0.0,0.2279775235351884,0.9736663950053749]],[430000.123456789,280000.987654321,120.314159265]]",
+          "source_scope": "all retained points"
+        },
+        "progress_tail": [
+          "3D Delaunay tetrahedralisation: 5,997 points",
+          "Writing mesh: 5,997 vertices \u00b7 11,990 triangles",
+          "Checking triangle surface against spatially distributed measured reference points\u2026",
+          "Triangle geometry, connected surfaces and measured support checked",
+          "Saving joined triangle faces and mesh result\u2026"
+        ],
+        "elapsed_seconds": 0.26454823500534985
+      },
+      {
+        "method": "poisson",
+        "passed": true,
+        "production_path": "mesh_workflows.create_from_scan -> meshing.create",
+        "mocked_geometry": false,
+        "fixture": "sphere",
+        "source_points": 6000,
+        "masked_points": 3,
+        "retained_source_points": 5997,
+        "working_points": 5997,
+        "processed_points": 5997,
+        "vertices": 15966,
+        "triangles": 31928,
+        "reconstruction_seconds": 1.1408353810038534,
+        "analytic_vertex_surface_p95_m": 0.0008338539240656528,
+        "fixture_regression_bound_m": 0.06,
+        "minimum_triangle_area_m2": 6.474678130890967e-11,
+        "output_vertex_bounds_world": [
+          [
+            429998.1238566405,
+            279998.98804248654,
+            118.3145631764818
+          ],
+          [
+            430002.1225758559,
+            280002.9868922361,
+            122.31338228925951
+          ]
+        ],
+        "registration_rotation": [
+          [
+            0.9323273456060345,
+            -0.35209279401963595,
+            0.08244019065147945
+          ],
+          [
+            0.361615431964962,
+            0.9077758055611578,
+            -0.21254967937539945
+          ],
+          [
+            0.0,
+            0.2279775235351884,
+            0.9736663950053749
+          ]
+        ],
+        "registration_translation": [
+          430000.123456789,
+          280000.987654321,
+          120.314159265
+        ],
+        "source_sha256": {
+          "measured.xyz64": "2f9c227503555d0446981a6b7e2afba9e8e8948dc139236704207346859e54fa",
+          "measured.attr32": "84a55a10b26bd7882f801fa41fbe787ea79126722639ea352b8061b7a1c2fce6",
+          "measured.mask": "4997cec9c055fdb3f53e192ae8739f06ef1332f284e6933d76b24ee992940540"
+        },
+        "source_bytes_unchanged": true,
+        "source_metadata_unchanged": true,
+        "world_frame_verified": true,
+        "float64_vertex_file": true,
+        "complete_mesh_persisted": true,
+        "settings": {
+          "name": "Current poisson",
+          "engine": "poisson",
+          "quality": "balanced",
+          "step": 0.1,
+          "degrees": 2,
+          "max_edge": 0,
+          "smoothing": 0,
+          "sampling_distance": 0,
+          "noise_gap": 0,
+          "hole_handling": "preserve",
+          "hole_size": 0.5,
+          "poisson_depth": 6,
+          "tunnel_gap": 0.25
+        },
+        "summary": {
+          "area_m2": 50.26181703823447,
+          "boundary_edges": 0,
+          "nonmanifold_edges": 0,
+          "connected_components": 1,
+          "largest_component_triangles": 31928,
+          "largest_component_triangle_fraction": 1.0,
+          "largest_component_area_fraction": 1.000000000000004,
+          "isolated_triangles": 0,
+          "orientation_conflict_edges": 0,
+          "surface_status": "connected",
+          "review_required": false,
+          "review_reasons": [],
+          "triangle_quality_mean": 0.6836864821298786,
+          "triangle_quality_min": 0.0001040137782942961,
+          "triangle_quality_p05": 0.11278111214115459,
+          "triangle_quality_note": "Q = 4 sqrt(3) area / sum(edge length squared). 1 is equilateral; 0 is degenerate. Shape quality is not surface accuracy.",
+          "edge_closed": true,
+          "topology_note": "Components are triangles joined through shared edges. Open boundary edges can be intentional portals or measurement limits. These checks do not test self-intersections or certify watertightness or measurement coverage.",
+          "point_spacing_m": 0.08672903853033044,
+          "effective_max_edge_m": 0.0,
+          "sampled_chamfer_m2": 0.0013622104706075442,
+          "mesh_sample_to_cloud_rms_m": 0.03714794022508837,
+          "mesh_sample_to_cloud_p95_m": 0.053255627214533606,
+          "mesh_fit_samples": 12000,
+          "cloud_fit_samples": 5997,
+          "fit_note": "Area-weighted surface samples; normalized squared Chamfer = half the sum of directional mean squared nearest-neighbour distances. Approximate, not exact point-to-triangle deviation. Reference points are bounded spatial representatives of retained measurements; this is not full-density survey deviation.",
+          "method": "poisson",
+          "source_points": 5997,
+          "sampled_points": 5997,
+          "processed_points": 5997,
+          "fit_reference_points": 5997,
+          "vertices": 15966,
+          "triangles": 31928,
+          "support_mode": "spatial_representatives",
+          "finite_source_points": 5997,
+          "source_passes": 2,
+          "sampling_cell_m": 0.01215082666778574,
+          "working_voxels": 5997,
+          "sampling_budget_limited": false,
+          "sampling_note": "One unchanged measured XYZ row nearest each retained voxel centre. Voxel priorities bound working memory without weighting the sample towards dense scanner setups. The reported cell size is a sampling resolution, not an accuracy guarantee.",
+          "poisson_depth": 6,
+          "warning": "Poisson can extrapolate across unmeasured regions. Edge trimming and cropping can open holes; inspect topology and source deviation.",
+          "triangles_before_edge_limit": 31928,
+          "triangles_removed_by_edge_limit": 0,
+          "quality_preset": "balanced",
+          "preview": false,
+          "creation_engine": "poisson",
+          "source_item_id": "cefff8eac2314c8685d697d8580d963a",
+          "source_name": "Registered sphere",
+          "source_geometry_revision": "/tmp/ts0183-mesh-poisson-ee88kcra/measured.xyz64|/tmp/ts0183-mesh-poisson-ee88kcra/measured.mask|pose:[[[0.9323273456060345,-0.35209279401963595,0.08244019065147945],[0.361615431964962,0.9077758055611578,-0.21254967937539945],[0.0,0.2279775235351884,0.9736663950053749]],[430000.123456789,280000.987654321,120.314159265]]",
+          "source_scope": "all retained points"
+        },
+        "progress_tail": [
+          "Screened Poisson reconstruction \u00b7 octree depth 6",
+          "Writing mesh: 15,966 vertices \u00b7 31,928 triangles",
+          "Checking triangle surface against spatially distributed measured reference points\u2026",
+          "Triangle geometry, connected surfaces and measured support checked",
+          "Saving joined triangle faces and mesh result\u2026"
+        ],
+        "elapsed_seconds": 1.1515832860022783
+      },
+      {
+        "method": "ball_pivoting",
+        "passed": true,
+        "production_path": "mesh_workflows.create_from_scan -> meshing.create",
+        "mocked_geometry": false,
+        "fixture": "sphere",
+        "source_points": 6000,
+        "masked_points": 3,
+        "retained_source_points": 5997,
+        "working_points": 5997,
+        "processed_points": 5997,
+        "vertices": 5997,
+        "triangles": 11990,
+        "reconstruction_seconds": 0.8798920859990176,
+        "analytic_vertex_surface_p95_m": 2.649835906254338e-11,
+        "fixture_regression_bound_m": 0.06,
+        "minimum_triangle_area_m2": 0.003446028436845814,
+        "output_vertex_bounds_world": [
+          [
+            429998.12376378785,
+            279998.987837715,
+            118.31474182568863
+          ],
+          [
+            430002.1230961367,
+            280002.9875900901,
+            122.31363712106234
+          ]
+        ],
+        "registration_rotation": [
+          [
+            0.9323273456060345,
+            -0.35209279401963595,
+            0.08244019065147945
+          ],
+          [
+            0.361615431964962,
+            0.9077758055611578,
+            -0.21254967937539945
+          ],
+          [
+            0.0,
+            0.2279775235351884,
+            0.9736663950053749
+          ]
+        ],
+        "registration_translation": [
+          430000.123456789,
+          280000.987654321,
+          120.314159265
+        ],
+        "source_sha256": {
+          "measured.xyz64": "2f9c227503555d0446981a6b7e2afba9e8e8948dc139236704207346859e54fa",
+          "measured.attr32": "84a55a10b26bd7882f801fa41fbe787ea79126722639ea352b8061b7a1c2fce6",
+          "measured.mask": "4997cec9c055fdb3f53e192ae8739f06ef1332f284e6933d76b24ee992940540"
+        },
+        "source_bytes_unchanged": true,
+        "source_metadata_unchanged": true,
+        "world_frame_verified": true,
+        "float64_vertex_file": true,
+        "complete_mesh_persisted": true,
+        "settings": {
+          "name": "Current ball_pivoting",
+          "engine": "ball_pivoting",
+          "quality": "balanced",
+          "step": 0.1,
+          "degrees": 2,
+          "max_edge": 0,
+          "smoothing": 0,
+          "sampling_distance": 0,
+          "noise_gap": 0,
+          "hole_handling": "preserve",
+          "hole_size": 0.5,
+          "poisson_depth": 6,
+          "tunnel_gap": 0.25
+        },
+        "summary": {
+          "area_m2": 50.23942782805845,
+          "boundary_edges": 0,
+          "nonmanifold_edges": 0,
+          "connected_components": 1,
+          "largest_component_triangles": 11990,
+          "largest_component_triangle_fraction": 1.0,
+          "largest_component_area_fraction": 1.0000000000000004,
+          "isolated_triangles": 0,
+          "orientation_conflict_edges": 0,
+          "surface_status": "connected",
+          "review_required": false,
+          "review_reasons": [],
+          "triangle_quality_mean": 0.9447921528680453,
+          "triangle_quality_min": 0.6183472752243866,
+          "triangle_quality_p05": 0.8799915834456624,
+          "triangle_quality_note": "Q = 4 sqrt(3) area / sum(edge length squared). 1 is equilateral; 0 is degenerate. Shape quality is not surface accuracy.",
+          "edge_closed": true,
+          "topology_note": "Components are triangles joined through shared edges. Open boundary edges can be intentional portals or measurement limits. These checks do not test self-intersections or certify watertightness or measurement coverage.",
+          "point_spacing_m": 0.08672903853033044,
+          "effective_max_edge_m": 0.5203742311819827,
+          "sampled_chamfer_m2": 0.0013479200155915726,
+          "mesh_sample_to_cloud_rms_m": 0.03693487601222653,
+          "mesh_sample_to_cloud_p95_m": 0.053169011124535974,
+          "mesh_fit_samples": 12000,
+          "cloud_fit_samples": 5997,
+          "fit_note": "Area-weighted surface samples; normalized squared Chamfer = half the sum of directional mean squared nearest-neighbour distances. Approximate, not exact point-to-triangle deviation. Reference points are bounded spatial representatives of retained measurements; this is not full-density survey deviation.",
+          "method": "ball_pivoting",
+          "source_points": 5997,
+          "sampled_points": 5997,
+          "processed_points": 5997,
+          "fit_reference_points": 5997,
+          "vertices": 5997,
+          "triangles": 11990,
+          "support_mode": "spatial_representatives",
+          "finite_source_points": 5997,
+          "source_passes": 2,
+          "sampling_cell_m": 0.01215082666778574,
+          "working_voxels": 5997,
+          "sampling_budget_limited": false,
+          "sampling_note": "One unchanged measured XYZ row nearest each retained voxel centre. Voxel priorities bound working memory without weighting the sample towards dense scanner setups. The reported cell size is a sampling resolution, not an accuracy guarantee.",
+          "ball_radius_m": 0.2168225963258261,
+          "warning": "Ball Pivoting preserves sampled local surfaces; gaps can remain where points are missing.",
+          "triangles_before_edge_limit": 11990,
+          "triangles_removed_by_edge_limit": 0,
+          "quality_preset": "balanced",
+          "preview": false,
+          "creation_engine": "ball_pivoting",
+          "source_item_id": "1184d875620e4d3b90aff919be8b859c",
+          "source_name": "Registered sphere",
+          "source_geometry_revision": "/tmp/ts0183-mesh-ball_pivoting-pyvyyftw/measured.xyz64|/tmp/ts0183-mesh-ball_pivoting-pyvyyftw/measured.mask|pose:[[[0.9323273456060345,-0.35209279401963595,0.08244019065147945],[0.361615431964962,0.9077758055611578,-0.21254967937539945],[0.0,0.2279775235351884,0.9736663950053749]],[430000.123456789,280000.987654321,120.314159265]]",
+          "source_scope": "all retained points"
+        },
+        "progress_tail": [
+          "Ball Pivoting \u00b7 radii 0.2168 / 0.4336 m",
+          "Writing mesh: 5,997 vertices \u00b7 11,990 triangles",
+          "Checking triangle surface against spatially distributed measured reference points\u2026",
+          "Triangle geometry, connected surfaces and measured support checked",
+          "Saving joined triangle faces and mesh result\u2026"
+        ],
+        "elapsed_seconds": 0.8870993960008491
+      },
+      {
+        "method": "marching_cubes",
+        "passed": true,
+        "production_path": "mesh_workflows.create_from_scan -> meshing.create",
+        "mocked_geometry": false,
+        "fixture": "sphere",
+        "source_points": 6000,
+        "masked_points": 3,
+        "retained_source_points": 5997,
+        "working_points": 5997,
+        "processed_points": 5997,
+        "vertices": 10440,
+        "triangles": 20872,
+        "reconstruction_seconds": 0.1754230280057527,
+        "analytic_vertex_surface_p95_m": 0.32340867099969256,
+        "fixture_regression_bound_m": 0.8,
+        "minimum_triangle_area_m2": 1.1977213469091326e-11,
+        "output_vertex_bounds_world": [
+          [
+            429997.8867757271,
+            279998.750817125,
+            118.07772177957371
+          ],
+          [
+            430002.3205117012,
+            280003.1845050429,
+            122.51140915356949
+          ]
+        ],
+        "registration_rotation": [
+          [
+            0.9323273456060345,
+            -0.35209279401963595,
+            0.08244019065147945
+          ],
+          [
+            0.361615431964962,
+            0.9077758055611578,
+            -0.21254967937539945
+          ],
+          [
+            0.0,
+            0.2279775235351884,
+            0.9736663950053749
+          ]
+        ],
+        "registration_translation": [
+          430000.123456789,
+          280000.987654321,
+          120.314159265
+        ],
+        "source_sha256": {
+          "measured.xyz64": "2f9c227503555d0446981a6b7e2afba9e8e8948dc139236704207346859e54fa",
+          "measured.attr32": "84a55a10b26bd7882f801fa41fbe787ea79126722639ea352b8061b7a1c2fce6",
+          "measured.mask": "4997cec9c055fdb3f53e192ae8739f06ef1332f284e6933d76b24ee992940540"
+        },
+        "source_bytes_unchanged": true,
+        "source_metadata_unchanged": true,
+        "world_frame_verified": true,
+        "float64_vertex_file": true,
+        "complete_mesh_persisted": true,
+        "settings": {
+          "name": "Current marching_cubes",
+          "engine": "marching_cubes",
+          "quality": "balanced",
+          "step": 0.12,
+          "degrees": 2,
+          "max_edge": 0,
+          "smoothing": 0,
+          "sampling_distance": 0,
+          "noise_gap": 0,
+          "hole_handling": "preserve",
+          "hole_size": 0.5,
+          "poisson_depth": 6,
+          "tunnel_gap": 0.25
+        },
+        "summary": {
+          "area_m2": 101.07516109566951,
+          "boundary_edges": 0,
+          "nonmanifold_edges": 0,
+          "connected_components": 2,
+          "largest_component_triangles": 12784,
+          "largest_component_triangle_fraction": 0.6124952088922959,
+          "largest_component_area_fraction": 0.6140266641876911,
+          "isolated_triangles": 0,
+          "orientation_conflict_edges": 0,
+          "surface_status": "multiple",
+          "review_required": true,
+          "review_reasons": [
+            "2 separate edge-connected surfaces. Inspect whether these are intentional separate areas or missing connections; all components were retained."
+          ],
+          "triangle_quality_mean": 0.68844023101588,
+          "triangle_quality_min": 4.313299939844504e-05,
+          "triangle_quality_p05": 0.10198111669149808,
+          "triangle_quality_note": "Q = 4 sqrt(3) area / sum(edge length squared). 1 is equilateral; 0 is degenerate. Shape quality is not surface accuracy.",
+          "edge_closed": true,
+          "topology_note": "Components are triangles joined through shared edges. Open boundary edges can be intentional portals or measurement limits. These checks do not test self-intersections or certify watertightness or measurement coverage.",
+          "point_spacing_m": 0.08672903853033044,
+          "effective_max_edge_m": 0.0,
+          "sampled_chamfer_m2": 0.045909444366458226,
+          "mesh_sample_to_cloud_rms_m": 0.23794007856407653,
+          "mesh_sample_to_cloud_p95_m": 0.32568859238382203,
+          "mesh_fit_samples": 12000,
+          "cloud_fit_samples": 5997,
+          "fit_note": "Area-weighted surface samples; normalized squared Chamfer = half the sum of directional mean squared nearest-neighbour distances. Approximate, not exact point-to-triangle deviation. Reference points are bounded spatial representatives of retained measurements; this is not full-density survey deviation.",
+          "method": "marching_cubes",
+          "source_points": 5997,
+          "sampled_points": 5997,
+          "processed_points": 5997,
+          "fit_reference_points": 5997,
+          "vertices": 10440,
+          "triangles": 20872,
+          "support_mode": "spatial_representatives",
+          "finite_source_points": 5997,
+          "source_passes": 2,
+          "sampling_cell_m": 0.01215082666778574,
+          "working_voxels": 5997,
+          "sampling_budget_limited": false,
+          "sampling_note": "One unchanged measured XYZ row nearest each retained voxel centre. Voxel priorities bound working memory without weighting the sample towards dense scanner setups. The reported cell size is a sampling resolution, not an accuracy guarantee.",
+          "voxel_m": 0.12,
+          "warning": "Marching Cubes extracts the boundary of a smoothed occupied-voxel field. It can thicken a scanned surface and produce inner and outer sheets; it does not guarantee a watertight lining or survey accuracy. Inspect connected surfaces and source deviation.",
+          "quality_preset": "balanced",
+          "preview": false,
+          "creation_engine": "marching_cubes",
+          "source_item_id": "2584cec226ab49d0b29676ee84227b14",
+          "source_name": "Registered sphere",
+          "source_geometry_revision": "/tmp/ts0183-mesh-marching_cubes-sampd5k1/measured.xyz64|/tmp/ts0183-mesh-marching_cubes-sampd5k1/measured.mask|pose:[[[0.9323273456060345,-0.35209279401963595,0.08244019065147945],[0.361615431964962,0.9077758055611578,-0.21254967937539945],[0.0,0.2279775235351884,0.9736663950053749]],[430000.123456789,280000.987654321,120.314159265]]",
+          "source_scope": "all retained points"
+        },
+        "progress_tail": [
+          "Extracting voxel triangle faces\u2026",
+          "Writing mesh: 10,440 vertices \u00b7 20,872 triangles",
+          "Checking triangle surface against spatially distributed measured reference points\u2026",
+          "Triangle geometry, connected surfaces and measured support checked",
+          "Saving joined triangle faces and mesh result\u2026"
+        ],
+        "elapsed_seconds": 0.18521905800298555
+      }
+    ],
+    "limits": [
+      "Small deterministic analytic fixtures, not user survey scans.",
+      "Linux execution; no native Windows/WebView2/GPU validation.",
+      "Quality diagnostics and fixture regression bounds are not survey accuracy claims.",
+      "One suitable fixture per method; Auto plane branch only.",
+      "Preserve-openings setting; capped/watertight certification is not claimed.",
+      "No huge-cloud, whole-application RAM, or universal timing guarantee."
+    ],
+    "prior_environment_failure_and_resolution": {
+      "package_versions": {
+        "numpy": "2.3.5",
+        "scipy": "1.17.0",
+        "open3d": "0.20.0",
+        "scikit-image": null
+      },
+      "elapsed_seconds": 14.580469448999793,
+      "failures": [
+        {
+          "method": "marching_cubes",
+          "error_type": "ValueError",
+          "error": "Marching Cubes is not available because the optional scikit-image engine is not installed.",
+          "traceback": "Traceback (most recent call last):\n  File \"/workspace/scratch/0d497fbe0eff/tunnel_studio/app/meshing.py\", line 187, in marching_cubes\n    from skimage import measure\nModuleNotFoundError: No module named 'skimage'\n\nThe above exception was the direct cause of the following exception:\n\nTraceback (most recent call last):\n  File \"/workspace/scratch/0d497fbe0eff/validation/explorer_0183/mesh_engines_current.py\", line 131, in child\n    item = mesh_workflows.create_from_scan(s, settings)\n           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/workspace/scratch/0d497fbe0eff/tunnel_studio/app/mesh_workflows.py\", line 82, in create_from_scan\n    meta = meshing.create(\n           ^^^^^^^^^^^^^^^\n  File \"/workspace/scratch/0d497fbe0eff/tunnel_studio/app/meshing.py\", line 467, in create\n    elif method=='marching_cubes':v,f,extra=marching_cubes(points,spacing,max(1,smoothing),progress)\n                                            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/workspace/scratch/0d497fbe0eff/tunnel_studio/app/meshing.py\", line 189, in marching_cubes\n    except Exception as e:raise ValueError('Marching Cubes is not available because the optional scikit-image engine is not installed.') from e\n                          ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\nValueError: Marching Cubes is not available because the optional scikit-image engine is not installed.\n"
+        }
+      ],
+      "note": "Initial Linux validation environment lacked scikit-image. Installed scikit-image 0.26.0 in validation/venv, then reran all ten methods. Application source and packaged Windows runtime were not changed."
+    },
+    "source_sha256_after": {
+      "meshing.py": "acab62187752331bfd37edd64e9702d91822f042bfd04ad70d03e7d4b62b51f0",
+      "mesh_geometry.py": "463a595b9c456639329391502d386c2d78e9573fe1a55eb4eebc8f9af207e27c",
+      "mesh_sampling.py": "23976028d870b1567414d8d2302f43dd929a5f9cc1657c12f454238f245013b1",
+      "tunnel_surface.py": "8b1844dcce5c805fcbc279604c08bda8ac0d07050f3874461f3ef5361191a4c6",
+      "mesh_workflows.py": "2cd9625eac08427aa88809604173c4c43076aed3654f8ac71b933b13ae75be2a",
+      "registration_pose.py": "29c440988411b186873d836cec59a5de1a7544b28d2154278d4000ba6bc72b46",
+      "jobdata.py": "5d8c19783ba3631f5bd2c89afb0106ab7a85613660db8e123f2581c56492651e",
+      "job_api.py": "57218901be685012596f766a3fe6e6fc691f9badf2148004a2cf4e1b3530f822"
+    },
+    "source_code_unchanged": true,
+    "elapsed_seconds": 14.209501041004842,
+    "passed": true
+  },
+  "long_alignment_workflow": {
+    "dense_oracle": {
+      "cases": 90,
+      "maximum_coordinate_difference_m": 3.434251993894577e-09,
+      "maximum_shift_difference_m": 2.289562983648352e-09,
+      "absolute_tolerance_m": 2e-08,
+      "varied_node_counts": [
+        2,
+        3,
+        4,
+        11,
+        127
+      ],
+      "varied_station_intervals_m": [
+        0.1,
+        1.37,
+        5.0
+      ],
+      "smoothing_values": [
+        0,
+        1,
+        4
+      ],
+      "includes_weight_gaps_outliers_and_survey_offsets": true
+    },
+    "large_smoother": {
+      "nodes": 100003,
+      "coefficient_shape": [
+        5,
+        100003
+      ],
+      "robust_passes": 4,
+      "dense_matrix_allocations": false
+    },
+    "actual_lining_workflow": {
+      "nodes": 320,
+      "source_scans": 201,
+      "source_points": 31296,
+      "fitting_sample_points": 31296,
+      "requested_interval_m": 2.0,
+      "maximum_axis_interval_difference_m": 2.0372681319713593e-09,
+      "maximum_centre_error_m": 4.106937012693379e-12,
+      "maximum_radius_error_m": 0.0006242581600290897,
+      "supported_sections": 320,
+      "estimate": true,
+      "save_estimate": true,
+      "use_estimate": true,
+      "persisted_axis_nodes": 320,
+      "original_source_bytes_unchanged": true,
+      "actual_lining_algorithm": true,
+      "seconds": 25.300836935995903
+    }
+  },
+  "source_coordinates_changed": false,
+  "original_import_files_deleted": false,
+  "registration_repairs_retained": true,
+  "ordinary_point_delete_reversible": true,
+  "explorer_delete_clears_workspace_history_only_for_exclusive_disk_release": true,
+  "ring_chainage_bin_width_preserved": true,
+  "ring_source_point_limit": null,
+  "heatmap_full_input_extent": true,
+  "heatmap_output_resolution_may_be_adapted": true,
+  "cylinder_high_residual_policy": "Finite converged supported fits above 5% RMS/radius return a clearly poor preview; warnings persist with an added approximate model. Numerical, convergence and geometric support guards remain.",
+  "native_windows_execution": false,
+  "real_350_million_point_benchmark": false,
+  "complete_application_7GB_memory_guarantee": false,
+  "universal_instant_disk_commit_guarantee": false,
+  "semantic_segment_type_recognition": false,
+  "semantic_bolt_accuracy_validated": false,
+  "all_physical_panels_correctly_segmented": false,
+  "prior_evidence": "Cumulative 0.18.0, 0.18.1 and 0.18.2 code, source evidence, original-file protections and six-paper research review retained. Historical real-scan recognition limitations remain open."
+}

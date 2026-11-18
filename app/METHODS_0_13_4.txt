@@ -1,0 +1,65 @@
+TUNNEL STUDIO 0.13.4 - SCAN GEOMETRY AND CLEANING METHODS
+
+Coordinates are in metres. Original XYZ/attributes are not changed.
+
+Scan section: let c be the chosen centre and n a unit normal. A point p is in
+ a slice of thickness w when abs((p-c) dot n) <= w/2. Unit in-plane vectors
+ u and v are perpendicular to n and each other. Plot/export coordinates are
+ U=(p-c) dot u, V=(p-c) dot v. The plot uses the same scale on both axes.
+ Full retained point IDs are filtered; the 60,000-point cap only affects display.
+
+Estimated alignment (independent implementation):
+1. Deterministic uniform priority sampling of at most 180,000 retained points
+   in the chosen area; existing masks and the active limit box are applied.
+2. A robustly centred PCA chooses the dominant direction. The greatest
+   covariance eigenvalue must be at least twice the next; ambiguous geometry
+   is rejected. The longest-component direction fixes a reproducible orientation.
+3. Stations span the 1st-99th longitudinal percentiles at the chosen spacing.
+   Each slab uses half-width max(0.25 m, 0.65 times the station interval).
+4. Divide cross-section angles into 72 cells. Select up to three observations
+   nearest each cell's 80th radial percentile to reduce uneven density and
+   interior-object influence. Fit the resulting shell, not an imagined surface.
+5. Start with an algebraic circle fit. Refine centre a and radius r by weighted
+   geometric least squares on e_i=norm(q_i-a)-r. Huber weights are
+   min(1,1.5*sigma/abs(e_i)), where sigma=max(0.003 m,1.4826*MAD(e)).
+   Up to 12 iterations; section angular coverage must reach 210 degrees.
+   Radius must be 0.15-50 m and the winsorised radial RMS no greater than
+   max(0.15 m,0.12*r). These are practical screening limits, not confidence.
+6. Reject unsupported gaps larger than 2.1 times the station interval and
+   estimates with fewer than three supported nodes. Optional smoothing uses
+   (previous+2*current+next)/4 on interior node positions; ends stay fixed.
+7. Chainage increments are Euclidean distances along the node polyline.
+   Fitted radius, not nominal design radius, is written to the CSV.
+
+This method is limited to approximately circular, gently curving single
+branches with sufficient lining coverage. It is not a general skeletonisation
+or a geodetic design reconstruction. Do not interpret the estimate's residual
+as survey accuracy. User edits are validated for finite coordinates, positive
+radius and strictly increasing chainage before use.
+
+Cleaning presets (all process every retained point in the selected area):
+                       Fast     Detailed     Fine
+Noise neighbours          8           12       24
+Patch resolution (m)   0.30         0.20     0.10
+Normal neighbours        10           15       25
+Envelope angle (deg)      6            3      1.5
+Other numerical settings remain as currently entered. Adjusting a numerical
+control manually switches the preset selector to Custom. The preset name
+expresses computational detail, not accuracy or guaranteed cleaning quality.
+
+Small-area noise path: the radius-support and local median/MAD criteria are
+unchanged. For at most min(150,000, floor(1,500,000/(neighbours+1))) selected
+points, deduplicate coordinates and classify them together with one cKDTree.
+This is the same neighbourhood calculation as tiled cleaning with complete
+2R halos. The original point-ID mapping expands labels back to duplicates.
+Larger selections retain spatial tiling. A new selected area is collected in
+one bounded pass through the source and cached temporarily for the run; the
+cache is removed on completion/cancellation. There is no permanent spatial
+index yet, so a small selection in a very large file still requires that read.
+
+Point edits: byte masks retain raw cache length; 0 means retained. Every edit
+writes a new immutable mask. Deleted groups are identified by before/after
+mask differences and can be restored independently. Separate commits its new
+XYZ/attribute cache and source mask together. Undo/Redo uses both sides of
+that transaction. Snapshot counts/extents are computed from retained points
+and cached against the exact mask revision; original raw count is unchanged.

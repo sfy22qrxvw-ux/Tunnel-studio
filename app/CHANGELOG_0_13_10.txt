@@ -1,0 +1,96 @@
+TUNNEL STUDIO 0.13.10 - LEICA PROJECTS, SETUP VIEWS AND SCAN LINKS
+14 October 2026
+
+INSTALL
+Save your project and close Tunnel Studio completely. Extract this whole ZIP
+into a new folder, then double-click UPDATE_TUNNEL_STUDIO.bat.
+Check version 0.13.10 after restart; refresh browser mode.
+This updates the existing Windows installation, not a standalone application.
+Internet is needed if the isolated native reader dependency is not installed.
+Application files are backed up; RESTORE_PREVIOUS_VERSION.bat restores them.
+Keep a saved copy of your project before trying the new registration workflow.
+
+LEICA PROJECT FOLDER
+Import > Leica project folder. Choose the GUID project folder containing
+SetupsFolder and project_deliv_*.db, then Inspect project. In browser mode,
+paste its full local folder path. If several deliverable databases exist,
+paste the exact database file path instead.
+Review setup names and missing files. Select the setups to import.
+Use saved Register 360 positions reads each saved setup pose and applies it
+once. Import unregistered setups leaves each scan in its own scanner frame,
+ready for target matching. Saved target names and observations are imported.
+Each setup is a separate item in Scans & models. Available saved links appear
+between registered setups. You do NOT also need to import E57 or the combined
+PointCloud file. Importing them again would duplicate the same observations.
+Individual supported SetupsFolder HSPCA files still work via normal Import.
+Folder import is experimental for the observed database/HSPCA layout.
+RGB/HDR colour, photographs, external Leica cleaning masks and native normals
+are not imported. Source XYZ/intensity remain intact; originals are unchanged.
+The combined PointCloud HSPCA schema is still unsupported.
+
+GO TO SETUP VIEW
+Click a native scan in Scans & models, then Go to setup view in its bottom
+controls. The scan is isolated, and a 360-degree intensity panorama opens from
+its scanner position. First generation visits every source point; reopening
+an unchanged setup reuses its view. Wheel to zoom; drag to pan; Fit panorama
+resets the display. This is measured intensity, not a photographic panorama.
+Click a visible point to read XYZ. Fit target at picked point sends that exact
+measured point to the existing full-density target fitter. Review its centre
+and click Use centre. A coarse panorama click alone is not a fitted centre.
+Only the nearest retained point per angular pixel is displayed; hidden gaps
+are not invented points. The 2048 x 1024 image limits visual resolution.
+No target size is requested. Target detection can still miss real targets.
+
+TARGETS FOR EACH SCAN
+Registration > Work on scan switches between scans and saves pending edits.
+Use centre now saves immediately. Names, rows and candidates stay with their
+own scan. Saving a target name updates its 3D label. Search scan keeps accepted
+targets. Name the same physical target consistently, e.g. dam1 in each scan.
+Survey coordinates are optional for scan-to-scan matching. If you have them,
+enter/import E,N,H, save to shared control list and fill other scans by name.
+The original surveyed-control Solve workflow still requires complete control
+coordinates; use Match two scans for relative scan registration.
+Save the project to reopen this work later; startup opens an empty workspace.
+
+MATCH TWO SCANS
+Select two scans, then Match two scans (also available in Registration).
+Choose fixed and moving scans. Match target names, or choose matches manually.
+Use at least three shared non-collinear Fit targets; add Check targets where
+available. Units must be metres. Solve geometry, inspect residuals, tick the
+review confirmation, then Accept link & position moving group.
+This is a rigid six-parameter fit with fixed scale; no surveyed coordinates
+are needed. Existing linked moving scans move together. After joining A-B,
+you can fix B and move C to create B-C. Links appear in Scans & models and 3D.
+Coordinates, scanner viewpoints and stored target centres move together;
+original caches, intensity and point deletion masks are preserved.
+Target edits mark affected links for review; they do not silently reposition
+scans. Existing results are historical until you solve again. Remove a link
+to disconnect its groups; removing a link does not undo their coordinates.
+Use Undo to reverse a just-applied position. Loop/network adjustment is not
+implemented. Already-connected scans require removal of a link before refit.
+Clear stale selection boxes after positioning; world-fixed reference geometry
+is not repositioned automatically with the scan.
+
+DISPLAY
+Orbit/pan/zoom redraws are coalesced. While moving, the point display uses a
+lighter sample, then restores the loaded display density after navigation.
+This changes drawing only; it does not downsample stored scan data or target
+analysis. Dense view loading still requires disk reads and can take time.
+
+SPACE AND VALIDATION
+Native XYZ/intensity caches use about 40 bytes per source point. Registered
+folder import also writes a positioned XYZ copy (24 bytes/point), plus previews.
+A pairwise move writes another XYZ copy; undo/source caches stay on disk.
+Both supplied full setups imported through the new folder route: 75,094,568
+points total, about 92 seconds here. All positioned XYZ values were checked
+against the saved transforms; intensity caches were shared unchanged. The
+third setup was not supplied and is correctly reported missing in our test.
+A 36,694,551-point setup panorama took about 11 seconds here; picks near all
+six stored targets returned measured points. These are seed picks, not centre
+accuracy checks. Shared saved targets after Leica poses differed by roughly
+3.5-6.1 mm in this two-setup data if native units are metres. This is internal
+consistency evidence, not independent survey accuracy validation.
+Backend/state/geometry and UI-event tests passed; the updater dependency path
+was tested with mocks. Native Windows installation and actual GPU rendering
+were not run here. Native decoding and saved-pose interpretation remain
+experimental; independent matched E57/survey checks are still required.

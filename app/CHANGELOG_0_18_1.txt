@@ -1,0 +1,18 @@
+Tunnel Studio 0.18.1 - research audit and consistent section baselines
+30 October 2026
+
+Saved section comparisons now enforce matching wall band, design radius and
+fit threshold as well as plane and slice width. Invalid or incomplete saved
+settings are rejected before fitting, with clear restoration/recreation guidance.
+Different survey epochs and masks remain supported; original coordinates stay
+unchanged. A true centre translation remains visible in comparison results.
+
+Added a six-paper algorithm decision record. The Camara2024 robust section
+method was already incorporated, with documented corrections. Camara2025 was
+critically reviewed; its printed filtering inequality and unconstrained
+per-ring ICP are not adopted as default absolute-deformation methods.
+
+233 application regression tests passed; nine dedicated baseline tests added.
+All 0.18.0 performance, whole-project analysis, registration and storage fixes
+are retained. M3C2-EP and a confidence-qualified epoch engine are not included.
+See ALGORITHM_REVIEW_2026_10_30.txt and VALIDATION_0_18_1.json.

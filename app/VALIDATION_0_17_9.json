@@ -1,0 +1,12 @@
+{
+  "version": "0.17.9",
+  "focus": ["permanent project deletion", "exclusive/shared asset accounting", "orphan storage cleanup"],
+  "focused_tests": 22,
+  "notes": [
+    "Shared assets remain protected when deleting one project.",
+    "Current-project deletion treats its own autosave as part of the selected project.",
+    "Startup recovery references protect assets.",
+    "Orphan cleanup rejects stale reviews and excludes unrelated files.",
+    "Virtual registration and bulk permanent point deletion regression tests passed."
+  ]
+}

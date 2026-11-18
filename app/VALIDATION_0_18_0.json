@@ -1,0 +1,162 @@
+{
+  "version": "0.18.0",
+  "date_utc": "2026-10-30",
+  "baseline_application_version": "0.17.12",
+  "source_frozen_before_packaging": true,
+  "application_tests": {
+    "command": "python -m unittest discover -s app -p test*.py -v",
+    "tests": 224,
+    "failures": 0,
+    "errors": 0,
+    "skipped": 0,
+    "seconds": 18.165,
+    "platform": "Linux",
+    "result": "OK"
+  },
+  "installer_activation_tests": {
+    "command": "python -m unittest -v test_installer",
+    "tests": 12,
+    "failures": 0,
+    "errors": 0,
+    "seconds": 0.117,
+    "platform": "Linux, standard-library activation logic; not native Windows execution",
+    "result": "OK"
+  },
+  "syntax": {
+    "python_files_parsed": 155,
+    "javascript_files_syntax_checked": 47,
+    "passed": true
+  },
+  "baseline_integrity": {
+    "baseline_source_version": "0.17.12",
+    "baseline_source_files": 339,
+    "updater_version": "0.17.12",
+    "updater_files": 327,
+    "updater_source_mismatches": [],
+    "source_zip_sha256": "6acd4cd6c253071e9a6d40b53de0a4a0016b00638965cfe8331af15829ad7cce",
+    "baseline_installer_sha256": "ea6c0815635ea01dd609107857ab03b797a5f14d7f7c667f2572e95d911ef232"
+  },
+  "whole_tunnel_synthetic": {
+    "synthetic": true,
+    "source_points": 3100123,
+    "retained_expected": 3100120,
+    "generated_in_blocks": 100000,
+    "phases": {
+      "cloud_vs_design": {
+        "elapsed_seconds": 6.963386953997542,
+        "peak_rss_bytes": 123211776,
+        "prior_rss_high_water_bytes": 110440448,
+        "rss_measurement": "getrusage process high-water RSS; cumulative across phases",
+        "used": 3100120,
+        "deleted": 3,
+        "mean_mm": 9.999999999068013,
+        "p95_absolute_mm": 10.00000001757595,
+        "record_count": 3100120
+      },
+      "cloud_vs_cloud": {
+        "elapsed_seconds": 2.62816666100116,
+        "peak_rss_bytes": 123211776,
+        "prior_rss_high_water_bytes": 123211776,
+        "rss_measurement": "getrusage process high-water RSS; cumulative across phases",
+        "used": 3100120,
+        "deleted": 3,
+        "mean_mm": 9.999999998314507,
+        "reference_count": 720,
+        "record_count": 3100120
+      },
+      "cross_section": {
+        "elapsed_seconds": 6.250172089999978,
+        "peak_rss_bytes": 191631360,
+        "prior_rss_high_water_bytes": 123211776,
+        "rss_measurement": "getrusage process high-water RSS; cumulative across phases",
+        "used": 3100120,
+        "source_points": 3100120,
+        "displayed": 17920,
+        "mean_mm": 9.999999999068017,
+        "p95_absolute_mm": 10.00000001757595,
+        "fit_valid": true
+      }
+    },
+    "limitations": "Linux synthetic geometry, not a real 550M/billion-point tunnel or the complete Windows application RAM budget.",
+    "original_coordinate_sha256_unchanged": true,
+    "new_merged_xyz_caches": 0,
+    "all_assertions_passed": true
+  },
+  "selection_delete_synthetic": {
+    "points": 5000000,
+    "source_xyz_bytes": 120000000,
+    "measurements": [
+      {
+        "case": "without_existing_index",
+        "seconds": 0.494551,
+        "xyz_rows_read_for_selection": 5000000,
+        "deleted_rows": 1000,
+        "retained_rows": 4999000
+      },
+      {
+        "case": "with_reusable_index",
+        "seconds": 0.005545,
+        "xyz_rows_read_for_selection": 16384,
+        "deleted_rows": 1000,
+        "retained_rows": 4999000
+      }
+    ],
+    "source_sha256_unchanged": true,
+    "peak_rss_mib": 38.85,
+    "scope": "Linux synthetic sequentially ordered XYZ. Warm filesystem cache; not a Windows/real-RTC360 timing guarantee."
+  },
+  "browser_integration": {
+    "version": "0.18.0",
+    "browser": "156.0.8078.80",
+    "platform": "Linux headless Chromium, not Windows WebView2",
+    "webgl": true,
+    "preview": "Whole scene \u00b7 72,000 displayed / 72,000 retained scan points \u00b7 display setting 35%. Display mode: rgb.",
+    "comparison": {
+      "used": 72000,
+      "mean_mm": 10.000000001228045,
+      "source_id": "analysis:all"
+    },
+    "inspection_scopes": [
+      {
+        "id": "analysis:all",
+        "text": "Whole project \u00b7 all source scans"
+      },
+      {
+        "id": "analysis:bundle:joined_99c2003ea7c0a749",
+        "text": "Bundle 1 \u00b7 whole registered bundle"
+      },
+      {
+        "id": "abf600af40e34384847e7ae375c949dd",
+        "text": "Setup 1"
+      },
+      {
+        "id": "c8cdba8a7fa749e9b2d7d908db6ad11b",
+        "text": "Setup 2"
+      }
+    ],
+    "page_errors": [],
+    "http_failures": []
+  },
+  "additional_regression_coverage": [
+    "Registration and control Apply preserve a single current representation and avoid repeated transformation.",
+    "Virtual poses apply consistently to targets, selection, cleaning, meshing, analysis and exports.",
+    "Cached quick and normal colour/intensity previews avoid full XYZ/attribute rereads; masks and poses reuse sampled source data.",
+    "3.2-million-point ordinary deletion, Undo, Redo and restore preserve original coordinates.",
+    "2.1-million-point streaming import persists an index; first localized selection reads at most 32,768 rows.",
+    "Project deletion and recovery respect live ownership and Undo/Redo; unreadable ownership metadata stops cleanup.",
+    "Full-density CSV and section processing uses bounded owned reads; sampled screening is labelled."
+  ],
+  "not_validated": [
+    "Native Windows installer execution, WebView2, GPU/driver behaviour and native dialogs.",
+    "The user actual RTC360 tunnel projects or a real 550-million/billion-point dataset.",
+    "A universal 7 GB process-tree RAM cap across every application operation.",
+    "Multi-million-point reference clouds in the synthetic cloud-vs-cloud benchmark (reference contains 720 points)."
+  ],
+  "remaining_scopes": [
+    "SMRG remains a local-patch tool with a 3,000,000 selected-point guard; full-point comparison and sections use a separate engine.",
+    "Existing projects can require one index/coloured-overview generation pass; new imports build the index during ingestion.",
+    "Large/spatially interleaved selections reduce index pruning; permanent compaction still rewrites retained records.",
+    "Edits only on a superseded physical merge remain with its hidden previous result, not propagated to original setup masks.",
+    "Display/mesh/reference complexity limits and documented sampled fitting/reconstruction remain."
+  ]
+}

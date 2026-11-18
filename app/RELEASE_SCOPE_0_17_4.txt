@@ -1,0 +1,42 @@
+Tunnel Studio 0.17.4 — RTC360 raw import, target fitting and raw-view update
+
+This cumulative application update is based on 0.17.3 and retains all previously
+shipped alignment/model design, Project Explorer, themes, permanent point removal,
+meshing, cleaning, analysis, Measure, export, project recovery, target network and
+robust match-review features.
+
+NEW / CHANGED
+- Direct RTC360 raw job/setup folder remains the primary Leica import workflow.
+- Real supplied folders 27-sFHX, 32-n2GG and 37-bcCv pass direct inspection; their
+  parent folder is discovered as a three-setup job.
+- Raw RTC360 quick display no longer uses the legacy one-dimensional raster stride;
+  it uses spatially balanced deterministic sampling from the full float64 point cache.
+- Registration ribbon now says Survey targets / Pick & fit target instead of implying
+  the workflow is B&W-only.
+- Target type is explicit: known-diameter Sphere, known-size B&W HDS, or automatic
+  B&W search.
+- New robust known-diameter sphere centre fit with fixed nominal radius, free-radius
+  diagnostic, residual/coverage/curvature checks and reviewable quality values.
+- Repeated sphere fitting uses the persistent conservative point-block index and exact
+  original-point checks.
+- This sample defaults Sphere to 198.8 mm. B&W known-size defaults to 152.4 mm but
+  remains editable.
+- Existing target pair solve, kept-coordinate choices, Check targets, multi-link network
+  adjustment and 0.17.3 suspect-match review are retained.
+
+REFERENCE DATA
+REGISTER 360/E57 supplied by the user are used for comparison only. They are not
+required inputs to the direct raw RTC360 workflow. The reference database includes
+sphere centres whose fitted radii vary around the 99.4 mm nominal radius, reinforcing
+why the nominal target size and residual review are retained rather than trusting an
+unconstrained fitted radius.
+
+NOT CLAIMED
+- Exact Leica factory filtering/validity handling or calibrated point RGB/HDR.
+- Native Windows/GPU verification of the new balanced raw display in this build host.
+- Automatic blind sphere discovery over an entire 84-million-point setup. Sphere fitting
+  is intentionally assisted by a user pick; automatic B&W search remains separate.
+- REGISTER 360-equivalent cloud-to-cloud optimisation from the raw job.
+- Field accuracy of target centres until compared on the user's Windows machine.
+
+See RTC360_TARGET_REGISTRATION_0_17_4.txt and VALIDATION_0_17_4.json.

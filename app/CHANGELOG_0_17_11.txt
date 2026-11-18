@@ -1,0 +1,12 @@
+TUNNEL STUDIO 0.17.11 — PROJECT STORAGE / FAST BULK DELETION
+Copyright (c) 2026 Damian Gulczynski
+
+- Open Project now shows each saved project's referenced size, individually reclaimable size and shared/protected size.
+- Project rows include selection checkboxes plus Select all, Clear and Delete selected controls.
+- Multi-project deletion reviews the selection as one transaction. Data shared only among selected projects becomes reclaimable; data used by any unselected project, current workspace or startup recovery remains protected.
+- Project deletion no longer waits for Windows to physically erase large cache files. Exclusive files and project manifests are moved by same-volume rename into a private purge queue, then the project disappears from Open Project immediately.
+- Physical space is reclaimed by a background purge thread. Pending purge jobs resume automatically on application startup and whenever Open Project is used.
+- Open Project reports when background storage cleanup is active and the maximum queued amount still being released.
+- Clean unreferenced data uses the same fast quarantine/background-purge architecture.
+- Automatic orphan cleanup remains restricted to Tunnel Studio internal cache/result formats; neutral/source exchange files such as E57/LAS/LAZ/PTS/PLY/XYZ/CSV/OBJ are not auto-deleted merely because no project references them.
+- 0.17.6 virtual registration, 0.17.7 multi-scan permanent point compaction, 0.17.8 shared-runtime updater, and 0.17.9/0.17.10 storage safety remain cumulative.

@@ -1,0 +1,88 @@
+DIRECT RTC360 READER - METHODS AND LIMITS
+15 October 2026; model rtc360_paraboloid_base_experimental_v1
+
+The production raw worker consumes only the original setup XML, SCV6 scan
+slices and format-17 HDR preview. It does not read E57, invoke Leica executables,
+use a vendor SDK, or use fitted per-point/E57 correction constants.
+
+SOURCE VALIDATION
+Setup API 6.4.204, CreatorDevice RTC360, Completed status. SCV6 header magic,
+observed header words, float32-gray JPEG XR GUID/dimensions/extent, JPEG wrapper,
+six blocks per row, sparse bitmap population, RLE coverage, row count, unique
+row coverage, file extent and supplied CRC32 are checked. Referenced filenames
+cannot escape the setup. Metadata, sizes, mtimes and header/tail fingerprints
+are rechecked before and after conversion; consumed slice SHA256 is retained.
+No world positioning is inferred from folder names or the empty SetupPositions.
+
+ANGLE GRID
+For row coefficients (a,b,da,db) and zero-based mirror column j:
+  azimuth = a + j*da
+  mirror angle = b + j*db + DeltaElevation_base
+Angles are in radians after parsing explicit unit-bearing metadata.
+
+EXPERIMENTAL OPTICAL MODEL
+All listed parameters below come from that setup's base kinematic metadata.
+Vertex V and laser origin L are in metres; paraboloid radius is R.
+Let u = (cos(Mu), sin(Mu), 0). Rotate L and the normalized laser direction
+(1, Lambda1, Lambda2) by Rx(-mirror angle) into the mirror frame.
+The paraboloid is defined by:
+  ||p-V||^2 - (u dot (p-V))^2 = 2*R*(u dot (p-V)).
+Intersect the laser ray L+t*d with that surface using the positive quadratic
+root. The unit surface normal is proportional to
+  (p-V) - u*(u dot (p-V) + R).
+The reflected ray is d - 2*(d dot normal)*normal. Rotate the intersection and
+reflected ray back by Rx(mirror angle). The range carried along that ray is
+  measured_range*RangeScale_base + RangeOffset_base - (t + LaserX_base).
+Apply the hypothesized Ry(Epsilon_base - pi/2), Soy_base translation along Y,
+then Rz(-azimuth). Finally apply the recorded setup tilt matrix once.
+
+The ideal model (Mu=Epsilon=90 degrees, all angular defects and Soy zero,
+Laser=(-.09,0,0), Vertex=(-.09,-.045,0), R=.09) reproduces the analytic polar ray
+r*(cos(b)*sin(a), cos(b)*cos(a), sin(b)) within floating-point roundoff.
+This is an implementation/physical-consistency check, not factory validation.
+The Lambda and Epsilon conventions, path reference, temperature/warm-up
+corrections and full model accuracy are still provisional. No thermal values
+are silently guessed. All original base/thermal metadata stays in provenance.
+
+RETENTION AND INTENSITY
+Retain every finite strictly positive range. Do not crop against E57 header
+bounds, select only one mirror face, average passes or silently sample points.
+Keep native intensity from the stored grayscale JPEG (0..255); RGB is absent.
+Packed footer flags are high-nibble-first. Record their total and retained
+histograms, but do not invent their validity semantics. Original unknown
+footer data stays in the untouched raw source; it is not reinterpreted as XYZ.
+Only the display preview is strided. Its indices follow retained-cache order.
+The complete editable point cache is float64 XYZ plus float32 I/R/G/B; unknown
+RGB is NaN. Deleted-point masks drive subsequent exports.
+
+AUXILIARY FIELD RESEARCH (NOT USED AS INTENSITY OR VALIDITY)
+Footer block 3 was decoded using MSB-first packets: 5-bit shared high value,
+5-bit literal run count (1..31), then that many 5-bit low parts; zero tail pad.
+Each value is (high<<5)|low. All 20,168 rows across the two supplied setups
+consume exactly one value per high-nibble-first flag with bit 2 set.
+Observed values span 0..255; semantic meaning remains unknown. R0001 has
+82,822,359 values; R0002 82,995,875. Do not use these counts as valid-point counts.
+
+PHOTOGRAPHS
+Named cubemap faces use validated chunk framing and DWAB EXR decoding.
+Format-17 six-face 1024-pixel HDR previews are tone-mapped with one global
+exposure, Reinhard mapping and gamma 2.2. They become the existing TSPHOTO1
+viewer cache with 1024/512 JPEG levels. They are not reconstructed from the
+180 raw camera frames. Recorded colour correction and precise photo-to-point
+calibration are not verified; no point RGB is synthesized from these previews.
+
+INDEPENDENT E57 DIAGNOSTIC
+The matching E57 contains 38,486,202 records. A pre-existing 150,337-record
+stride sample was compared to nearest raw candidate cells under the provisional
+physical model. Candidate search accounts for head-angle ambiguity near zenith.
+The E57 local points were transformed into the raw frame with the recorded
+raw tilt. The E57's very small declared project pose was not applied in this
+local diagnostic. No fitted residual correction was applied.
+Distances: median 0.665311948 mm; p95 1.212375634 mm; p99 1.666831259 mm;
+maximum 114.904190037 mm. This is not exact beam correspondence and not survey
+accuracy. Raw range quantization, the E57's millimetre coordinate quantization,
+unknown status/selection, occlusion and remaining optical conventions matter.
+One matching setup/reference is insufficient to validate the general model.
+
+See tests/real_rtc360_import_0_13_22.json for full-cache verification.
+Windows installation and GPU rendering were not executed in this environment.

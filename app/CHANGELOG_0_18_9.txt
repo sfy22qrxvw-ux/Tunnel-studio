@@ -1,0 +1,23 @@
+Tunnel Studio 0.18.9
+
+Cloud-to-cloud registration is now integrated into Registration > Cloud to cloud.
+Choose a fixed reference and moving setup (linked components move together),
+roughly align them in plan and elevation, enable Correct tilt, then Refine.
+Review sampled point-to-plane RMS, median, maximum, inliers and warnings before
+Join and lock. Manual edits invalidate the fitted result; local Undo can restore
+it. Workspace Undo reverses an accepted registration. Original XYZ is unchanged.
+
+Registration > RTC360 positions now inspects saved setup poses from the original
+scanner folders. It matches setup and OwnerJob IDs, handles the observed typed
+matrix JSON inside SetupPositions XML, and compensates for tilt already applied
+to raw-import caches. Review eligible setups before applying. Existing linked
+or independently registered setups are preserved. Reapplication is idempotent.
+Inspection reports can be downloaded without altering scanner metadata.
+
+This release retains the manual alignment, live plane, bolt-recess selection,
+mesh-selection, independent-result and deletion improvements from 0.18.8/0.18.7.
+
+Cloud fitting is local numerical alignment, not survey accuracy or a global
+feature matcher. Weak geometry, inadequate overlap or unconverged fits are
+refused. Saved scanner positions/VIS can drift and need independent target
+checks. Experimental raw optical reconstruction remains experimental.

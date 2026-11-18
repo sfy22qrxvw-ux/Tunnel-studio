@@ -445,7 +445,7 @@
   const exact=scans.every(x=>x.count_exact!==false),count=scans.reduce((n,x)=>n+(Number.isFinite(x.count)?x.count:0),0);
   const countText=exact?`${fmt(count,0)} retained points`:`up to ${fmt(count,0)} points · ${scans.some(x=>x.metadata_pending)?'checking remaining count':'remaining count unavailable'}`;
   const {detailed,stage}=sourceInfo;
-  $('job-preview-info').textContent=setupState?`SETUP · ${setupState.name} only · ${fmt(jobScene.pointCount,0)} preview points / ${countText} · ${detailed?'Detailed view':'Whole setup preview'} · Drag to look around · Wheel to zoom`:`${stage==='overview'?'Overview · detail is loading · ':detailed?'Detailed view · ':'Whole scene · '}${fmt(jobScene.pointCount,0)} preview points / ${countText} · display setting ${density()}%${visibleMeshes().length?' · '+visibleMeshes().length+' triangle model'+(visibleMeshes().length===1?'':'s'):''}. Display mode: ${displayMode.replace('-', ' ')}.`;
+  $('job-preview-info').textContent=setupState?`SETUP · ${setupState.name} only · ${fmt(jobScene.pointCount,0)} preview points / ${countText} · ${detailed?'Detailed view':'Whole setup preview'} · Drag to look around · Wheel to zoom`:`${stage==='overview'?'Overview · detail is loading · ':stage==='navigation'?'Overview · zoom for detail · ':detailed?'Detailed view · ':'Whole scene · '}${fmt(jobScene.pointCount,0)} preview points / ${countText} · display setting ${density()}%${visibleMeshes().length?' · '+visibleMeshes().length+' triangle model'+(visibleMeshes().length===1?'':'s'):''}. Display mode: ${displayMode.replace('-', ' ')}.`;
  }
  function scheduleInventoryRefresh(){
   clearTimeout(inventoryTimer);inventoryTimer=null;
@@ -495,24 +495,31 @@
   const contentKey=previewContentKey(),wholeKey=overviewKey(),cacheKey=requestedSetup?JSON.stringify([contentKey,query]):null;
   const currentRequest=()=>request.epoch===previewEpoch&&!busy&&!deletedMode&&!previewOwner&&!cleanSnapshot&&requestedLive===liveLimitEditing&&requestedView===JSON.stringify(detailView)&&requestedSetup===(setupState?setupState.id+'|'+setupState.key:'')&&contentKey===previewContentKey();
   let b=cacheKey?setupPreviews.get(cacheKey):!detailView&&normalOverview?.key===wholeKey&&normalOverview.complete!==false?normalOverview.buffer:null;
-  const needsOverview=setupState?!packed?.length:detailView||data.items.some(x=>x.visible&&x.kind==='scan'&&x.count>2000000);
+  const largeScene=!setupState&&!detailView&&data.items.some(x=>x.visible&&x.kind==='scan'&&x.count>20000000);
+  const needsOverview=setupState?!packed?.length:!detailView&&data.items.some(x=>x.visible&&x.kind==='scan'&&x.count>2000000);
   if(!b&&needsOverview){
    previewFeedback('loading',detailView?'Loading measured points in this view':'Opening measured overview');
    const saved=setupState?setupOverview:normalOverview;
    let qb=!detailView&&saved?.key===wholeKey&&saved.complete===false?saved.buffer:null;
    if(!qb){const quick=await fetch('/api/job-preview-bin?'+new URLSearchParams({...query,quick:'1'}),{signal:request.controller.signal});if(quick.ok)qb=await quick.arrayBuffer();}
    if(qb&&currentRequest()){
-    // A temporarily empty coarse frustum must not blank a useful loaded view.
-    if(qb.byteLength>=56&&(new DataView(qb).getFloat64(32,true)>0||!packed?.length))showPointBuffer(qb,!!detailView,'overview');
-    if(!detailView){const overview={key:wholeKey,buffer:qb,complete:false};if(setupState)setupOverview=overview;else normalOverview=overview;}
-    busyUI(busy);previewFeedback('loading','Measured points ready · increasing detail in the background');await new Promise(resolve=>requestAnimationFrame(resolve));
+    // Keep a responsive overview for large clouds. Zoom requests work
+    // directly on the current camera instead of refining the whole scan.
+    const hasPoints=qb.byteLength>=56&&new DataView(qb).getFloat64(32,true)>0;
+    if(largeScene&&hasPoints){
+     b=qb;
+    }else{
+     if(qb.byteLength>=56&&(hasPoints||!packed?.length))showPointBuffer(qb,!!detailView,'overview');
+     if(!detailView){const overview={key:wholeKey,buffer:qb,complete:false};if(setupState)setupOverview=overview;else normalOverview=overview;}
+     busyUI(busy);previewFeedback('loading','Measured points ready · increasing detail in the background');await new Promise(resolve=>requestAnimationFrame(resolve));
+    }
    }
   }
-  if(!b){previewFeedback('loading',setupState?'Loading points · '+setupState.name+' only':normalOverview?.key===wholeKey?'Overview ready · refining the visible scans':'Loading measured points · '+data.items.filter(x=>x.visible).length+' visible items');const r=await fetch('/api/job-preview-bin?'+new URLSearchParams(query),{signal:request.controller.signal});if(!r.ok){let d={};try{d=await r.json();}catch(_e){}throw Error(d.error||'Could not load 3D preview.');}b=await r.arrayBuffer();}
+  if(!b){previewFeedback('loading',detailView&&!setupState?'Refining measured points in this view':setupState?'Loading points · '+setupState.name+' only':normalOverview?.key===wholeKey?'Overview ready · refining the visible scans':'Loading measured points · '+data.items.filter(x=>x.visible).length+' visible items');const r=await fetch('/api/job-preview-bin?'+new URLSearchParams(query),{signal:request.controller.signal});if(!r.ok){let d={};try{d=await r.json();}catch(_e){}throw Error(d.error||'Could not load 3D preview.');}b=await r.arrayBuffer();}
   else if(cacheKey){setupPreviews.delete(cacheKey);setupPreviews.set(cacheKey,b);}
   if(!currentRequest()){if(!previewOwner&&!cleanSnapshot&&!deletedMode)previewRefreshPending=true;return;}
   previewFeedback('loading','Drawing point preview');
-  showPointBuffer(b,!!detailView);
+  showPointBuffer(b,!!detailView,largeScene?'navigation':'complete');
   if(cacheKey){setupPreviews.set(cacheKey,b);while(setupPreviews.size>3||[...setupPreviews.values()].reduce((sum,x)=>sum+x.byteLength,0)>64*1024*1024)setupPreviews.delete(setupPreviews.keys().next().value);}
   if(!detailView&&b.byteLength<=32*1024*1024){const saved={key:wholeKey,buffer:b,complete:true};if(setupState)setupOverview=saved;else normalOverview=saved;}
   if(setupState){publishMeshPreview();window.SetupCameraUI?.loaded(setupState.id);return;}
@@ -567,7 +574,11 @@
  async function action(body,after=null,options={}){
   if(busy||uploading)return false;
   if(!['register','analyse','surface','rename','delete_selection_many'].includes(body.action)){
-   clearPreviewCaches();detailView=null;signature='';previewRequest?.controller.abort();
+   const viewEdit=['hide_box','hide_selection','isolate_box','isolate_selection'].includes(body.action);
+   clearPreviewCaches();
+   if(viewEdit&&jobScene.initialised&&!setupState)detailView=viewportFrame();
+   else if(!viewEdit)detailView=null;
+   signature='';previewRequest?.controller.abort();
   }
   const preparing=body.action==='analyse',name=current()?.name||'Scan';
   if(preparing){
@@ -622,7 +633,7 @@
   const limit=item.limit_box;
   const selectedArea=selectionSpec?JSON.parse(JSON.stringify(selectionSpec)):null;
   if(selectedArea&&limit)selectedArea.clip_box=limit;
-  const area=selectedArea||(limit?{mode:'limit_box'}:null);
+  const area=selectedArea||(item.hidden_regions||item.isolated?{mode:'visible'}:limit?{mode:'limit_box'}:null);
   if(window.CadUI?.modelSpace?.()&&!window.CadUI.enter('Clean',{openTool:false}))return false;
   const ok=await action({action:'surface',id:item.id,selection:selectedArea});if(!ok)return false;
   const ready=await window.SurfaceUI?.selectSource('separate',area);if(ready===false)return false;
@@ -1160,7 +1171,7 @@
  // Fine buffers include a whole-scene sample. Keep those measured points in
  // GPU memory while navigating instead of repeatedly reverting/re-uploading
  // the sparse overview. Coalesce movement into one current-view request.
- jobScene.onNavigate=()=>{clearTimeout(detailTimer);scheduleDetail();};
+ jobScene.onNavigate=()=>{if(previewRequest&&detailView&&!setupState&&!viewStillCovered(detailView)){previewEpoch++;previewRequest.controller.abort();}scheduleDetail();};
  jobScene.onViewportResize=scheduleDetail;
  function canLoadReviewDetail(){return previewOwner==='shape'&&['orbit','pan'].includes(jobMode)&&!busy;}
  function loadViewDetail(force=false){
@@ -1173,9 +1184,10 @@
   if(setupState){if((!force&&!autoDetail)||setupDisplay==='photo')return;if(!force&&detailView&&viewStillCovered(detailView))return;const next=setupDetail();if(!force&&JSON.stringify(next)===JSON.stringify(detailView))return;detailView=next;signature='';previewRequested=true;previewRequest?.controller.abort();if(loading)previewRefreshPending=true;else sync();return;}
   const visible=data.items.filter(x=>x.visible&&x.kind==='scan');if(!visible.length)return;
   const extent=Math.max(...[0,1,2].map(j=>Math.max(...visible.map(x=>x.maximum?.[j]??0))-Math.min(...visible.map(x=>x.minimum?.[j]??0))));
-  const enabled=force||(autoDetail&&jobScene.scale<extent*.25);
-  if(!force&&enabled&&detailView&&jobScene.scale>=detailView.scale*.6&&viewStillCovered(detailView))return;
-  const next=enabled?viewportFrame():null;
+  const enabled=force||(autoDetail&&jobScene.scale<extent*.5);
+  if(!force&&enabled&&detailView&&jobScene.scale>=detailView.scale*.8&&viewStillCovered(detailView))return;
+  const atCamera=viewportFrame();
+  const next=enabled?{...atCamera,scale:Math.max(.02,atCamera.scale)}:null;
   if(!force&&JSON.stringify(next)===JSON.stringify(detailView))return;detailView=next;signature='';previewRequested=true;previewRequest?.controller.abort();
   if(next)$('job-preview-info').textContent='Loading more detail in the current view · whole scan preview remains available…';else if(restoreOverview())return;
   if(loading)previewRefreshPending=true;else sync();

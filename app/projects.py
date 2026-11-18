@@ -359,13 +359,22 @@ def portable(work,data,destination,progress=lambda s:None,*,publish=None):
             for i,(path,name) in enumerate(files.items()):
                 label=f'Packaging project asset {i+1}/{len(files)}';progress(label)
                 digest=hashlib.sha256()
-                with open(path,'rb') as src,z.open(name,'w',force_zip64=True) as out:
+                source=Path(path)
+                path_before=source.stat()
+                with source.open('rb') as src,z.open(name,'w',force_zip64=True) as out:
                     before=os.fstat(src.fileno())
+                    # Windows can report different ctime values for the path
+                    # and the open handle. Compare each with its own snapshot.
+                    if ((before.st_dev,before.st_ino)!=(path_before.st_dev,path_before.st_ino) or
+                            _file_revision(before)[:2]!=_file_revision(path_before)[:2]):
+                        raise ValueError('A project asset changed before copying: '+label)
                     _copy_stream(src,out,before.st_size,progress,label,digest)
+                    path_after=source.stat()
                     if (_file_revision(os.fstat(src.fileno()))!=_file_revision(before) or
-                            _file_revision(Path(path).stat())!=_file_revision(before)):
+                            _file_revision(path_after)!=_file_revision(path_before) or
+                            (path_after.st_dev,path_after.st_ino)!=(path_before.st_dev,path_before.st_ino)):
                         raise ValueError('A project asset changed while copying: '+label)
-                verified[name]={'source':path,'revision':_file_revision(before),'digest':digest.hexdigest()}
+                verified[name]={'source':path,'revision':_file_revision(path_before),'digest':digest.hexdigest()}
             _pack_retained_caches(clean,verified)
             progress('Packaging project metadata')
             with z.open('project.json','w',force_zip64=True) as out:write_json(out,manifest,progress)

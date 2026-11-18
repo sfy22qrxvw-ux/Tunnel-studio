@@ -1,0 +1,189 @@
+{
+  "version": "0.21.0",
+  "base_version": "0.20.0",
+  "date": "2026-11-04",
+  "application_tests": {
+    "tests_discovered": 568,
+    "tests_run": 568,
+    "seconds": 72.01268265100043,
+    "success": true,
+    "failures": [],
+    "errors": [],
+    "skipped": [],
+    "source_files_changed_during_tests": [],
+    "native_windows_execution": false
+  },
+  "syntax": {
+    "python_files": 202,
+    "javascript_files": 59,
+    "errors": [],
+    "passed": true
+  },
+  "browser_scenario_groups": 67,
+  "browser_reports": {
+    "bolt_gap_reconstruction": {
+      "checks": [
+        "Selected source mesh in the explorer and opened the Meshing ribbon command with 50–150 mm defaults.",
+        "Apply sent the selected source ID, requested copy name and edited gap limits through the production API.",
+        "Real job saved one curved patch with 48 estimated triangles, retained the outer opening and original 128 source faces, and kept scan and mesh provenance.",
+        "Selecting the derived mesh shows the actual reconstructed gap and estimated-face counts."
+      ],
+      "browser": "141.0.7390.37",
+      "errors": []
+    },
+    "segment_review": {
+      "scenarios": [
+        "Real detector classifies six panels from two observed rings and three longitudinal joints, with medium boundary evidence in the review summary.",
+        "Vivid and Standard visibly change the actual main WebGL point colour buffer.",
+        "Measured and inferred four-sided outlines and panel numbers render on the classified cloud and reproject when the 3D camera rotates.",
+        "Minimum confidence filters panel points, numbers and outlines together and preserves full-density kept classifications.",
+        "Boundary and number toggles operate independently and release the unneeded overlay.",
+        "Layout count, measured-only mode, angular offset, task visibility and cleanup on leaving Review work through the normal controls."
+      ],
+      "platform": "Linux Chromium/software WebGL, real detector and HTTP API, synthetic tunnel with observed ring and side joints",
+      "browser": "141.0.7390.37",
+      "errors": []
+    },
+    "tunnel_volume": {
+      "checks": [
+        "Explicit range required; only job meshes available.",
+        "Pick start station in the actual 3D viewer and project it onto the loaded alignment.",
+        "Real volume job reports 48 m³ for 6 m of a prism with an 8 m² cross-section.",
+        "Saved range, mesh and measured volume survive reload.",
+        "Incomplete wall is refused; previous saved measurement preserved."
+      ],
+      "errors": []
+    },
+    "section_epochs": {
+      "checks": [
+        "Ribbon reaches real section-fitting job and recovers a 6 m scan circle.",
+        "Two-epoch run requires checked common datum, measures 8 mm horizontal closure, and identifies an unsupported station.",
+        "Saved epoch result remains available after reload.",
+        "Stop cancels the job without replacing the saved section report."
+      ],
+      "errors": []
+    },
+    "project_save_in": {
+      "scenarios": [
+        "Save shows the real data root, free space, pending project-record folder and native reveal action",
+        "Fast named Save writes a named record and Save As displays its existing path",
+        "Cancelling the file chooser leaves the working project and destination intact",
+        "Save in uses the picker, writes one complete portable copy at the destination, and displays the matching receipt",
+        "Declining overwrite retains the previous portable copy byte for byte",
+        "With no desktop chooser, entering an absolute destination saves a portable copy",
+        "Storage manager shows the data folder and project record"
+      ],
+      "platform": "Linux Chromium, actual application and synthetic project assets, simulated native picker and folder reveal",
+      "errors": []
+    },
+    "viewer_lod": {
+      "results": {
+        "base": 27500,
+        "visibility": [
+          25000,
+          2500,
+          0,
+          0
+        ],
+        "telephoto": 50000,
+        "reversed": 2500,
+        "orthoNear": 30000,
+        "orthoFar": 10000,
+        "uploadDelta": 0,
+        "fallback": 27501,
+        "pageBases": [
+          0,
+          65536
+        ],
+        "glError": 0,
+        "nearPixels": 25,
+        "farPixels": 5,
+        "ids": [
+          0,
+          -1,
+          1
+        ],
+        "cancelled": true,
+        "progress": [
+          0,
+          10
+        ],
+        "latest": 2
+      },
+      "platform": "Linux Chromium, software WebGL",
+      "browser": "141.0.7390.37"
+    },
+    "existing_bolt_selection": {
+      "scenarios": [
+        "Selecting a centre guide highlights every retained original recess point in the main WebGL buffer",
+        "Ctrl-selection combines measured recess groups",
+        "Ctrl-selection deselects an unwanted candidate without changing scan points",
+        "Select all recess candidates selects point regions, with original point counts",
+        "Delete removes the complete chosen recess group into Deleted points and leaves coordinates unchanged",
+        "Workspace Undo restores the exact prior exclusion count",
+        "Late point-detail responses cannot replace a newer selected recess",
+        "Stale result selection is rejected",
+        "Failed detail loading disables point deletion; a fresh valid selection recovers"
+      ],
+      "platform": "Linux Chromium/software WebGL; known full-density synthetic groups; production UI, API, delete and workspace Undo",
+      "browser": "141.0.7390.37",
+      "errors": []
+    },
+    "mesh_repair_selection": {
+      "scenarios": [
+        "Ribbon opens selected CAD surface; curves excluded",
+        "Selected CAD surface reaches real boundary inspection",
+        "Explorer-selected mesh reaches the same dialog",
+        "Switching source clears old inspection, canvas and repair selection",
+        "Multiple selected meshes require explicit source choice",
+        "No selection offers meshes instead of false selection error",
+        "Late response cannot replace a newer selected source",
+        "Unavailable source is reported; another source remains selectable",
+        "Chosen source produces the repaired copy; original topology remains unchanged",
+        "Repair undo removes the derived copy and updates the dialog"
+      ],
+      "platform": "Linux Chromium with software WebGL; synthetic meshes and real application/API",
+      "browser": "141.0.7390.37",
+      "errors": []
+    },
+    "renderer_regression": {
+      "scenarios": [
+        "No hidden overview, section or registration preview requests",
+        "Setup opens on coloured coarse perspective points while fine response is held",
+        "Refresh point detail retries a failed response without requiring camera movement",
+        "Fine response preserves measured coordinates and RGB colours",
+        "Drag automatically requests one coalesced quick/fine detail pair",
+        "Wheel reuses covering detail and automatically loads a wider view",
+        "Wider viewport automatically refreshes horizontal perspective detail",
+        "Late response from previous setup cannot overwrite current setup",
+        "Repeated selection clear performs zero point-buffer uploads",
+        "Legacy remaining count refreshes automatically without geometry requests or GPU uploads",
+        "Binary analysis equals JSON colours, avoids flattening, uploads once per recolour",
+        "Background count completion preserves the active analysis layer and GPU buffer",
+        "Late normal scan response cannot replace an active analysis overlay",
+        "Restore from analysis resumes missing fine detail after aborted load",
+        "Pending deletion stays hidden through selection clear; failure restores source display"
+      ],
+      "browser": "Chromium 141, Linux, software WebGL",
+      "page_errors": []
+    },
+    "point_deletion": {
+      "scenarios": [
+        "Exact commit, retained buffer and next selection finish while post-delete detail is deliberately withheld for 3 seconds",
+        "Rapid successive edits preserve exact source IDs, mixed scan/mesh ownership, triangle geometry, current camera, and grouped Undo/Redo; old responses cannot undo either change",
+        "Failed exact edit restores the temporary hide and preserves source masks, selection and camera",
+        "Unknown derived count preserves active cloud and analysis files; an unrelated analysis stays visible, and returning to normal view permits another exact edit before refinement",
+        "One million displayed points: exact byte-mask SHA-256 matches an independent grid oracle; next box selection works before background detail returns",
+        "Progress overlay keeps canvas dimensions stable; Stop remains pointer- and keyboard-accessible above geometry and measurement dialogs",
+        "Sparse retained GPU IDs 7/17/27 stay visibly red/green/blue during navigation; empty clouds submit no points and refined clouds regain navigation sampling"
+      ]
+    }
+  },
+  "additional_viewer_fixture": "100,000 synthetic points. Screen culling, distance LOD, GL16 index paging, coordinate preservation, point size and cancellation.",
+  "fixtures": "Generated control geometry, real application HTTP endpoints, Linux CPython 3.12 and Chromium with software WebGL, native Windows chooser simulated.",
+  "native_windows_webview2_executed": false,
+  "field_data_validation": false,
+  "field_volume_accuracy_established": false,
+  "original_921_million_point_dataset_tested": false,
+  "separate_live_cache_migration": "Planned; portable Save in copies the project and assets and shows the existing working storage location."
+}

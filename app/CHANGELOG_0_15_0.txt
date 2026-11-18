@@ -1,0 +1,52 @@
+Tunnel Studio 0.15.0 — consolidated tunnel cleaning, classification and editing
+24 October 2026
+
+Clean Tunnel now opens with GuSAC as the primary cleaning method. The method
+uses regional RANSAC planes and normal agreement, based on the complete Wang
+et al. (2025) paper. Inward objects/services are proposed exclusions; supported
+lining, recesses/joints, sparse evidence and near-wall normal disagreements
+remain separate review groups. Source coordinates and attributes are preserved.
+
+Tunnel classification is available under Model > Lining features and in the
+Clean Tunnel method list. It runs GuSAC then original-point radius clustering.
+The review offers stable cluster colours and supported-ring colours, independent
+of keep/exclude decisions. Ring IDs are withheld when joint evidence is absent.
+CSV, JSON and HTML reports carry cleaning classes and classification metadata.
+
+The previous Extract Tunnel Surface and other cleaning methods remain available.
+The later 0.14.11 source update is consolidated here, including the alternative
+ray/box cleaner. GuSAC remains the primary method; the older provisional
+gusac_tmatch.py engine is superseded by the separately tested gusac.py/tmatch.py.
+
+Earlier requested workflow changes are included:
+- Editable 3D tunnel designer, direct profile selection for a new design using
+  the active alignment, and explicit update-existing/create-separate-copy paths.
+  Model placement, mirrored transforms, layers, colours and bundles are retained.
+- PDF Drawing removed according to the later 24 October decision. Report
+  printing/PDF output and existing PDF-derived geometry remain available.
+- Transactional project opening and recovery, older project formats, portable
+  data, New Project, and recovery notices. Missing essential geometry or masks
+  are identified without silently restoring deleted points or losing edits.
+- Brush selection alongside box, polygon and lasso, with original-point editing,
+  frozen world geometry, cancellation, invert, hide/isolate/separate and undo.
+- File Explorer drop of scans, meshes and one portable project at a time. Native
+  full paths use disk import; browser transfers are queued with cancellation.
+  Browser files over 150 MB use the existing local-path import flow.
+- Mesh to Point Cloud with count/average-spacing controls, estimate, progress,
+  cancellation and generated-geometry labels; optional real vertex RGB retained.
+- Selected small-hole repair with exact patch preview, conservative boundary
+  checks, an independent repaired mesh, inferred-face flags and Workspace Undo.
+- Counted PTS import progress with measured throughput and approximate ETA.
+
+RELEASE_SCOPE_0_15_0.txt records the consolidated feature inventory, retained
+earlier tools and the remaining research/validation limits.
+
+Read GUSAC_TMATCH_METHOD_0_15_0.txt for precise method choices, corrections to
+the paper's inconsistent normal equations, uncertainty and omitted author-specific
+steps. Read VALIDATION_0_15_0.json for actual synthetic, integration and real-scan
+checks. The paper's reported accuracy is not claimed for this software.
+
+This build was prepared and checked on Linux. Native Windows/GPU execution and
+a full 600-million-point project have not been tested on this build host. The
+installer checks component imports before activating the new version and keeps
+previous installed versions and user projects.

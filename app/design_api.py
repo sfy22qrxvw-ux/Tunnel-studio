@@ -38,7 +38,7 @@ def get(s,h,path,args):
     if path=='/api/design-sources':
         sources=analysis_sources.collections(s)+[x for x in s.STATE.get('job_items',[]) if x.get('kind')=='scan' and not x.get('merge_archived') and not x.get('merge_stale')]
         return h.send({'sources':[dict(id=x['id'],name=x['name'],count=x['meta']['count'],
-            source_scan_ids=analysis_sources.scan_ids(x),has_limit_box=any(analysis_sources.saved_boxes(s,x))) for x in sources]}) or True
+            source_scan_ids=analysis_sources.scan_ids(x),has_limit_box=any(analysis_sources.saved_boxes(s,x)),source_members=analysis_sources.scope_members(s,x)) for x in sources]}) or True
     r=current(s)
     if path=='/api/design-comparison':return h.send({'result':public(r)}) or True
     if not r or r.get('stale'):raise ValueError(r.get('stale_reason') if r else 'Run Cloud vs Design first.')

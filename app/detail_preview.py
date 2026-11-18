@@ -48,14 +48,23 @@ def request_cancelled(handler):
 
 def _view_mask(points, view, frame):
     target, axes, scale, aspect = frame
-    projected = (points - target) @ axes.T
-    finite = np.isfinite(points).all(1)
+    relative = points - target
     if view.get('projection') == 'perspective':
+        projected = relative @ axes.T
+        finite = np.isfinite(points).all(1)
         z = projected[:, 2]
         return (finite & (z >= view['near']) & (z <= view['far'])
                 & (np.abs(projected[:, 0]) <= z * scale * aspect * 1.15)
                 & (np.abs(projected[:, 1]) <= z * scale * 1.15))
-    return finite & (np.abs(projected) <= [scale * 1.15, scale / aspect * 1.15, np.inf]).all(1)
+    # Orthographic depth is unbounded. Check horizontal overlap first
+    # and only project rows that could survive the viewport filter.
+    with np.errstate(invalid='ignore'):
+        horizontal = np.einsum('ij,j->i', relative, axes[0])
+        candidates = np.flatnonzero(np.abs(horizontal) <= scale * 1.15)
+        vertical = np.einsum('ij,j->i', relative[candidates], axes[1])
+    keep = np.zeros(len(points), dtype=bool)
+    keep[candidates] = np.abs(vertical) <= scale / aspect * 1.15
+    return keep
 
 
 class _PrioritySample:
@@ -71,6 +80,7 @@ class _PrioritySample:
         self.capacity = max(READ_POINTS, 2 * self.budget)
         self.ids = np.empty(self.capacity, dtype=np.int64)
         self.keys = np.empty(self.capacity, dtype=np.uint64)
+        self.points = None
         self.used = 0
         self.cutoff = None
         self.partitions = 0
@@ -80,23 +90,31 @@ class _PrioritySample:
             take = np.argpartition(self.keys[:self.used], self.budget - 1)[:self.budget]
             self.ids[:self.budget] = self.ids[take]
             self.keys[:self.budget] = self.keys[take]
+            if self.points is not None:
+                self.points[:self.budget] = self.points[take]
             self.used = self.budget
             self.partitions += 1
         if self.used >= self.budget:
             self.cutoff = self.keys[:self.used].max()
 
-    def add(self, ids):
+    def add(self, ids, points=None):
         if not len(ids):
             return
+        if points is not None and self.points is None:
+            self.points = np.empty((self.capacity, 3), dtype=np.float64)
         keys = priority_keys(ids)
         if self.cutoff is not None:
             use = keys < self.cutoff
             ids, keys = ids[use], keys[use]
+            if points is not None:
+                points = points[use]
         offset = 0
         while offset < len(ids):
             count = min(self.capacity - self.used, len(ids) - offset)
             self.ids[self.used:self.used+count] = ids[offset:offset+count]
             self.keys[self.used:self.used+count] = keys[offset:offset+count]
+            if points is not None:
+                self.points[self.used:self.used+count] = points[offset:offset+count]
             self.used += count; offset += count
             if self.used == self.capacity:
                 self._prune()
@@ -108,11 +126,18 @@ class _PrioritySample:
         return np.sort(self.ids[:self.used])
 
 
-def _coalesced_ranges(ranges):
+    def finish_points(self):
+        self._prune()
+        order = np.argsort(self.ids[:self.used])
+        points = self.points[order] if self.points is not None else np.empty((0, 3))
+        return self.ids[order], points
+
+
+def _coalesced_ranges(ranges, gap=0):
     """Join adjacent spatial blocks without exceeding the bounded read size."""
     first = last = None
     for start, stop in ranges:
-        if first is not None and start == last and stop - first <= READ_POINTS:
+        if first is not None and 0 <= start-last <= gap and stop - first <= READ_POINTS:
             last = stop
         else:
             if first is not None:
@@ -136,7 +161,12 @@ def _quick_sample(item, budget, origin, fallback, mode, z_range, view, cancel=No
     return shown
 
 
-def sample(item, budget, origin, fallback, mode, z_range, view, quick=False, cancel=None, *, decorate=None):
+INTERACTIVE_BLOCKS = 24
+NAVIGATION_BLOCKS = 2048
+NAVIGATION_ROWS_PER_BLOCK = 2048
+
+
+def sample(item, budget, origin, fallback, mode, z_range, view, quick=False, cancel=None, *, decorate=None, interactive=False):
     """Sample a viewport. A review can colour its rows using the original IDs."""
     fallback,mode=__import__('scan_appearance').resolve(item,fallback,mode)
     import jobdata, preview_index, preview_store, registration_pose
@@ -145,10 +175,11 @@ def sample(item, budget, origin, fallback, mode, z_range, view, quick=False, can
     if not budget:
         return np.empty((0, 6), dtype='<f4')
     _check_cancel(cancel)
+    navigation = view.get("navigation_sample") == "stratified-v1" and not decorate and not interactive
     cache = None
     if decorate is not None and quick:
         raise ValueError('Review detail requires original point IDs.')
-    if decorate is None:
+    if decorate is None and not interactive:
         try:
             cache = preview_store.cache_path(item, budget, origin, fallback, mode, z_range, quick, view=view)
             saved = preview_store.read(cache)
@@ -163,15 +194,57 @@ def sample(item, budget, origin, fallback, mode, z_range, view, quick=False, can
         packed = _quick_sample(item, budget, origin, fallback, mode, z_range, view,cancel=cancel)
     else:
         m = item['meta']; n = int(m['count'])
+        included, hidden = jobdata.view_selections(item)
         source_key = preview_index._key(m)
         local_view = registration_pose.local_view(m, view)
         boxes = preview_index.cached_bounds(m, source_key)
+        if interactive and boxes is None:
+            return _quick_sample(item, budget, origin, fallback, mode, z_range, view, cancel=cancel)
         builder = preview_index.BoundsBuilder(m, source_key) if boxes is None else None
         if boxes is None:
             ranges = ((start, min(n, start+READ_POINTS)) for start in range(0, n, READ_POINTS))
         else:
-            ranges = _coalesced_ranges(preview_index.candidate_blocks(
-                m, local_view, validate_view(local_view), boxes=boxes))
+            blocks = preview_index.candidate_blocks(m, local_view, validate_view(local_view), boxes=boxes, included=included, hidden=hidden)
+            if interactive:
+                candidates = np.array(list(blocks), dtype=np.int64)
+                if len(candidates) > INTERACTIVE_BLOCKS:
+                    bounds = boxes[candidates[:, 0] // preview_index.BLOCK]
+                    target, axes, scale, aspect = validate_view(local_view)
+                    delta = bounds.mean(axis=1) - target
+                    projected = (delta @ axes[:2].T) / [scale, scale / aspect]
+                    cells = np.clip(np.floor((projected + 1) * 2), 0, 3).astype(int)
+                    cell_ids = cells[:, 0] * 4 + cells[:, 1]
+                    distance = np.sum(delta**2, axis=1)
+                    # Cover different parts of the screen first. Taking the
+                    # nearest rows alone can show one strip of a long tunnel.
+                    by_distance = np.argsort(distance, kind='stable')
+                    _, first = np.unique(cell_ids[by_distance], return_index=True)
+                    representative = by_distance[first]
+                    remainder = by_distance[~np.isin(by_distance, representative)]
+                    take = np.r_[representative, remainder][:INTERACTIVE_BLOCKS]
+                    candidates = candidates[np.sort(take)]
+                blocks = iter(candidates)
+            elif navigation:
+                candidates = list(blocks)
+                if len(candidates) > NAVIGATION_BLOCKS:
+                    take = np.linspace(0,len(candidates)-1,NAVIGATION_BLOCKS,dtype=np.int64)
+                    candidates = [candidates[i] for i in take]
+                def slices():
+                    for start, stop in candidates:
+                        width = min(NAVIGATION_ROWS_PER_BLOCK,stop-start)
+                        block = start // preview_index.BLOCK
+                        # Vary the slice phase across scan lines to avoid
+                        # repeating bands in the navigation display.
+                        offset = (block * 2654435761 % 4294967296) % (stop-start-width+1)
+                        yield start+offset,start+offset+width
+                blocks = slices()
+            fine = None
+            if not interactive and not navigation and local_view.get('projection') != 'perspective':
+                import fine_view_index
+                coarse = list(blocks)
+                fine = fine_view_index.candidates(source_key, local_view, validate_view(local_view), coarse)
+                blocks = coarse if fine is None else fine
+            ranges = _coalesced_ranges(blocks, gap=1024 if fine is not None else 0)
         chosen = _PrioritySample(budget)
         with ExitStack() as files:
             source = files.enter_context(Path(m['file']).open('rb'))
@@ -189,27 +262,23 @@ def sample(item, budget, origin, fallback, mode, z_range, view, quick=False, can
                     builder.add(start, local)
                 q = registration_pose.points(m, local)
                 use = _view_mask(q, view, frame)
+                jobdata.apply_view_selections(q, use, included, hidden)
+                if not use.any():
+                    continue
                 if excluded is not None:
                     excluded.seek(start); flags = np.fromfile(excluded, 'u1', count=count)
                     if len(flags) != count:
                         raise ValueError('The point deletion mask changed while loading detail.')
                     use &= flags == 0
-                if item.get('limit_box') and item.get('limit_hide_outside', True):
-                    use &= jobdata.selection_mask(q, {'mode':'box', **item['limit_box']})
-                if item.get('isolate_box') is not None:
-                    use &= jobdata.selection_mask(q, item['isolate_box'])
-                for hidden in item.get('hidden_boxes', []):
-                    use &= ~jobdata.selection_mask(q, hidden)
-                chosen.add(np.flatnonzero(use) + start)
+                indices = np.flatnonzero(use)
+                chosen.add(indices + start, q[indices])
         _check_cancel(cancel)
         if builder is not None:
             builder.finish()
         elif preview_index._key(m) != source_key:
             raise ValueError('The scan changed while loading detail. Refresh the view.')
-        selected = chosen.finish()
-        q = registration_pose.points(m, jobdata._display_rows(m['file'], n, selected,cancel=cancel))
-        _check_cancel(cancel)
-        colours = jobdata._colour_from_attributes(m, selected, fallback, mode, q, z_range,cancel=cancel)
+        selected, q = chosen.finish_points()
+        colours = jobdata._colour_from_attributes(m, selected, fallback, mode, q, z_range, cancel=cancel)
         packed = np.empty((len(q), 6), dtype='<f4'); packed[:, :3] = q-origin; packed[:, 3:] = colours
         if decorate is not None:
             decorate(selected, packed)

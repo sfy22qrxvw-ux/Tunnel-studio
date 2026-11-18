@@ -1,0 +1,91 @@
+TUNNEL STUDIO 0.13.20
+Ring creep, cleaned-scan export and navigation
+14 October 2026
+
+INSTALL
+Save your project and close Tunnel Studio. Extract the whole ZIP into a new
+folder, run UPDATE_TUNNEL_STUDIO.bat, and restart. Confirm version 0.13.20.
+This is an update for your existing desktop installation, not a new installer.
+In browser fallback mode, refresh the page after restarting the application.
+RESTORE_PREVIOUS_VERSION.bat restores the automatic application-file backup.
+Existing scans do not need importing again.
+
+RING CREEP
+Open Analyse > Ring creep. Add a ring face and enter its design and measured
+chainage in metres. Select Calculate & save creep. Results and the graph show
+signed millimetres: (measured chainage - design chainage) x 1000.
+Positive means ahead along increasing chainage; negative means behind.
+Compare the SAME physical face at design and measurement. The face-reference
+field lets you distinguish leading/trailing faces and repeated observations.
+
+Explicit chainage observations work without a loaded scan or alignment.
+CSV columns: ring_id, design_chainage_m, measured_chainage_m, reference, source.
+The last two columns are optional. Creep is recalculated, not trusted from an
+imported creep_mm column. Legacy XYZ ring observations still need an alignment.
+
+Use kept joint suggestions adds only reviewed/kept candidates as estimated
+measured chainages. Enter the design chainages and verify IDs/face references.
+Their original bin resolution is retained in the source description. These
+are scan estimates, not automatically certified millimetre measurements.
+
+Blank measurements, non-finite values and duplicate ring/face references give
+specific errors without replacing saved results. Unsaved input survives status
+refreshes. Reload saved results discards edits only after confirmation.
+The CSV export uses saved results; it no longer requires a loaded scan/design.
+The visible display-limit field controls the graph and within/outside check.
+
+EXPORT YOUR CLEANED SCAN
+1. Select your cleaned scan or merged cloud in Scans & models.
+2. Open Export. Selected scene scan / remaining points is the default when
+   scene scans are present. Confirm the scan in the dropdown and choose E57,
+   LAS/LAZ, PTS, XYZ, CSV or PLY.
+3. Click Save as, select the destination and filename, then allow preparation
+   and saving to finish. A success message shows the saved filename/path and
+   the remaining point count.
+
+No alignment or Use for analysis step is required to export a scene scan.
+Exports use every retained point at original cache precision before the chosen
+format's encoding. Deletion masks are applied to coordinates and attributes in
+chunks. The retained count and excluded count are reported. View-only hiding,
+isolation and limit boxes do not delete points and do not crop the export.
+For a Clean Tunnel review result, choose Tunnel / kept points (processed area).
+Portable projects include editable history and original caches; choose a
+point-cloud format when you want only the remaining cleaned point data.
+
+The desktop shell opens a Save As dialog. Supported browsers open a browser
+save picker and stream the completed file. If no picker is available, a full
+folder-and-filename field appears so you can choose an explicit destination.
+Cancelling the picker does not generate a new export. Failed saves leave the
+prepared file available through Save exported file. Native/local-path saving
+asks before replacing an existing file, protects recorded original inputs and
+the internal data directory, and preserves existing destination bytes on failure.
+If a scan changes after preparation, export it again before saving.
+
+LARGE SCAN NAVIGATION WHILE CLEANING
+Repeated detail views now use cached bounds of point-file blocks to skip blocks
+outside the view. Exact view, deletion-mask and visibility checks still run on
+candidate points. This is display acceleration, not a change to measured data.
+The first detailed view builds the index. Benefit depends on the point order,
+view and storage; no fixed speed-up is promised. Small pans within loaded detail
+reuse it. Navigation stops an old detail timer. Read-only detail loading keeps
+polygon editing available on an existing preview. Edits invalidate old previews.
+Cached whole-scan restoration on zoom-out remains in place.
+
+VALIDATION AND LIMITS
+11 targeted suites cover backend data masks and attributes, export routing,
+destination handling, creep maths/CSV/validation, conservative view culling,
+UI save/cancel/retry flows, polygon/overview/navigation, setup display and photos,
+cleaning controls, static routes and updater dependency handling.
+All Python payload files parse and all JavaScript payload files pass syntax checks.
+UI tests use JSDOM, mocked save dialogs and captured WebGL calls. This package
+has not been run on your Windows laptop or physically benchmarked on your GPU.
+The original installed E57/LAS/etc format writers are not present in this
+incremental source checkout: their input is tested, final file encoding is not
+retested here. Those existing writers and their format limitations are retained.
+
+RAW RTC360 FILES
+This update does not claim complete support for original scanner .scan folders.
+The separate RTC360_Scan_Reader_Research.zip preserves the verified decoding of
+two supplied partial scan slices, metadata associations and remaining unknowns.
+Calibrated XYZ and validity still need verification before production import.
+Existing experimental REGISTER 360 project/HSPCA import is retained.

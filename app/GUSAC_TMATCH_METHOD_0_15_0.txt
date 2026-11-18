@@ -1,0 +1,172 @@
+TUNNEL STUDIO 0.15.0 - GUSAC CLEANING AND TMATCH CLASSIFICATION
+Implementation record, 24 October 2026
+
+PRIMARY REFERENCE
+Wang, Z.; Zhu, Z.; Wu, Y.; Hong, Q.; Jiang, D.; Fu, J.; Xu, S. (2025).
+Automated Tunnel Point Cloud Segmentation and Extraction Method.
+Applied Sciences 15, 2926. https://doi.org/10.3390/app15062926
+The supplied complete article has 22 pages. Figure 4 is on page 8 and
+Figure 6 is on page 9. The paper is licensed CC BY 4.0. This implementation
+was written independently; it does not contain author source code or weights.
+
+WHAT IS NEW
+Clean Tunnel defaults to GuSAC-based regional lining cleaning. The previous
+measured-lining extraction, combined denoising, stray-point, reflection,
+irregular-surface, lining-feature and SMRG tools remain available.
+Tunnel classification runs GuSAC followed by connected lining clustering.
+Individual clusters have stable categorical colours, selectable original
+points, per-group keep/exclude decisions, hide/isolate/restore, and CSV/JSON
+reports. The colour mode is independent of which points are kept.
+
+GUARANTEED DATA BEHAVIOUR VS GEOMETRIC UNCERTAINTY
+The code writes original int64 point IDs and int32 labels. It never snaps
+coordinates to a circle, plane or fitted surface. Source XYZ stays float64;
+RGB and intensity are not rewritten. Display sampling affects only the view.
+Every selected retained source point receives one decision, including points
+that are outside the learned lining or have insufficient evidence. Existing
+selection volumes and prior exclusions still restrict the processing area.
+No source deletion happens during analysis. The user reviews the result and
+can create a separate cleaned scan or apply reversible exclusions.
+This data-integrity contract does not mean every automatic decision is correct.
+
+GUSAC METHOD
+1. A deterministic spatial sample, capped at 400,000 actual measured points,
+   learns one supported approximately circular tunnel branch. The sample uses
+   a 15 mm spatial grid for balancing, but retains original point coordinates;
+   voxel-centre coordinates are not used as observed lining points.
+2. The existing robust tunnel reference supplies a direction and measured
+   section-centre/profile corrections. It accommodates gentle curvature and
+   supported floor profiles. Local station is projected distance in this
+   estimated frame, not a design chainage or a rigorous arc-length alignment.
+3. The default regional partition uses 5-degree angular sectors and 1 m
+   longitudinal cells. Overlapping fitting support avoids input-batch seams.
+   Sparse patches can extend their longitudinal fitting halo up to four
+   configured windows. Original point ownership remains in the original cell.
+4. Each patch fits an actual RANSAC plane. Candidate planes must agree with
+   measured wall support, plausible normal orientation and spatial coverage.
+   A dense foreground service cannot win solely by providing more points.
+5. Deep narrow inward dents in the initial reference are checked against
+   surrounding circumferential support. Only the reference is corrected.
+   A patch still needs actual wall observations for its RANSAC plane; absent
+   wall support is retained as uncertainty rather than invented geometry.
+6. Local PCA estimates normals from bounded sample neighbourhoods, with a
+   physical radius and degeneracy/support checks. Normal queries are batched.
+7. All selected original points are compared with the regional plane and
+   measured radial reference. Both must support an inward departure before
+   that point becomes an obstruction candidate. Near-wall points also undergo
+   the normal-agreement check. These decisions do not move source points.
+
+CORRECTIONS TO THE PRINTED EQUATIONS
+Equation 4 on page 7 is absolute point-to-plane distance:
+    abs(a*x+b*y+c*z+d) / sqrt(a*a+b*b+c*c).
+The printed Equation 5 multiplies normal lengths in both numerator and
+denominator, which would be identically one. The implemented interpretation is:
+    q = abs(dot(n, np)) / (norm(n)*norm(np)).
+This is invariant to normal sign. Consistent surface normals have larger q.
+Equation 6 prints a less-than cosine inequality while the accompanying text
+defines a lower agreement threshold. The implementation retains adequate
+agreement with q >= threshold. It applies the described mean-minus-1.5-SD
+principle to supported inlier agreements, with an explicit angular bound and
+small numerical allowance. See gusac.py for the exact safeguards.
+The equation interpretation is documented; it is not presented as an exact
+reproduction of inconsistent printed expressions.
+
+DEFAULT CLEANING CLASSES
+0 Supported lining: retained.
+1 Inward obstruction/service candidates: proposed exclusion.
+2 Outward points, joints and recesses: retained for review.
+3 Insufficient lining evidence: retained for review.
+4 Near-wall normal disagreement: retained for review.
+The paper removes joint features to create separable blocks. Here those
+measurements remain available, separately from the lining used for clustering.
+This protects joint/deformation observations and sparse wall glimpses behind
+services. Retained review groups can also contain real clutter and reflections;
+their names describe geometric evidence, not verified object identity.
+
+TMATCH INITIAL CLUSTERING
+The paper names a neighbourhood distance R and minimum point count N without
+fully specifying the preliminary clustering rule. This implementation uses
+Euclidean radius-connected components of the GuSAC-supported lining. N is
+the minimum final component size; it is not a DBSCAN core-neighbour count.
+The default R is 15 mm and N is 30 points. R must exceed ordinary neighbour
+spacing while remaining smaller than a resolved joint gap. A bridge of valid
+lining points can merge panels; a missing-data gap can split a real panel.
+The algorithm does not silently manufacture a seam from the expected ring width.
+
+All original eligible lining points participate. The spatial grid is an exact
+acceleration structure, not downsampling: its cell diameter is no larger than
+R. Cross-cell merging requires an actual point pair within R, or a bounding-box
+test proving all relevant pairs are within R. A 1 nm numerical allowance is
+used at the radius boundary. Connections are merged globally
+across input batches and spatial cells, including the circumferential seam.
+Point records and component parents are disk-backed in temporary SQLite data.
+Working trees/records and union-find traversal memory are bounded; no
+full-cloud neighbour matrix is created. Up to 6,000 of the largest qualifying
+components receive individually named metadata and review rows. This bounds
+project and UI metadata; it is not a processing point cap. Eight representative
+preview indices are recorded per named group. Every point in any
+excess component remains in retained label 0, with explicit deferred component
+and point counts and a warning. Label 0 is not claimed to be one geometric
+component. Output ID and label files are staged and committed only on success.
+Label updates use at most eight mapped windows of 8 MiB each, explicitly
+unmapping evicted windows. Source selection uses bounded reads rather than a
+whole-source mapping; neither mechanism promises a measured process-tree peak
+for a billion-point run that has not been executed.
+Label 0 denotes unclassified lining and is retained. Positive IDs identify
+lining components and separate GuSAC review groups. The cleaning_class field
+distinguishes these meanings; an ID itself is not a physical measurement.
+
+RING GROUPING, GMM AND PLANES
+Optional ring grouping uses physically defined local longitudinal component
+centres, weighted by original point counts. It never treats arbitrary integer
+cluster numbers as distances. Observed separated bands must have shared
+longitudinal extent and substantial circumferential support. A positive expected
+ring width is a consistency check; 0 requests observation-based grouping.
+Weighted Gaussian-mixture EM refines supported bands. Ambiguous memberships,
+inconsistent widths or missing joint evidence withhold ring labels. A seamless
+shell is not split into fabricated rings. Local ring IDs are not design ring IDs.
+Accepted rings also receive full-density centred covariance/plane metadata.
+Every assigned original point contributes. Poorly conditioned normals are
+withheld. Axial point spread is a ring-thickness statistic, not scan accuracy.
+Unsupported planes have no axial_spread_m value; minimum-variance spread is
+recorded separately without calling that direction the tunnel axis.
+
+FIGURE 6 VISUALISATION
+The classification view offers Individual clusters, Supported rings and
+Cleaning decisions. Cluster/ring colours are categorical. Grey denotes
+unresolved or retained boundary/review areas; red denotes excluded candidates;
+magenta indicates the current selection. Selecting or hiding a colour does
+not change kept points. Keep/Exclude changes the reviewed output explicitly.
+The paper's Figure 6 is structural instance clustering, not semantic recognition
+of cable, pipe, tray, bracket and other service types. No such semantic accuracy
+is claimed here. Reports record cluster ID, name, cleaning class, ring ID,
+original point count, decision and centroid.
+
+DELIBERATE ADAPTATIONS AND UNIMPLEMENTED AUTHOR-SPECIFIC STEPS
+The paper does not provide runnable source, full parameter sets or raw benchmark
+clouds. Its minimum-spanning-tree axis operation is mentioned but not specified
+reproducibly. Its GMM scalar field, component-count choice and geometric
+reassignment thresholds are also incomplete. Tunnel Studio uses the explicit
+supported reference, exact radius graph and physical GMM described above.
+It does not claim exact reproduction of the crown/MST/piecewise-cubic axis
+procedure or the incompletely specified adjacent-plane reassignment heuristic.
+The six-block angular template illustrated in Figure 11 is not imposed on
+other projects. Automatic named within-ring block types need the actual
+project segment arrangement. Existing ring-plane cross-section tools remain
+separate from the classification colour view.
+
+VALIDATION AND LIMITS
+See VALIDATION_0_15_0.json for the completed build's actual checks and measured
+test results. Synthetic results and real-scan execution are recorded separately.
+The article's F1 0.9527 and IoU 0.9055 refer to its ten-ring classification
+evaluation, with manually prepared reference segmentation after GuSAC. They
+are not Tunnel Studio results and do not establish an all-service removal rate.
+The authors' acquisition density was at least 50,000 points per square metre;
+the article acknowledges problems with data gaps and pipeline-concentrated
+regions. Its normalized local CD/RMSE figures are not millimetre measurements.
+Geometry alone may not separate a service touching the wall from genuine lining
+detail. Severe curves, branches, irregular excavations, missing wall returns and
+under-resolved joints need inspection or another workflow. Source preservation
+and uncertainty labels make these cases reviewable; they do not solve them all.
+Neither synthetic fixtures nor a smaller real scan validate the user's entire
+600-million-point project or every Windows/GPU environment.

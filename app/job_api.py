@@ -180,7 +180,7 @@ def get(s,h,path,args):
         if view is not None:detail_preview.validate_view(view)
         quick=args.get('quick',['0'])[0]=='1'
         try:
-            blob,_=jobdata.preview_binary(preview_items,args.get('detail',[25])[0],args.get('mode',['rgb'])[0],view,owners=args.get('owners',['0'])[0]=='1',quick=quick,cancel=lambda:detail_preview.request_cancelled(h),setup=bool(args.get('setup_id')))
+            blob,_=jobdata.preview_binary(preview_items,args.get('detail',[25])[0],args.get('mode',['rgb'])[0],view,owners=args.get('owners',['0'])[0]=='1',quick=quick,cancel=lambda:detail_preview.request_cancelled(h),setup=bool(args.get('setup_id')),interactive=args.get('interactive',['0'])[0]=='1')
         except InterruptedError:
             h.close_connection=True
             return True
@@ -352,7 +352,7 @@ def post(s,h,path,body):
                 if op=='restore_deleted' and scan_edits.record(x,body.get('group_id')).get('archive'):
                     scan_edits.restore_archive(s,x,scan_edits.record(x,body.get('group_id')),lambda msg:progress(s,msg));return
                 if op=='copy_selection':
-                    newmeta=jobdata.extract_selection(m,selection,s.WORK,x['name']+' · copy',lambda msg:progress(s,msg))
+                    newmeta=jobdata.extract_selection(m,selection,s.WORK,x['name']+' · copy',lambda msg:progress(s,msg),visibility=x)
                     old=copy.deepcopy(s.STATE)
                     try:append(s,'scan',newmeta)
                     except Exception:s.STATE.clear();s.STATE.update(old);jobdata.remove_assets(newmeta);raise

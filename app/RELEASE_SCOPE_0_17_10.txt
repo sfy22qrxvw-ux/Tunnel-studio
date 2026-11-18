@@ -1,0 +1,14 @@
+Tunnel Studio 0.17.10 is a cumulative verification/fix release.
+
+Primary fix: Open Project storage actions no longer depend on nesting a second HTML modal dialog over the already-modal Project window. Review and confirmation are rendered in-place, with final native confirmation before destructive actions.
+
+Cumulative retained behaviour:
+- Raw RTC360 job/setup import and improved structured preview sampling.
+- Survey targets including 198.8 mm known-diameter sphere fitting and B&W workflows.
+- Transform-only virtual registration for long chains; Apply Geometry does not create transformed XYZ duplicates or automatic merged clouds.
+- Explicit materialised merge/export only when requested.
+- Multi-scan permanent deletion with sequential atomic compaction, 1,000,000-point blocks and single-pass preview generation.
+- Fast shared-runtime updater without cloning the runtime per release.
+- Project deletion with exclusive/shared reference protection and unreferenced-internal-cache cleanup.
+
+Safety refinement: automatic orphan cleanup excludes neutral exchange/source formats.

@@ -1,0 +1,15 @@
+Tunnel Studio 0.10.0 — design/algorithm references
+
+This release is an independent implementation. No source code was copied from Cyclone 3DR, CloudCompare, or the linked tutorial repositories/articles.
+
+Workflow and capability references consulted:
+- Leica Cyclone 3DR documentation: Scan to Mesh, 3D Mesh, Refine Mesh, 2D Mesh, Convex Hull and related modelling workflows.
+- CloudCompare project/documentation: capability benchmark for point-cloud QA, comparison and mesh/point processing. CloudCompare is GPL; Tunnel Studio does not embed/copy its source in this update.
+- Micro 3D Solutions 2026 point-cloud-to-mesh workflow: scan/register/clean/mesh/refine sequence and watertight-deliverable considerations.
+- LearnGeoData: voxelisation + Marching Cubes workflow for point-cloud surface reconstruction.
+- Gao & Li, Deep Learning for 3D Point Clouds (Springer, 2025): point-cloud enhancement/analysis concepts including denoising, downsampling, registration robustness, segmentation and engineering applications.
+- User-supplied Point Cloud Triangulation tutorial: Delaunay, convex hull and Ball Pivoting strengths/limitations.
+
+Implementation choices in 0.10.0:
+- Practical deterministic preprocessing and QA are used in production paths (sampling, neighbour-gap noise filter, nearest-neighbour cloud comparison, local plane roughness).
+- Neural-network methods are not presented as working production features without a trained/validated model and suitable project data.

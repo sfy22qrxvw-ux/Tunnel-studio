@@ -1,0 +1,50 @@
+TUNNEL STUDIO 0.13.17
+Live image and point visibility slider
+14 October 2026
+
+INSTALL
+Save your project and close Tunnel Studio. Extract the whole ZIP into a new
+folder, run UPDATE_TUNNEL_STUDIO.bat, and restart. Confirm version 0.13.17.
+If using browser mode, refresh the page after restarting the application.
+The updater backs up application files; RESTORE_PREVIOUS_VERSION.bat restores
+them. Existing imported scans do not need to be imported again.
+
+HOW TO USE THE NEW SLIDER
+1. Select a scan and Go to setup view.
+2. Choose Both under Display.
+3. Move the Images / Points slider beside Display.
+
+Towards Images: photographs become more visible and points fade.
+Towards Points: points become more visible and photographs fade.
+In the middle: both layers are partly visible. The percentages show their
+respective opacity, with Images on the left and Points on the right.
+At either end only that layer is drawn. Arrow keys adjust the focused slider.
+
+Changes appear while dragging and use the already-loaded data. The slider
+does not request another scan pass, reload photographs, or move the camera.
+The blend is kept while looking around, switching display modes and visiting
+other setups during the session. Pure Photographs and Point cloud modes stay
+fully visible; choose Both to adjust the blend. If photographs are missing,
+the slider explains this and the point cloud remains usable.
+
+At the Images end, Pick point uses the photograph to retrieve measured XYZ
+from retained scan points. Elsewhere in Both mode it picks displayed points.
+Changing the slider cancels an armed pick, so click Pick point again when
+ready. Already-selected target coordinates are retained. Normal 3D rendering,
+target markers and setup spheres remain fully visible.
+
+This builds on the photographs, setup spheres, cached navigation and consistent
+contrast in 0.13.16. No source points, scan geometry or registration are changed.
+
+CHECKS
+All seven focused suites passed: setup photographs/blend, setup camera,
+production HTTP page/script delivery, target detail, surface UI, measurement
+UI and static routes. The photo suite now includes 13 cases covering live layer
+opacity, endpoints, measured picking, no reload/buffer upload on slider input,
+camera preservation, mode/setup changes and normal-view opacity restoration.
+Python/JavaScript syntax and ZIP/payload integrity checks passed.
+
+UI checks use JSDOM, simulated API/image completion and mocked WebGL. Windows
+input and actual GPU pixels were not tested here. Existing real-scan/photo
+reports from 0.13.16 are retained as history, not repeated for this UI change.
+See tests/validation_0_13_17.json and tests/run_0_13_17/.

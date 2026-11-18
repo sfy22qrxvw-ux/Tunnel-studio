@@ -1,0 +1,2552 @@
+{
+  "release": "0.15.0",
+  "date_utc": "2026-10-24",
+  "status": "Consolidated application release gates passed. Installer extraction and payload hashes are recorded in the standalone delivered report.",
+  "primary_reference": {
+    "title": "Automated Tunnel Point Cloud Segmentation and Extraction Method",
+    "authors": "Wang et al.",
+    "year": 2025,
+    "doi": "10.3390/app15062926",
+    "provided_complete_pdf_pages": 22,
+    "figure_4_pdf_page": 8,
+    "figure_6_pdf_page": 9,
+    "author_exact_reproduction": false,
+    "published_accuracy_claimed": false,
+    "implementation_record": "GUSAC_TMATCH_METHOD_0_15_0.txt"
+  },
+  "environment": {
+    "build_host_os": "Linux",
+    "python": "3.12.14",
+    "numpy": "2.3.5",
+    "scipy": "1.17.0",
+    "native_windows_tested": false,
+    "actual_GPU_UI_tested": false
+  },
+  "automated_test_count": 249,
+  "automated_test_counts": {
+    "backend": {
+      "final_combined_regressions": 77,
+      "gusac_synthetic": 9,
+      "tmatch_synthetic": 19,
+      "paper_production_api": 5,
+      "ray_box": 7,
+      "mesh_to_cloud_new": 10,
+      "project_compatibility": 27,
+      "designer": 18,
+      "mesh_repair": 16,
+      "installer_transactions": 8
+    },
+    "ui": {
+      "paper_classification": 7,
+      "legacy_surface": 13,
+      "brush_and_file_drop": 15,
+      "ray_box": 2,
+      "mesh_to_cloud": 5,
+      "project_compatibility": 7,
+      "mesh_repair": 1,
+      "designer": 3
+    }
+  },
+  "automated_tests": {
+    "backend": {
+      "final_combined_regressions": {
+        "unique_tests": 77,
+        "tests_run": 77,
+        "passed": 77,
+        "failures": 0,
+        "errors": 0,
+        "skips": 0,
+        "seconds": 7.264,
+        "duplicate_ids_removed": [],
+        "environment": {
+          "python": "3.12.14",
+          "platform": "Linux-6.18.55-x86_64-with-glibc2.39",
+          "dependencies": {
+            "numpy": "2.3.5",
+            "scipy": "1.17.0",
+            "pye57": "0.4.19",
+            "laspy": "2.6.1",
+            "lazrs": "0.8.0",
+            "plyfile": "1.1.3",
+            "pywebview": "6.1",
+            "pillow": "12.3.0"
+          }
+        },
+        "scope": "Generated temporary fixtures covering legacy maths, readers/exchange, SMRG, edits/reports/meshing, project persistence, registration, desktop bridge/startup with native WinForms stubbed, installer activation with fixture smoke callbacks, bounded source/output/PTS/brush and native drop bridge contract. No Windows GUI or huge-cloud benchmark.",
+        "fixture_isolation": "Every test writes into its TemporaryDirectory; desktop diagnostics are redirected to a separate temporary TUNNEL_STUDIO_DATA directory. Installer activation operates only on generated temporary payloads.",
+        "modules": [
+          {
+            "file": "app/test_surface.py",
+            "tests": 13
+          },
+          {
+            "file": "app/test_core.py",
+            "tests": 12
+          },
+          {
+            "file": "app/test_jobs.py",
+            "tests": 6
+          },
+          {
+            "file": "app/test_features.py",
+            "tests": 5
+          },
+          {
+            "file": "app/test_registration.py",
+            "tests": 7
+          },
+          {
+            "file": "app/test_startup.py",
+            "tests": 3
+          },
+          {
+            "file": "app/test_desktop_backend.py",
+            "tests": 2
+          },
+          {
+            "file": "app/test_update.py",
+            "tests": 5
+          },
+          {
+            "file": "work/checks/test_surface_streaming.py",
+            "tests": 5
+          },
+          {
+            "file": "work/checks/test_clean_output_streaming.py",
+            "tests": 6
+          },
+          {
+            "file": "work/checks/test_pts_progress.py",
+            "tests": 3
+          },
+          {
+            "file": "work/checks/test_brush_selection.py",
+            "tests": 7
+          },
+          {
+            "file": "work/checks/test_file_drop.py",
+            "tests": 3
+          }
+        ],
+        "test_results": [
+          {
+            "id": "test_surface.SurfaceMathTests.test_hull_degeneracies_and_overlap_recovery",
+            "outcome": "passed",
+            "seconds": 0.0015
+          },
+          {
+            "id": "test_surface.SurfaceMathTests.test_mad_prunes_an_outlying_neighbour",
+            "outcome": "passed",
+            "seconds": 0.0004
+          },
+          {
+            "id": "test_surface.SurfaceMathTests.test_metric_numeric_and_opposite_normal_invariance",
+            "outcome": "passed",
+            "seconds": 0.0002
+          },
+          {
+            "id": "test_surface.SurfaceMathTests.test_pca_planar_patch_has_low_saliency_and_zero_curvature",
+            "outcome": "passed",
+            "seconds": 0.0002
+          },
+          {
+            "id": "test_surface.SurfaceMathTests.test_synthetic_intersection_with_obstructions",
+            "outcome": "passed",
+            "seconds": 0.0003
+          },
+          {
+            "id": "test_surface.SurfaceMathTests.test_three_growth_cases_and_directional_equation",
+            "outcome": "passed",
+            "seconds": 0.0001
+          },
+          {
+            "id": "test_surface.SurfaceMathTests.test_translation_and_duplicate_point_identity",
+            "outcome": "passed",
+            "seconds": 0.234
+          },
+          {
+            "id": "test_surface.SurfaceMathTests.test_validation_cap_no_sampling_and_cancellation",
+            "outcome": "passed",
+            "seconds": 0.0113
+          },
+          {
+            "id": "test_surface.SurfaceWorkflowTests.test_apply_only_roi_undo_and_stale_result_guard",
+            "outcome": "passed",
+            "seconds": 0.0064
+          },
+          {
+            "id": "test_surface.SurfaceWorkflowTests.test_crop_respects_existing_mask_and_cap",
+            "outcome": "passed",
+            "seconds": 0.0042
+          },
+          {
+            "id": "test_surface.SurfaceWorkflowTests.test_portable_project_preserves_result_review_and_truth",
+            "outcome": "passed",
+            "seconds": 0.0623
+          },
+          {
+            "id": "test_surface.SurfaceWorkflowTests.test_result_survives_failed_run_and_cancel",
+            "outcome": "passed",
+            "seconds": 0.0524
+          },
+          {
+            "id": "test_surface.SurfaceWorkflowTests.test_review_export_keeps_coordinate_and_attribute_identity",
+            "outcome": "passed",
+            "seconds": 0.0183
+          },
+          {
+            "id": "test_core.GeometryTests.test_chainage_frame_and_end_rejection",
+            "outcome": "passed",
+            "seconds": 0.0007
+          },
+          {
+            "id": "test_core.GeometryTests.test_circle_offset_is_not_ovality",
+            "outcome": "passed",
+            "seconds": 0.0102
+          },
+          {
+            "id": "test_core.GeometryTests.test_creep_sign_and_reference",
+            "outcome": "passed",
+            "seconds": 0.0014
+          },
+          {
+            "id": "test_core.GeometryTests.test_joint_detection_and_smooth_negative_control",
+            "outcome": "passed",
+            "seconds": 0.2578
+          },
+          {
+            "id": "test_core.GeometryTests.test_known_ellipse",
+            "outcome": "passed",
+            "seconds": 0.01
+          },
+          {
+            "id": "test_core.GeometryTests.test_partial_arc_withheld",
+            "outcome": "passed",
+            "seconds": 0.0031
+          },
+          {
+            "id": "test_core.GeometryTests.test_polyline_projection_matches_brute_force",
+            "outcome": "passed",
+            "seconds": 0.0058
+          },
+          {
+            "id": "test_core.ReaderTests.test_ascii_and_binary_ply",
+            "outcome": "passed",
+            "seconds": 0.0026
+          },
+          {
+            "id": "test_core.ReaderTests.test_e57_pose_invalid_and_multiple_chunks",
+            "outcome": "passed",
+            "seconds": 0.0277
+          },
+          {
+            "id": "test_core.ReaderTests.test_las_and_laz_scale_offset",
+            "outcome": "passed",
+            "seconds": 0.0254
+          },
+          {
+            "id": "test_core.ReaderTests.test_malformed_file_does_not_leave_partial_cache",
+            "outcome": "passed",
+            "seconds": 0.0005
+          },
+          {
+            "id": "test_core.ReaderTests.test_text_formats_and_header_mapping",
+            "outcome": "passed",
+            "seconds": 0.0016
+          },
+          {
+            "id": "test_jobs.JobTests.test_cancel_scan_discards_partial_import",
+            "outcome": "passed",
+            "seconds": 0.0048
+          },
+          {
+            "id": "test_jobs.JobTests.test_e57_setups_import_separately",
+            "outcome": "passed",
+            "seconds": 0.3293
+          },
+          {
+            "id": "test_jobs.JobTests.test_invalid_mesh_cancellation_and_disk_check_leave_no_assets",
+            "outcome": "passed",
+            "seconds": 0.0036
+          },
+          {
+            "id": "test_jobs.JobTests.test_job_preview_global_cap_visibility_and_mask",
+            "outcome": "passed",
+            "seconds": 0.011
+          },
+          {
+            "id": "test_jobs.JobTests.test_obj_float64_topology_zip_and_portable",
+            "outcome": "passed",
+            "seconds": 0.0029
+          },
+          {
+            "id": "test_jobs.JobTests.test_registration_pairs_survive_switching_setup",
+            "outcome": "passed",
+            "seconds": 0.0103
+          },
+          {
+            "id": "test_features.FeatureTests.test_full_density_delete_undo_export_and_hidden",
+            "outcome": "passed",
+            "seconds": 0.0306
+          },
+          {
+            "id": "test_features.FeatureTests.test_heatmap_signs_count_and_mesh_methods",
+            "outcome": "passed",
+            "seconds": 1.8491
+          },
+          {
+            "id": "test_features.FeatureTests.test_nearest_and_idw_are_distinct",
+            "outcome": "passed",
+            "seconds": 0.0095
+          },
+          {
+            "id": "test_features.FeatureTests.test_primitive_and_transform",
+            "outcome": "passed",
+            "seconds": 0.0094
+          },
+          {
+            "id": "test_features.FeatureTests.test_report_escaping_and_sparse_sections",
+            "outcome": "passed",
+            "seconds": 0.0232
+          },
+          {
+            "id": "test_registration.RegistrationTests.test_checker_positive_tilted_and_uniform_negative",
+            "outcome": "passed",
+            "seconds": 0.3555
+          },
+          {
+            "id": "test_registration.RegistrationTests.test_exchange_roundtrip_and_mask",
+            "outcome": "passed",
+            "seconds": 0.0171
+          },
+          {
+            "id": "test_registration.RegistrationTests.test_large_coordinates_rotation_fixed_scale_and_independent_checks",
+            "outcome": "passed",
+            "seconds": 0.0009
+          },
+          {
+            "id": "test_registration.RegistrationTests.test_project_save_as_and_portable",
+            "outcome": "passed",
+            "seconds": 0.1648
+          },
+          {
+            "id": "test_registration.RegistrationTests.test_reject_collinear_duplicate_missing_and_too_few_targets",
+            "outcome": "passed",
+            "seconds": 0.0004
+          },
+          {
+            "id": "test_registration.RegistrationTests.test_text_attribute_alignment_and_no_guessing",
+            "outcome": "passed",
+            "seconds": 0.0012
+          },
+          {
+            "id": "test_registration.RegistrationTests.test_xyz_only_export_metadata_is_json_serializable",
+            "outcome": "passed",
+            "seconds": 0.0052
+          },
+          {
+            "id": "test_startup.StartupTests.test_existing_session_does_not_start_competing_recovery",
+            "outcome": "passed",
+            "seconds": 0.0014
+          },
+          {
+            "id": "test_startup.StartupTests.test_failed_bridge_does_not_acquire_or_restore_workspace",
+            "outcome": "passed",
+            "seconds": 0.0006
+          },
+          {
+            "id": "test_startup.StartupTests.test_failed_window_releases_workspace_before_offering_recovery",
+            "outcome": "passed",
+            "seconds": 0.001
+          },
+          {
+            "id": "test_desktop_backend.BackendImportTests.test_actual_pywebview_import_when_package_guilib_is_none",
+            "outcome": "passed",
+            "seconds": 0.0186
+          },
+          {
+            "id": "test_desktop_backend.BackendImportTests.test_reject_legacy_renderer_with_a_specific_error",
+            "outcome": "passed",
+            "seconds": 0.0003
+          },
+          {
+            "id": "test_update.UpdateTests.test_activation_keeps_previous_and_survey",
+            "outcome": "passed",
+            "seconds": 0.0022
+          },
+          {
+            "id": "test_update.UpdateTests.test_corrupt_payload_stops_before_activation",
+            "outcome": "passed",
+            "seconds": 0.0014
+          },
+          {
+            "id": "test_update.UpdateTests.test_failed_components_stop_before_activation",
+            "outcome": "passed",
+            "seconds": 0.0014
+          },
+          {
+            "id": "test_update.UpdateTests.test_failed_pointer_write_rolls_back_previous",
+            "outcome": "passed",
+            "seconds": 0.0018
+          },
+          {
+            "id": "test_update.UpdateTests.test_reject_path_escape_and_wrong_version",
+            "outcome": "passed",
+            "seconds": 0.0015
+          },
+          {
+            "id": "test_surface_streaming.SurfaceStreamingTests.test_01_selections_across_different_read_and_output_boundaries",
+            "outcome": "passed",
+            "seconds": 0.0347
+          },
+          {
+            "id": "test_surface_streaming.SurfaceStreamingTests.test_02_no_whole_file_maps_and_yielded_buffers_remain_owned",
+            "outcome": "passed",
+            "seconds": 0.0058
+          },
+          {
+            "id": "test_surface_streaming.SurfaceStreamingTests.test_03_cancel_and_generator_close_release_input_files",
+            "outcome": "passed",
+            "seconds": 0.0009
+          },
+          {
+            "id": "test_surface_streaming.SurfaceStreamingTests.test_04_truncated_coordinate_mask_and_derived_caches_fail",
+            "outcome": "passed",
+            "seconds": 0.0062
+          },
+          {
+            "id": "test_surface_streaming.SurfaceStreamingTests.test_05_cached_roi_reader_matches_original_stream",
+            "outcome": "passed",
+            "seconds": 0.0022
+          },
+          {
+            "id": "test_clean_output_streaming.CleanOutputStreamingTests.test_01_sparse_source_windows_preserve_order_duplicate_ids_and_attributes",
+            "outcome": "passed",
+            "seconds": 0.0025
+          },
+          {
+            "id": "test_clean_output_streaming.CleanOutputStreamingTests.test_02_filtered_cloud_streams_ids_labels_and_keeps_row_identity",
+            "outcome": "passed",
+            "seconds": 0.004
+          },
+          {
+            "id": "test_clean_output_streaming.CleanOutputStreamingTests.test_03_late_extraction_and_incomplete_result_failures_clean_new_assets",
+            "outcome": "passed",
+            "seconds": 0.0016
+          },
+          {
+            "id": "test_clean_output_streaming.CleanOutputStreamingTests.test_04_apply_streams_review_labels_and_preserves_prior_masks",
+            "outcome": "passed",
+            "seconds": 0.0023
+          },
+          {
+            "id": "test_clean_output_streaming.CleanOutputStreamingTests.test_05_external_export_chunks_are_owned_exact_and_bounded",
+            "outcome": "passed",
+            "seconds": 0.0029
+          },
+          {
+            "id": "test_clean_output_streaming.CleanOutputStreamingTests.test_06_truncated_export_inputs_and_count_mismatch_fail",
+            "outcome": "passed",
+            "seconds": 0.0033
+          },
+          {
+            "id": "test_pts_progress.PTSProgressTests.test_bad_count_fails_without_partial_import",
+            "outcome": "passed",
+            "seconds": 0.0009
+          },
+          {
+            "id": "test_pts_progress.PTSProgressTests.test_declared_total_eta_and_exact_bounded_records",
+            "outcome": "passed",
+            "seconds": 0.0015
+          },
+          {
+            "id": "test_pts_progress.PTSProgressTests.test_headerless_pts_and_invalid_coordinate_accounting",
+            "outcome": "passed",
+            "seconds": 0.0009
+          },
+          {
+            "id": "test_brush_selection.BrushTests.test_01_capsule_union_endpoints_single_click_and_corner",
+            "outcome": "passed",
+            "seconds": 0.0036
+          },
+          {
+            "id": "test_brush_selection.BrushTests.test_02_rotated_camera_large_world_coordinates_and_aspect_invariance",
+            "outcome": "passed",
+            "seconds": 0.0019
+          },
+          {
+            "id": "test_brush_selection.BrushTests.test_03_depth_clip_and_inversion",
+            "outcome": "passed",
+            "seconds": 0.0042
+          },
+          {
+            "id": "test_brush_selection.BrushTests.test_04_full_density_ids_bounded_owned_reads_and_original_bits",
+            "outcome": "passed",
+            "seconds": 0.0687
+          },
+          {
+            "id": "test_brush_selection.BrushTests.test_05_cleaning_roi_count_batches_and_clip_match_original_ids",
+            "outcome": "passed",
+            "seconds": 0.0137
+          },
+          {
+            "id": "test_brush_selection.BrushTests.test_06_invalid_frames_and_unbounded_strokes_rejected",
+            "outcome": "passed",
+            "seconds": 0.0009
+          },
+          {
+            "id": "test_brush_selection.BrushTests.test_07_cancel_closes_source_and_mask",
+            "outcome": "passed",
+            "seconds": 0.006
+          },
+          {
+            "id": "test_file_drop.DropBridgeTests.test_01_native_paths_quotes_backslashes_unicode_are_data",
+            "outcome": "passed",
+            "seconds": 0.0001
+          },
+          {
+            "id": "test_file_drop.DropBridgeTests.test_02_partial_or_invalid_native_paths_fall_back_as_a_whole",
+            "outcome": "passed",
+            "seconds": 0.0001
+          },
+          {
+            "id": "test_file_drop.DropBridgeTests.test_03_dom_drop_prevents_navigation_and_retains_callback",
+            "outcome": "passed",
+            "seconds": 0.0002
+          }
+        ],
+        "failure_details": [],
+        "skip_details": [],
+        "legacy_tests_modified": true,
+        "test_changes": [
+          {
+            "file": "app/test_update.py",
+            "change": "Prefer the installed build_support/windows_installer.py path; use packaging/windows_installer.py when running from this source tree. Activation/rollback assertions are unchanged."
+          },
+          {
+            "file": "app/test_surface.py",
+            "change": "Document GuSAC as the user-facing default while keeping these legacy numeric tests explicitly on SMRG. Replace the old all-or-nothing corrupted-result open assertion with the requested recovery contract: result is unusable/quarantined with identity warning and original metadata; raw XYZ, attributes and current mask are unchanged; surface_api.result refuses the missing active result."
+          }
+        ],
+        "validation_dependencies_note": "The desktop backend gate imports the actual bundled pywebview 6.1 Python package copied into an isolated scratch dependency folder. WinForms alone is stubbed by the pre-existing tests; no native Windows DLLs execute."
+      },
+      "gusac_synthetic": {
+        "kind": "synthetic_only",
+        "paper_accuracy_reproduced": false,
+        "real_scan_validation": false,
+        "limitation": "Generated circular/gently curved geometry does not validate all services, irregular profiles, heavy occlusion, runtime on billion-point clouds or real scanner data.",
+        "tests_run": 9,
+        "failures": 0,
+        "errors": 0,
+        "numpy_version": "2.3.5",
+        "seconds": 28.603,
+        "cases": [
+          {
+            "case": "straight_cylinder_and_pipe",
+            "source": "synthetic_generated_geometry",
+            "points": 44440,
+            "wall_points": 36360,
+            "lining_retained_fraction": 1.0,
+            "obstruction_candidate_fraction": 1.0,
+            "class_counts": [
+              36360,
+              8080,
+              0,
+              0,
+              0
+            ],
+            "regional_planes": 855,
+            "seconds": 3.862
+          },
+          {
+            "case": "sparse_lining_behind_dense_service",
+            "source": "synthetic_generated_geometry",
+            "points": 98521,
+            "wall_points": 33881,
+            "lining_retained_fraction": 1.0,
+            "obstruction_candidate_fraction": 1.0,
+            "class_counts": [
+              33819,
+              64640,
+              0,
+              62,
+              0
+            ],
+            "regional_planes": 853,
+            "seconds": 3.886
+          },
+          {
+            "case": "gently_curved_branch",
+            "source": "synthetic_generated_geometry",
+            "points": 44440,
+            "wall_points": 36360,
+            "lining_retained_fraction": 1.0,
+            "obstruction_candidate_fraction": 1.0,
+            "class_counts": [
+              36088,
+              8080,
+              0,
+              272,
+              0
+            ],
+            "regional_planes": 846,
+            "seconds": 3.511
+          },
+          {
+            "case": "outward_joint_recesses",
+            "source": "synthetic_generated_geometry",
+            "points": 44440,
+            "wall_points": 36360,
+            "lining_retained_fraction": 1.0,
+            "obstruction_candidate_fraction": 1.0,
+            "class_counts": [
+              35918,
+              8080,
+              360,
+              0,
+              82
+            ],
+            "regional_planes": 831,
+            "seconds": 3.331
+          },
+          {
+            "case": "large_coordinate_offset",
+            "source": "synthetic_generated_geometry",
+            "points": 44440,
+            "wall_points": 36360,
+            "lining_retained_fraction": 1.0,
+            "obstruction_candidate_fraction": 1.0,
+            "class_counts": [
+              36360,
+              8080,
+              0,
+              0,
+              0
+            ],
+            "regional_planes": 855,
+            "seconds": 3.532
+          }
+        ]
+      },
+      "tmatch_synthetic": {
+        "scope": "Synthetic geometric and failure-injection regression tests; not a real-scan accuracy score.",
+        "test_count": 19,
+        "failures": 0,
+        "errors": 0,
+        "skipped": 0,
+        "seconds": 2.2093390519999048,
+        "passed": true,
+        "checks": [
+          "tmatch_release_tests.TMatchGeometryTests.test_adversarial_union_chain_compresses_and_checks_cancel",
+          "tmatch_release_tests.TMatchGeometryTests.test_angular_wrap_does_not_split_seamless_shell",
+          "tmatch_release_tests.TMatchGeometryTests.test_cancellation_removes_partial_outputs",
+          "tmatch_release_tests.TMatchGeometryTests.test_global_continuity_across_many_grid_and_input_boundaries",
+          "tmatch_release_tests.TMatchGeometryTests.test_grid_connection_agrees_with_independent_radius_graph",
+          "tmatch_release_tests.TMatchGeometryTests.test_input_order_ids_and_batches_do_not_change_partition",
+          "tmatch_release_tests.TMatchGeometryTests.test_label_window_flush_failure_still_unmaps_every_window",
+          "tmatch_release_tests.TMatchGeometryTests.test_label_windows_are_bounded_and_preserve_random_assignments",
+          "tmatch_release_tests.TMatchGeometryTests.test_late_cancel_preserves_previous_output_bytes",
+          "tmatch_release_tests.TMatchGeometryTests.test_metadata_budget_retains_all_excess_component_points",
+          "tmatch_release_tests.TMatchGeometryTests.test_observed_ring_planes_use_every_original_point",
+          "tmatch_release_tests.TMatchGeometryTests.test_real_gaps_create_distinct_panels",
+          "tmatch_release_tests.TMatchGeometryTests.test_rotation_and_large_survey_translation_preserve_components",
+          "tmatch_release_tests.TMatchGeometryTests.test_second_file_publish_failure_rolls_back_both_outputs",
+          "tmatch_release_tests.TMatchGeometryTests.test_sparse_unknown_and_cleaning_uncertainty_are_preserved",
+          "tmatch_release_tests.TMatchGeometryTests.test_supplied_width_does_not_invent_or_force_rings",
+          "tmatch_release_tests.TMatchGeometryTests.test_supported_ring_bands_use_geometry_not_cluster_numbers",
+          "tmatch_release_tests.TMatchGeometryTests.test_weak_ring_plane_normal_is_withheld",
+          "tmatch_release_tests.TMatchGeometryTests.test_worst_case_metadata_leaves_portable_manifest_headroom"
+        ],
+        "python_version": "3.12.14",
+        "named_component_metadata_limit": 6000,
+        "preview_representatives_per_named_component": 8,
+        "pessimistic_duplicated_metadata_plus_ring_records_bytes": 12438054,
+        "portable_manifest_limit_bytes": 20000000,
+        "label_window_bytes": 8388608,
+        "maximum_open_label_windows": 8,
+        "label_mapping_budget_bytes": 67108864,
+        "huge_cloud_memory_benchmark_performed": false,
+        "native_windows_execution_tested": false,
+        "real_benchmark_relation": {
+          "description": "The three real full-density 4 m benchmark variants loaded the TMatch module before the final bounded label-window and flush-cleanup change. Their geometry/labels were computed by the same radius-component and classification rules. The final forced-small-window test verifies assignment equivalence under random writes and repeated eviction; these real variants were not rerun solely for the storage change.",
+          "variants": [
+            {
+              "report_path": "scan_validation/tmatch/validation.json",
+              "input_points": 629245,
+              "radius_mm": 15.0,
+              "gusac_distance_mm": 20.0,
+              "seconds": 78.949998521,
+              "peak_measured_rss_bytes": 221904896,
+              "lining_clusters": 557,
+              "supported_rings": 0,
+              "every_original_id_exactly_once": true,
+              "source_coordinates_unchanged": true,
+              "loaded_before_bounded_label_window_change": true,
+              "has_independent_ground_truth": false
+            },
+            {
+              "report_path": "scan_validation/tmatch_r30/validation.json",
+              "input_points": 629245,
+              "radius_mm": 30,
+              "gusac_distance_mm": 20.0,
+              "seconds": 74.27546343600034,
+              "peak_measured_rss_bytes": 216522752,
+              "lining_clusters": 77,
+              "supported_rings": 0,
+              "every_original_id_exactly_once": true,
+              "source_coordinates_unchanged": true,
+              "loaded_before_bounded_label_window_change": true,
+              "has_independent_ground_truth": false
+            },
+            {
+              "report_path": "scan_validation/tmatch_tol5/validation.json",
+              "input_points": 629245,
+              "radius_mm": 15.0,
+              "gusac_distance_mm": 5,
+              "seconds": 77.55133515399984,
+              "peak_measured_rss_bytes": 222859264,
+              "lining_clusters": 570,
+              "supported_rings": 0,
+              "every_original_id_exactly_once": true,
+              "source_coordinates_unchanged": true,
+              "loaded_before_bounded_label_window_change": true,
+              "has_independent_ground_truth": false
+            }
+          ],
+          "comparison_timing_note": "The radius-30 mm and GuSAC-5 mm comparison jobs ran concurrently in the same environment; elapsed times include that contention and are not an isolated speed comparison."
+        },
+        "failure_details": []
+      },
+      "paper_production_api": {
+        "kind": "production_api_synthetic_integration",
+        "actual_production_entry_point": "surface_api.run",
+        "mocked_algorithms": false,
+        "real_scan_accuracy_claimed": false,
+        "tests_run": 5,
+        "failures": 0,
+        "errors": 0,
+        "seconds": 7.51,
+        "details": {
+          "gusac": {
+            "seconds": 1.131,
+            "input_points": 84475,
+            "clusters": 2,
+            "rings": 0,
+            "preview_records": 42270
+          },
+          "tmatch": {
+            "seconds": 2.482,
+            "input_points": 84475,
+            "clusters": 5,
+            "rings": 4,
+            "preview_records": 42266
+          },
+          "fixture_seconds": 5.28,
+          "source_records": 84480,
+          "masked_records": 5,
+          "roi": {
+            "selected_records": 63359,
+            "excluded_records": 17279,
+            "outside_roi_unchanged": true,
+            "original_xyz_attributes_unchanged": true
+          },
+          "portable": {
+            "rings": 4,
+            "clusters": 5,
+            "metadata_equal": true,
+            "labels_and_original_attributes_equal": true
+          }
+        },
+        "failure_details": []
+      },
+      "ray_box": {
+        "passed": true,
+        "checks": [
+          {
+            "name": "test_api_routing_preserves_gu_sac_default_and_all_retained_original_ids",
+            "passed": true
+          },
+          {
+            "name": "test_cancel_after_indexing_closes_mappings_and_removes_temporary_index",
+            "passed": true
+          },
+          {
+            "name": "test_cancel_preserves_output_contract",
+            "passed": true
+          },
+          {
+            "name": "test_histogram_tiles_match_single_window_including_boundaries",
+            "passed": true
+          },
+          {
+            "name": "test_non_divisible_radial_range_uses_the_reported_effective_depth",
+            "passed": true
+          },
+          {
+            "name": "test_translation_does_not_change_labels",
+            "passed": true
+          },
+          {
+            "name": "test_wall_behind_service_is_retained_and_service_rejected",
+            "passed": true
+          }
+        ],
+        "scope": "Synthetic geometry and production Python API; no native Windows execution or real-cloud accuracy labels",
+        "source_sha256": {
+          "ray_box_extraction.py": "dce44a9b42f5feb36e5d3a7cf03bbf70af30f7f711a2ba9d8430946df4bc4fce",
+          "test_ray_box.py": "ae83c2550f36676c31c3f7212e3b73b81bc7229e28901c130f6e420d7b0545ab",
+          "surface_extraction.py": "9dfe8f1145d382fdd51e28d50d751f981f5e1ee7bfb07e55a2d3b1b94ef45757",
+          "surface_api.py": "8ff48cfa15c8d5ee18bea0d2ecfeda66e9676946881f49967e2ff0447d0e3a3b",
+          "web/surface-ui.js": "1ee54f491280e93c19784d2e3d430dde00b4b61feec0c9c67e79f6089e9f5e7e",
+          "web/index.html": "5f28c430cab663d8701eb7c1acfe8070b494fef772b225d1b984d73d9d02305c",
+          "METHOD_RAY_BOX_0_14_10.txt": "4e8ef4078a43c617dd58a21f0077cac6d3744d38630afc4505b648be39c5791c"
+        },
+        "corrections": [
+          "Bounded histogram mappings with overlap-preserving station windows",
+          "Explicit closure on cancellation and disk-space preflight",
+          "Consistent effective radial bin width and indexing"
+        ]
+      },
+      "mesh_to_cloud": {
+        "passed": true,
+        "checks": [
+          {
+            "name": "test_area_weighted_sampling_counts_disconnected_components_and_skips_degenerate_faces",
+            "suite": "test_mesh_to_cloud.MeshToCloudTests.test_area_weighted_sampling_counts_disconnected_components_and_skips_degenerate_faces",
+            "passed": true
+          },
+          {
+            "name": "test_cancellation_and_late_failure_remove_every_new_asset",
+            "suite": "test_mesh_to_cloud.MeshToCloudTests.test_cancellation_and_late_failure_remove_every_new_asset",
+            "passed": true
+          },
+          {
+            "name": "test_invalid_geometry_settings_disk_space_and_stale_estimates_fail_cleanly",
+            "suite": "test_mesh_to_cloud.MeshToCloudTests.test_invalid_geometry_settings_disk_space_and_stale_estimates_fail_cleanly",
+            "passed": true
+          },
+          {
+            "name": "test_large_output_is_chunked_and_face_batch_boundaries_do_not_change_samples",
+            "suite": "test_mesh_to_cloud.MeshToCloudTests.test_large_output_is_chunked_and_face_batch_boundaries_do_not_change_samples",
+            "passed": true
+          },
+          {
+            "name": "test_missing_vertex_colour_stays_unavailable_in_affected_triangles",
+            "suite": "test_mesh_to_cloud.MeshToCloudTests.test_missing_vertex_colour_stays_unavailable_in_affected_triangles",
+            "passed": true
+          },
+          {
+            "name": "test_production_action_creates_a_separate_scene_cloud",
+            "suite": "test_mesh_to_cloud.MeshToCloudTests.test_production_action_creates_a_separate_scene_cloud",
+            "passed": true
+          },
+          {
+            "name": "test_saved_transformed_large_coordinates_are_preserved_without_double_transform",
+            "suite": "test_mesh_to_cloud.MeshToCloudTests.test_saved_transformed_large_coordinates_are_preserved_without_double_transform",
+            "passed": true
+          },
+          {
+            "name": "test_scene_save_failure_rolls_back_state_and_generated_files",
+            "suite": "test_mesh_to_cloud.MeshToCloudTests.test_scene_save_failure_rolls_back_state_and_generated_files",
+            "passed": true
+          },
+          {
+            "name": "test_spacing_estimate_drives_exact_count_and_storage",
+            "suite": "test_mesh_to_cloud.MeshToCloudTests.test_spacing_estimate_drives_exact_count_and_storage",
+            "passed": true
+          },
+          {
+            "name": "test_vertex_rgb_import_interpolation_and_export_do_not_invent_intensity",
+            "suite": "test_mesh_to_cloud.MeshToCloudTests.test_vertex_rgb_import_interpolation_and_export_do_not_invent_intensity",
+            "passed": true
+          },
+          {
+            "name": "test_cancel_scan_discards_partial_import",
+            "suite": "test_jobs.JobTests.test_cancel_scan_discards_partial_import",
+            "passed": true
+          },
+          {
+            "name": "test_e57_setups_import_separately",
+            "suite": "test_jobs.JobTests.test_e57_setups_import_separately",
+            "passed": true
+          },
+          {
+            "name": "test_invalid_mesh_cancellation_and_disk_check_leave_no_assets",
+            "suite": "test_jobs.JobTests.test_invalid_mesh_cancellation_and_disk_check_leave_no_assets",
+            "passed": true
+          },
+          {
+            "name": "test_job_preview_global_cap_visibility_and_mask",
+            "suite": "test_jobs.JobTests.test_job_preview_global_cap_visibility_and_mask",
+            "passed": true
+          },
+          {
+            "name": "test_obj_float64_topology_zip_and_portable",
+            "suite": "test_jobs.JobTests.test_obj_float64_topology_zip_and_portable",
+            "passed": true
+          },
+          {
+            "name": "test_registration_pairs_survive_switching_setup",
+            "suite": "test_jobs.JobTests.test_registration_pairs_survive_switching_setup",
+            "passed": true
+          }
+        ],
+        "new_sampling_checks": 10,
+        "existing_job_regressions": 6,
+        "scope": "Synthetic known geometry and production Python API; native Windows/GPU execution not tested",
+        "source_sha256": {
+          "mesh_to_cloud.py": "c96fa93e00186d177d2a6ad2b4594eb6a2b70c129ecdf2fc6ed16af3fca5d9c6",
+          "test_mesh_to_cloud.py": "95a5d69d60b890fb796dd5d4deb43823f6e2d3230eeb8a7b86941378088748fc",
+          "jobdata.py": "3cdcc3f529fd094cb8bb54b25464b57c958aa6f76c02ef3fe493450aaad79446",
+          "job_api.py": "bf108ebdae4f72e03436421670c4603bd2c1548e12b79146f52f1c1b69dafe3a",
+          "exchange.py": "15ba5bb19352a43787fa74819ae1ec728a63f80e65db39ad1623e4daf479e7fc",
+          "web/mesh-to-cloud-ui.js": "5a0c0ba55fccdf20959cc2961f1880036819e7663548711e68c7bf29166a1b66",
+          "web/workspace-ui.js": "086edfd5c52e5710fd73101aac49a30ea2251fd65245f73c12f447d00f6ba408",
+          "MESH_TO_CLOUD_0_15_0.txt": "417a948b9d9ac1e26dcb97d4362e5ea49ffeb7d1f48106f37d8ea229b74f4d5d"
+        },
+        "performance_contract": {
+          "maximum_output_points_per_batch": 100000,
+          "maximum_source_vertices_per_triangle_batch": 98304,
+          "maximum_source_mapping_bytes": 67108864,
+          "maximum_preview_points": 250000,
+          "full_point_limit": null,
+          "disk_space_check": true
+        }
+      },
+      "project_compatibility": {
+        "tests": 27,
+        "failures": 0,
+        "errors": 0,
+        "seconds": 0.133,
+        "scope": "Generated current/v0/raw legacy project fixtures, actual file-backed save-close-reopen, partial recovery and rollback. The user failing file was not available; no claim to reproduce that exact failure. No huge-cloud or Windows end-to-end benchmark.",
+        "checks": [
+          "test_all_missing_core_assets_reject_and_preserve_active_state_and_index",
+          "test_ambiguous_legacy_basename_is_not_guessed",
+          "test_broken_undo_transition_does_not_skip_to_an_older_mask",
+          "test_cancellation_during_unpack_removes_partial_import_keeps_current",
+          "test_cancelled_validation_is_not_treated_as_damaged_optional_data",
+          "test_current_save_close_reopen_preserves_all_assets_and_tmatch_metadata",
+          "test_damaged_cleaning_id_cache_quarantines_result_preserves_raw_scans",
+          "test_damaged_zip_member_recovers_other_scan_without_full_asset_reads",
+          "test_future_format_and_traversal_reject_without_changing_project",
+          "test_invalid_named_open_does_not_mutate_ui_or_create_snapshot",
+          "test_late_save_failure_restores_memory_disk_and_removes_pending_assets",
+          "test_legacy_cloud_without_alignment_is_retained_as_scene_scan",
+          "test_legacy_missing_bounds_rebuilds_from_all_coordinates",
+          "test_legacy_raw_json_snapshot_with_colocated_cache",
+          "test_legacy_v0_windows_references_and_dict_alignment_rows",
+          "test_manifest_guard_and_untrusted_cleanup_marker_preserve_existing_files",
+          "test_missing_automatic_cache_preserves_reviewed_result_and_disables_reset",
+          "test_missing_current_mask_quarantines_scan_without_resurrecting_points",
+          "test_missing_derived_cache_preserves_current_scan_masks_and_alignment",
+          "test_named_open_same_id_does_not_overwrite_requested_snapshot",
+          "test_new_project_failed_previous_save_leaves_workspace_untouched",
+          "test_new_project_saves_previous_and_empties_workspace",
+          "test_optional_preview_colour_photo_recovery_preserves_geometry",
+          "test_recovered_project_can_save_and_reopen_without_missing_dependencies",
+          "test_retained_properties_follow_the_exact_mask_and_stale_counts_are_invalidated",
+          "test_separated_child_undo_masks_use_the_child_point_count",
+          "test_single_asset_copy_checks_cancellation_and_preserves_old_export"
+        ]
+      },
+      "designer": {
+        "scope": "24 October consolidated designer requirements and PDF Drawing removal",
+        "backend": {
+          "tests": 18,
+          "failures": 0,
+          "errors": 0,
+          "seconds": 7.272,
+          "suites": [
+            "test_designer149",
+            "test_designer_consolidated"
+          ],
+          "engines": {
+            "manifold3d": "3.5.4",
+            "shapely": "2.1.2"
+          }
+        },
+        "ui": [
+          {
+            "script": "ui_designer_consolidated.cjs",
+            "passed": true
+          },
+          {
+            "script": "ui_live_designer149.cjs",
+            "passed": true
+          },
+          {
+            "script": "ui_designer_drawing.cjs",
+            "passed": true
+          }
+        ],
+        "ui_environment": "Production HTTP and production JavaScript with simulated DOM/WebGL; no native Windows/WebView2 or GPU rendering test. The wire range test calls the production onpointer handlers with synthetic coordinates because jsdom does not wire those handler properties into dispatchEvent.",
+        "removed_feature_tests_not_run": [
+          "test_pdf149.py (4 PDF Drawing cases)",
+          "test_drawing_next.py (3 PDF Drawing cases; its 3 unrelated designer geometry checks retained in test_designer_consolidated.py)",
+          "ui_pdf_simple.cjs"
+        ],
+        "removed_application_files": [
+          "app/pdf_drawing.py",
+          "app/pdf_outlines.py",
+          "app/web/pdf-drawing-ui.js"
+        ],
+        "verified": [
+          "New active alignment opens profile selection; saved model/draft takes precedence",
+          "Original alignment and supplied chainages remain unchanged; horizontal-distance recalculation disclosed",
+          "Update retains model identity and transformed/mirrored placement",
+          "Separate copy preserves original, transform, colour, layer and bundle and remains editable",
+          "Save failure rolls back model and draft state",
+          "Legacy PDF-derived CAD/extrusions and stored profile snapshots remain editable without PDFium",
+          "PDF Drawing routes/assets/buttons removed; PDF survey report printing and export preserved"
+        ],
+        "source_hashes": {
+          "app/server.py": "b5e6c1f6f5850d256ea2ee99fde5ebf8753e1dd24443a1cfcaee148a0dabe8a9",
+          "app/tunnel_designer.py": "ef4e98309448229b82a79008016f4f857dd794370a72e0142a621e4dec031cfa",
+          "app/web/index.html": "5f28c430cab663d8701eb7c1acfe8070b494fef772b225d1b984d73d9d02305c",
+          "app/web/cad-ui.js": "643bdca60e8dcf2af88bd2f017d8dc2d83ec9d6a915805fd662455a00bca91bd",
+          "app/web/alignment-hub.js": "adf31cc2086b2b75ce021aea2e0124fd33f149c41f789ee9b62f6b2e5b66d9cd",
+          "app/web/tunnel-designer-ui.js": "5263a84efc87730cd109bc6098df7458c365db9e5bf84af0e60ce312c3d4fd3a"
+        },
+        "remaining_work": "Mesh hole repair is a separate additional task; later shared-file additions will change the relevant source hashes."
+      },
+      "mesh_repair": {
+        "scope": "MESH-001 selected conservative small-hole repair",
+        "backend": {
+          "tests": 16,
+          "failures": 0,
+          "errors": 0,
+          "skipped": 0,
+          "seconds": 0.113,
+          "passed": true,
+          "output": "test_branched_boundary_is_not_arbitrarily_traced (test_mesh_repair.MeshGeometryRepair.test_branched_boundary_is_not_arbitrarily_traced) ... ok\ntest_cancellation_and_invalid_source_leave_arrays_untouched (test_mesh_repair.MeshGeometryRepair.test_cancellation_and_invalid_source_leave_arrays_untouched) ... ok\ntest_concave_boundary_ear_clipping_has_no_overlap_or_outside_faces (test_mesh_repair.MeshGeometryRepair.test_concave_boundary_ear_clipping_has_no_overlap_or_outside_faces) ... ok\ntest_extent_is_rotation_invariant_in_metres_and_large_coordinates (test_mesh_repair.MeshGeometryRepair.test_extent_is_rotation_invariant_in_metres_and_large_coordinates) ... ok\ntest_narrow_long_gap_requires_extent_and_actual_cloud_support (test_mesh_repair.MeshGeometryRepair.test_narrow_long_gap_requires_extent_and_actual_cloud_support) ... ok\ntest_nonplanar_boundary_is_unfilled_with_reason (test_mesh_repair.MeshGeometryRepair.test_nonplanar_boundary_is_unfilled_with_reason) ... ok\ntest_overlapping_surface_inside_hole_prevents_cap (test_mesh_repair.MeshGeometryRepair.test_overlapping_surface_inside_hole_prevents_cap) ... ok\ntest_portals_preserved_even_inside_extent_limit (test_mesh_repair.MeshGeometryRepair.test_portals_preserved_even_inside_extent_limit) ... ok\ntest_simple_hole_exact_boundary_connectivity_and_originals (test_mesh_repair.MeshGeometryRepair.test_simple_hole_exact_boundary_connectivity_and_originals) ... ok\ntest_failed_save_and_late_cancel_discard_outputs_and_preserve_current_scene (test_mesh_repair.MeshRepairAPI.test_failed_save_and_late_cancel_discard_outputs_and_preserve_current_scene) ... ok\ntest_fully_masked_reference_yields_and_cancels_between_bounded_blocks (test_mesh_repair.MeshRepairAPI.test_fully_masked_reference_yields_and_cancels_between_bounded_blocks) ... ok\ntest_legacy_fill_uses_the_same_portal_preservation_gate (test_mesh_repair.MeshRepairAPI.test_legacy_fill_uses_the_same_portal_preservation_gate) ... ok\ntest_optional_reference_reads_retained_points_and_closes_files (test_mesh_repair.MeshRepairAPI.test_optional_reference_reads_retained_points_and_closes_files) ... ok\ntest_preview_matches_saved_patch_flags_source_bytes_and_workspace_undo (test_mesh_repair.MeshRepairAPI.test_preview_matches_saved_patch_flags_source_bytes_and_workspace_undo) ... ok\ntest_repaired_copy_preserves_shared_vertex_colours_even_on_cleanup (test_mesh_repair.MeshRepairAPI.test_repaired_copy_preserves_shared_vertex_colours_even_on_cleanup) ... ok\ntest_stale_and_incomplete_geometry_are_rejected_without_partial_output (test_mesh_repair.MeshRepairAPI.test_stale_and_incomplete_geometry_are_rejected_without_partial_output) ... ok\n\n----------------------------------------------------------------------\nRan 16 tests in 0.113s\n\nOK\n"
+        },
+        "ui": {
+          "scenarios": 1,
+          "passed": true,
+          "exit_code": 0,
+          "seconds": 6.133,
+          "output": "PASS: actual mesh import, opening/reason preview, explicit extent units, no automatic selection, canvas boundary picking, two exact inferred triangles, new repaired mesh, original preservation, distinct inferred-face metadata, Workspace Undo and threshold invalidation. Production HTTP/scripts; DOM/WebGL simulated.\n"
+        },
+        "verified": [
+          "Simple and concave cap connectivity and coverage",
+          "Non-planar, branched, portal and overlapping/crossing surface preservation",
+          "Rotation-invariant maximum overall extent in metres; large coordinate offsets",
+          "Narrow-long gaps need overall extent allowance and real nearby cloud support",
+          "Original XYZ and original faces unchanged; new faces explicitly inferred",
+          "Exact selected cap preview matches saved and full OBJ-exported triangles",
+          "OBJ original_surface/inferred_repair groups; bounded owned source reads",
+          "Save failure and late cancellation remove new files and preserve scene",
+          "Workspace Undo and Redo; stale/truncated source rejection",
+          "Actual UI import, boundary selection, orange cap preview, repaired copy, Undo and threshold invalidation"
+        ],
+        "limits": [
+          "The user's affected mesh and matching cloud are unavailable; this is synthetic and integration validation, not reproduction of that reported case.",
+          "DOM/canvas/WebGL are simulated in the UI harness; native Windows/WebView2 and GPU display are not covered.",
+          "Interactive analysis is limited to2,000,000 vertices,2,000,000 faces,200,000 boundary edges,6,000 openings and512 vertices per cap; exceeding a limit produces a clear error or unfilled reason.",
+          "Cloud support is proximity at sampled patch locations, not a surface-accuracy certification. Every cap remains inferred.",
+          "Distance controls assume one source coordinate unit is one metre; unconfirmed imported units remain explicitly unconfirmed and coordinates are not rescaled.",
+          "Large-mesh dialog context uses sampled vertices; selected cap triangles are exact. Existing source/output meshes retain every triangle."
+        ],
+        "source_hashes": {
+          "app/mesh_repair.py": "3922ecb533fa0c3fb43d256de70950dbecf367e7bb653d4aa2233070d9b1c647",
+          "app/meshing.py": "41b90650ec92d498ee0b370bf11ccaf704c69693f52a7014cea8540545dbc3ef",
+          "app/jobdata.py": "6d37844132b74846788362c225b01c771bf292de43c0cab3e090941335b3214a",
+          "app/server.py": "893027a3f16ad0a05f5925144f880e16ee162602083d0348c1e084107b59c2fd",
+          "app/web/mesh-repair-ui.js": "c915690f4a4f17e8496c3bc4d85d58932f9729d3384f1c692384e8477d5c15d6",
+          "app/web/index.html": "940cde12c95ba4ead966034f4ebb4dc831476888f974658aa649c14279459cb4",
+          "work/checks/test_mesh_repair.py": "fd9a56fde4b36a88a2b658272ee670ffd7c0c3c1645372ed5748c696f97b1bcd",
+          "work/checks/ui_mesh_repair.cjs": "c8264086b6a3733e515f3957b6659c4343b4082016f6fbc46c88b30bb6d15aa1"
+        }
+      },
+      "installer_transactions": {
+        "tests_run": 8,
+        "failures": 0,
+        "errors": 0,
+        "passed": true,
+        "checks": [
+          "test_active_application_blocks_installation (test_installer.InstallerTests.test_active_application_blocks_installation) ... ok",
+          "test_component_failure_preserves_active_version (test_installer.InstallerTests.test_component_failure_preserves_active_version) ... ok",
+          "test_damaged_payload_never_activates (test_installer.InstallerTests.test_damaged_payload_never_activates) ... ok",
+          "test_install_preserves_data_previous_release_and_index (test_installer.InstallerTests.test_install_preserves_data_previous_release_and_index) ... ok",
+          "test_installer_leaves_staging_directory_before_activation (test_installer.InstallerTests.test_installer_leaves_staging_directory_before_activation) ... ok",
+          "test_marker_failure_rolls_back_both_directories (test_installer.InstallerTests.test_marker_failure_rolls_back_both_directories) ... ok",
+          "test_path_traversal_rejected (test_installer.InstallerTests.test_path_traversal_rejected) ... ok",
+          "test_reinstall_retains_previous_same_version (test_installer.InstallerTests.test_reinstall_retains_previous_same_version) ... ok"
+        ],
+        "scope": "Temporary fixture installation/activation/rollback and path guards. No native Windows launch.",
+        "log": "test_active_application_blocks_installation (test_installer.InstallerTests.test_active_application_blocks_installation) ... ok\ntest_component_failure_preserves_active_version (test_installer.InstallerTests.test_component_failure_preserves_active_version) ... ok\ntest_damaged_payload_never_activates (test_installer.InstallerTests.test_damaged_payload_never_activates) ... ok\ntest_install_preserves_data_previous_release_and_index (test_installer.InstallerTests.test_install_preserves_data_previous_release_and_index) ... ok\ntest_installer_leaves_staging_directory_before_activation (test_installer.InstallerTests.test_installer_leaves_staging_directory_before_activation) ... ok\ntest_marker_failure_rolls_back_both_directories (test_installer.InstallerTests.test_marker_failure_rolls_back_both_directories) ... ok\ntest_path_traversal_rejected (test_installer.InstallerTests.test_path_traversal_rejected) ... ok\ntest_reinstall_retains_previous_same_version (test_installer.InstallerTests.test_reinstall_retains_previous_same_version) ... ok\n\n----------------------------------------------------------------------\nRan 8 tests in 0.017s\n\nOK\n"
+      }
+    },
+    "ui": {
+      "paper_classification": {
+        "passed": true,
+        "checks": [
+          {
+            "name": "GuSAC is primary and its physical settings reach the API",
+            "passed": true
+          },
+          {
+            "name": "TMatch exposes connection, size and optional ring settings",
+            "passed": true
+          },
+          {
+            "name": "Cluster colours are distinct and kept state remains independent of colour mode",
+            "passed": true
+          },
+          {
+            "name": "Supported ring view is available without treating local IDs as design ring numbers",
+            "passed": true
+          },
+          {
+            "name": "Unsupported ring view stays unavailable",
+            "passed": true
+          },
+          {
+            "name": "Selecting, hiding and restoring a coloured cluster preserves its keep decision",
+            "passed": true
+          },
+          {
+            "name": "Reviewing a cluster changes full-density kept counts and exclusion colour",
+            "passed": true
+          }
+        ],
+        "scope": "Production application JavaScript; HTTP fixture and WebGL calls simulated. Native Windows and rendered GPU output are separate checks."
+      },
+      "legacy_surface": {
+        "passed": true,
+        "checks": [
+          {
+            "name": "Escape clears completed box and does not redraw it",
+            "passed": true
+          },
+          {
+            "name": "Escape clears lasso with a settings input focused",
+            "passed": true
+          },
+          {
+            "name": "Escape during a drag cannot complete a late selection",
+            "passed": true
+          },
+          {
+            "name": "Escape leaves scene selection alone while a modal is open",
+            "passed": true
+          },
+          {
+            "name": "Clean Tunnel binds the selected scan and enables settings immediately",
+            "passed": true
+          },
+          {
+            "name": "Viewport Extract Surface binds source and captured area",
+            "passed": true
+          },
+          {
+            "name": "Source refresh waits for an older in-flight response",
+            "passed": true
+          },
+          {
+            "name": "Switching scans resets old area and does not silently restore it",
+            "passed": true
+          },
+          {
+            "name": "Preview cleaning runs, shows review, and restores enabled controls",
+            "passed": true
+          },
+          {
+            "name": "Quick Clean Tunnel mirrors source availability and submits the chosen method",
+            "passed": true
+          },
+          {
+            "name": "Failed cleaning request shows the error and can be retried",
+            "passed": true
+          },
+          {
+            "name": "Background failure exits busy state and restores cleaning controls",
+            "passed": true
+          },
+          {
+            "name": "Cancelling a running cleaning job restores controls",
+            "passed": true
+          }
+        ],
+        "limitations": "Production JavaScript in JSDOM with stateful mocked API/WebGL. Windows host, GPU pixels and real user scan are not covered."
+      },
+      "brush_and_file_drop": {
+        "passed": true,
+        "checks": [
+          {
+            "name": "Brush produces a world-anchored stroke and sends it to cleaning at full density",
+            "passed": true
+          },
+          {
+            "name": "Brush radius persists, orbit preserves frozen selection, Escape clears it",
+            "passed": true
+          },
+          {
+            "name": "A new brush stroke replaces the previous selection and inversion is explicit",
+            "passed": true
+          },
+          {
+            "name": "Cancelled brush gestures cannot commit later and another pointer cannot finish a stroke",
+            "passed": true
+          },
+          {
+            "name": "File Explorer native paths import directly once without uploading file bodies",
+            "passed": true
+          },
+          {
+            "name": "Browser File objects are queued in order with progress labels",
+            "passed": true
+          },
+          {
+            "name": "Single projects use guarded open; mixed project/data drops leave all input untouched",
+            "passed": true
+          },
+          {
+            "name": "Unsupported or failed import does not silently continue queued operations",
+            "passed": true
+          },
+          {
+            "name": "A second drop waits for the active import and does not overlap its API operation",
+            "passed": true
+          },
+          {
+            "name": "Rapid native drops remain distinct and ordered even when callbacks arrive backwards",
+            "passed": true
+          },
+          {
+            "name": "A missing native path falls back once and late callbacks cannot consume another drop",
+            "passed": true
+          },
+          {
+            "name": "Large browser fallback offers local import without loading or transferring its body",
+            "passed": true
+          },
+          {
+            "name": "Cancel aborts a pending browser file transfer and stops the remaining file queue",
+            "passed": true
+          },
+          {
+            "name": "Wheel zoom and loss of focus cancel an unfinished brush without committing it",
+            "passed": true
+          },
+          {
+            "name": "Declining a dropped project also cancels pending native tickets so late callbacks cannot import into the old project",
+            "passed": true
+          }
+        ],
+        "scope": "Production JavaScript and event handlers in JSDOM. Browser/native transfer contracts simulated; no physical Windows File Explorer or GPU run. The 25 GB object tests local-import fallback only; no large browser transfer benchmark."
+      },
+      "ray_box": {
+        "passed": true,
+        "checks": [
+          {
+            "name": "Ray/box alternative exposes all seven physical settings and sends them to the API",
+            "passed": true
+          },
+          {
+            "name": "Returning to GuSAC and TMatch restores their own controls and keeps ray settings hidden",
+            "passed": true
+          }
+        ],
+        "scope": "Production JavaScript with HTTP fixture and simulated WebGL calls; native Windows/GPU execution not tested."
+      },
+      "mesh_to_cloud": {
+        "passed": true,
+        "checks": [
+          {
+            "name": "Mesh context action opens a modeless estimate/create flow with generated-geometry labels",
+            "passed": true
+          },
+          {
+            "name": "Changing count or spacing invalidates the previous estimate",
+            "passed": true
+          },
+          {
+            "name": "Create sends the reviewed estimate revision and keeps the source mesh in the scene",
+            "passed": true
+          },
+          {
+            "name": "Cancellation restores controls and creates no partial scene item",
+            "passed": true
+          },
+          {
+            "name": "Creation errors leave the estimate reviewable and allow a retry",
+            "passed": true
+          }
+        ],
+        "scope": "Production JavaScript and UI events; HTTP and WebGL simulated. Native Windows/GPU execution not tested."
+      },
+      "project_compatibility": {
+        "checks": [
+          "Named Save stores scene scan and UI settings",
+          "Named Open restores saved state while preserving unsaved work in a separate recovery snapshot",
+          "Failed portable open keeps current state and project.json intact and shows an error",
+          "Missing optional preview recovers geometry, refreshes view and exposes a downloadable recovery report",
+          "Consecutive imported projects with null IDs restore their own UI settings",
+          "New Project saves a recovery copy, clears active inventory and refreshes the scene",
+          "Path and streamed File project-open hooks are exposed for File Explorer/browser drop routing"
+        ],
+        "passed": 7,
+        "failures": 0,
+        "seconds": 5.394,
+        "scope": "Real application HTTP, production project/ribbon scripts, real small file caches. DOM/WebGL simulated; no native Windows or huge-cloud benchmark."
+      },
+      "mesh_repair": {
+        "scenarios": 1,
+        "passed": true,
+        "exit_code": 0,
+        "seconds": 6.133,
+        "output": "PASS: actual mesh import, opening/reason preview, explicit extent units, no automatic selection, canvas boundary picking, two exact inferred triangles, new repaired mesh, original preservation, distinct inferred-face metadata, Workspace Undo and threshold invalidation. Production HTTP/scripts; DOM/WebGL simulated.\n"
+      }
+    }
+  },
+  "real_scan_execution": [
+    {
+      "scope": "REAL previously supplied E57; no independently labelled truth, therefore no accuracy score",
+      "input_name": "one scan for damian(1).e57",
+      "input_points": 10125420,
+      "method": "tunnel_envelope",
+      "settings": {
+        "resolution": 0.2,
+        "normal_neighbours": 15,
+        "alpha_normal": 1.0,
+        "alpha_space": 0.4,
+        "alpha_offset": 0.6,
+        "dbscan_factor": 2.5,
+        "dbscan_min": 3,
+        "edge_passes": 3,
+        "linearity": 0.8,
+        "residual_k": 2.0,
+        "angle_deg": 20.0,
+        "offset": 0.1,
+        "curvature": 0.05,
+        "overlap": 0.5,
+        "repair": true,
+        "graph_mode": "boundary",
+        "convexity_mode": "printed",
+        "max_points": 300000,
+        "interior": null,
+        "method": "tunnel_envelope",
+        "gusac_distance_mm": 20.0,
+        "gusac_sector_deg": 5.0,
+        "gusac_window_m": 1.0,
+        "gusac_normal_deg": 35.0,
+        "gusac_min_support": 20,
+        "tmatch_radius_mm": 15.0,
+        "tmatch_min_points": 30,
+        "tmatch_ring_width_m": 0.0,
+        "noise_radius": 0.1,
+        "noise_neighbours": 12,
+        "noise_minimum": 3,
+        "noise_sigma": 3.0,
+        "envelope_angle_deg": 3.0,
+        "envelope_quantile": 0.7,
+        "envelope_thickness": 0.08,
+        "denoise_shape": "measured",
+        "denoise_distance_mm": 20.0,
+        "interior_cleanup": "standard",
+        "interior_band_mm": 30.0,
+        "reflection_gap_mm": 100.0,
+        "reflection_match_mm": 100.0,
+        "lining_task": "all",
+        "lining_detail": "detailed",
+        "lining_depth_mm": 12.0,
+        "lining_inward_mm": 60.0,
+        "lining_recess_mm": 250.0,
+        "lining_bolt_max_mm": 350.0,
+        "irregular_sensitivity": 50.0,
+        "irregular_patch_size": 0.2,
+        "irregular_min_points": 30
+      },
+      "seconds": 21.46088978700027,
+      "peak_measured_rss_bytes": 103395328,
+      "memory_scope": "single benchmark process (resource.getrusage); process-tree enumeration unavailable",
+      "under_7_GB_measured_scope": true,
+      "every_original_id_exactly_once": true,
+      "source_float64_sha256_before": "1c7d16f8eadd1955bc0c4c5429ad44226b3f544504ab4fff855a004d46191e3e",
+      "source_float64_sha256_after": "1c7d16f8eadd1955bc0c4c5429ad44226b3f544504ab4fff855a004d46191e3e",
+      "source_coordinates_unchanged": true,
+      "statistics": {
+        "input_points": 10125420,
+        "unique_points": null,
+        "duplicate_locations": null,
+        "supervoxels": 0,
+        "expected_supervoxels": 0,
+        "merge_passes": 0,
+        "initial_edges": 0,
+        "removed_edges": 0,
+        "retained_edges": 0,
+        "clusters": 4,
+        "kept_points": 9852595,
+        "noise_points": 0,
+        "noise_candidates": 272825,
+        "extra_interior_candidates": 0,
+        "interior_cleanup": "standard",
+        "interior_band_mm": null,
+        "interior_calibration_guard_mm": null,
+        "spacing_m": 0.05,
+        "calibration_points": 140000,
+        "fitted_sections": 139,
+        "reference_radius_m": 3.765932576189114,
+        "strategy": "one supported tunnel model; every original point classified",
+        "seconds": 21.391
+      },
+      "warnings": [
+        "The tunnel shape is learned once from a bounded spatial sample; every retained point in the processing area is classified at its original coordinates.",
+        "Review red points, especially openings, supported protrusions and areas labelled Uncertain lining area (retained). This models one approximately circular tunnel branch, including supported floor profiles; it is not a design or tolerance check."
+      ],
+      "result_metadata": {},
+      "case": "baseline",
+      "kept_points": 9852595,
+      "excluded_candidate_points": 272825,
+      "cleaning_class_counts": {
+        "0": 9845127,
+        "1": 267321,
+        "2": 5504,
+        "3": 7468
+      },
+      "independent_ground_truth": false,
+      "accuracy_measured": false,
+      "timing_context": "Observed elapsed time on this Linux build host. Some runs and other validation jobs overlapped; timings are not a controlled speed comparison.",
+      "final_code_relation": "Previous measured-lining fallback at its existing default settings."
+    },
+    {
+      "scope": "REAL previously supplied E57; no independently labelled truth, therefore no accuracy score",
+      "input_name": "one scan for damian(1).e57",
+      "input_points": 10125420,
+      "method": "gusac",
+      "settings": {
+        "resolution": 0.2,
+        "normal_neighbours": 15,
+        "alpha_normal": 1.0,
+        "alpha_space": 0.4,
+        "alpha_offset": 0.6,
+        "dbscan_factor": 2.5,
+        "dbscan_min": 3,
+        "edge_passes": 3,
+        "linearity": 0.8,
+        "residual_k": 2.0,
+        "angle_deg": 20.0,
+        "offset": 0.1,
+        "curvature": 0.05,
+        "overlap": 0.5,
+        "repair": true,
+        "graph_mode": "boundary",
+        "convexity_mode": "printed",
+        "max_points": 300000,
+        "interior": null,
+        "method": "gusac",
+        "gusac_distance_mm": 20.0,
+        "gusac_sector_deg": 5.0,
+        "gusac_window_m": 1.0,
+        "gusac_normal_deg": 35.0,
+        "gusac_min_support": 20,
+        "tmatch_radius_mm": 15.0,
+        "tmatch_min_points": 30,
+        "tmatch_ring_width_m": 0.0,
+        "noise_radius": 0.1,
+        "noise_neighbours": 12,
+        "noise_minimum": 3,
+        "noise_sigma": 3.0,
+        "envelope_angle_deg": 3.0,
+        "envelope_quantile": 0.7,
+        "envelope_thickness": 0.08,
+        "denoise_shape": "measured",
+        "denoise_distance_mm": 20.0,
+        "interior_cleanup": "standard",
+        "interior_band_mm": 30.0,
+        "reflection_gap_mm": 100.0,
+        "reflection_match_mm": 100.0,
+        "lining_task": "all",
+        "lining_detail": "detailed",
+        "lining_depth_mm": 12.0,
+        "lining_inward_mm": 60.0,
+        "lining_recess_mm": 250.0,
+        "lining_bolt_max_mm": 350.0,
+        "irregular_sensitivity": 50.0,
+        "irregular_patch_size": 0.2,
+        "irregular_min_points": 30
+      },
+      "seconds": 97.96310134700025,
+      "peak_measured_rss_bytes": 189067264,
+      "memory_scope": "single benchmark process (resource.getrusage); process-tree enumeration unavailable",
+      "under_7_GB_measured_scope": true,
+      "every_original_id_exactly_once": true,
+      "source_float64_sha256_before": "1c7d16f8eadd1955bc0c4c5429ad44226b3f544504ab4fff855a004d46191e3e",
+      "source_float64_sha256_after": "1c7d16f8eadd1955bc0c4c5429ad44226b3f544504ab4fff855a004d46191e3e",
+      "source_coordinates_unchanged": true,
+      "statistics": {
+        "input_points": 10125420,
+        "unique_points": null,
+        "duplicate_locations": null,
+        "supervoxels": 0,
+        "expected_supervoxels": 0,
+        "merge_passes": 0,
+        "initial_edges": 0,
+        "removed_edges": 0,
+        "retained_edges": 0,
+        "clusters": 5,
+        "kept_points": 9819957,
+        "noise_points": 0,
+        "noise_candidates": 305463,
+        "inward_obstruction_candidates": 305463,
+        "joint_recess_retained_points": 123211,
+        "uncertain_retained_points": 518269,
+        "normal_disagreement_retained_points": 115331,
+        "calibration_points": 400000,
+        "model_sample_cap": 400000,
+        "model_sample_spacing_m": 0.015,
+        "plane_supported_points": 10105070,
+        "regional_planes": 5777,
+        "attempted_regions": 7473,
+        "sparse_support_extended_regions": 2215,
+        "normal_checked_points": 9281530,
+        "normal_neighbourhood_radius_m": 0.39452199523762654,
+        "fitted_sections": 132,
+        "reference_radius_m": 3.767407542032728,
+        "inward_reference_bins_corrected": 0,
+        "gusac_distance_mm": 20.0,
+        "gusac_sector_deg": 5.0,
+        "gusac_window_m": 1.0,
+        "strategy": "GuSAC-based regional RANSAC planes and bounded-neighbourhood normal agreement; every selected original point classified",
+        "reference": "Wang et al. (2025), Applied Sciences 15, 2926, doi:10.3390/app15062926",
+        "seconds": 97.886
+      },
+      "warnings": [
+        "This GuSAC-based implementation corrects the paper's inconsistent normal equations and adds measured-reference and uncertainty safeguards. It is not an author-exact reproduction or a reproduction of the paper's reported accuracy.",
+        "Every selected original point receives a label. Plane fitting and surface-normal neighbourhoods use a bounded, spatially balanced model sample; sparse or ambiguous lining is retained. Coordinates, RGB and intensity are unchanged.",
+        "Inspect Inward objects / services before applying. Joints, recesses, uncertain regions and near-wall normal disagreements are retained separately. Geometry alone cannot reliably distinguish a service touching the wall from real lining detail.",
+        "The model follows one approximately circular, gently curved branch with supported floor profiles. Junctions, severe bends, large gaps and irregular excavations need review. More sampling/support or a different method may be needed."
+      ],
+      "result_metadata": {},
+      "case": "gusac",
+      "kept_points": 9819957,
+      "excluded_candidate_points": 305463,
+      "cleaning_class_counts": {
+        "0": 9063146,
+        "1": 305463,
+        "2": 123211,
+        "3": 518269,
+        "4": 115331
+      },
+      "independent_ground_truth": false,
+      "accuracy_measured": false,
+      "timing_context": "Observed elapsed time on this Linux build host. Some runs and other validation jobs overlapped; timings are not a controlled speed comparison.",
+      "final_code_relation": "The final GuSAC mathematical rules are unchanged from this run. Final production source reads are now bounded and are verified separately by streaming and API tests."
+    },
+    {
+      "scope": "REAL previously supplied E57; no independently labelled truth, therefore no accuracy score",
+      "input_name": "Real E57 full-density 4 m selected section",
+      "input_points": 629245,
+      "method": "tmatch",
+      "settings": {
+        "resolution": 0.2,
+        "normal_neighbours": 15,
+        "alpha_normal": 1.0,
+        "alpha_space": 0.4,
+        "alpha_offset": 0.6,
+        "dbscan_factor": 2.5,
+        "dbscan_min": 3,
+        "edge_passes": 3,
+        "linearity": 0.8,
+        "residual_k": 2.0,
+        "angle_deg": 20.0,
+        "offset": 0.1,
+        "curvature": 0.05,
+        "overlap": 0.5,
+        "repair": true,
+        "graph_mode": "boundary",
+        "convexity_mode": "printed",
+        "max_points": 300000,
+        "interior": null,
+        "method": "tmatch",
+        "gusac_distance_mm": 20.0,
+        "gusac_sector_deg": 5.0,
+        "gusac_window_m": 1.0,
+        "gusac_normal_deg": 35.0,
+        "gusac_min_support": 20,
+        "tmatch_radius_mm": 15.0,
+        "tmatch_min_points": 30,
+        "tmatch_ring_width_m": 0.0,
+        "noise_radius": 0.1,
+        "noise_neighbours": 12,
+        "noise_minimum": 3,
+        "noise_sigma": 3.0,
+        "envelope_angle_deg": 3.0,
+        "envelope_quantile": 0.7,
+        "envelope_thickness": 0.08,
+        "denoise_shape": "measured",
+        "denoise_distance_mm": 20.0,
+        "interior_cleanup": "standard",
+        "interior_band_mm": 30.0,
+        "reflection_gap_mm": 100.0,
+        "reflection_match_mm": 100.0,
+        "lining_task": "all",
+        "lining_detail": "detailed",
+        "lining_depth_mm": 12.0,
+        "lining_inward_mm": 60.0,
+        "lining_recess_mm": 250.0,
+        "lining_bolt_max_mm": 350.0,
+        "irregular_sensitivity": 50.0,
+        "irregular_patch_size": 0.2,
+        "irregular_min_points": 30
+      },
+      "seconds": 78.949998521,
+      "peak_measured_rss_bytes": 221904896,
+      "memory_scope": "single benchmark process (resource.getrusage); process-tree enumeration unavailable",
+      "under_7_GB_measured_scope": true,
+      "every_original_id_exactly_once": true,
+      "source_float64_sha256_before": "70e7e177304ecc03af777007d0715372f204a1f3ed5a4bcdcf011b533607bfaf",
+      "source_float64_sha256_after": "70e7e177304ecc03af777007d0715372f204a1f3ed5a4bcdcf011b533607bfaf",
+      "source_coordinates_unchanged": true,
+      "statistics": {
+        "input_points": 629245,
+        "unique_points": null,
+        "duplicate_locations": null,
+        "supervoxels": 0,
+        "expected_supervoxels": 0,
+        "merge_passes": 1,
+        "initial_edges": 2158937,
+        "removed_edges": 0,
+        "retained_edges": 505971,
+        "clusters": 562,
+        "kept_points": 607621,
+        "noise_points": 0,
+        "noise_candidates": 21624,
+        "spacing_m": null,
+        "unclassified_points": 61784,
+        "lining_points": 565664,
+        "raw_components": 21144,
+        "lining_clusters": 557,
+        "rings": 0,
+        "ring_planes_supported": 0,
+        "connectivity_cells": 527115,
+        "support_radius_m": 0.015,
+        "minimum_component_points": 30,
+        "tmatch_radius_mm": 15.0,
+        "tmatch_ring_width_m": 0.0,
+        "uncertain_retained_points": 41957,
+        "strategy": "full-density exact radius components with disk-backed global connectivity; GuSAC cleaning decisions retained separately",
+        "seconds": 78.876,
+        "calibration_points": 376548,
+        "reference_radius_m": 3.7672664855465317
+      },
+      "warnings": [
+        "TMatch is an independent interpretation: connection distance R joins actual lining points; minimum N applies to the final component. The paper supplies no universal R/N values.",
+        "Joints narrower than the 15 mm connection distance can join neighbouring blocks. Review the coloured clusters; increase radius only when point spacing requires it.",
+        "Every selected original point is labelled. Small/unresolved lining groups, recesses and uncertain GuSAC decisions remain retained; only interior obstruction candidates start excluded.",
+        "No separated longitudinal ring bands were observed; a seamless shell is not divided into invented rings.",
+        "Colours identify geometric instances, not semantic cable/pipe types. Segment types and theoretical sector boundaries require the correct project design."
+      ],
+      "result_metadata": {
+        "rings": [],
+        "classification": {
+          "kind": "lining_instances",
+          "unclassified_label": 0,
+          "ring_method": "supported physical-station weighted GMM",
+          "ring_status": "No separated longitudinal ring bands were observed; a seamless shell is not divided into invented rings.",
+          "coordinate_precision": "float64 originals; metadata labels only",
+          "published_accuracy_reproduced": false
+        },
+        "algorithm_notes": [
+          "The paper does not fully specify the R/N clustering operation. This implementation uses exact Euclidean radius connectivity and a final component-size minimum.",
+          "Ring GMM input is the physical longitudinal centre of each observed lining component, weighted by its point count. Arbitrary cluster label numbers are never fitted.",
+          "Accepted ring planes use centroid and covariance from every original assigned point, with eigenvalue and orientation checks. Axial spread is ring thickness, not a precision claim.",
+          "The paper describes a further adjacent-group plane reassignment heuristic without complete tolerances. This version keeps unsupported assignments unresolved instead of forcing that heuristic.",
+          "Within-ring block types and angular templates are not inferred from a universal six-block design; the correct project segment layout is required.",
+          "The GuSAC reference is a supported measured single-branch model. It does not reproduce the paper's crown-maximum MST and cubic-axis segmentation exactly."
+        ]
+      },
+      "case": "tmatch",
+      "kept_points": 607621,
+      "excluded_candidate_points": 21624,
+      "cleaning_class_counts": {
+        "0": 565664,
+        "1": 21624,
+        "2": 9239,
+        "3": 24448,
+        "4": 8270
+      },
+      "independent_ground_truth": false,
+      "accuracy_measured": false,
+      "timing_context": "Observed elapsed time on this Linux build host. Some runs and other validation jobs overlapped; timings are not a controlled speed comparison.",
+      "final_code_relation": "Real TMatch runs preceded final bounded label-window/flush-cleanup changes. Final window eviction and assignment-equivalence tests pass; these runs were not repeated solely for storage changes."
+    },
+    {
+      "scope": "REAL previously supplied E57; no independently labelled truth, therefore no accuracy score",
+      "input_name": "Real E57 full-density 4 m selected section",
+      "input_points": 629245,
+      "method": "tmatch",
+      "settings": {
+        "resolution": 0.2,
+        "normal_neighbours": 15,
+        "alpha_normal": 1.0,
+        "alpha_space": 0.4,
+        "alpha_offset": 0.6,
+        "dbscan_factor": 2.5,
+        "dbscan_min": 3,
+        "edge_passes": 3,
+        "linearity": 0.8,
+        "residual_k": 2.0,
+        "angle_deg": 20.0,
+        "offset": 0.1,
+        "curvature": 0.05,
+        "overlap": 0.5,
+        "repair": true,
+        "graph_mode": "boundary",
+        "convexity_mode": "printed",
+        "max_points": 300000,
+        "interior": null,
+        "method": "tmatch",
+        "gusac_distance_mm": 20.0,
+        "gusac_sector_deg": 5.0,
+        "gusac_window_m": 1.0,
+        "gusac_normal_deg": 35.0,
+        "gusac_min_support": 20,
+        "tmatch_radius_mm": 30,
+        "tmatch_min_points": 30,
+        "tmatch_ring_width_m": 0.0,
+        "noise_radius": 0.1,
+        "noise_neighbours": 12,
+        "noise_minimum": 3,
+        "noise_sigma": 3.0,
+        "envelope_angle_deg": 3.0,
+        "envelope_quantile": 0.7,
+        "envelope_thickness": 0.08,
+        "denoise_shape": "measured",
+        "denoise_distance_mm": 20.0,
+        "interior_cleanup": "standard",
+        "interior_band_mm": 30.0,
+        "reflection_gap_mm": 100.0,
+        "reflection_match_mm": 100.0,
+        "lining_task": "all",
+        "lining_detail": "detailed",
+        "lining_depth_mm": 12.0,
+        "lining_inward_mm": 60.0,
+        "lining_recess_mm": 250.0,
+        "lining_bolt_max_mm": 350.0,
+        "irregular_sensitivity": 50.0,
+        "irregular_patch_size": 0.2,
+        "irregular_min_points": 30
+      },
+      "seconds": 74.27546343600034,
+      "peak_measured_rss_bytes": 216522752,
+      "memory_scope": "process tree",
+      "under_7_GB_measured_scope": true,
+      "every_original_id_exactly_once": true,
+      "source_float64_sha256_before": "70e7e177304ecc03af777007d0715372f204a1f3ed5a4bcdcf011b533607bfaf",
+      "source_float64_sha256_after": "70e7e177304ecc03af777007d0715372f204a1f3ed5a4bcdcf011b533607bfaf",
+      "source_coordinates_unchanged": true,
+      "statistics": {
+        "input_points": 629245,
+        "unique_points": null,
+        "duplicate_locations": null,
+        "supervoxels": 0,
+        "expected_supervoxels": 0,
+        "merge_passes": 1,
+        "initial_edges": 1157761,
+        "removed_edges": 0,
+        "retained_edges": 279324,
+        "clusters": 82,
+        "kept_points": 607621,
+        "noise_points": 0,
+        "noise_candidates": 21624,
+        "spacing_m": null,
+        "unclassified_points": 5833,
+        "lining_points": 565664,
+        "underresolved_points": 5833,
+        "raw_components": 610,
+        "lining_clusters": 77,
+        "metadata_group_limit": 6000,
+        "metadata_preview_points_per_group": 8,
+        "metadata_deferred_components": 0,
+        "metadata_deferred_points": 0,
+        "rings": 0,
+        "ring_planes_supported": 0,
+        "connectivity_cells": 279934,
+        "support_radius_m": 0.03,
+        "minimum_component_points": 30,
+        "tmatch_radius_mm": 30.0,
+        "tmatch_ring_width_m": 0.0,
+        "uncertain_retained_points": 41957,
+        "strategy": "full-density exact radius components with disk-backed global connectivity; GuSAC cleaning decisions retained separately",
+        "seconds": 74.197,
+        "calibration_points": 376548,
+        "reference_radius_m": 3.7672664855465317
+      },
+      "warnings": [
+        "TMatch is an independent interpretation: connection distance R joins actual lining points; minimum N applies to the final component. The paper supplies no universal R/N values.",
+        "Joints narrower than the 30 mm connection distance can join neighbouring blocks. Review the coloured clusters; increase radius only when point spacing requires it.",
+        "Every selected original point is labelled. Small/unresolved lining groups, recesses and uncertain GuSAC decisions remain retained; only interior obstruction candidates start excluded.",
+        "Ring labels withheld: observed components lack shared longitudinal extent or sufficient circumferential support.",
+        "Colours identify geometric instances, not semantic cable/pipe types. Segment types and theoretical sector boundaries require the correct project design."
+      ],
+      "result_metadata": {
+        "rings": [],
+        "classification": {
+          "kind": "lining_instances",
+          "unclassified_label": 0,
+          "ring_method": "supported physical-station weighted GMM",
+          "ring_status": "Ring labels withheld: observed components lack shared longitudinal extent or sufficient circumferential support.",
+          "coordinate_precision": "float64 originals; metadata labels only",
+          "published_accuracy_reproduced": false
+        },
+        "algorithm_notes": [
+          "The paper does not fully specify the R/N clustering operation. This implementation uses exact Euclidean radius connectivity and a final component-size minimum.",
+          "Ring GMM input is the physical longitudinal centre of each observed lining component, weighted by its point count. Arbitrary cluster label numbers are never fitted.",
+          "Accepted ring planes use centroid and covariance from every original assigned point, with eigenvalue and orientation checks. Axial spread is ring thickness, not a precision claim.",
+          "The paper describes a further adjacent-group plane reassignment heuristic without complete tolerances. This version keeps unsupported assignments unresolved instead of forcing that heuristic.",
+          "Within-ring block types and angular templates are not inferred from a universal six-block design; the correct project segment layout is required.",
+          "The GuSAC reference is a supported measured single-branch model. It does not reproduce the paper's crown-maximum MST and cubic-axis segmentation exactly.",
+          "Named component metadata is bounded to 6,000 groups. Additional qualifying fragments remain retained under label 0 and are counted explicitly; there is no total input-point cutoff."
+        ]
+      },
+      "case": "tmatch_r30",
+      "kept_points": 607621,
+      "excluded_candidate_points": 21624,
+      "cleaning_class_counts": {
+        "0": 565664,
+        "1": 21624,
+        "2": 9239,
+        "3": 24448,
+        "4": 8270
+      },
+      "independent_ground_truth": false,
+      "accuracy_measured": false,
+      "timing_context": "Observed elapsed time on this Linux build host. Some runs and other validation jobs overlapped; timings are not a controlled speed comparison.",
+      "final_code_relation": "Real TMatch runs preceded final bounded label-window/flush-cleanup changes. Final window eviction and assignment-equivalence tests pass; these runs were not repeated solely for storage changes."
+    },
+    {
+      "scope": "REAL previously supplied E57; no independently labelled truth, therefore no accuracy score",
+      "input_name": "Real E57 full-density 4 m selected section",
+      "input_points": 629245,
+      "method": "tmatch",
+      "settings": {
+        "resolution": 0.2,
+        "normal_neighbours": 15,
+        "alpha_normal": 1.0,
+        "alpha_space": 0.4,
+        "alpha_offset": 0.6,
+        "dbscan_factor": 2.5,
+        "dbscan_min": 3,
+        "edge_passes": 3,
+        "linearity": 0.8,
+        "residual_k": 2.0,
+        "angle_deg": 20.0,
+        "offset": 0.1,
+        "curvature": 0.05,
+        "overlap": 0.5,
+        "repair": true,
+        "graph_mode": "boundary",
+        "convexity_mode": "printed",
+        "max_points": 300000,
+        "interior": null,
+        "method": "tmatch",
+        "gusac_distance_mm": 5,
+        "gusac_sector_deg": 5.0,
+        "gusac_window_m": 1.0,
+        "gusac_normal_deg": 35.0,
+        "gusac_min_support": 20,
+        "tmatch_radius_mm": 15.0,
+        "tmatch_min_points": 30,
+        "tmatch_ring_width_m": 0.0,
+        "noise_radius": 0.1,
+        "noise_neighbours": 12,
+        "noise_minimum": 3,
+        "noise_sigma": 3.0,
+        "envelope_angle_deg": 3.0,
+        "envelope_quantile": 0.7,
+        "envelope_thickness": 0.08,
+        "denoise_shape": "measured",
+        "denoise_distance_mm": 20.0,
+        "interior_cleanup": "standard",
+        "interior_band_mm": 30.0,
+        "reflection_gap_mm": 100.0,
+        "reflection_match_mm": 100.0,
+        "lining_task": "all",
+        "lining_detail": "detailed",
+        "lining_depth_mm": 12.0,
+        "lining_inward_mm": 60.0,
+        "lining_recess_mm": 250.0,
+        "lining_bolt_max_mm": 350.0,
+        "irregular_sensitivity": 50.0,
+        "irregular_patch_size": 0.2,
+        "irregular_min_points": 30
+      },
+      "seconds": 77.55133515399984,
+      "peak_measured_rss_bytes": 222859264,
+      "memory_scope": "process tree",
+      "under_7_GB_measured_scope": true,
+      "every_original_id_exactly_once": true,
+      "source_float64_sha256_before": "70e7e177304ecc03af777007d0715372f204a1f3ed5a4bcdcf011b533607bfaf",
+      "source_float64_sha256_after": "70e7e177304ecc03af777007d0715372f204a1f3ed5a4bcdcf011b533607bfaf",
+      "source_coordinates_unchanged": true,
+      "statistics": {
+        "input_points": 629245,
+        "unique_points": null,
+        "duplicate_locations": null,
+        "supervoxels": 0,
+        "expected_supervoxels": 0,
+        "merge_passes": 1,
+        "initial_edges": 2053548,
+        "removed_edges": 0,
+        "retained_edges": 475253,
+        "clusters": 575,
+        "kept_points": 598659,
+        "noise_points": 0,
+        "noise_candidates": 30586,
+        "spacing_m": null,
+        "unclassified_points": 57595,
+        "lining_points": 530880,
+        "underresolved_points": 57595,
+        "raw_components": 21097,
+        "lining_clusters": 570,
+        "metadata_group_limit": 6000,
+        "metadata_preview_points_per_group": 8,
+        "metadata_deferred_components": 0,
+        "metadata_deferred_points": 0,
+        "rings": 0,
+        "ring_planes_supported": 0,
+        "connectivity_cells": 496350,
+        "support_radius_m": 0.015,
+        "minimum_component_points": 30,
+        "tmatch_radius_mm": 15.0,
+        "tmatch_ring_width_m": 0.0,
+        "uncertain_retained_points": 67779,
+        "strategy": "full-density exact radius components with disk-backed global connectivity; GuSAC cleaning decisions retained separately",
+        "seconds": 77.476,
+        "calibration_points": 376548,
+        "reference_radius_m": 3.7672664855465317
+      },
+      "warnings": [
+        "TMatch is an independent interpretation: connection distance R joins actual lining points; minimum N applies to the final component. The paper supplies no universal R/N values.",
+        "Joints narrower than the 15 mm connection distance can join neighbouring blocks. Review the coloured clusters; increase radius only when point spacing requires it.",
+        "Every selected original point is labelled. Small/unresolved lining groups, recesses and uncertain GuSAC decisions remain retained; only interior obstruction candidates start excluded.",
+        "No separated longitudinal ring bands were observed; a seamless shell is not divided into invented rings.",
+        "Colours identify geometric instances, not semantic cable/pipe types. Segment types and theoretical sector boundaries require the correct project design."
+      ],
+      "result_metadata": {
+        "rings": [],
+        "classification": {
+          "kind": "lining_instances",
+          "unclassified_label": 0,
+          "ring_method": "supported physical-station weighted GMM",
+          "ring_status": "No separated longitudinal ring bands were observed; a seamless shell is not divided into invented rings.",
+          "coordinate_precision": "float64 originals; metadata labels only",
+          "published_accuracy_reproduced": false
+        },
+        "algorithm_notes": [
+          "The paper does not fully specify the R/N clustering operation. This implementation uses exact Euclidean radius connectivity and a final component-size minimum.",
+          "Ring GMM input is the physical longitudinal centre of each observed lining component, weighted by its point count. Arbitrary cluster label numbers are never fitted.",
+          "Accepted ring planes use centroid and covariance from every original assigned point, with eigenvalue and orientation checks. Axial spread is ring thickness, not a precision claim.",
+          "The paper describes a further adjacent-group plane reassignment heuristic without complete tolerances. This version keeps unsupported assignments unresolved instead of forcing that heuristic.",
+          "Within-ring block types and angular templates are not inferred from a universal six-block design; the correct project segment layout is required.",
+          "The GuSAC reference is a supported measured single-branch model. It does not reproduce the paper's crown-maximum MST and cubic-axis segmentation exactly.",
+          "Named component metadata is bounded to 6,000 groups. Additional qualifying fragments remain retained under label 0 and are counted explicitly; there is no total input-point cutoff."
+        ]
+      },
+      "case": "tmatch_tol5",
+      "kept_points": 598659,
+      "excluded_candidate_points": 30586,
+      "cleaning_class_counts": {
+        "0": 530880,
+        "1": 30586,
+        "2": 16396,
+        "3": 45562,
+        "4": 5821
+      },
+      "independent_ground_truth": false,
+      "accuracy_measured": false,
+      "timing_context": "Observed elapsed time on this Linux build host. Some runs and other validation jobs overlapped; timings are not a controlled speed comparison.",
+      "final_code_relation": "Real TMatch runs preceded final bounded label-window/flush-cleanup changes. Final window eviction and assignment-equivalence tests pass; these runs were not repeated solely for storage changes."
+    },
+    {
+      "scope": "REAL previously supplied E57; no independently labelled truth, therefore no accuracy score",
+      "input_name": "Real E57 full-density 4 m selected section",
+      "input_points": 629245,
+      "method": "ray_box",
+      "settings": {
+        "resolution": 0.2,
+        "normal_neighbours": 15,
+        "alpha_normal": 1.0,
+        "alpha_space": 0.4,
+        "alpha_offset": 0.6,
+        "dbscan_factor": 2.5,
+        "dbscan_min": 3,
+        "edge_passes": 3,
+        "linearity": 0.8,
+        "residual_k": 2.0,
+        "angle_deg": 20.0,
+        "offset": 0.1,
+        "curvature": 0.05,
+        "overlap": 0.5,
+        "repair": true,
+        "graph_mode": "boundary",
+        "convexity_mode": "printed",
+        "max_points": 300000,
+        "interior": null,
+        "method": "ray_box",
+        "gusac_distance_mm": 20.0,
+        "gusac_sector_deg": 5.0,
+        "gusac_window_m": 1.0,
+        "gusac_normal_deg": 35.0,
+        "gusac_min_support": 20,
+        "tmatch_radius_mm": 15.0,
+        "tmatch_min_points": 30,
+        "tmatch_ring_width_m": 0.0,
+        "noise_radius": 0.1,
+        "noise_neighbours": 12,
+        "noise_minimum": 3,
+        "noise_sigma": 3.0,
+        "envelope_angle_deg": 3.0,
+        "envelope_quantile": 0.7,
+        "envelope_thickness": 0.08,
+        "denoise_shape": "measured",
+        "denoise_distance_mm": 20.0,
+        "interior_cleanup": "standard",
+        "interior_band_mm": 30.0,
+        "reflection_gap_mm": 100.0,
+        "reflection_match_mm": 100.0,
+        "lining_task": "all",
+        "lining_detail": "detailed",
+        "lining_depth_mm": 12.0,
+        "lining_inward_mm": 60.0,
+        "lining_recess_mm": 250.0,
+        "lining_bolt_max_mm": 350.0,
+        "irregular_sensitivity": 50.0,
+        "irregular_patch_size": 0.2,
+        "irregular_min_points": 30,
+        "ray_station_m": 0.25,
+        "ray_angle_deg": 3.0,
+        "ray_depth_mm": 20.0,
+        "ray_keep_mm": 60.0,
+        "ray_min_points": 4,
+        "ray_inward_mm": 1200.0,
+        "ray_outward_mm": 300.0
+      },
+      "seconds": 2.009473318000346,
+      "peak_measured_rss_bytes": 99172352,
+      "memory_scope": "process tree",
+      "under_7_GB_measured_scope": true,
+      "every_original_id_exactly_once": true,
+      "source_float64_sha256_before": "70e7e177304ecc03af777007d0715372f204a1f3ed5a4bcdcf011b533607bfaf",
+      "source_float64_sha256_after": "70e7e177304ecc03af777007d0715372f204a1f3ed5a4bcdcf011b533607bfaf",
+      "source_coordinates_unchanged": true,
+      "class_counts": {
+        "0": 600966,
+        "1": 27674,
+        "2": 605
+      },
+      "statistics": {
+        "input_points": 629245,
+        "unique_points": null,
+        "duplicate_locations": null,
+        "supervoxels": 0,
+        "expected_supervoxels": 0,
+        "merge_passes": 0,
+        "initial_edges": 0,
+        "removed_edges": 0,
+        "retained_edges": 0,
+        "clusters": 3,
+        "kept_points": 600966,
+        "noise_points": 0,
+        "noise_candidates": 28279,
+        "calibration_points": 49066,
+        "fitted_sections": 6,
+        "reference_radius_m": 3.7626758972158063,
+        "ray_station_m": 0.25,
+        "ray_angle_deg": 3.0,
+        "ray_depth_mm": 20.000000000000018,
+        "ray_keep_mm": 60.0,
+        "ray_boxes": 3360,
+        "supported_ray_boxes": 2038,
+        "unsupported_points": 0,
+        "box_histogram_bins": 75,
+        "strategy": "outward radial modes with 3x3 station/angle box support; all original points classified",
+        "seconds": 1.94
+      },
+      "warnings": [
+        "Independent adaptation inspired by DOI 10.1016/j.measurement.2026.123609; the full paper and author code were unavailable, so this is not a reproduction and published accuracy or speed is not claimed.",
+        "Green unsupported boxes are deliberately retained. Red groups are review candidates, not confirmed equipment or errors.",
+        "Inspect recesses, openings, junctions, rough SCL and possible outward reflections. Use one tunnel branch and do not use the cleaned result for deformation decisions without independent control and section checks.",
+        "Every selected original point and ID was classified at float64 coordinates; bounded file mappings and overlapping histogram windows limit working memory."
+      ],
+      "clusters": [
+        {
+          "id": 0,
+          "name": "Ray-supported tunnel lining",
+          "points": 600966,
+          "supervoxels": 0,
+          "centre": [
+            -1.7969829851605634,
+            5.44163139715061,
+            2.087099723411978
+          ],
+          "linearity": 0.0,
+          "planar_fraction": 0.0,
+          "overlap": 0.0,
+          "automatic_keep": true
+        },
+        {
+          "id": 1,
+          "name": "Interior objects before lining \u00b7 review",
+          "points": 27674,
+          "supervoxels": 0,
+          "centre": [
+            -2.8809008000289085,
+            5.286477364313075,
+            0.2485949201416492
+          ],
+          "linearity": 0.0,
+          "planar_fraction": 0.0,
+          "overlap": 0.0,
+          "automatic_keep": false
+        },
+        {
+          "id": 2,
+          "name": "Outside surface / possible reflections \u00b7 review",
+          "points": 605,
+          "supervoxels": 0,
+          "centre": [
+            -3.3524976033057845,
+            4.737943553719007,
+            3.8157961157024802
+          ],
+          "linearity": 0.0,
+          "planar_fraction": 0.0,
+          "overlap": 0.0,
+          "automatic_keep": false
+        }
+      ],
+      "kept": [
+        0
+      ],
+      "result_metadata": {},
+      "native_windows_tested": false,
+      "full_600_million_point_project_tested": false,
+      "case": "ray_box_4m",
+      "independent_ground_truth": false,
+      "accuracy_measured": false
+    }
+  ],
+  "real_scan_interpretation": {
+    "cleaning": "The full 10,125,420-point E57 completed. The displayed 4m cross-section shows inward structures proposed for exclusion while surrounding lining/floor remains. Visual inspection is qualitative and cannot establish correctness of every point.",
+    "classification": "On the full-density 629,245-point section, 30mm radius reduced fragmentation from557 to77 groups. No supported ring IDs were recovered at15mm or30mm, or by reducing GuSAC plane tolerance to5mm. This is geometric clustering, not confirmed design-panel or service-type identification.",
+    "synthetic_rings": "The production API fixture recovered4 deliberately separated synthetic rings and preserved them through a portable-project round trip. This is distinct from the real-scan outcome."
+  },
+  "bounded_processing": {
+    "source_read_records": 100000,
+    "maximum_output_batch_records": 500000,
+    "model_sample_maximum_original_points": 400000,
+    "tmatch_record_tree_points": 50000,
+    "tmatch_label_mapping_budget_bytes": 67108864,
+    "maximum_named_lining_components": 6000,
+    "excess_components": "All points retained under explicitly unresolved label0; counts and warning reported.",
+    "all_selected_retained_original_points_labelled": true,
+    "processing_point_cap": false,
+    "full_source_memory_map_in_new_selection_path": false,
+    "full_cloud_neighbour_matrix": false,
+    "process_tree_7GB_benchmark_on_600M_or_billion_points": false
+  },
+  "data_integrity": {
+    "original_xyz_storage": "float64",
+    "label_ids": "int64 original IDs and int32 labels",
+    "coordinates_moved_by_cleaning": false,
+    "preview_sampling_changes_processing": false,
+    "original_attributes_identity_verified_by_production_api_tests": true,
+    "ROI_and_existing_masks_verified": true,
+    "prior_result_survives_cancel_and_failure_verified": true,
+    "old_work_preservation": {
+      "20_october_working_copy": {
+        "source_files": 228,
+        "unchanged_files": 198,
+        "changed_files": [
+          "desktop.py",
+          "exchange.py",
+          "job_api.py",
+          "jobdata.py",
+          "meshing.py",
+          "pointio.py",
+          "preview_index.py",
+          "projects.py",
+          "release.py",
+          "server.py",
+          "surface_api.py",
+          "surface_extraction.py",
+          "surface_streaming.py",
+          "test_surface.py",
+          "test_update.py",
+          "tunnel_designer.py",
+          "web/alignment-hub.js",
+          "web/cad-ui.js",
+          "web/index.html",
+          "web/job-ui.js",
+          "web/ribbon.js",
+          "web/surface-ui.js",
+          "web/tunnel-designer-ui.js",
+          "web/workspace-ui.js",
+          "windows/launcher.c",
+          "windows/version.rc",
+          "workflows.py"
+        ],
+        "not_active_in_current_app": [
+          "pdf_drawing.py",
+          "pdf_outlines.py",
+          "web/pdf-drawing-ui.js"
+        ]
+      },
+      "24_october_0_14_11_update": {
+        "source_files": 233,
+        "unchanged_files": 198,
+        "changed_files": [
+          "METHOD_RAY_BOX_0_14_10.txt",
+          "desktop.py",
+          "exchange.py",
+          "job_api.py",
+          "jobdata.py",
+          "meshing.py",
+          "pointio.py",
+          "preview_index.py",
+          "projects.py",
+          "ray_box_extraction.py",
+          "release.py",
+          "server.py",
+          "surface_api.py",
+          "surface_extraction.py",
+          "surface_streaming.py",
+          "test_ray_box.py",
+          "test_surface.py",
+          "test_update.py",
+          "tunnel_designer.py",
+          "web/alignment-hub.js",
+          "web/cad-ui.js",
+          "web/index.html",
+          "web/job-ui.js",
+          "web/ribbon.js",
+          "web/surface-ui.js",
+          "web/tunnel-designer-ui.js",
+          "web/workspace-ui.js",
+          "windows/launcher.c",
+          "windows/version.rc",
+          "workflows.py"
+        ],
+        "not_active_in_current_app": [
+          "CHANGELOG_0_14_10.txt",
+          "CHANGELOG_0_14_11.txt",
+          "TEST_RESULTS_0_14_11.txt",
+          "gusac_tmatch.py",
+          "test_gusac_tmatch.py"
+        ]
+      },
+      "intentional_removals": {
+        "pdf_drawing.py": "Later explicit decision removes PDF Drawing.",
+        "pdf_outlines.py": "PDF Drawing-specific implementation removed.",
+        "web/pdf-drawing-ui.js": "PDF Drawing UI removed."
+      },
+      "superseded_01411_files": {
+        "gusac_tmatch.py": "Superseded by independently validated gusac.py/tmatch.py; historical source retained under recovered/later_updates.",
+        "test_gusac_tmatch.py": "Superseded by current GuSAC/TMatch/API test gates; retained as historical source.",
+        "historical_release_notes": "Copied under recovered/later_updates/0_14_11; current scope and validation have precedence."
+      }
+    },
+    "legacy_tests_modified": true,
+    "legacy_test_change_explanations": [
+      {
+        "file": "app/test_update.py",
+        "change": "Prefer the installed build_support/windows_installer.py path; use packaging/windows_installer.py when running from this source tree. Activation/rollback assertions are unchanged."
+      },
+      {
+        "file": "app/test_surface.py",
+        "change": "Document GuSAC as the user-facing default while keeping these legacy numeric tests explicitly on SMRG. Replace the old all-or-nothing corrupted-result open assertion with the requested recovery contract: result is unusable/quarantined with identity warning and original metadata; raw XYZ, attributes and current mask are unchanged; surface_api.result refuses the missing active result."
+      }
+    ],
+    "project_open_transaction_and_recovery_tested": true,
+    "missing_current_masks_are_not_reset": true,
+    "generated_mesh_samples_identified": true,
+    "inferred_mesh_faces_identified": true
+  },
+  "application_sha256": {
+    "CHANGELOG_0_10_0.txt": "cd9fe8f1e015c5015265ef4c177b700e3ae2d24ef9a22be18d12347881517733",
+    "CHANGELOG_0_11_0.txt": "a6fc42f5f61b81ae548fdb8df5cc75e1b9ed73fa825a4d47f0e3a4baaf46e52e",
+    "CHANGELOG_0_11_1.txt": "ec29473b57321931e084d32d1428002bee21e9fda67d5ab41f49a887481113d9",
+    "CHANGELOG_0_12_0.txt": "c5ccd3672b3e96f86f7f3609a2c68031cb0b0f23700e492de32011afd0a6a974",
+    "CHANGELOG_0_13_0.txt": "53cddb686c55ac2d3935bec800621c96a95962a9f1eda16acfde047948739ab9",
+    "CHANGELOG_0_13_1.txt": "ef63b461eeab95bda638ed4bcdf49bf5b63c200a48e6a7c3cef6762c226d641b",
+    "CHANGELOG_0_13_10.txt": "9912b041b7e021cc06e897cc5410ef715a425e0ef552dfd52a1d82e40c4ae99d",
+    "CHANGELOG_0_13_11.txt": "add7ac7cde66ed60ce947d70b73b8733667bba3363a106fbb123693b117e6658",
+    "CHANGELOG_0_13_12.txt": "5a0ad1380df3715c2237a7d723dafec46f03fc23c50d39bc23cf1b491f211dd3",
+    "CHANGELOG_0_13_13.txt": "c321557abf96f04ba0a903014668625fe0b49e3287fc44e39d1003e4af88398c",
+    "CHANGELOG_0_13_14.txt": "56a517d6b93fe64ee02ce5ad7a2b48a8202e8c2ffe7245d355328760c64cc433",
+    "CHANGELOG_0_13_15.txt": "91dfa43c80c4fa7ae6153f2d3e7500766f58155e78bcc789780aac248beca572",
+    "CHANGELOG_0_13_16.txt": "deb9b5900d4c13c93d776097cb54a522d6d3702f0a4ddae7ad8bd0e9971722f5",
+    "CHANGELOG_0_13_17.txt": "994902b852924cb5009375aa2f35c5d781dea2294100814201658f36468235a3",
+    "CHANGELOG_0_13_18.txt": "fa34d06cdcb88bfb4a8128de7c600e8a752c8724c11d8546d7a7916b77491a07",
+    "CHANGELOG_0_13_19.txt": "7afe0ed7ba23acef8514da67e4602b70b51789808b417290bc6604c1ba69aa26",
+    "CHANGELOG_0_13_2.txt": "f79ccac4f63d252ee016e5e5cbbcff3cf486604f2ada1746077d79a8c8570710",
+    "CHANGELOG_0_13_20.txt": "530174cf44275b1b323e377b77e3ebc512f3ca5e89323a28fe3d8570d8083aa0",
+    "CHANGELOG_0_13_22.txt": "24955ca548649359043669e34d2e35d6840d569bd778e01509b987e36dffeb82",
+    "CHANGELOG_0_13_23.txt": "1577dbbd64acf88b80b8d3fce4cf0c8344e765a12db5731669afe43aa0829f4e",
+    "CHANGELOG_0_13_24.txt": "328bf049b3cada3d09f42cf93f7ca494bde874a913a7909ff9483bd576f4f0a8",
+    "CHANGELOG_0_13_25.txt": "e861e7a79016f60ad5a5102cf5f4a55327b9c9571d78c653793ac1bca4fedea9",
+    "CHANGELOG_0_13_3.txt": "a9c7965dce1d60beb4398c04831d68f03dc1d9c5f044031f41dcc19657ff4088",
+    "CHANGELOG_0_13_4.txt": "863c5f9330d88aef08c2b9923477c7686fbc2e3d46706a45396c2773cfc43bf9",
+    "CHANGELOG_0_13_5.txt": "d728e0e55b67073fbc5118f6b47c0bc66ea256e14b7394634dd3d6317e87e059",
+    "CHANGELOG_0_13_6.txt": "62a0381da37171301367d70274e84ccc9dcb15d1a29ea3bfb5136c9cbc1deee6",
+    "CHANGELOG_0_13_7.txt": "6b08ea4679a14552868391c98f980a531f52d1a173d0eec47becaf7ee2a60675",
+    "CHANGELOG_0_13_8.txt": "884254764d3599f3b119cb5a10c1357c1c4b5ef177e99d05b86fce2c9b0df1cc",
+    "CHANGELOG_0_13_9.txt": "db3dc0fea8c73b136963f8e77b3b5eb3c9192ba62f8cad74e5261c33c6556387",
+    "CHANGELOG_0_14_0.txt": "e271e9dbeaf8cf56e9b2e129c445169bab53c2200681e78692f8185c46daa483",
+    "CHANGELOG_0_14_1.txt": "3d54f167d9a04733c9774855054b67174a55c1dbeb3295a11a4561cdfe012d48",
+    "CHANGELOG_0_14_2.txt": "12c6b14a2ac36434bddb91020ed55d72048486c92add7eec39475239d641bdf9",
+    "CHANGELOG_0_14_3.txt": "bdf7f36c71bea71f2fb043739c84a0cad31a32936c5e52c72a82eda306db210b",
+    "CHANGELOG_0_15_0.txt": "e2fcf5a7aa15971e9ef237af2ec6297b8cf9507185db34b7b6fd129e42dbdc6e",
+    "CHANGELOG_0_6_0.txt": "3ffd82d54212c05651e61d1a82f52a179cb42af0032f158d2080293e779d3f20",
+    "CHANGELOG_0_7_0.txt": "384a99c04a1283829aae635551a893bff044aa0a665912388d70461efa92e498",
+    "CHANGELOG_0_7_1.txt": "61342c2884ba6d07d7515b96f2723f962bf0aaf4098a36dceb19bedd8339afe1",
+    "CHANGELOG_0_7_2.txt": "8750f98b6747b3e5a77a9f631fffb595f12ee3bbadb1cdd2a5e6d5cb2c399b3a",
+    "CHANGELOG_0_8_0.txt": "8d4be7bfa0f09b4faea642b3020b0f51632f6756bc6458e6d413a1c6652713ff",
+    "CHANGELOG_0_9_0.txt": "d30282814729dadd10d2ef939f3583fe6e141c47b4c70927ddc40b339e911c6e",
+    "CLEAN_TUNNEL_METHOD_0_12_0.txt": "7c8297a9ba77c27d56de4a807347fbb142249d18e3c0ab20c1c366a6e88af52b",
+    "COPYRIGHT.txt": "1cbc46f6b41f915bc53cbb533dd4a90e912f9ce154660fc2ddc9022639865f06",
+    "DEVELOPMENT.txt": "aba6e97d16e7eb5c38cf019743dd1238208d73b4f5e95c7ef034a517042e7a80",
+    "DEVELOPMENT_0_3_0.txt": "a175375283cd58faf43c92929882e129fff8ff1aee642e1ebe6c1ebebe743de4",
+    "GUSAC_TMATCH_METHOD_0_15_0.txt": "d544b438e3c5d63e1c95a0d5a1a27c17409ce07a8779b0d97b8bf14dfbacd5f5",
+    "MESH_TO_CLOUD_0_15_0.txt": "417a948b9d9ac1e26dcb97d4362e5ea49ffeb7d1f48106f37d8ea229b74f4d5d",
+    "METHODS_0_13_0.txt": "1e67b4e6bfe1738df4ffbce02e5c5d13549bd5955fc1134ef0e47c95ec12e226",
+    "METHODS_0_13_22.txt": "71a72b075af34b1792f4378b4c4ce25ddef82346945b73aece852195292f7d6b",
+    "METHODS_0_13_23.txt": "9eb9340fc77b1688cf5a49fcf5cad6a150a3b6a9907deaa55a92233f770f988d",
+    "METHODS_0_13_24.txt": "0feb5de8426df9b5e09002bf8ff46f8ebe00c26a25a4f7469105593c62a4b55b",
+    "METHODS_0_13_25.txt": "479a5275f01e3cfdd0ca6e3a389b6f925fac90a9e9d30ec694bb5baed5e35f8c",
+    "METHODS_0_13_4.txt": "7c64a3dd539728524f2674858c5979ad6ff7a1a8d7180614604c33550304d1db",
+    "METHODS_0_13_6.txt": "e2bad2959340193c7f6927eee886fdb9726d0dd2aff9aa99ff8f66aeb208532a",
+    "METHODS_0_13_7.txt": "8bb48b9fbdfceb103c96a12669b446a5dc97adfe0059a47cb1b425330df19717",
+    "METHODS_0_13_8.txt": "a0674a8841f8ff70671b77aa11e842a4356e5383e2625e28f1d1927690d6f233",
+    "METHODS_0_14_2.txt": "c58835ba5c351104cfb0091b6293ef2a9b659050b60db7f960bf1908f320087d",
+    "METHODS_0_14_3.txt": "fc684379664bc2f25323ffde1c6f44b80be4656fa87bc9b5c6627465116c9e8b",
+    "METHOD_RAY_BOX_0_14_10.txt": "4e8ef4078a43c617dd58a21f0077cac6d3744d38630afc4505b648be39c5791c",
+    "REFERENCES_0_10_0.txt": "50deef0c3eb14a09099677b0588c82bd90642231346f17db42a77b93ececa6ee",
+    "REFERENCES_0_11_0.txt": "60e5e294b6d1b8b0c69097c4eb375d05353ea53c025afc70313aba499044b856",
+    "RELEASE_SCOPE_0_15_0.txt": "a4bb77cc76890286f6b4740e5362a94d139216bb6f58a7cacd6416ec9a4b6b2f",
+    "SECTION_METHOD_0_12_0.txt": "77c4fcc39213d47406289dcd4a579e29517d01791af152400aff754160968dd4",
+    "SURFACE_METHOD_0_4_0.txt": "8bf37b8b2f799c58802bbd82be8c527ad78b8ba60ee9deb5ed4f0c035d0271c6",
+    "TARGET_DETECTION_REVIEW_0_12_0.txt": "25eb208e23e4f224af6b37d8ce3c392f2704e548489b25e5474b5c507598f402",
+    "TEST_RESULTS.txt": "bc11330c55380427b52cea1820f04c18001ed2ded0bc02c682744055097b57fb",
+    "TEST_RESULTS_0_5_0.txt": "e2eaf5c2787a46428d0b05b96a949eeeb54a1814295892c29e6810a4c0d231cc",
+    "THIRD_PARTY_NOTICES.txt": "d537040165dc369b81a3d5e9a3f2e3f82f1dc727a03ec4c31e340a94cae1189b",
+    "UPDATE_GUIDE_0_4_0.txt": "a141711194c103bd66f23a0024defd17254248f1dae038ba36008fcff0c9296b",
+    "UPDATE_GUIDE_0_5_0.txt": "ecbebbb46d1c308994719278f7cd676afe6b22f2679b16d29ed5a5dae7054ad2",
+    "WEEKEND_CHECKLIST.txt": "c389c9c3794952686b26766379839ea25934cba55a7a18a6e4821a898d7a18ca",
+    "alignment_model.py": "a9780ebb8b4d2d8349c141b470fcb87455d69d215e1db41f92ce72a4716db2c5",
+    "analysis_tools.py": "b633c75f2a073c22dbb5be219682473063f9f5450c8274f13a80a0901c891cec",
+    "browser_mode.py": "8a08e27d90815e1a520fce0f36b3887c75c8fa612909f514ef5d197ebe4183ea",
+    "cad_api.py": "fd38bbc18ccb5c3e3414491d33d70f8f15f99618d06126a2ee1df7629731e231",
+    "cad_geometry.py": "7b2c63170142bbba87fc4e54009a31f4c2bedac28fe1c0a60e50de7f80ee2939",
+    "checker_evidence.py": "8c75aea056870cdba10b917f4ec82d2ff0ba926e720b86016c5e6221f2bf6aa9",
+    "clean_tunnel.py": "ca4e88d150a7778b2f58ed7f31455c1195d02fad3b3da46306aef6899962ab61",
+    "combined_denoising.py": "18a73ac7d3dead224149e15359ecddcebb3218f7d7f0595d805a2c22fd7146cc",
+    "core.py": "5ee5f6cddbfee97f54a378dbdf4252f0b402cc1b4454561ead2f1bffca582024",
+    "demo_targets.py": "41037ceba4e2b298b5f88245c997a91954814bbb2a19bb7bce359f74af53f5cb",
+    "design_api.py": "304e22b46b030097e3a3d30b9286737a522c894595261f529efff4dc30e390d0",
+    "design_compare.py": "f3b0bb7b040713d5327e1a72aeb171670e6c581d1b53893ad578ed1c27ac3675",
+    "desktop.py": "47906d8b5fb0046b2ea0e7026a62ca4de4f250161a28f6603f40266c71d8d584",
+    "detached_windows.py": "4bdfb1245073705a90b2d752c84095c0fb629209caf61198f1301bfbe5184163",
+    "detail_preview.py": "8ded0ebc1530f7d3f9778ef641aa74026d5028a709f4ef56b673b56a7f6925fc",
+    "e57_setup_photos.py": "34918a0b456763cf5f017825a0052be1807de9d9bf20c82e541d3bd7a3e57f0e",
+    "e57_worker.py": "76b12b19977809efbb1fb21c0d4e97a12c8da4a22d903deb7c4f1d895e22d61e",
+    "editing.py": "45cf3d7c4bc9114eb72a854759258f8c66e538ab7d34c507a2a81ccbe1591fd9",
+    "examples/SAMPLE_SURVEY_REPORT.html": "4f87e8b9cc1fdc353a9a987ebd482571a731d2c747ffd9db22861ff3d52125e9",
+    "examples/SAMPLE_SURVEY_REPORT.pdf": "df1f91eb749fd6cefd7a08a1cf9c212022176473623903613878565aa54d69f6",
+    "examples/alignment_template.csv": "9dc65c5a3a506161d72efdcd258fabd5b85c7b3ba680ba891fc2699fc1da8f5f",
+    "examples/control_template.csv": "aa2d00ae10d0ea62a3173b18db56540491c81f2f023fbb23c8cfba9cb3fd6f2c",
+    "examples/demo_alignment.csv": "c970fddbad074ab7cd9c83a4bf8d627a0f2fb61fec73470e6ec0e593aeb49f21",
+    "examples/demo_rings.csv": "efa9a04b483a730afc7bb319657cfb9419f8344275e16bf7880bdc8be1c62fc7",
+    "examples/points_template.csv": "bb8d2542567ef04ffe817aca925ac616df5096a85481fdb3fe037f1f4d557b1d",
+    "examples/ring_template.csv": "a52e713d60ebd07ea16c6252ade025a29ab2d0d997d5eb6048ca6ee45fee52df",
+    "exchange.py": "15ba5bb19352a43787fa74819ae1ec728a63f80e65db39ad1623e4daf479e7fc",
+    "gusac.py": "340a0e762cba92d429d959a874cb1b497817e06a6d6c084bc535777e84b938cd",
+    "heatmap.py": "83650ba586989909009ee614efe2baf7ff591b5e8d0b6568bb71dcb4a88d7c26",
+    "hspca_codec.py": "cf83ded72ad7af93c0e17a3087051ffc5dcce8d04c49e6c31e9038b134105023",
+    "hspca_import.py": "55eab9f6d403eb4f21cc0ebb4669ad2c47bde13712ffb916fb1b2e1838ccf32c",
+    "hspca_worker.py": "9d660223deb20bb87b2296cfa47160140877ccc3751c420ed51cf087ab678143",
+    "install_bundle.py": "2c5dfcac212dbbd4c4fe0e14dc223d500ad023d513af7d27b8090c9dacb4b8e0",
+    "install_windows.py": "b395d8de5a690e74c8b1ee381d6f442e85555971369d076e4c2eecbb6882276b",
+    "irregular_surfaces.py": "ea94aa7290f4702553fc0b956583053aaacaccd121e7f619fc1770c71fde3357",
+    "job_api.py": "bf108ebdae4f72e03436421670c4603bd2c1548e12b79146f52f1c1b69dafe3a",
+    "jobdata.py": "6d37844132b74846788362c225b01c771bf292de43c0cab3e090941335b3214a",
+    "joint_scan.py": "24f0f325c2bb0990b74f4a9ec22a5aabd906bfe39aea2813155bfc008e3da11b",
+    "large_sections.py": "8100090f33b5183fef761ff87a1915da6bb4fdeabd1038428be336add7ecf626",
+    "leica_bridge.py": "1b1339a15947de9c4121a80182ffdb9e18b82526bd2b9d1e4b25052826f5aebd",
+    "leica_e57_worker.py": "06b6ca2bac9f9df51934ae20669b1e733be05f750f6880930afa26532c3c61b5",
+    "leica_project.py": "c5bd0199528f8e78525859640841a6b72eb9a8b97f26f92888b9c511b7c0c672",
+    "lining_features.py": "e95da5c807853e0285d86953e8c54ff18f764cebb011ecf2c81a771678b4815c",
+    "lining_tiles.py": "9c0d269cff1372ce6ea512d387dac6ab5972b24c1670b12e7be9f3efaa88323f",
+    "mask_storage.py": "370be2197171fc141d6df7c82c566518897b8104376690f49a8dd1d78d12878c",
+    "mesh_geometry.py": "587fc5198023d21b26ff2ca376e508f6a2d7abac89b7d3763da313553a43e9ae",
+    "mesh_preview.py": "a2891f1146cb826360b28b158f2752cb793e76fccf7aee0314867a2784d05c28",
+    "mesh_repair.py": "3922ecb533fa0c3fb43d256de70950dbecf367e7bb653d4aa2233070d9b1c647",
+    "mesh_to_cloud.py": "c96fa93e00186d177d2a6ad2b4594eb6a2b70c129ecdf2fc6ed16af3fca5d9c6",
+    "meshing.py": "41b90650ec92d498ee0b370bf11ccaf704c69693f52a7014cea8540545dbc3ef",
+    "native_progress.py": "cda89d86278832d36f9753b36096a36e4d48f035d07d975381f4bdba7dbf3867",
+    "ply_ascii.py": "aa741a8ba3627897b84daf2a8b55d7e805560c963a9b0752e534de6708c99252",
+    "pointio.py": "6dc23a865d3c33ab8b806e5950b6cd9f87e0a2f5f00780429cacc108ce42ee5c",
+    "preview_3d.png": "6d7d5768ed2d46b60dbcf8877e243a6b52079355bba146484cb69cea1a742072",
+    "preview_heatmap.png": "5c0a1bcb7fd5ea4321dcd226905f7e58ae2e94918caf56c6e60a8d51d5dbceed",
+    "preview_index.py": "32a816a3228371f49271c212cbb8aaffdf141754f63fd36cde91039323199335",
+    "preview_store.py": "fd6bffa65426f54d9fd75a0e46ebd6e1a40a400a70ca6a84410ede889e10e2c2",
+    "project_maintenance.py": "baf795a1758943924bba61b5e1a08e993a2f51e0e494ebe4d5f101cb0e0954fc",
+    "project_validation.py": "4ebe43b7ecbffa34db59266f44834db26b31c8fb14fedda8aa6071c5ca3358d1",
+    "projects.py": "ca6be4fa6fb301d96dc75640ad40aa843b97c8c2be02fd79c0ade95ac20e1f6d",
+    "ray_box_extraction.py": "dce44a9b42f5feb36e5d3a7cf03bbf70af30f7f711a2ba9d8430946df4bc4fce",
+    "reflection_cleaning.py": "6334cc3efa39f38688fc033b1fcc099795c06b7448b332be4d40b47efcc923c5",
+    "registered_cloud.py": "92f5fdfe301df57ab0c8ee2e7dc1e388d1e43985e36b86d302bb912a5157c23c",
+    "registration.py": "2a5871bf23315fe5ab14caa0ca697a6da0860aa2404dd07d9dc5d943ea9b4628",
+    "registration_network.py": "e5b929175f9b6ba719442ba1901015df7a8fba3d1b67a69a53ed7d283633e163",
+    "registration_references.py": "fd3d6618dde24db277c1813c013751d6e86d4bb2e385adce4f13442e2112ca85",
+    "registration_workspace.py": "91ac371c49e641321d367b188f9dbf45f8afd75f1772432a1ffc7b85e97b6688",
+    "release.py": "a05d23a4ea6cc17b4c83e27291a7de20ab8d07554d2a263aab2c51b3d15e6dd1",
+    "reporting.py": "56185da652cf8198b79da836a6a10cf0011823a10b354f13b46ebf0287a95b53",
+    "requirements-desktop.txt": "89e2f0fc59ad44c88a3b2a20bc1026ecbf9185c73d888c547d1c86e684f0fe1b",
+    "requirements.txt": "318975e04056bf18adf20564cbc4e4b7f515db0e7c23d691a950139e626bfa68",
+    "ring_creep.py": "2a3c1958f2b5bcca538bd704f481942b00ef82f4b97b275c7abe2e18fa611c26",
+    "ring_suggestions.py": "b1b08ba5203fb156e620e1946b7a27bd06aa5177c9e1bd7902c83196412f2c12",
+    "rtc360_folder.py": "2a4049941899c99b79b15e8772cd7d6dbdf418407b0b06df2fa2925e9edfa87a",
+    "rtc360_image_probe.py": "ef447454b6d380a2fc7400be3f8126b8ba1c32cbeced141f592ee2944b28440d",
+    "rtc360_native.py": "90a3c37e5f32d15636b51b66d3de890e62db8bca10c03262cbadc39c6f25ff70",
+    "rtc360_native_worker.py": "366c9ad04159067fa05e2885295b55c856539c6fb0d32081c58ccf007023245f",
+    "rtc360_optics.py": "6b1b32523f51fbf85c847be89da0f9e87031a505cb58f2bcb99ceb4c2bdac3ed",
+    "rtc360_scan_probe.py": "a37757982a38fd11e9449654d280d62da726a2111359844b43796083ab2da737",
+    "rtc360_source.py": "1b8d4f2049fec205b8fbd3813030920b34560385bca160fbdcb3ba232d8c9e73",
+    "runtime_diagnostics.py": "a8d25d081cacb1fa30f0e2557da25f54e13b2278860242cb74d7d54ff565c97e",
+    "scan_compaction.py": "2532d33d51a1f2b7884d297d929ef57a7a9e5320ac4cfc94aa28d382f0848887",
+    "scan_edits.py": "a6a3dd68bda4208f3ae4c7bf2a5b7b63b8600da8049ef72052f3ef9c6578cea4",
+    "scan_export.py": "82c09d8f4307411beb8d64247e49238b9248d0f8f759a175ee98b15d6ace17a6",
+    "scan_geometry.py": "60270cee4090b550ce909d02255d0d579dd503a21f1370ec947bc06defc0b931",
+    "scene_objects.py": "7eb0fc81e0b1c2147fb951b4d57c06a9ffbf5e8a33e52dcbe4ddbcb6d65129c7",
+    "section_api.py": "2ece54be96e483c6fc01afa752611285a6d5a883304084258bbdf0f97814b41e",
+    "section_path.py": "a55322f67860f4d6b3f0f1f4f683369f5f9188f44437a56d7b0cced354cb769d",
+    "section_research.py": "e6ef5f66c1659b30cdb56bab91e1ce3a2f282ee6eabfd930fe18424806e7c24f",
+    "section_shape.py": "e441079a452f9062936f91f2a5053405dc970603c914736e6a2655012ebc5576",
+    "server.py": "893027a3f16ad0a05f5925144f880e16ee162602083d0348c1e084107b59c2fd",
+    "session_start.py": "fd8f1c7debf2d7f38e441168c2af54027beef25a061f233f6dc84788bc6c487a",
+    "setup_camera.py": "dbdad22ad6c38d6e58533cada3db2b462bc44c79f786533e3bcbc1b9edd5b9d5",
+    "setup_photo_codec.py": "ca7b7e180991d69ea7fd90339d61ce74f61f0cfdab7724ebaba1a6e1b01ca1d6",
+    "setup_photos.py": "90dd7881dc6a85c351919f4de67abd87e9c904220ec4479397e83fe6cdf58603",
+    "setup_view.py": "1addf1c115fb1cb7ccf5f8ddd279f32ab591d97d9cc519486950add5b7b513fe",
+    "startup_support.py": "7768d113d19e47751040c8303f5f6c7eb8d1be2933616138961c00cf5b02e7b7",
+    "structures.py": "9c01a8be100497dd1bf6a50bf13315e0dc60ac6d62c04552bd9a456a01500572",
+    "surface_api.py": "c75790b16116a28e7f75d168230b5a10f6ea78f649f191bce3b7a5d49ea6742a",
+    "surface_demo.py": "5f46da1ee0fef968dc4c8f799c1ee6d7c0c27d4203eeb95b8a0c2507d51f64dc",
+    "surface_extraction.py": "9dfe8f1145d382fdd51e28d50d751f981f5e1ee7bfb07e55a2d3b1b94ef45757",
+    "surface_streaming.py": "bc4544688a61bd1fd36e02df03ddb4e7e8f315057773fdac0458f8b4cf0c4810",
+    "target_ops.py": "3ad3303a85e6588c643fdc489c8330c067013f6edb778745f8e4b5f4c96afdd3",
+    "target_search.py": "7f49adb80dcdb06bb765c4e85399f191b5e133bb1c645df392d01ec3d0d6d791",
+    "target_thumbnail.py": "face7434722c5f283ce509801bf5e9d2efad7fef7cc6ae0629822b8713dc660a",
+    "test_core.py": "047c7463cc8608cacff33b4022e22baa67ae6e6ea6504d89bc8e46ee7d0418da",
+    "test_desktop_backend.py": "a2ffa0f889d551fdef53ff6a37ea43a316afcaa28fc435b2c9ddaf16f7e34ed3",
+    "test_features.py": "930d6df54459ccfbff5ade0665b23b27252a93529fc77eec411cf343c19c4516",
+    "test_jobs.py": "98bd957a3bc7b9cac869a3d0c1ebb8d28bf5af2c2eb0c265311af0b87b192e99",
+    "test_mesh_to_cloud.py": "95a5d69d60b890fb796dd5d4deb43823f6e2d3230eeb8a7b86941378088748fc",
+    "test_ray_box.py": "ae83c2550f36676c31c3f7212e3b73b81bc7229e28901c130f6e420d7b0545ab",
+    "test_registration.py": "f9a426aa25d4255753f00decac5f2ad1b6847589d9a61c3285427931ea755693",
+    "test_startup.py": "2f34db8e59e5d9f26e9b2a025610405e72a783d1c9b046e7d9fedc7d94c5e443",
+    "test_surface.py": "6b59139c3ab716db8221e15b2d3f10bf9ddfdf4d4d6cf27fc0f42f4d387437f7",
+    "test_update.py": "ce636e96c8f527827dfa74cb985c9b89847c9568aec6d43194ab26a62671875d",
+    "tmatch.py": "0cfcc1078af13401ca603f6676aca3999c7786508b102bdcd627f7f0a2d9ca86",
+    "tunnel_axis_fit.py": "b098101170ce6dae70a1fae7d6edde09d94219031b3c7a3edf227f3f016a96a2",
+    "tunnel_designer.py": "ef4e98309448229b82a79008016f4f857dd794370a72e0142a621e4dec031cfa",
+    "tunnel_lining.py": "3081bcafaf2c1278302fcd77a34c5e96b36b1b16a5f227f9cd953edab6cae06a",
+    "tunnel_surface.py": "1b78ff7752a2fd53edd6af530c666579248b5277d87e1de416eb8c0d204f437b",
+    "upload_io.py": "60307819dcfcdd6017b97bc93b9a605d4e95ff423e343feb5ae04ce4212ac1e7",
+    "web/alignment-editor-ui.js": "d34081e191ecff5d92cac2e7cd42d5b097985da9610da9e6c3ee9f9991dad309",
+    "web/alignment-hub.js": "adf31cc2086b2b75ce021aea2e0124fd33f149c41f789ee9b62f6b2e5b66d9cd",
+    "web/app.js": "39f0b4c79f1a78b5053f7746e2b04f20ece02f88448499184307729df72779dd",
+    "web/cad-math.js": "3c2d8272f86673c7475ec9f008ae1df4621ef8ec0a86a04f6b2a2231ef014cac",
+    "web/cad-ui.js": "643bdca60e8dcf2af88bd2f017d8dc2d83ec9d6a915805fd662455a00bca91bd",
+    "web/cad.css": "7a85a9b033e95a717903433b658213e571700cf175c20f5b72c23788f686ee7e",
+    "web/cleaning-help.js": "e6f7128f8260a027292a31dc79441ea9472a559f85edc2401cae23ed62f3d53f",
+    "web/design-ui.js": "909bf96e63fbf562737b6fb4e2e000e5ee60fac0cdcaa0aef77e1dcc3342144a",
+    "web/detached-client.js": "a6225c0c7e87424344d669c11a1e9ffe7dfcae60c3bc53650ab1cabfc0859af4",
+    "web/detached-ui.js": "129d9c6ce6d4dbc71c72258204016282ee52312d43d01bbc81fac6c9872bbe8f",
+    "web/detached.html": "f3762c59486e7be9902f77cad67bd1eae7ddbdb682b48e5d017280208a19d7f5",
+    "web/export-ui.js": "6b7e3efb94427b7989c029f21306f7906896f883abfab5a7cff70abd2193b5a2",
+    "web/file-drop-ui.js": "f2b2b2d96cd6308bd3188dcff8fc3569bdbca81f5cab33d1b21d9f200cc17975",
+    "web/heatmap-ui.js": "e1b4e1d0034f315b53372d42148a180026991432e11e36af46fc9daccf2d2524",
+    "web/history-ui.js": "108a2e587ce579499d12f9ad55a3c9d257c5e9e80c0d0768a2bf6dbca3e98d6e",
+    "web/index.html": "940cde12c95ba4ead966034f4ebb4dc831476888f974658aa649c14279459cb4",
+    "web/job-ui.js": "3cf5f7d9b58bcde548bb6d81b1cba0565031e480237ebf579f3ce15bc2cd9c06",
+    "web/job.css": "cd3449f685474f8fbcd8c79bc3a676dbf7d93bd58ea3e7f7de48be84851cd541",
+    "web/joint-ui.js": "62852da3d34e97ed94510f526488468d711fa9659055276b8e6aa565a9abd693",
+    "web/leica-bridge-ui.js": "5d84d1a1d626ecf149f58692eff8e72f086902dc94da9c8b0c36b29aca458655",
+    "web/limit-box-ui.js": "25b23659269b235ce7febaf9d0aadf46ff3bd77b9723b2e74688e943f2c28331",
+    "web/mesh-repair-ui.js": "c915690f4a4f17e8496c3bc4d85d58932f9729d3384f1c692384e8477d5c15d6",
+    "web/mesh-to-cloud-ui.js": "5a0c0ba55fccdf20959cc2961f1880036819e7663548711e68c7bf29166a1b66",
+    "web/registration-ui.js": "24e29b91a3898e18fc05876d8c6e14e4a6c3f6a53697566f529604104547fa66",
+    "web/ribbon.css": "36c97926beab47b0a8d963f57812dc198c83138853554436d11e0c35f795c702",
+    "web/ribbon.js": "94ab8c43f07cd3aa8a97e4f6d7cd73e8116fa4e0eb9e04fde2c5cdeac66e0d03",
+    "web/ring-creep-ui.js": "e113adc43ce2ca4487893741600f098c03d8e3354eb24b9dcbd2cb7631b83dd9",
+    "web/scan-registration-ui.js": "a0d157b9930980b0d9e0a6aea1acb5fbe2497282cf75949aac319b8442302096",
+    "web/scan-tools-ui.js": "70b12d25150d4837053df7adec425d5579ed04f66d18270de46bb45123f9ae66",
+    "web/scene-objects-ui.js": "ca94f50194715d565ee7b782882cb1e541876ae1e0b8610e667f3912d8fa31a8",
+    "web/section-locator-ui.js": "c0880cae8ff19e37d12cde2b6d55827c8e98287fe971d9cbfdc92ae7d59a549b",
+    "web/section-plot-ui.js": "f9106ea662d2f16247abf4bb93e4014968fe0cd254c4e7f11dd5edc4e41ec23c",
+    "web/section-research-ui.js": "50cd6be4c19930a80d36f29665b87cf8f3226d25b40ad8f1a3ac4c88fe44133e",
+    "web/setup-backdrop.js": "f0c5921f0b85a75c75f80c312dbe524aaed5bc99a01a95157d751d1c8f65a701",
+    "web/setup-camera-ui.js": "ca0048c9c5d4e1929b31caded03e189f49cc8d6576fe197d7424be3d7d6ddd15",
+    "web/setup-photo-viewer.js": "1eb7bf8f02904f50473296dcebab71beea5a31f0bc8d286865c51f72938688fd",
+    "web/style.css": "59e259b597d37c30f77183c47dd11f277837d9b27c8be4b6343685dd61b5adc6",
+    "web/surface-ui.js": "ba0874fcc2c4e06e4b454f39b371b052cc4c98933ce15ae6d95ede52c6dfb97a",
+    "web/surface.css": "152fa39a079989330b144fe2158c51be7a016e7e2b4a16ad7b9c17d6076ee9e9",
+    "web/tunnel-designer-ui.js": "5263a84efc87730cd109bc6098df7458c365db9e5bf84af0e60ce312c3d4fd3a",
+    "web/tunnel.ico": "703a4b80cfa64e8419482e1a2e68f60ca2b0087ff8bd94d0b707108f794cce6f",
+    "web/ui-icons.js": "53d31d9fa03dcfdc1b481f9997a2d19faa22e22601524e5e5743a432990b0194",
+    "web/work-status-ui.js": "25552d7a4e2b1c894a775cc564d1c1228e0bbf2f745bcbfc3e1a6b9313c00470",
+    "web/workspace-ui.js": "086edfd5c52e5710fd73101aac49a30ea2251fd65245f73c12f447d00f6ba408",
+    "windows/launcher.c": "fa682c4d22f867c1573e67c387ce784d999fc33ec2d31babd376d732bb8c2003",
+    "windows/version.rc": "bcd23b4980e5394b83be08e7d2173e1748b8a0d185a19c955ad342b63bb753b5",
+    "work/checks/gusac_synthetic_report.json": "c4d9c446ef697e2b914c8bdd1120d41a8f1ea99c4a8fb163f8058b20158dfa67",
+    "work/checks/test_gusac.py": "2fe73c4acb181f829fa8aaa3d33518aeb00c475f7bcd740e7e952d021ce0c688",
+    "workflows.py": "30ebd7c1bfe4ca1a14055a4100e39076e76e7a1514bb077cc9bbb827e3c8a097",
+    "workspace_history.py": "a5544ffd75232e0c97032c14665e330b9d7f040f700ec95702494f9c145e1a59",
+    "workspace_tools.py": "4721dbf0885e5de7e1441cde51ccd891a53888451f65b41d57a055707b5d0781"
+  },
+  "not_established": [
+    "No independently labelled real-scan accuracy, precision, recall or all-service removal guarantee.",
+    "No native Windows/GPU execution on the build host.",
+    "No full600-million-point or billion-point project run, and no measured whole-process-tree7GB guarantee.",
+    "No exact reproduction of the underspecified crown/MST/cubic-axis or adjacent-group plane reassignment steps.",
+    "No automatic semantic cable/pipe type classifier or universal ring/segment design template.",
+    "The user reported failing project and mesh files were not supplied; generated compatibility and repair fixtures do not reproduce those exact files.",
+    "No 25 GB PTS import speed benchmark or physical File Explorer drag/drop run. Native renderer rewrite and TriMe/local-chart mesh engines remain proposals."
+  ],
+  "reproduction_sources": "The saved source checkpoint contains the tests and full real-run JSON records. No private scan or project files are bundled into the installer.",
+  "real_result_html_export_checks": [
+    {
+      "method": "gusac",
+      "html_report_generated": true,
+      "bytes": 7703
+    },
+    {
+      "method": "tmatch_r30",
+      "html_report_generated": true,
+      "bytes": 16518
+    }
+  ],
+  "automated_backend_test_count": 196,
+  "automated_ui_scenario_count": 53,
+  "repeated_checks_not_double_counted": {
+    "mesh_sampling_existing_job_regressions": 6,
+    "source_streaming_output_pts_brush_native_bridge": "Included in the 77-test combined regression gate."
+  },
+  "consolidated_scope_document": "RELEASE_SCOPE_0_15_0.txt",
+  "application_hash_scope": "All application files excluding this self-referential report and transient Python bytecode. Installer FILES_SHA256.json covers the packaged report as well.",
+  "packaging_source_sha256": {
+    "TunnelStudio.nsi": "70b4e8e0d5a19663e53353750ee490395c232e6472c1ea6651e64b56cfb5ee6d",
+    "build_windows.py": "bee2b17fa381c186f5e852a834d5ffca0c269ebfdffe9772bccf9c20c0071b9e",
+    "finalize_validation.py": "3c20d5737ed72cc6aaa184a4d8ba82483e57bfd32e739a30fdde0ad96b5cbeda",
+    "launcher.c": "b55fe3ff2944cc2e8c4f0b2e9e0755ad034b3df66a0179efdf8e5937c32b7425",
+    "launcher.rc": "54f768ef9391d9c20525bf6e5433479d81b399e27a537ab2ff9c8586577a55ed",
+    "source_provenance.json": "86294f28a9c9fb8d8cc2eae5755e77bedd6d2e6fd25a6549c8946850d84b874b",
+    "test_installer.py": "198b2f6a01802063c5038028f3b25c3dca2963035abed1fe180fd98b7f712efe",
+    "windows_installer.py": "0596958166753b250e3d5cecba5385e15974ced17bd75a41012eaf8e617484bc"
+  }
+}

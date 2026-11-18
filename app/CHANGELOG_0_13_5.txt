@@ -1,0 +1,49 @@
+TUNNEL STUDIO 0.13.5 - POINT PICKING AND CLUSTER VISIBILITY
+13 October 2026
+
+PICKING A POINT INSIDE THE TUNNEL
+- After Continue, drag with the left button to rotate the scan.
+- Shift-drag or right-drag pans; the mouse wheel zooms.
+- Click without dragging to choose the interior point. Moving the view does
+  not finish the pick. Escape or changing tools cancels picking.
+- A hint remains visible over the main viewport while picking is armed.
+- The point is placed at the current view-centre depth, as before. It orients
+  extraction; it is not a surveyed measurement of a point in the empty space.
+
+POINT AND TARGET PICKS
+The same navigation is available when choosing a displayed scan point for
+measurements or target fitting. Picking still snaps to a nearby displayed
+point. Two-point measurement requires two distinct clicks.
+
+CLEAR CLUSTER SELECTION
+- Selected clusters turn bright magenta in the main 3D view.
+- Their Review rows have a matching highlight and a Selected badge.
+- A visible viewport legend explains magenta selection, green kept points,
+  orange removed points, and yellow Box/Lasso areas.
+- Clearing selection restores each cluster's Keep/Remove colour. Selecting,
+  hiding and inspecting a cluster do not change its Keep/Remove decision.
+
+ACCIDENTAL PICKS FIXED
+- A drag never becomes a click just because it ends near its starting point.
+- Right-click, Shift-click, a cancelled pointer or releasing outside the
+  viewport cannot choose an interior point.
+- Escape cancels an unfinished camera drag as well as point picking.
+- Finishing a point pick in Review cannot also select a cluster behind it.
+
+INSTALL
+Save your project, close Tunnel Studio and its server, extract the complete
+ZIP and run UPDATE_TUNNEL_STUDIO.bat. Confirm version 0.13.5. Refresh the page
+if using browser mode. The updater keeps an application-file backup.
+
+This cumulative package includes the 0.13.4 scan tools and prior fixes.
+Cleaning and meshing algorithms, point density and file-format support are
+unchanged by this patch. See WHATS_NEW_0_13_4.txt for the preceding release.
+
+VERIFICATION
+89 UI checks passed, including 18 focused navigation/picking/colour cases.
+The focused checks inspect camera uniforms and colours uploaded to WebGL,
+using production JavaScript and a stateful local-API fixture. The reported
+rotation failure was reproduced against the previous 0.13.4 frontend.
+The existing static-asset delivery check, JavaScript/Python syntax and all
+payload hashes passed. Historical numerical test reports remain included.
+Native Windows/WebView2 mouse handling and final GPU pixels were not tested.

@@ -1,0 +1,64 @@
+TUNNEL STUDIO 0.13.9 - NATIVE LEICA SETUPS AND TARGET PREVIEWS
+14 October 2026
+
+INSTALL
+1. Save your project and close Tunnel Studio completely.
+2. Extract this entire ZIP into a new folder.
+3. Double-click UPDATE_TUNNEL_STUDIO.bat. Internet access is needed on the
+   first installation to fetch the native reader dependency for the app runtime.
+4. Check that Tunnel Studio shows version 0.13.9. Refresh browser mode after
+   restarting the server.
+
+This updates your existing Windows installation; it is not a standalone app.
+Application files are backed up. RESTORE_PREVIOUS_VERSION.bat restores them.
+Existing projects and source scan files are kept. The separate optional native
+reader dependency can remain after rollback; it does not upgrade NumPy/SciPy.
+If dependency installation fails, application files are not updated.
+
+IMPORT YOUR LEICA SCAN
+Use Import > Scan / point cloud, then select a .hspca file from SetupsFolder.
+Start with 27bd5423-901d-4d86-ad48-a9047d075fe9.hspca, which you already tested.
+362e04df-40b5-48f8-bdf7-21e7e4f1c623.hspca is also tested.
+You do not need to run hspca_probe.py or any terminal commands.
+The scan appears in Scans & models and the normal 3D workspace.
+The default colour view uses intensity for native scans. Detailed intensity
+view and contrast/brightness controls remain available.
+
+IMPORTANT POSITIONING LIMIT
+These are individual scanner-local setups. This update does NOT apply the
+saved Register 360 setup positions from the project database. Import one setup
+at a time for inspection, or use the application's registration workflow.
+Several setups are not automatically aligned just because they share a folder.
+The full registered project and combined PointCloud/a1e55dfc...hspca file
+remain unsupported. Do not select the project folder, SDA, HDS or DAT files.
+RGB/HDR colour, photographs, external cleaning masks and native normals are
+not imported. The working cache retains every decoded XYZ and intensity value;
+the original files keep all other attributes unchanged.
+
+For browser mode, Import > Read a large file directly from this PC lets you
+paste the full path without making a browser transfer copy. The browser file
+picker also accepts .hspca. Cache storage is about 40 bytes per point plus a
+small preview: roughly 1.5 GB per supplied setup, plus working free space.
+Unsupported layouts, cleaned native point flags and corrupt files stop with
+an explanation. Incomplete native imports are discarded on cancellation.
+
+TARGET PREVIEWS
+Select the scan, then Registration > Find B&W targets, or Pick & fit centre.
+Each new suggestion has a small intensity/colour-contrast preview with a red
+cross at the fitted centre. Click the thumbnail or Inspect to focus the scan.
+The Targets list also shows the thumbnail. Dark-grey empty pixels are gaps,
+not measured black intensity. Preview contrast is adjusted locally.
+Older saved candidates need a new search/refine to generate thumbnails.
+No target size is requested. Suggestions still need review before Use centre.
+
+VALIDATION
+Both supplied complete HSPCAs decoded to app caches: 75,094,568 total points.
+Counts, byte sizes, node bounds and embedded scan bounds matched. Full import
+including writing XYZ/intensity and source hashing took about 29 seconds per
+setup here; your Windows/disk timing may differ.
+Four real known-position target patches each returned a local fitted centre
+and a scan-derived thumbnail. This is not a whole-scan detection test.
+Native Windows installation and GPU rendering have not been exercised here.
+Native decoding is experimental; independent survey accuracy remains unverified.
+Previous unexplained differences from Leica metadata means/variances remain
+open; matching counts/bounds alone is not accuracy certification.

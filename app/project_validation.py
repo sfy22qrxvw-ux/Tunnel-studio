@@ -8,17 +8,23 @@ BLOCK=100000
 
 def validate_surface(result, work, progress=lambda _:None):
     total=result['statistics']['input_points'];source=result['source_meta']['count']
-    valid=np.asarray(sorted({-1,*[r['id'] for r in result['clusters']]}),dtype=np.int64)
-    if not set(result['kept'])<=set(valid.tolist()):raise ValueError('Invalid surface cluster labels.')
-    ordered=True;last=-1;read=0
+    stored=result.get('stored_point_count',total)
+    live={-1,*[r['id'] for r in result['clusters']]}
+    removed=result.get('deleted_cluster_ids',[])
+    if not isinstance(removed,list) or any(type(k) is not int or k<0 or k in live for k in removed):raise ValueError('Invalid deleted surface clusters.')
+    valid=np.asarray(sorted(live.union(removed)),dtype=np.int64)
+    if not set(result['kept'])<=live:raise ValueError('Invalid surface cluster labels.')
+    ordered=True;last=-1;read=0;removed_count=0
     with open(result['point_ids_file'],'rb') as ids,open(result['labels_file'],'rb') as labels:
-        while read<total:
-            count=min(BLOCK,total-read);i=np.fromfile(ids,'<i8',count=count);lab=np.fromfile(labels,'<i4',count=count)
+        while read<stored:
+            count=min(BLOCK,stored-read);i=np.fromfile(ids,'<i8',count=count);lab=np.fromfile(labels,'<i4',count=count)
             if len(i)!=count or len(lab)!=count:raise ValueError('Incomplete surface extraction cache.')
             if i.min()<0 or i.max()>=source:raise ValueError('Invalid surface point identities.')
             if not np.isin(lab,valid).all():raise ValueError('Invalid surface cluster labels.')
+            if removed:removed_count+=int(np.isin(lab,removed).sum())
             ordered&=bool(i[0]>last and (np.diff(i)>0).all());last=int(i[-1]);read+=count
             progress(f'Checking saved analysis · {read:,}/{total:,} point identities')
+    if stored-removed_count!=total:raise ValueError('Invalid retained surface point count.')
     if ordered:return
     # Legacy methods can output unsorted IDs. Use an on-disk byte set rather
     # than np.unique over a multi-billion-entry cloud. Map only 8 MiB at once.
@@ -27,8 +33,8 @@ def validate_surface(result, work, progress=lambda _:None):
         with path.open('wb') as f:f.truncate(source)
         step=8*1024*1024;read=0
         with open(result['point_ids_file'],'rb') as ids:
-            while read<total:
-                values=np.fromfile(ids,'<i8',count=min(BLOCK,total-read));unique=np.unique(values)
+            while read<stored:
+                values=np.fromfile(ids,'<i8',count=min(BLOCK,stored-read));unique=np.unique(values)
                 if len(unique)!=len(values):raise ValueError('Invalid surface point identities: duplicate IDs.')
                 blocks=unique//step
                 for block in np.unique(blocks):

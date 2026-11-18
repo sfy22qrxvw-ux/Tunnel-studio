@@ -1,0 +1,40 @@
+Tunnel Studio 0.9.0
+
+MAIN 3D WORKSPACE
+- Completed box/lasso selection boundary is stored in world coordinates and reprojected every frame, so it follows the scan during orbit/pan/zoom.
+- Added semi-transparent CAD navigation overlay: Orbit, Pan, Top, Front, Right, Isometric and Fit.
+- Esc cancels the current interactive tool and returns to Orbit.
+- Delete performs context-appropriate deletion/removal.
+- Ctrl+Z undo, Ctrl+Y/Ctrl+Shift+Z redo, Ctrl+C/Ctrl+V internal copy/paste.
+- Right-click main-viewport menu adds common scene/selection commands and target-candidate removal.
+- Point selection actions default to all visible unlocked scan items.
+
+PANELS
+- Active tool drawer remains left by default and can dock left/right or float.
+- Scan/scene browser now can dock left/right or float/move; it remains vertically scrollable.
+- Resizing supports left- or right-docked scene browser.
+
+MESHING
+- Generic point-cloud mesh creation no longer requires an alignment.
+- PCA tunnel unwrap: estimates a single tunnel branch axis and triangulates a cylindrical grid.
+- Planar Delaunay: best-fit plane triangulation with maximum-edge rejection for locally planar areas.
+- Convex Hull: fast outer envelope; explicitly warns that concavities/openings are filled.
+- Ball Pivoting: optional Open3D engine only; UI reports when it is unavailable.
+- Alignment-grid mesh remains an explicit alignment-aware option with the existing Regular/Rough/Refine/Interpolate workflow.
+- Mesh creation can use the current main-3D selection and writes the result back into the same scene as a new mesh item.
+
+ANALYSE / MEASURE
+- Added main-ribbon Point XYZ measurement.
+- Added two-point 3D/horizontal/vertical distance measurement.
+- Added displayed selection statistics and XYZ extents.
+- Existing alignment-based cross-section, heatmap, ring joint and ring creep tools remain available.
+
+TARGET QA
+- Right-clicking a displayed target suggestion can remove that candidate and its marker without deleting survey points.
+- Clear-all target suggestions remains available.
+
+PERFORMANCE / SAFETY
+- Generic mesh algorithms use bounded full-density sampling and current selection filters.
+- Original scan files remain unchanged.
+
+Not yet implemented in this release: native Poisson/TSDF reconstruction, full cloud-vs-cloud/mesh-vs-mesh inspection, scanner panorama display, or a compiled GPU/out-of-core point-cloud core. These remain future native-engine work rather than placeholder buttons.

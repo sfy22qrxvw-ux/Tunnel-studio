@@ -1,0 +1,51 @@
+TUNNEL STUDIO 0.13.2 - CLEAN TUNNEL AND ESCAPE FIXES
+12 October 2026
+
+CONFIRMED CAUSES
+The scene Clean Tunnel action set the backend source but did not refresh the
+surface tool's source dropdown. The viewport Extract surface action only opened
+the drawer. Its quick Clean Tunnel button forwarded clicks to a disabled
+Preview cleaning button, so it could appear to do nothing.
+Escape hid the temporary drag rectangle but redrew the stored selection, leaving
+its yellow outline and selected points active. It also ignored Escape when a
+settings input had focus.
+
+CHANGES
+- Bind the chosen scene scan and refresh its source metadata before opening
+  Clean Tunnel. Open Setup, with the scan name and active controls visible.
+- The viewport Extract surface command uses the same source-binding workflow.
+- Capture Box/Lasso before a preview refresh can clear it. Opening a different
+  scan without a selection resets the area to Whole retained scan.
+- Wait for older metadata reads and fetch the new source afterwards. Routine
+  refreshes no longer reinstate an old processing area or reset edited settings.
+- Both run buttons share availability and show the actual selected operation:
+  Preview cleaning, Extract lining, or Extract surface patches. Their tooltip
+  explains a missing source or an active operation.
+- Escape clears the stored selection, yellow outline, point highlights and
+  unfinished drag, and returns to Orbit. An open dialog retains its normal
+  Escape handling. Clear selection also removes an unfinished drag rectangle.
+
+CLEAN TUNNEL WORKFLOW
+1. Select a point-cloud scan in the scene list. Draw a Box/Lasso first if you
+   only want to process part of the scan.
+2. Open Model > Clean Tunnel. Check Source scan and Processing area.
+3. For isolated noise choose Remove noise, then Preview cleaning.
+   For lining versus interior objects choose Extract lining - tunnel envelope,
+   then Extract lining. Select one tunnel branch for the envelope method.
+4. Review the coloured result. Keep/remove selected points if needed.
+5. Under Output, confirm the review and choose Create cleaned scan. The original
+   is preserved. A cleaning preview does not itself replace the source scan.
+
+VERIFICATION AND LIMITS
+44 UI checks pass: 31 existing integrations and 13 focused Escape/cleaning checks.
+The focused checks use production scripts with a stateful API fixture and
+mocked WebGL. They cover an initially empty source list, viewport entry, a stale
+in-flight response, scan changes, completed/failed/cancelled processing and retry.
+The original code failed the initial 11 focused regression cases.
+13 Python checks pass: seven noise-filter geometry cases and six workflow cases,
+including cache IO, manual review, retained coordinates/attributes, original-file
+preservation, cancellation and save failure. These use synthetic points and
+narrow installed-base IO doubles where needed.
+The cleaning algorithms are unchanged in this patch. This fixes confirmed UI
+failures; it is not a claim of validated classification on the user's current
+scan, a full Windows installation test, or an actual GPU rendering test.

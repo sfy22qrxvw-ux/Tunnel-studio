@@ -1,0 +1,13 @@
+Tunnel Studio 0.13.0 — 12 October 2026
+- New Create Tunnel Surface shared-vertex radial lining grid, bounded gap
+  interpolation and default solid display.
+- New Analyse > Cloud vs Design: circular alignment radial deviation or
+  full triangle-design distance; full retained-point statistics, tolerance
+  colours, CSV and stale-input protection.
+- Connected large-mesh previews replace individual-face omission; point
+  display remains usable if a solid preview cannot be prepared.
+- Independent overlapping target neighbourhoods, priority sampling, stricter
+  four-quadrant evidence and original-density verification of fitted patterns.
+- Automatic picked-target channel falls back to RGB when intensity fails.
+- New equations/limitations guide and regression checks.
+See READ_ME_FIRST.txt and METHODS_0_13_0.txt.

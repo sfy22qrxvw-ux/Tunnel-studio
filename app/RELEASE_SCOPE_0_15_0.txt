@@ -1,0 +1,167 @@
+TUNNEL STUDIO 0.15.0 — CONSOLIDATED RELEASE SCOPE
+24 October 2026
+
+Basis
+The complete 20 October 3D drawing source checkpoint is combined with the later
+24 October 0.14.10 ray/box and 0.14.11 consolidated updates, the earlier request
+tracker, and the decisions recovered from previous conversations. Later decisions
+take precedence: PDF Drawing is removed. This is a complete Windows installer,
+not a patch that requires the user to copy application files manually.
+
+1. PRIMARY PAPER METHOD AND FIGURE 4 CLEANING
+The complete 22-page paper was reviewed: Wang et al. (2025), Automated Tunnel
+Point Cloud Segmentation and Extraction Method, Applied Sciences 15, 2926,
+DOI 10.3390/app15062926. Figure 4 is the GuSAC denoising reference; Figure 6
+illustrates lining-instance clustering.
+
+Clean Tunnel defaults to GuSAC: robust regional planes, absolute point-to-plane
+distance and sign-independent normal agreement. Inward services/obstructions
+are proposed exclusions. Supported lining, outward recesses/joints, insufficient
+support and near-wall normal disagreement remain separate review classes.
+This protects measured lining behind dense services when support exists; it
+cannot reconstruct measured points where the scanner has no observations.
+
+Every selected retained original point receives a cleaning label. Coordinates,
+original IDs and recorded attributes are not replaced by a fitted surface. A
+bounded calibration sample fits the reference; it is not an output point cap.
+Review keeps/excludes entire groups or a selected portion before creating a
+separate cleaned scan, exporting, or applying reversible working exclusions.
+
+GUSAC_TMATCH_METHOD_0_15_0.txt records the printed normal-equation inconsistencies,
+unspecified parameters, practical axis/reference adaptations and unreproduced
+author-specific steps. This is an independent paper-based implementation, not
+the authors' original software or a claim to their reported accuracy.
+
+2. TUNNEL CLASSIFICATION UNDER CLUSTERING
+Model > Lining features > Tunnel classification, or Clean Tunnel > TMatch,
+runs GuSAC followed by exact-distance original-point connectivity. Review offers
+categorical cluster colours and, where supported, ring colours. Keep/exclude,
+selection, hide/show and colour mode are independent. Reports include the class,
+cluster, supported ring and geometric statistics.
+
+Ring grouping uses physical station and observed geometry, not arbitrary cluster
+IDs or a supplied nominal width alone. Unsupported rings are withheld. These
+are geometric lining groups; the software does not assign trained semantic
+labels such as cable type, pipe type or installed design ring identity.
+
+Up to 6,000 largest components have named metadata; remaining components retain
+their original points in the unresolved group and are reported explicitly.
+Disk-backed connectivity and bounded label windows limit working allocations.
+
+3. EARLIER CLEANING AND LINING TOOLS RETAINED
+- Original Extract Tunnel Surface / SMRG and existing presets.
+- Alternative ray/box extraction restored from the later update and checked on
+  the real 4 m scan section; unsupported boxes are retained conservatively.
+- Neighbour noise filtering, combined denoising, reflection candidates,
+  irregular patches and measured tunnel-envelope extraction.
+- Lining features: bolt-hole candidates, non-lining, ring/longitudinal seams and
+  supported segments. Large unwrap maps use tiled processing rather than the
+  former global two-million-cell stop. Local window and disk guards remain.
+- Saved review results, selective keep/exclude, reports and cleaned outputs.
+
+4. 3D EDITING AND DISPLAY
+- Box, polygon, lasso and new brush selection; selection geometry remains tied
+  to world coordinates when the camera moves. One brush drag is one stroke; a
+  new stroke replaces the previous selection. Brush selection passes through
+  the captured scan depth and observes the active limit box.
+- Full-density selection/editing, invert, hide/isolate, copy/separate/move,
+  working exclusion and Undo/Redo, deleted-point groups and restoration.
+- Scene bundles, selected-item context menus, limits and display-detail tools.
+- Point size/density, RGB/intensity/bundle/elevation modes, brightness/contrast,
+  mesh display modes and remembered viewport background controls.
+- File Explorer drop imports supported scans/meshes directly by native path.
+  Drop a single .tstudio file to invoke the same guarded project-open flow.
+  One native DXF/model JSON drop opens the existing units/destination dialog.
+  Unsupported or mixed project/data drops are explained instead of ignored.
+  Browser fallback files over 150 MB use local import. File transfers and
+  imports are queued; cancellation clears pending drops as well as queued work.
+
+5. ALIGNMENT, PROFILES AND EDITABLE MODELS
+- Draw alignment in 3D; edit horizontal nodes, chainage and height rows, bends
+  and slopes. Draw/select theoretical profiles and set section ranges in 3D.
+- Constant or interpolated profiles across sections and shared range boundaries.
+- New designer with an active alignment opens directly at profile selection;
+  existing model/draft state has precedence. Source alignments remain unchanged.
+- Reopen a created tunnel model to update it, or create a separate copy while
+  retaining its placement, transform, layer, colour and bundle.
+- Existing 3D modelling: primitives, profiles, extrusion, loft/sweep, supported
+  Boolean operations, UCS, snapping, transforms, editable model JSON and DXF.
+- PDF Drawing is removed. Existing PDF-derived objects remain editable geometry.
+  Survey report printing/export is preserved.
+
+6. MESHING AND NEW MESH TOOLS
+- Existing scan/tunnel/planar meshing, engine choices, spacing, edge limits,
+  smoothing, hole handling, refinement, quality controls and preview retained.
+- Selected small-hole repair examines conservative closed boundary loops.
+  The user reviews opening measurements and exact proposed orange cap faces;
+  rejected or excessive openings remain open. A repaired copy retains original
+  vertices/faces, flags new inferred faces and supports Workspace Undo.
+  Interactive repair accepts up to 2 million vertices, 2 million faces, 200,000 boundary edges,
+  6,000 openings and 512 boundary vertices per cap; larger inputs are rejected
+  explicitly. The repair does not silently decimate the source mesh.
+- Mesh to Point Cloud generates a separate cloud from triangle surface area.
+  Choose exact count or average spacing, estimate storage, then create/cancel.
+  Sampling includes disconnected components proportionally; a tiny component
+  may receive no sample at coarse density. Spacing is average density, not a
+  guaranteed minimum separation. Existing mesh placement is retained.
+- Actual optional OBJ vertex RGB can be interpolated. Measured intensity is
+  never invented. Metadata and exports distinguish generated geometry from
+  survey observations. Neither a hole cap nor a mesh sample proves as-built
+  geometry that was not measured.
+
+7. PROJECTS AND IMPORT/EXPORT
+- Transactional named/portable open, legacy migrations, New Project, Save and
+  Save As retain scans, current masks, edits, alignments, models, target state,
+  cleaning and classification where their required assets are available.
+- Damaged/missing optional display assets can be rebuilt or omitted with a
+  recovery notice. Missing essential geometry/masks quarantine the affected
+  item and retain its metadata; edits are not silently reset to a clean scan.
+- Failed validation, cancellation or final-save failure preserves the current
+  in-memory and saved workspace. Large portable assets copy in bounded blocks
+  with progress/cancellation. File traversal and manifest-size guards remain.
+- E57, LAS/LAZ, PLY, PTS, XYZ, TXT and CSV readers and neutral exports retained;
+  original coordinates use float64. Display uses a local origin with float32.
+- PTS headers supply counted progress; rate and remaining time are estimates
+  measured during the current read. No 25 GB performance result is claimed.
+- Direct RTC360 raw/HSPCA work remains experimental with honest scanner-local
+  setup status. VIS/world registration, complete colour/calibration or thermal
+  correction are not inferred or represented as validated capabilities.
+
+8. SURVEY ANALYSIS AND EARLIER WORKSPACE FEATURES RETAINED
+- Target fitting/picking, correspondences, rigid pairwise/network registration,
+  residuals and independent check targets, scan setups and registered bundles.
+- Alignment-based and arbitrary cross-sections, estimated axis/ellipse tools,
+  ring suggestions, ring observations/creep, section plots and reports.
+- Large cross-section fallback uses disk-backed statistics beyond the former
+  two-million-point slice guard, with a separately bounded display sample.
+- Heatmaps, design comparison, cloud comparison, measurements, exports and
+  printable reports; existing method notes and historical tests retained.
+
+9. VALIDATION AND PRACTICAL LIMITS
+The current VALIDATION_0_15_0.json contains the exact test inventory, results,
+source hashes and real-scan execution evidence. GUI event tests use production
+JavaScript with simulated DOM/WebGL; some scenarios also use the real local
+HTTP server. They are not a native Windows/WebView2 or rendered GPU run.
+
+The user's earlier E57 contains 10,125,420 imported points. GuSAC processed all
+of them and proposed 305,463 exclusions; 9,819,957 were retained. Original XYZ
+cache hashes and complete original-ID coverage were checked. Runtime was about
+98 seconds, with about 180 MiB measured worker RSS in this environment. That
+measurement excludes a full desktop process tree, import and browser rendering.
+
+On the full-density 4 m section (629,245 points), a 30 mm TMatch connection
+distance produced 77 named lining groups. No supported rings were recovered.
+The available scan has no independently labelled truth; point counts and
+execution are evidence of functioning code, not measured cleaning accuracy.
+Classification tests recover four known rings in a synthetic fixture, which
+does not establish ring recovery on this real scan.
+
+The 7 GB process-tree target and 600-million/billion-point project scale have
+not been benchmarked here. Bounded source reads, labels and outputs are checked;
+that does not certify every existing import, display or optional mesh engine
+within a single memory budget. No arbitrary-obstruction removal guarantee is
+made, especially for heavy occlusion, junctions or unsupported lining profiles.
+
+Native renderer rewrites and TriMe/local-chart reconstruction remain research
+proposals, not shipped engines. No unsupported author code, semantic equipment
+classifier or automatic survey accuracy claim has been added under those names.

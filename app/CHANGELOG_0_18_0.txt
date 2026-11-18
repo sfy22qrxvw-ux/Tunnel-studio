@@ -1,0 +1,29 @@
+Tunnel Studio 0.18.0 — registration, whole-tunnel analysis and interaction review
+30 October 2026
+
+Registration
+- Reconcile registered setups and merged results so normal visibility uses one current representation. Preserve superseded merged results and their edits as hidden previous results.
+- Control Apply positions existing connected setups virtually; repeated Apply does not create or double-transform coordinate caches.
+- Display, target markers/picking, selections, cleaning, meshing, analysis and export use the saved registration poses.
+
+Whole-tunnel analysis
+- Whole registered bundle and whole project inputs in Compare / Inspect, Cloud vs Design, 3D Heat Map and movable cross-sections.
+- Stream original retained points, masks and poses in bounded blocks, without a preliminary merged cloud.
+- Dense sections enter the disk-backed perpendicular-plane engine directly. Statistics and exact percentiles use bounded passes.
+- CSVs retain original setup and point-index provenance. Legacy sampled screening is labelled and links to the full-point comparison.
+
+Selection, deletion and display
+- Import builds a small reusable original-row spatial index during the existing coordinate stream. Exact selections skip disjoint scans and non-intersecting blocks.
+- Ordinary Delete remains reversible mask editing with Undo/Redo/Deleted restore. Permanent compaction remains separate.
+- A measured source-frame overview cache retains sampled XYZ, point IDs and colour/intensity for reuse after registration and ordinary exclusions.
+- Quick preview uses available colour/intensity. The usable view remains visible during refinement/retry; incomplete previews are distinguished from finished detail; imports open an overview automatically.
+
+Storage and cumulative work
+- New/Open uses one hidden recovery instead of duplicate named projects.
+- Project deletion accounts for its own recovery while protecting other projects and Undo/Redo assets.
+- Destructive cleanup stops if live ownership metadata cannot be read.
+- Cumulative 0.17.12 modelling, cleaning, meshing, import/export and project workflows are retained. PDF Drawing remains removed.
+
+Scope
+SMRG remains a separate local surface-patch tool with a 3,000,000 selected-point limit. Its whole-scan GuSAC cleaning alternative is separate from the full-point comparison and section engine. Display budgets and other reference/mesh complexity limits remain.
+See RELEASE_SCOPE_0_18_0.txt and VALIDATION_0_18_0.json for measured evidence and practical limits.

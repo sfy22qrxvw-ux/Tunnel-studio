@@ -317,10 +317,16 @@ def discover(folder,max_projects=200):
 
 def preview(info,database=None,*,sample_scans=True):
     """Show measured scans when readable, with a separately labelled layout fallback."""
-    if database is not None and database not in {d['path'] for d in info['databases']}:
-        raise ValueError('Choose a saved database listed for this Leica project.')
-    if database:
-        record=_database(Path(database),scan_sources=sample_scans)
+    if database is not None:
+        if not isinstance(database,(str,Path)):
+            raise ValueError('Choose a saved database listed for this Leica project.')
+        # Path equality follows native case rules. Open the catalogued path,
+        # even when the caller spells the same Windows path differently.
+        requested=Path(database)
+        listed=next((Path(d['path']) for d in info['databases'] if Path(d['path'])==requested),None)
+        if listed is None:
+            raise ValueError('Choose a saved database listed for this Leica project.')
+        record=_database(listed,scan_sources=sample_scans)
     else:
         record=info.get('layout')
         if record and sample_scans:

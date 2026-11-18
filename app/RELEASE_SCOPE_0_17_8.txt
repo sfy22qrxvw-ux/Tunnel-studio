@@ -1,0 +1,17 @@
+TUNNEL STUDIO 0.17.8 — FAST SHARED-RUNTIME UPDATES
+
+Purpose: make frequent cumulative Tunnel Studio updates practical without copying the entire bundled Windows runtime for each release.
+
+Cumulative retained functionality:
+- 0.17.6 virtual registration: individual scan caches remain unchanged and rigid poses are stored as metadata. Adding registration links does not allocate transformed point-cloud copies or automatic merged clouds. Explicit materialisation/export remains the place where large output storage is required.
+- 0.17.7 permanent deletion: multiple eligible scans can be reviewed and compacted in one batch. Compaction remains sequential and atomic per scan, uses 1,000,000-point streaming blocks and builds the replacement preview in the same retained-point pass.
+
+Updater architecture:
+- The existing runtime is migrated once to a shared runtime folder on the same Windows volume using Move-Item. A directory junction is left at the previous release's runtime path, preserving fallback compatibility.
+- 0.17.8 creates a small version folder containing the application payload and launcher while its runtime directory is a junction to the shared runtime.
+- Future compatible releases can reuse the same shared runtime rather than copying it again.
+- The updater verifies the application payload SHA256 manifest before activation and verifies that the shared runtime exposes python.exe/pythonw.exe.
+- The HKCU TunnelStudio CurrentInstall pointer and desktop/Start shortcuts are switched only after staging succeeds.
+- Survey/project data is outside the program release folders and remains untouched.
+
+Limit: this updater architecture assumes the bundled runtime remains binary-compatible with the release. A future release that genuinely changes native/Python runtime dependencies must publish a runtime migration/update rather than silently reusing the old runtime.

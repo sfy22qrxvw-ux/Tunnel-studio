@@ -1,0 +1,53 @@
+Tunnel Studio 0.21.3
+4 November 2026
+
+Restore an area from Deleted points
+View one or more deleted groups, draw an area with Box, Lasso, Polygon or Brush,
+then choose Restore selected points. The full-density original observations
+inside that shape are restored; the remaining points stay deleted.
+
+Ordinary deleted points return to their scan. Cleaning exclusions restore as a
+separate scan, keeping the cleaned tunnel independent. The selected groups are
+saved atomically and one workspace Undo reverses the complete restoration.
+Cancellation and failed saves discard only incomplete restoration assets.
+
+The deleted-point view disables ordinary delete/separate actions. Restore is
+available next to Back to scan, in the Edit ribbon and in its right-click menu.
+Back to scan refreshes the current retained points. Remaining deleted-point
+lists are saved with the project and stay protected by storage reference checks.
+
+The bolt-selection instruction now says to face the wall from inside the tunnel
+and click a bolt head or fitting sticking out, with surrounding wall visible.
+The source-bundle preservation fix from 0.21.2 remains included.
+
+Whole-cloud bolt pockets and raised fittings
+Bolts & pockets now offers Whole retained cloud and Near a picked point.
+Whole cloud uses the existing streamed lining engine and bounded overlapping
+windows, without the local tool's one-million-point neighbourhood admission cap.
+An active source limit box still applies and is explained in the scope help.
+The local scope retains its explicit working budget and seed requirement.
+
+Recessed bolt pocket means a dip behind the neighbouring wall; the bolt head may
+remain below the wall. Raised fitting means a bump extending into the tunnel.
+Separate depth/height wording, thresholds and signed geometry checks support
+both cases. Whole-cloud detection does not need a camera-facing seed. It labels
+all retained original IDs; display and reference calibration samples stay bounded.
+Detected point groups can be inspected in detail and removed reversibly, keeping
+raw XYZ and attributes unchanged. Candidate centres are guides, not the selection.
+No hardware identity or survey accuracy is claimed. No missing wall is invented;
+reconstruction remains a separate mesh step with estimated triangles.
+
+All lining departures and point separation
+Above / below lining selects every supported measured point outside a user band
+on either side, with no bolt-diameter or compactness restriction. The whole-cloud
+route streams all IDs against the supported tunnel reference; a local picked
+patch uses a robust quadratic lining fit. Review the groups, then Remove or
+Separate selected points to a new scan. Separation and removal preserve source
+coordinates and support one workspace Undo. Unsupported areas remain retained.
+
+Export selected deleted areas
+Draw an area in Deleted points and choose Export selected deleted points, or use
+the Explorer Export button. The captured deleted groups export at full density
+without restoring them. The export dialog can also include original source wall
+points inside the drawn area, which is useful for supplying a bolt-pocket sample.
+E57, XYZ and the existing point-cloud formats use the normal destination dialog.

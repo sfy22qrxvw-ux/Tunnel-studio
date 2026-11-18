@@ -1,0 +1,134 @@
+Tunnel Studio 0.17.3 - optional robust target-match review
+
+CUMULATIVE RELEASE BASE
+This full installer builds on the verified delivered 0.17.2 application and
+Windows runtime. It keeps the preceding ribbon, Alignment/model designer,
+Explorer, themes, editing, meshing, cleaning, measurement, comparison and
+import/export work. The new change is an optional correspondence-consistency
+review in Registration > Join scans.
+
+NEW REGISTRATION WORKFLOW
+Review tolerance (mm) and Review suspect matches appear before Solve geometry.
+The review reports a compact result, with Target residuals and review notes
+available for inspection. Eligible proposals expose Exclude suggested matches;
+adoption changes only those reviewed Fit rows to Exclude. The user still runs
+Solve geometry, checks its residuals, acknowledges the review and applies the
+geometry through the existing workflow. Stop review cancels an active review.
+
+The current named-target workflow has no genuine correspondence-quality ranks.
+It uses exhaustive minimal combinations when bounded by the configured budget,
+otherwise uniform sampling. The numerical engine additionally supports growing
+ranked sampling plus uniform fallback for callers with genuine match qualities.
+Local consensus refinement follows the paper's useful ideas with the corrections
+and engineering settings documented in ROBUST_REGISTRATION_METHOD_0_17_3.txt.
+
+Check observations remain outside fitting and model selection. Excluded rows
+remain excluded. Kept target coordinates are protected against automatic role
+changes, and protected mismatches require explicit manual review. Degenerate
+geometry, weak support and competing equally supported transformations do not
+yield an adopted exclusion list. A robust review never applies a transform.
+An unavailable ordinary all-pair diagnostic fit does not stop robust subset
+search; a gross distant wrong pair can invalidate the baseline while a useful
+correct subset remains. No valid supported geometry means no proposed exclusions.
+
+The result distinguishes consistent, suspects, ambiguous and insufficient.
+Statistics separate Fit and independent Check observations. The ordinary target
+solver, common-vertical workflow and registration network are not replaced.
+Scale remains one. Original scan coordinates and external source files are not
+rewritten by the review. The asynchronous review does not change point geometry
+or global target observations. It saves diagnostic review/audit metadata and
+clears a stale geometry draft before the subsequent solve/review/apply workflow.
+
+RETAINED FEATURES
+Alignment remains a dedicated top tab with drawing, coordinate entry, import,
+editing and scan fitting. Model retains Create 3D model from alignment and Edit
+tunnel design, including the five-step profile/chainage/height/transition design
+workflow and editing of saved models.
+
+The Project Explorer remains compact, resizable and sized to its contents and
+available height, with independent yellow/grey visibility bulbs. Light, Dark
+and Follow Windows appearance preferences remain. No Find scan/model search is
+added, and Registration retains Join scans.
+
+Reversible point deletion and explicitly reviewed permanent removal remain,
+including stale-review checks, bounded float64/attribute compaction, reference
+protection and preservation of external originals and other saved copies.
+
+The 0.17.2 mesh changes remain: all retained support for the direct lining grid,
+reported bounded median approximation, physical gap limits, stable numerical
+grid ties, connected triangle display, mesh diagnostics, exact full OBJ export
+and atomic publication. A connected tunnel surface with open portals is not
+automatically a watertight solid or proof of semantic service removal.
+
+GuSAC primary tunnel cleaning, TMatch classification, clustering visualization,
+bolt/local feature selection, region growth, geometry drawing, plane and cylinder
+fitting, Measure, cross sections, six comparison routes, reports, import/export
+choices, save/reopen, recovery and oversized-metadata startup repair remain.
+The six comparison routes are cloud-cloud, cloud-mesh, cloud-CAD, cloud-geometry,
+mesh-mesh and mesh-CAD, with their existing supported-input limitations.
+
+RESEARCH AND VALIDATION BOUNDARIES
+The new paper concerns robust pose estimation from proposed correspondences.
+It does not provide a black-and-white or sphere-target detector/centre fitter.
+This release reviews already identified centres, adds no new target recognition,
+and does not claim field target millimetre
+accuracy, or benchmark the user's complete 550-million-point cloud. The new
+review operates on a bounded target table, not all points in the survey.
+
+ROBUST_REGISTRATION_METHOD_0_17_3.txt explains paper errors, corrected local
+sample size, consistent distance units, bounded sampling/refinement, protected
+rows, independent checks and the absence of a calibrated confidence guarantee.
+The latest user example merges three original setups with three common sphere
+targets; the physical sphere diameter is pending. The previous two-setup B&W
+target plan is a separate historical context. The new three-setup sphere job
+has not been field-validated for this release. For comparison, retain all three
+original setup folders and raw job metadata, a separate full-resolution
+structured E57 for each setup, and the merged REGISTER 360 result with target
+IDs/centres, report, version and physical sphere diameter. Auto Sphere Target
+Diameter should match the actual spheres, rather than the earlier B&W profile:
+https://rcdocs.leica-geosystems.com/docs/cyclone-register-360-link-settings
+
+Three non-collinear common centres suffice for the ordinary full 3D rigid fit.
+They do not supply robust-exclusion redundancy: this review needs at least four
+agreeing Fit pairs and a strict majority. The current source has CAD/inspection
+sphere geometry and imported sphere coordinates but no automatic sphere-target
+detector or target-centre fitting workflow. This update does not add one.
+
+The separate supplied 13-page paper On Fast Point Cloud Matching with Key Points
+and Parameter Tuning by Varga, Laki and colleagues was also reviewed. The
+publisher identifies it as an ACPR 2019 contribution published in 2020:
+https://doi.org/10.1007/978-3-030-41404-7_35
+It evaluates keypoints, FPFH descriptors and Fast Global Registration in
+room/object experiments with clouds up to one million points. Those tests
+support investigating faster coarse cloud alignment, not black-and-white target
+centre detection or performance on 550 million points. Harris3D was fastest in
+the reported tests, but Harris3D and SIFT failed the sofa case; the authors found
+ISS more reliable there. This release adds no unvalidated default or new FGR
+implementation on the strength of that paper. It is separate from the optional
+target-correspondence review implemented for 0.17.3.
+The completed source audit found no FPFH, FGR, ISS, Harris or ICP registration
+implementation. Registration currently uses named targets, the network solver
+and imported Leica poses. Cloud-to-cloud inspection computes distances; it does
+not implement cloud-to-cloud registration. This is an explicit future gap, and
+no algorithm from the Varga/Laki paper has been introduced in this release.
+
+VALIDATION_0_17_3.json binds the current final-source checks and their evidence.
+VALIDATION_0_17_2.json and earlier reports are retained historical records, not
+presented as reruns of this release. Current exact counts and source hashes
+belong to the final validation index. Native Windows/WebView2, GPU/DPI behaviour,
+actual installation on the user's PC and real-job target recognition accuracy
+were not validated on the Linux build host.
+
+RUNTIME AND INSTALLATION
+All 20,001 Windows runtime files are recovered unchanged from the exact verified
+TunnelStudio_Setup_0.17.2_x64.exe (244,450,488 bytes; SHA256
+eedd66ffc6d5ce8889ba0b18bd65a95c267bfadcefe18feda05a1c7a7a0e2052).
+Linux validation dependencies do not replace the Windows payload. The installer
+checks hashes and application components before activating the new version.
+Its isolated startup self-check includes metadata exceeding the former 20 MB
+limit, preserving and reopening the synthetic previous session. Activation
+failure preserves the prior release and workspace. Close Tunnel Studio first.
+
+Earlier method and format limitations remain applicable. PDF Drawing and its
+separate PDFium engine remain absent; printable survey reports remain. Private
+reference scans, projects and screenshots are not installer or source content.

@@ -1,0 +1,23 @@
+Tunnel Studio 0.18.3 - 30 October 2026
+
+- Reviewed reference-aware Explorer item deletion with physical working-file
+  reclamation, protected originals/shared projects, journal recovery and clear
+  pending/freed counters. Removed cloud aliases no longer resurrect on reopen.
+- Grouped ring/seam/reference rows, 3D multi-selection and unified mixed deletion.
+- Immediate GPU hide on point Delete; one atomic exact multi-scan mask job and
+  save/Undo checkpoint. Sparse known-ID deletion avoids whole-mask initialization.
+- Three snapped measured points, tentative third-point hover and point-area planes.
+- Bounded original-point and fit-spool reads for whole-input plane/cylinder fits.
+  Finite high-residual cylinders return explicitly poor reviewable previews.
+- Mesh source pose/visibility identity checks and stale merged-source protection.
+- Automatic alignment removes the 300-node and 200-source caps, including Save
+  and Use; equivalent banded smoothing keeps the requested station spacing.
+- Full-range ring detection without the old 20,000-bin guard; requested resolution
+  retained with disk-backed evidence and bounded baseline windows.
+- Full-extent heatmaps adapt output aggregation instead of rejecting a large
+  grid; requested/effective resolution is visible and all input remains in scope.
+- Cumulative registration, coloured overview, segmentation/classification, bolt
+  selection and research comparison retained with their documented limits.
+
+See RELEASE_SCOPE_0_18_3.txt and VALIDATION_0_18_3.json for exact tested behavior,
+real-scan poor-fit evidence, memory/output limits and remaining validation work.

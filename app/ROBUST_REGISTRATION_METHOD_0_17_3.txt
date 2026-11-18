@@ -1,0 +1,137 @@
+Tunnel Studio 0.17.3 - robust target-match review
+
+PURPOSE AND LOCATION
+Registration > Join scans > Review suspect matches checks the geometric
+consistency of the target pairs already listed by the user. It is an optional
+diagnostic before Solve geometry. It does not detect black-and-white or sphere targets,
+fit its centre, infer target identity from its appearance, change cloud points,
+or apply a scan transformation.
+
+The current named-target workflow does not supply measured correspondence
+quality. Small target sets therefore test every minimal combination within the
+review budget; larger sets use reproducible uniform sampling. The engine also
+supports progressive quality-ranked sampling when genuine match-quality data
+are supplied, followed by uniform exploration. A target-pattern recognition
+score is not a probability that two named targets are the same physical target.
+
+PAPER AND IMPLEMENTATION RELATIONSHIP
+Dhanya S. Pankaj and Rama Rao Nidamanuri, A Robust Estimation Technique for 3D
+Point Cloud Registration, Image Analysis & Stereology, 2016, 35(1), 15-28,
+DOI: 10.5566/ias.1378.
+Publisher record: https://www.ias-iss.org/ojs/IAS/article/view/1378
+Published PDF: https://www.ias-iss.org/ojs/IAS/article/download/1378/991/3515
+
+The uploaded 14-page version was read together with the published version. The
+implemented ideas are minimal rigid hypotheses, consensus over all eligible
+correspondences, growing ranked sampling when justified, and local refinement
+using an initially relaxed residual threshold that contracts to the base limit.
+This is a bounded engineering adaptation, not a literal reproduction of every
+printed equation, stopping rule, experiment, or feature-extraction stage.
+
+The ranked-growth construction also draws on Chum and Matas, Matching with
+PROSAC - Progressive Sample Consensus, CVPR 2005:
+https://cmp.felk.cvut.cz/~matas/papers/chum-prosac-cvpr05.pdf
+
+CORRECTIONS AND EXPLICIT ENGINEERING CHOICES
+1. The paper's prose gives max(m, I/2) for a local sample while Algorithm 1
+   prints min(I/2, m). The latter can leave fewer than the required points.
+   This implementation uses max(m, ceil(I/2)), bounded by the available support.
+2. A random hypothesis needs a complete all-inlier minimal sample. An individual
+   inlier fraction is not that probability. The exact finite-set probability
+   would be C(I,m)/C(N,m), and the usual inlier-fraction power is an approximation.
+   This release does not present a probability of correctness or a statistical
+   confidence derived from the paper's inconsistent stopping expressions.
+3. The printed non-randomness/binomial expression is not normalized as written.
+   Its extra exponent term and unspecified parameters are not used as a survey
+   confidence test. Ambiguity and support are reported explicitly instead.
+4. The paper leaves important threshold/annealing details unspecified and its
+   pseudocode contains conflicting control flow. The explicit local thresholds
+   here are 5, 4, 3, 2 and 1 times the user's base distance limit, with at most
+   ten local repetitions when redundant support exists. Residual distances and
+   the review limit use the same linear units; squared distances are used only
+   for the fitting cost and RMS calculation.
+5. The paper uses a 200,000-iteration experimental budget for cloud-feature
+   correspondences. This target-table implementation defaults to 2,000 draws,
+   accepts an engine budget up to 20,000 and at most 200 rows, and records its
+   actual work. Exhaustive enumeration is preferred when C(N,m) fits the budget.
+   Otherwise the ranked path reserves half the draw budget for uniform fallback.
+   These are application choices, not numerical settings claimed by the paper.
+6. Full 3D uses three non-collinear pairs, a proper SVD rotation and translation,
+   with scale fixed to one. Keep vertical uses two horizontally separated pairs
+   for heading and translation and requires an explicitly shared vertical.
+   The latter is an application adaptation; it is not the paper's full 3D mode.
+7. Coordinates are centred for fitting and residual calculation to reduce loss
+   of precision at large survey offsets. Invalid coordinates, duplicate Fit
+   positions and degenerate geometry are rejected. The input rows and original
+   scan coordinates remain unchanged by the review.
+
+The ordinary all-pair fit is a diagnostic comparison, not a prerequisite for
+robust sampling. A gross distant mismatched pair can make that diagnostic fit
+degenerate even when a well-spread correct subset remains usable. In that case
+the baseline is reported as unavailable and robust subsets are still searched.
+If no sufficiently supported valid geometry is found, no exclusions are proposed.
+
+REVIEW DECISIONS AND PROTECTED OBSERVATIONS
+Only Fit rows select the model. Check rows are independent validation and are
+evaluated only after model selection; Exclude rows remain excluded. Kept or
+protected coordinates cannot be dropped through the suggested-exclusion action.
+
+The default review limit is 5 mm. It is a user-controlled screening threshold,
+not a scanner specification, promised target accuracy, or acceptance standard.
+Set it using the job's measurement quality and registration requirements.
+
+A consensus must have at least m+1 agreeing Fit pairs and a strict majority of
+Fit rows before exclusions can be proposed. Minimal support alone is not enough
+to establish that another observation is wrong. Competing equally supported
+transformations produce an ambiguous result. This protects against some repeat
+geometry, but does not prove that the largest consistent group has correct
+physical identities. Incorrect names can still form a consistent configuration.
+In particular, three non-collinear corresponding sphere centres can determine
+an ordinary full 3D rigid fit. They do not provide the redundancy for this robust
+exclusion review: at least four agreeing Fit pairs and a strict majority are
+required. Having a third setup does not add another common target to each pair.
+
+The four engine statuses are:
+  consistent   All eligible Fit pairs agree with the observed supported model.
+  suspects     Some Fit pairs disagree; protected mismatches block adoption.
+  ambiguous    Different transformations have equally strong observed support.
+  insufficient There is not enough useful support for a proposed exclusion.
+
+Residual tables distinguish Fit and Check results. Diagnostics record sampling,
+seed, draw count, valid/degenerate/local models, consensus support and whether
+every minimal combination was examined. A bounded, non-exhaustive search can
+miss alternatives and is labelled as such; no confidence percentage is invented.
+Reported search modes are exhaustive, uniform and ranked_with_uniform_fallback;
+none indicates that a search was not run.
+
+Review suspect matches does not change the target table or transform geometry.
+It does not change point geometry or global target observations. Diagnostic
+review/audit metadata is saved, and a stale geometry draft is cleared so an old
+solution cannot be applied as though it represented the newly reviewed matches.
+Only Exclude suggested matches adopts eligible proposed role changes. The user
+must then run Solve geometry, inspect the new residuals, acknowledge their review
+and use the existing Apply geometry action. A Stop review action is available.
+The ordinary least-squares and registration-network solvers remain separate.
+
+VALIDATION AND LIMITS
+Use VALIDATION_0_17_3.json and its bound evidence for current numerical, API,
+browser and installer checks. Earlier release evidence is retained as history.
+Exact current counts are in the final validation index, not duplicated here.
+
+The paper's experiments use six object models, point geometry and descriptors,
+not RTC360 intensity target data, black-and-white target centres, labelled
+tunnel target observations, or a 550-million-point survey. Its loop timing does
+not include the whole feature extraction/matching workflow. The current review
+operates on the small target table and does not scan the full cloud.
+
+The user's latest sample is three merged setups with three common sphere
+targets; the physical sphere diameter is still to be confirmed. The earlier
+two-setup black-and-white target plan remains a separate historical context.
+The new three-setup sphere job has not been validated in this release.
+Native Windows/WebView2 and real-job millimetre target recognition accuracy
+were not established on the Linux build host. Synthetic consistency, API and
+browser checks cannot substitute for those independent field measurements.
+This release reviews already identified centres. It adds neither black-and-white
+recognition nor automatic sphere-target detection/centre fitting. CAD spheres,
+inspection geometry and sphere coordinates in an imported format do not amount
+to an automatic survey-sphere target detector.

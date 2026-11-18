@@ -1,0 +1,8 @@
+Tunnel Studio 0.11.1
+- Desktop and browser fallback start with a new empty project.
+- The previous non-empty autosave is preserved as a separate previous-session
+  snapshot under Open before resetting the active workspace.
+- Existing named projects are not overwritten by startup recovery.
+- Empty startups do not create extra blank projects in the Open list.
+- Raw recovery copies are retained; failed preservation stops before clearing work.
+- Includes all changes from 0.11.0.

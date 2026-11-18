@@ -187,7 +187,7 @@ def batches(s,request,progress):
     with ExitStack() as review_files:
         if review:
             revision(s,request)
-            r=s.STATE['surface_result'];length=int(r['statistics']['input_points'])
+            r=s.STATE['surface_result'];length=int(r.get('stored_point_count',r['statistics']['input_points']))
             ids=review_files.enter_context(RowFile(r['point_ids_file'],'<i8',length,block=block))
             labels=review_files.enter_context(RowFile(r['labels_file'],'<i4',length,block=block))
             chosen=review.get('clusters',[]);valid={-1,*[c['id'] for c in r['clusters']]}
@@ -205,6 +205,7 @@ def batches(s,request,progress):
                     q=registration_pose.points(meta,p.take(ix) if review else p[start:stop]);use=np.isfinite(q).all(1)
                     if mask is not None:use &= (mask.take(ix) if review else mask[start:stop])==0
                     current_labels=labels[start:stop] if review else None
+                    if review and r.get('deleted_cluster_ids'):use &= ~np.isin(current_labels,r['deleted_cluster_ids'])
                     if review and chosen:use &= np.isin(current_labels,chosen)
                     if review and 'visible_clusters' in review:use &= np.isin(current_labels,review['visible_clusters'])
                     if spec:use &= jobdata.selection_mask(q,spec)

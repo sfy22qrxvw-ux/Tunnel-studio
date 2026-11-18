@@ -1,0 +1,52 @@
+TUNNEL STUDIO 0.4.0 - WINDOWS UPDATE
+Copyright (c) 2026 Damian Gulczynski
+
+1. Close Tunnel Studio and any browser recovery console.
+2. Right-click the downloaded ZIP and choose Extract All.
+3. Open the extracted Tunnel_Studio_0_4_0_Update folder.
+4. Double-click UPDATE_TUNNEL_STUDIO.bat.
+5. Wait for "Update complete". Use your normal Tunnel Studio desktop shortcut.
+   The application version should show 0.4.0.
+
+This is an offline application update for your working desktop installation.
+It includes the earlier 0.3.0 ribbon/target/project changes, so it can update
+that release or the working 0.2.1 installation. No Python download or
+administrator command is needed. The existing working desktop runtime,
+WebView2 DLLs, desktop shortcut and original scans are kept.
+
+Your installed program may still be in a releases\0.2.1 folder. This is
+intentional: the existing launcher/runtime are reused, while the application
+itself becomes 0.4.0. The updater checks for the current-release marker first.
+
+NEW WORKFLOW
+Process > Extract surface > Try synthetic demo > Extract surface.
+Review green kept clusters, orange other clusters and grey density noise.
+Inspect or click clusters to keep/exclude them; then export the surface,
+export other points, or apply to the active survey with Undo available.
+Save / Save As retains the result and its review history.
+
+Choose a coordinate box or chainage range on large scans. Default processing
+cap 300,000 points; configurable maximum 750,000. Full selected density is
+used. Only the display is sampled. This is an independent research
+implementation of your supplied paper, with explicit mathematical choices
+and review controls; it is not an author-validated accuracy guarantee.
+
+Read SURFACE_METHOD_0_4_0.txt for a walkthrough, equations, parameters,
+interpretation choices and limitations. TEST_RESULTS_0_4_0.txt records tests.
+Both are in payload\app and copied to your installed app folder.
+
+RESTORE THE PREVIOUS PROGRAM
+Close Tunnel Studio and run RESTORE_PREVIOUS_VERSION.bat from this update.
+Program files are restored from the latest application-update backup.
+Survey files and saved projects remain. Older application versions will
+not show the surface-extraction features. Preserve important work with
+Save As > Other file formats > Tunnel Studio project (.tstudio).
+
+IF THE UPDATE STOPS
+Read its message and send the details file shown on screen:
+%LOCALAPPDATA%\TunnelStudio\update_0_4_0_error.txt
+The updater rolls back changed program files if verification or the
+application component check fails. It refuses to run while the app is open.
+
+Future changes can build on the included Python/JavaScript source. Your
+copyright notice is retained; dependencies retain their own licences.

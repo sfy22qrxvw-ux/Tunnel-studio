@@ -1,0 +1,176 @@
+Tunnel Studio 0.18.3 - release scope and remaining limits
+30 October 2026
+
+Cumulative update over delivered 0.18.2 (canonical source version 20). Earlier
+registration, whole-project comparison/section streaming, indexed exact editing,
+coloured measured overview, seam/classification and bolt-selection corrections
+remain. Original measurement coordinates and original imported files remain.
+
+PROJECT EXPLORER AND WINDOWS DISK STORAGE
+
+Delete now reviews selected scans, meshes, CAD models, references, bundles and
+mixed selections together. It lists the exact items, exclusive working files,
+shared bytes and whether workspace Undo/Redo will be cleared. An exclusive
+app-owned cache is released only after reference checks against current state,
+saved projects, recovery and retained resources. Original imports are protected,
+including originals placed inside the work or display-cache directories.
+
+Deletion updates aliases and dependent results so a removed scan cannot return
+through an old active-cloud alias when the project is reopened. Only selected
+IDs are removed from the matching named snapshot; unrelated unsaved changes are
+not silently written into that saved project. Other projects remain unchanged.
+Transient feature files, generated structure .mesh.json, tracked display variants
+and overview caches are covered. Shared resources remain until their last owner
+is removed. Untracked legacy display variants in shared directories may remain
+until normal cache trimming; they are not assumed safe to erase.
+
+A prepared disk journal rolls back interrupted uncommitted deletion. Only a
+committed transaction enters background purge. Windows-held files can remain
+pending until handles are released; the report distinguishes pending from freed
+bytes. Physical erasure is permanent and clears workspace Undo/Redo when exclusive
+files are actually released. Geometry/reference-only removal with no disk erasure
+can be undone. Point edits remain a separate reversible operation.
+
+SELECTION AND POINT DELETE
+
+Ring seams and other reference kinds are grouped in Explorer. Groups support
+multi-selection and Delete; visible guides can be selected in 3D, including
+Ctrl-click and while the coloured surface review is active. Deleting a guide
+does not delete scan points. Mixed CAD/reference/scan selection is retained.
+
+Ordinary point Delete flips a GPU hide flag for already-highlighted display
+points immediately, then runs one exact multi-scan transaction in the background.
+Failure or cancellation restores the temporary display. Exact original IDs,
+registration, hidden/isolate/limit scope and the captured selection are retained.
+The backend uses immutable sparse masks and one final save/history checkpoint;
+failure on a later scan restores earlier scans too. Known-ID legacy editing no
+longer fills an entire N-byte mask or reads XYZ before changing a few entries.
+Exact completion still depends on selected data, disk and hardware. Immediate
+visible response is not a claim of instantaneous physical storage writes.
+
+PLANES AND WHOLE-CLOUD CYLINDERS
+
+Create plane supports three snapped original scan points, a drawn point area,
+the current highlight and manual dimensions. After two accepted measurements,
+hovering near a third shows a labelled tentative plane; the final click recovers
+the exact original ID and registered coordinates. Collinear points and stale
+source revisions reject. A single hovered point does not define a plane.
+
+Best-fit plane/cylinder accept every retained point in Entire selected scan(s),
+or every original point inside a captured highlight. Source and fit-spool reads
+are bounded at 100,000 rows; no complete cloud memory map or input-point cutoff
+is introduced. Plane covariance, cylinder refinement, dimensions and final
+residuals use the complete selection. Cylinder initialization uses a reported
+bounded representative sample. Temporary disk space is needed for large fits.
+
+A finite supported cylinder with RMS above 5% of radius now returns a poor-fit
+preview with explicit RMS/radius/deviation warnings and an Add approximate model
+action. The warning persists with that model. Nonfinite, degenerate, unsupported
+coordinate-range, nonconvergent, narrow-arc and thin-ring fits still reject. A
+poor single-cylinder fit is not proof of a valid tunnel design approximation.
+
+MESHING, ALIGNMENT AND ANALYSIS
+
+Mesh creation rejects stale/archived merged sources and checks registration pose
+and limit scope before publishing. A pose change during creation cancels the
+result and removes temporary mesh files. Alignment-grid meshing no longer reuses
+a projection from an earlier registration pose merely because XYZ is unchanged.
+
+Automatic scan-derived alignment no longer rejects more than 300 centreline
+nodes or more than 200 selected linked scans. Its curve smoothing uses a bounded
+five-diagonal system equivalent to the previous dense objective, retaining the
+requested station interval. Save and Use alignment accept the resulting longer
+line while retaining finite-coordinate, increasing-chainage and positive-radius
+checks. Section lookup prunes by initial station without changing original point
+order. The fit remains a tentative circular-lining estimate from a reported
+bounded representative sample, requiring review before use as an alignment.
+
+The main tunnel-surface engine streams retained measurements. Generic mesh
+reconstruction and alignment estimation use explicitly reported bounded working
+representatives after reading the full selected extent. Their sample/mesh output
+budgets are not an input cloud truncation guarantee; reconstruction quality still
+depends on noise, coverage, parameters and the selected engine.
+
+All ten current mesh reconstruction methods were also freshly executed through
+the production creation path on controlled registered plane/tube/sphere fixtures.
+Their saved meshes had finite valid vertices/faces in the registered frame,
+reported retained input counts, and unchanged source bytes. These Linux fixture
+checks establish execution and the tested invariants, not physical survey accuracy
+or native Windows performance. The detailed per-engine results are retained.
+
+Ring-joint detection no longer rejects more than 20,000 chainage bins. It preserves
+the requested bin width across the full range, uses disk-backed 24-sector evidence
+and overlapping baseline windows, and retains the same global peak/prominence
+rules. The display signal is at most 2,000 rows. Final one-dimensional peak arrays
+and candidate output still scale with bin count. Adequate temporary disk is needed.
+
+The legacy unwrapped heatmap no longer rejects a full range exceeding 300,000
+output cells. It adjusts longitudinal display aggregation to fit that grid while
+retaining all in-scope input points and both ends of the tunnel. The requested and
+effective resolution are reported in the summary and hover text. This output-grid
+adjustment is distinct from ring detection, whose requested resolution is kept.
+
+Modern design comparison, inspection and section paths process the full retained
+source scope. Older quick cloud/point-quality analysis tools remain reported
+sampled screening operations. They are not full-density acceptance measurements.
+
+VALIDATION
+
+331 application tests passed with zero failures, errors or skips,
+including 58 tests added since 0.18.2. 170 Python files parsed and
+48 JavaScript files passed syntax checks. Browser QA covered 10
+flows without page errors or HTTP 500s. Selected display points were hidden before
+backend commit; exactly 2,304 original IDs were then masked and restored by Undo.
+Rejected and simulated-cancelled jobs restored the display. Physical fixture
+deletion reclaimed 10,569,554 bytes across seven exclusive files, preserving its
+original import and another scan. These are Linux Chromium results.
+
+Registration regressions confirm 24 setups/23 links allocate no extra XYZ caches,
+normal Apply does not physically merge, repeated Apply moves each setup once,
+and save/reopen/Show all preserve one visible registered representation. Older
+archived physical merges may remain on disk until explicitly released.
+
+Synthetic plane/cylinder validation used 3,100,123 original points (3,100,120
+retained), large survey coordinates, bounded reads and unchanged source bytes.
+The actual registered E57 cloud used all 5,921,285 points in cylinder refinement
+and residuals. Its 3.538141 m radius / 140.490753 m length fit is marked poor:
+549.462 mm RMS (15.5297% of radius). It produced a reviewable preview in 5.45 s
+in the Linux validation process; XYZ, attribute and preview hashes were unchanged.
+This is execution evidence, not proof that one cylinder describes the tunnel.
+
+A 500,000,003-row logical sparse mask test changed two distinct IDs without XYZ
+reads and allocated below 1 MB on the Linux fixture. This is not a 500M-point
+selection/render benchmark. Ring detection matched an independent full-array
+oracle at 33,011 bins / 792,264 projected rows and unchanged 0.02 m resolution,
+including a separate long-gap/window-boundary fixture and cancellation cleanup.
+
+Automatic alignment actually estimated, saved and activated 320 supported nodes
+at the requested 2 m interval from 201 connected scan files / 31,296 points, with
+original bytes unchanged. Ninety dense-solver oracle comparisons differed by at
+most 3.434e-9 m; a 100,003-node smoothing fixture used five matrix rows with dense
+allocation/solving forbidden. This establishes these execution and memory
+properties, not design-axis accuracy on the user's curved tunnel or junctions.
+
+OPEN VALIDATION AND RECOGNITION REQUIREMENTS
+
+Native Windows/WebView2 execution and locked-file behavior, actual 350M+ point
+end-to-end performance, and a universal 7 GB whole-application memory bound remain
+unverified. Installer payload/source/runtime hashes are verified separately.
+
+The 0.18.2 real-scan segment/classification/bolt limitations remain: missing ring
+boundaries can combine several physical panels, default connectivity can fragment
+the scan, and protrusion candidates can include seam edges. Connected colours
+are not verified physical segment types. No universal six-panel layout is assumed.
+Full reliable semantic segment/bolt recognition remains open, requiring correct
+project layout and reviewed ground truth. The six-paper comparison remains in
+ALGORITHM_REVIEW_2026_10_30.txt with its method distinctions and limitations.
+
+INSTALL AND USE
+
+Close Tunnel Studio, run the full 0.18.3 Windows x64 installer, and confirm 0.18.3
+in the header. For a whole-cloud plane/cylinder, select the scan(s) in Explorer
+and choose Entire selected scan(s) under Fit to. Use Model > Create plane for
+three-point/area fitting. Select grouped references in Explorer or Ctrl-click
+visible guides in 3D to review/delete them. Review poor fit and effective heatmap
+resolution before using results. Do not treat every completed calculation as an
+accurate physical interpretation of the scan.

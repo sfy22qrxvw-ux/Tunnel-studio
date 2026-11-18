@@ -1,0 +1,104 @@
+TUNNEL STUDIO 0.14.2 — MODELLING AND CLEANING METHOD NOTES
+Copyright (c) 2026 Damian Gulczynski.
+
+MIDPOINT AND FACE PLANE
+Hover acquisition waits 350 ms over a supported geometry snap. Two distinct
+acquired points give a + (b - a)/2 in stored world coordinates. The drawing
+command has not placed a point until the user clicks or enters coordinates.
+When both points lie on a common planar face of the same model, coplanar
+triangles are collected and the plane is inferred from the actual geometry.
+If a shared edge belongs to several planes, the most view-facing plane is
+highlighted. A body diagonal or unrelated points does not define a face.
+The detected frame is captured for the command; preview and accepted circle,
+arc or rectangle use that frame. Off-plane snapping is blocked after capture.
+World/UCS coordinates of the existing geometry are unchanged. Tracking is reset
+on cancellation/new commands; camera navigation cancels a pending hover dwell.
+
+VIEW SEPARATION
+Clean, Edit and Analyse suppress editable CAD rendering and picking. Model
+suppresses scan/reference rendering by default. Cloud reference explicitly
+allows combined viewing, and Work in Model mode from a cloud enables it.
+The views share one project coordinate system and storage but have separate
+camera states. Hidden model selection is excluded from generic highlighted
+export/delete actions. Import/export between bundles/projects remains explicit.
+
+STANDARD EXTRACTION
+The existing tunnel fit and default classification remain unchanged. This
+continues to fit one approximately circular tunnel branch with supported local
+radial profiles, including flat floors; unsupported areas remain uncertain.
+The stronger behavior is opt-in. It is not applied silently to older settings.
+
+MORE THOROUGH INTERIOR CLEANUP
+1. Reuse the standard bounded spatial calibration and fitted section frames.
+2. Build an additional angular profile with equal weight per longitudinal
+   section, requiring at least three populated section cells per angular bin.
+   This reduces domination by a dense local foreground remnant.
+3. Within fitted sections, flag additional points near the inner lining only
+   when both the local fit and the section-balanced reference put them inward
+   beyond the keep band. The effective band is at least the requested value,
+   half the voxel diagonal, plus an angular-profile variation allowance where
+   necessary. Flat/sloping profiles need this guard against quantization error.
+4. Deep interior uncertain points may be assessed across small support gaps
+   (up to four station/angle cells beyond standard support), with at least
+   200 mm or twice the standard tolerance clearance. The section-balanced
+   reference can also flag supported deep inward departures of at least
+   150 mm or twice the standard tolerance. Long gaps between fitted sections
+   are not bridged. An opening or missing outline does not supply wall evidence.
+5. Preserve original IDs and XYZ. Extra suggestions are label 4, named
+   Extra interior candidates · review. Review choices govern final retention.
+
+The default minimum inward band is 30 mm; it is a lower bound, not a claim of
+30 mm surface accuracy. At default 50 mm calibration spacing the voxel guard
+is about 43.3 mm, increased further on steep radial profiles. Real fittings,
+joints, protrusions and rough lining may be candidates. Points sufficiently
+close to the wall can remain; the algorithm cannot promise complete removal.
+Standard keep labels remain lining and uncertain areas, subject to explicit
+review overrides. No density-only rule deletes sparse wall behind pipes.
+
+REFLECTION REVIEW
+This is an independent conservative geometric candidate detector, not a
+waveform classifier or a validated detector for every reflection type.
+Calibration uses at most 140,000 deterministic spatially sampled actual points.
+The supported angular reference is balanced over longitudinal sections.
+A point must lie outside supported lining by the configured departure (100 mm
+default), then satisfy at least two additional cues:
+- Approximate radial mirroring matches at least three interior measured points
+  within the geometry-match distance, with measured wall support at its foot.
+- A ray from a known scanner position crosses supported measured lining before
+  reaching the point; crossing is found with 14 bisection iterations and needs
+  at least three nearby wall samples.
+- Available intensity is outside six robust scale units from the median. Scale
+  uses median absolute deviation and a central-percentile spread; constant or
+  missing intensity disables this cue. Sampling is bounded and deterministic
+  by original point ID. Intensity alone never rejects a point.
+Known acquisition poses are used only when the source metadata establishes
+one; a bounding-box centre is never substituted. Visibility evidence is disabled
+when the supplied scanner position is not inside supported fitted lining.
+
+All selected retained points are classified, in chunks of up to 25,000 for the
+reflection evidence calculation, with cancellation checks. Label 1 is a review
+candidate; labels 0, 2 (weak evidence) and 3 (uncertain support) are retained.
+Reports record available evidence and the settings. Selection/deletion masks
+and full-density source coordinates/attributes are preserved. Failed jobs do
+not replace the previous saved result. Review is required before applying.
+
+This radial approximation can miss floor/equipment reflections, curved or
+specular surfaces and areas with inadequate wall support. Real recesses,
+openings and outer structures can resemble ghosts. No waveform/dual-return
+classification or reflection-corrected replacement points are produced.
+Research background: Zhao, Yang and Schwertfeger, Mapping with Reflection,
+SSRR 2020, https://arxiv.org/abs/1909.12483 . That work's classifier and reported
+accuracy have not been reproduced or claimed by this implementation.
+
+VALIDATION SCOPE
+See tests/validation_0_14_2.json and its individual logs/reports. Tests use
+constructed geometry with known labels, the production UI in controlled API
+fixtures, and real Chromium/WebGL against the modelling backend. They include
+survey-sized coordinate offsets, exact midpoint/face-plane results, distinct
+render/pick layers, noisy rotated floors, sparse wall, floating interior
+clusters, known mirrored ghosts, dark wall and genuine outer recesses.
+Two user output screenshots from the tunnel lining cleaning chat informed the
+remnant patterns. Test XYZ was constructed independently: no survey coordinates
+or ground-truth labels were recovered from image pixels. A customer point-cloud
+sample is needed to measure performance on those exact outputs. Reported
+synthetic frame timings are not measurements of the user's Windows GPU/project.

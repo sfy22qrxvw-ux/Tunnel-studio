@@ -1,0 +1,24 @@
+TUNNEL STUDIO 0.17.6 — VIRTUAL REGISTRATION FOR LARGE RTC360 NETWORKS
+
+PURPOSE
+Registration no longer rewrites a full-density transformed XYZ cache when Apply geometry is accepted. Each scan keeps its existing immutable disk-backed cache and receives a lightweight rigid world pose (3x3 rotation + translation) in project metadata. This is designed for long RTC360 registration chains where tens of setups must be joined without multiplying working-disk use.
+
+BEHAVIOUR
+- Apply geometry is transform-only. It does not call the large-cache disk-space allocator and does not create a new .xyz64 file.
+- Existing physically positioned scans from older projects remain valid. New movements compose a virtual pose on top of their current stored coordinates.
+- Survey-target rows remain in the scan's stored frame. Matching evaluates them in world coordinates through the current virtual pose. This prevents cumulative coordinate rewrites and preserves original observations.
+- Main 3D preview and detailed viewport reads apply the virtual pose on demand. Preview cache keys include the pose so an accepted registration cannot reuse a stale pre-registration display cache.
+- Setup cloud picking converts the displayed world seed back to the stored scan frame to recover the exact original measured point.
+- Rectangle point selection and cleaned CSV output use world coordinates for virtually registered scans.
+- Optional Build merged cloud streams every retained point through its scan pose and writes one explicit registered physical cloud only when requested.
+- Explicit point-cloud export applies the pose during temporary export preparation. Large disk requirements therefore belong to explicit materialisation/export, not link acceptance.
+- Existing unedited physical merged caches can still be released independently.
+
+SCALE VALIDATION
+A synthetic 24-setup / 23-link chain was accepted while jobdata.room() was deliberately patched to fail on any attempted registration cache allocation. All links completed, no additional .xyz64 registration files were created, and every setup resolved into the same world geometry from its stored cache plus rigid pose. Optional merge was separately checked to apply the virtual poses correctly.
+
+BOUNDARIES
+- Imported raw scans still require their normal one-time working caches; this release removes registration duplication, not the source/import storage requirement.
+- Build merged cloud and exports that physically write a new point dataset still require sufficient destination/temporary disk space.
+- Some older analysis modules that directly open stored XYZ caches are being migrated toward the same pose-aware streaming abstraction. Core registration, main/detailed display, setup picking, point selection, explicit merged-cloud materialisation and point-cloud export are pose-aware in this release.
+- Windows/WebView2/GPU execution was not available on this Linux build host. Python/JS syntax and portable regression tests were run here; verify the installed Windows UI on the user's real project.

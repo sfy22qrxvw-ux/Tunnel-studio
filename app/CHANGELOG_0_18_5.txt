@@ -1,0 +1,22 @@
+Tunnel Studio 0.18.5 — single Windows application entry
+30 October 2026
+
+Updates one stable Tunnel Studio entry in Windows installed programs. Verified
+older per-version entries are removed only after the new release passes its
+startup checks and the new stable entry has been written and read back.
+
+The current release and exact prior active version are retained. Older verified,
+unchanged program files are removed after successful publication. Shared survey
+data, original scan formats, modified files and unlisted files are kept. Unknown
+ownership and inconsistent previous-version records cause conservative retention.
+
+Installation creates a usable uninstaller before publishing the Windows entry.
+Registry publication failure restores directories, the marker and prior registry
+values. File cleanup after commit is nonfatal and reports pending/protected files.
+
+Uninstall uses manifest-owned deletion rather than recursive release-folder
+removal. Locked-file or registry-removal failures retain a retryable uninstaller.
+An older retained version cannot remove the current entry or common shortcuts.
+
+Includes the corrected 0.18.4 startup check and all cumulative 0.18.3 application
+changes. Application algorithms, UI and Windows runtime are unchanged.

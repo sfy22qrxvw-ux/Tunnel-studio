@@ -1,0 +1,1653 @@
+{
+  "version": "0.18.2",
+  "date_utc": "2026-10-30",
+  "baseline_application_version": "0.18.1",
+  "scope": "Segment/seam evidence repairs, local classification-band handling, protruding fitting geometry, registered exact-point picking, E57 validity fields and honest result diagnostics.",
+  "application_tests": {
+    "tests": 273,
+    "seconds": 22.682,
+    "failures": 0,
+    "errors": 0,
+    "skipped": 0,
+    "result": "OK",
+    "platform": "Linux"
+  },
+  "new_regression_tests": 40,
+  "syntax": {
+    "python_files_parsed": 161,
+    "javascript_files_syntax_checked": 47,
+    "passed": true,
+    "seconds": 1.902,
+    "application_python_files_parsed": 154,
+    "packaging_python_files_parsed": 7
+  },
+  "browser_workflow": {
+    "platform": "Linux Chromium; native Windows WebView2 not executed",
+    "browser": "156.0.8078.80",
+    "webgl": true,
+    "steps": [
+      {
+        "flow": "lining_classification",
+        "points": 189000,
+        "status": "single_connected_component",
+        "summary": "One connected lining component was found. Connectivity has not separated the lining into physical segments; use Segments from seams to inspect measured joint boundaries."
+      },
+      {
+        "flow": "segments_from_seams",
+        "points": 189000,
+        "segments": 3,
+        "selected_segment": 9,
+        "status": "3 segment candidates in 1 of 1 observed ring intervals. Review the measured seams; missing seams can still merge physical panels."
+      },
+      {
+        "flow": "pick_bolt_preview_select_delete_undo",
+        "candidate_count": 1,
+        "original_points_removed_then_restored": 877,
+        "diameter_mm": 199.71980373345656
+      }
+    ],
+    "page_errors": [],
+    "http_errors": []
+  },
+  "real_imports": [
+    {
+      "import_seconds": 2.1227849070019147,
+      "source_sha256": "634493d50a2fcff7409a8dc434ba74bb28097fa4a23647080d038e539d4737cd",
+      "coordinate_sha256": "38cc17e4f6b27b5ee5edcd9514132cfe50f25d59abd990a759f51d9cbc4c38bb",
+      "source_name": "D2 27-95 1 registered_Full.e57",
+      "original_points": 5921285,
+      "source_bytes": 96659456,
+      "attribute_counts": [
+        5921285,
+        5921285,
+        5921285,
+        5921285
+      ]
+    },
+    {
+      "import_seconds": 2.3014548329992977,
+      "source_sha256": "6f5442e5383b914e5049d78f0074402f6516bb7042eab3d001d2cfea7bbd8e63",
+      "coordinate_sha256": "dc29830608621acdeebc728511c8b29adc1dd889a4d2a9a50b30392bd154ee8c",
+      "source_name": "240808 27-95- 27_reduced.e57",
+      "original_points": 5936302,
+      "source_bytes": 113385472,
+      "attribute_counts": [
+        5936302,
+        5936302,
+        5936302,
+        5936302
+      ]
+    }
+  ],
+  "lining_segmentation": {
+    "target_release": "0.18.2",
+    "validation_kind": "controlled regressions and supplied real E57 execution; no human-labelled segment ground truth",
+    "native_windows_tested": false,
+    "source_file_hashes": {
+      "lining_features.py": "99974aeb8ec15bd6f8f7d78a6631e5f4846951776024728115451b5493be9984",
+      "lining_tiles.py": "78c76845b95aa9907a962dbff9e8e2a7555a8ad531b46344dbb36d85f69c91f2",
+      "test_lining_features_0182.py": "49e5f5a4bf76b7063e269a080f98ae1621633f09722ee57cb8959d3fa2732290"
+    },
+    "controlled_tests": {
+      "count": 12,
+      "status": "passed",
+      "seconds": 3.599,
+      "log": "lining_tests.log"
+    },
+    "controlled_zero_mad_case": {
+      "points": 189000,
+      "before": {
+        "rings": 0,
+        "joints": 0,
+        "panels": 0
+      },
+      "after": {
+        "rings": 2,
+        "joints": 3,
+        "panels": 3
+      }
+    },
+    "configured_seam_threshold_mm": 4.0,
+    "noise_gate": "effective threshold=max(configured seam threshold,4*1.4826*MAD)",
+    "runs": [
+      {
+        "result_file": "real_lining_baseline_detailed_segments/result.json",
+        "settings": {
+          "method": "lining_features",
+          "lining_task": "segments",
+          "lining_detail": "detailed",
+          "lining_depth_mm": 12.0,
+          "lining_inward_mm": 60.0,
+          "lining_recess_mm": 250.0,
+          "lining_bolt_max_mm": 350.0
+        },
+        "statistics": {
+          "input_points": 5921285,
+          "unique_points": null,
+          "duplicate_locations": null,
+          "supervoxels": 0,
+          "expected_supervoxels": 0,
+          "merge_passes": 0,
+          "initial_edges": 0,
+          "removed_edges": 0,
+          "retained_edges": 0,
+          "clusters": 1879,
+          "kept_points": 5921285,
+          "noise_points": 0,
+          "noise_candidates": 781197,
+          "calibration_points": 160000,
+          "map_cell_m": 0.02,
+          "map_cells": 8319968,
+          "detail": "detailed",
+          "depth_threshold_mm": 12.0,
+          "intensity_used": true,
+          "bolt_holes": 0,
+          "ring_seams": 107,
+          "longitudinal_seams": 1747,
+          "segment_candidates": 21,
+          "uncertain_retained": 90764,
+          "seconds": 41.122
+        },
+        "detection": null,
+        "seconds": 41.255933921002,
+        "peak_rss_bytes": 337522688,
+        "all_original_ids_in_order": true,
+        "all_label_counts_match": true,
+        "all_points_retained": true,
+        "source_before_sha256": "38cc17e4f6b27b5ee5edcd9514132cfe50f25d59abd990a759f51d9cbc4c38bb",
+        "source_after_sha256": "38cc17e4f6b27b5ee5edcd9514132cfe50f25d59abd990a759f51d9cbc4c38bb",
+        "source_unchanged": true
+      },
+      {
+        "result_file": "real_lining_current_detailed_segments/result.json",
+        "settings": {
+          "method": "lining_features",
+          "lining_task": "segments",
+          "lining_detail": "detailed",
+          "lining_depth_mm": 12.0,
+          "lining_inward_mm": 60.0,
+          "lining_recess_mm": 250.0,
+          "lining_bolt_max_mm": 350.0
+        },
+        "statistics": {
+          "input_points": 5921285,
+          "unique_points": null,
+          "duplicate_locations": null,
+          "supervoxels": 0,
+          "expected_supervoxels": 0,
+          "merge_passes": 0,
+          "initial_edges": 0,
+          "removed_edges": 0,
+          "retained_edges": 0,
+          "clusters": 184,
+          "kept_points": 5921285,
+          "noise_points": 0,
+          "noise_candidates": 781197,
+          "calibration_points": 160000,
+          "map_cell_m": 0.02,
+          "map_cells": 8319968,
+          "detail": "detailed",
+          "depth_threshold_mm": 12.0,
+          "seam_depth_threshold_mm": 9.134089775503353,
+          "intensity_used": true,
+          "bolt_holes": 0,
+          "ring_seams": 20,
+          "longitudinal_seams": 100,
+          "segment_candidates": 60,
+          "ambiguous_segment_boundaries": 26,
+          "intervals_with_segments": 15,
+          "observed_ring_intervals": 19,
+          "uncertain_retained": 90764,
+          "seconds": 31.964
+        },
+        "detection": {
+          "task": "segments",
+          "ring_boundaries": 20,
+          "longitudinal_boundaries": 100,
+          "segment_candidates": 60,
+          "bolt_recess_candidates": 0,
+          "observed_ring_intervals": 19,
+          "intervals_with_segments": 15,
+          "ambiguous_segment_boundaries": 26,
+          "status": "partial",
+          "summary": "60 segment candidates in 15 of 19 observed ring intervals. Other intervals or conflicting boundaries remain unassigned. Review the measured seams; missing seams can still merge physical panels."
+        },
+        "seconds": 32.08634715399967,
+        "peak_rss_bytes": 381345792,
+        "all_original_ids_in_order": true,
+        "all_label_counts_match": true,
+        "all_points_retained": true,
+        "source_before_sha256": "38cc17e4f6b27b5ee5edcd9514132cfe50f25d59abd990a759f51d9cbc4c38bb",
+        "source_after_sha256": "38cc17e4f6b27b5ee5edcd9514132cfe50f25d59abd990a759f51d9cbc4c38bb",
+        "source_unchanged": true
+      },
+      {
+        "result_file": "real_lining_current_more_detailed_segments/result.json",
+        "settings": {
+          "method": "lining_features",
+          "lining_task": "segments",
+          "lining_detail": "more_detailed",
+          "lining_depth_mm": 12.0,
+          "lining_inward_mm": 60.0,
+          "lining_recess_mm": 250.0,
+          "lining_bolt_max_mm": 350.0
+        },
+        "statistics": {
+          "input_points": 5921285,
+          "unique_points": null,
+          "duplicate_locations": null,
+          "supervoxels": 0,
+          "expected_supervoxels": 0,
+          "merge_passes": 0,
+          "initial_edges": 0,
+          "removed_edges": 0,
+          "retained_edges": 0,
+          "clusters": 475,
+          "kept_points": 5921285,
+          "noise_points": 0,
+          "noise_candidates": 795788,
+          "calibration_points": 280000,
+          "map_cell_m": 0.01,
+          "map_cells": 33275136,
+          "detail": "more_detailed",
+          "depth_threshold_mm": 12.0,
+          "seam_depth_threshold_mm": 6.197227063104636,
+          "intensity_used": true,
+          "bolt_holes": 0,
+          "ring_seams": 26,
+          "longitudinal_seams": 294,
+          "segment_candidates": 151,
+          "ambiguous_segment_boundaries": 95,
+          "intervals_with_segments": 23,
+          "observed_ring_intervals": 25,
+          "uncertain_retained": 68187,
+          "seconds": 155.941
+        },
+        "detection": {
+          "task": "segments",
+          "ring_boundaries": 26,
+          "longitudinal_boundaries": 294,
+          "segment_candidates": 151,
+          "bolt_recess_candidates": 0,
+          "observed_ring_intervals": 25,
+          "intervals_with_segments": 23,
+          "ambiguous_segment_boundaries": 95,
+          "status": "partial",
+          "summary": "151 segment candidates in 23 of 25 observed ring intervals. Other intervals or conflicting boundaries remain unassigned. Review the measured seams; missing seams can still merge physical panels."
+        },
+        "seconds": 156.12158097899737,
+        "peak_rss_bytes": 401760256,
+        "all_original_ids_in_order": true,
+        "all_label_counts_match": true,
+        "all_points_retained": true,
+        "source_before_sha256": "38cc17e4f6b27b5ee5edcd9514132cfe50f25d59abd990a759f51d9cbc4c38bb",
+        "source_after_sha256": "38cc17e4f6b27b5ee5edcd9514132cfe50f25d59abd990a759f51d9cbc4c38bb",
+        "source_unchanged": true
+      }
+    ],
+    "limitations": [
+      "Counts are candidate detections, not validated physical segment counts.",
+      "Observed gaps can contain missing ring seams, so candidate regions can merge physical panels.",
+      "The reviewed input is a roughly139m registered E57 with5,921,285 points, not a350M or billion-point field benchmark.",
+      "Elapsed times include concurrent validation activity and are not controlled performance comparisons.",
+      "No intensity brightness inversion, missing-return seam invention, assumed segment count, design snapping or source-coordinate changes were introduced."
+    ]
+  },
+  "real_classification": {
+    "source_name": "D2 27-95 1 registered_Full.e57",
+    "selected_original_points": 5921285,
+    "kind": "real_scan_execution_no_ground_truth",
+    "native_windows": false,
+    "settings": {
+      "tmatch_radius_mm": 15.0,
+      "tmatch_min_points": 30,
+      "tmatch_ring_width_m": 0.0
+    },
+    "source_sha256_before": "38cc17e4f6b27b5ee5edcd9514132cfe50f25d59abd990a759f51d9cbc4c38bb",
+    "source_code_sha256": {
+      "tmatch.py": "1fc2d65a10da7c26de45d948357bcd8edc9185d302191d3b73d3e6b7a19807dc",
+      "gusac.py": "340a0e762cba92d429d959a874cb1b497817e06a6d6c084bc535777e84b938cd",
+      "tunnel_lining.py": "3081bcafaf2c1278302fcd77a34c5e96b36b1b16a5f227f9cd953edab6cae06a"
+    },
+    "model_reused": true,
+    "model_source": "real_classification/registered_model.pkl",
+    "model_fit_source": "same full registered scan and unchanged GuSAC default settings",
+    "time_budget_seconds": 900,
+    "calibration_points": 400000,
+    "regional_planes": 7470,
+    "completed": true,
+    "output_ids_sha256": "5e95f8198bc04d8fc95b3485077b29efba0d5265534b800a87b74ac4b2aa6fca",
+    "output_labels_sha256": "c9161816107f0e1398b6bd48ed11b5423c56dea9a373475f5847202b3a68e9c2",
+    "all_original_ids_in_order": true,
+    "seconds": 521.0688682889995,
+    "source_sha256_after": "38cc17e4f6b27b5ee5edcd9514132cfe50f25d59abd990a759f51d9cbc4c38bb",
+    "model_calibration_seconds_recorded": 57.38956372299799,
+    "combined_recorded_phase_seconds": 578.4584320119975,
+    "combined_phase_timing_note": "Sum of the recorded original full-scan GuSAC preparation and final classification run reusing that unchanged model; not a fresh single-run wall-clock measurement.",
+    "model_sha256": "ce3968d664d48503495f985bdf612d215a9acde798a7360fdd4247819b1c58f5",
+    "integrity": {
+      "coordinate_source_unchanged": true,
+      "output_id_count": 5921285,
+      "output_label_count": 5921285,
+      "all_original_ids_in_order": true,
+      "all_label_ids_and_exact_cluster_counts_match": true,
+      "cluster_point_total": 5921285,
+      "kept_point_total": 4612149,
+      "kept_total_matches_statistics": true,
+      "counts_by_cleaning_class": {
+        "0": 3984315,
+        "1": 1309136,
+        "2": 66528,
+        "3": 433597,
+        "4": 127709
+      }
+    },
+    "statistics": {
+      "input_points": 5921285,
+      "unique_points": null,
+      "duplicate_locations": null,
+      "supervoxels": 0,
+      "expected_supervoxels": 0,
+      "merge_passes": 1,
+      "initial_edges": 9454559,
+      "removed_edges": 0,
+      "retained_edges": 2350788,
+      "clusters": 6005,
+      "kept_points": 4612149,
+      "noise_points": 0,
+      "noise_candidates": 1309136,
+      "spacing_m": null,
+      "unclassified_points": 2597969,
+      "lining_points": 3984315,
+      "underresolved_points": 2304910,
+      "raw_components": 1182936,
+      "lining_clusters": 6000,
+      "metadata_group_limit": 6000,
+      "metadata_preview_points_per_group": 8,
+      "metadata_deferred_components": 7003,
+      "metadata_deferred_points": 293059,
+      "label_mapping_budget_bytes": 67108864,
+      "peak_mapped_label_bytes": 23685140,
+      "peak_open_label_windows": 3,
+      "rings": 0,
+      "ring_planes_supported": 0,
+      "connectivity_cells": 3533724,
+      "support_radius_m": 0.015,
+      "minimum_component_points": 30,
+      "tmatch_radius_mm": 15.0,
+      "tmatch_ring_width_m": 0.0,
+      "uncertain_retained_points": 627834,
+      "strategy": "full-density exact radius components with disk-backed global connectivity; GuSAC cleaning decisions retained separately",
+      "seconds": 520.647
+    },
+    "classification": {
+      "kind": "lining_instances",
+      "unclassified_label": 0,
+      "status": "multiple_connected_components",
+      "summary": "6,000 connected lining components were found; 0 observed ring bands have sufficient support. Components require review before treating them as physical segments.",
+      "supported_component_points": 1386346,
+      "unresolved_lining_points": 3031566,
+      "ring_method": "supported physical-station weighted GMM",
+      "ring_status": "Ring labels withheld: fewer than two independently supported, separated longitudinal bands remain. Review the unresolved groups.",
+      "coordinate_precision": "float64 originals; metadata labels only",
+      "published_accuracy_reproduced": false
+    },
+    "warnings": [
+      "The 6,000-group review metadata budget was reached. 7,003 additional qualifying components (293,059 original points) are retained as unclassified label 0. Every original point was processed; use a smaller review area or increase the component minimum to name those fragments separately.",
+      "2,304,910 lining points remain unclassified: point spacing, incomplete joints or the component minimum do not support reliable clustering at this connection distance. These points are retained.",
+      "TMatch is an independent interpretation: connection distance R joins actual lining points; minimum N applies to the final component. The paper supplies no universal R/N values.",
+      "Joints narrower than the 15 mm connection distance can join neighbouring blocks. Review the coloured clusters; increase radius only when point spacing requires it.",
+      "Every selected original point is labelled. Small/unresolved lining groups, recesses and uncertain GuSAC decisions remain retained; only interior obstruction candidates start excluded.",
+      "Ring labels withheld: fewer than two independently supported, separated longitudinal bands remain. Review the unresolved groups.",
+      "Colours identify geometric instances, not semantic cable/pipe types. Segment types and theoretical sector boundaries require the correct project design."
+    ],
+    "count_definitions": {
+      "lining_points": "All original points assigned GuSAC class 0 supported lining, including named and unclassified connectivity groups.",
+      "unclassified_points": "Supported-lining points left at label 0: undersized/unresolved connectivity components plus qualifying components deferred by the named-group metadata budget.",
+      "underresolved_points": "Supported-lining points in components below the final 30-point minimum; no individually named component.",
+      "metadata_deferred_points": "Supported-lining points in qualifying components beyond the 6,000 named-group review budget; retained under label 0.",
+      "classification.unresolved_lining_points": "Sum of unclassified supported-lining points (2,597,969) and GuSAC class 3 insufficient-evidence points (433,597). The latter are uncertain geometry, not verified lining. This combined count excludes separately retained class 2 recesses and class 4 normal disagreements.",
+      "supported_component_points": "Original supported-lining points in the 6,000 individually named connected components; this does not establish physical segment identity.",
+      "rings": "Supported observed ring bands. Zero in this real-scan default-settings execution."
+    },
+    "physical_segment_classification_validated": false,
+    "actual_scan_outcome": "Default 15 mm connectivity completed but fragmented the actual scan; no supported ring bands. It is not a successful physical segment classification or an accuracy validation."
+  },
+  "exact_connectivity_comparison": {
+    "kind": "bounded_actual_scan_connectivity_benchmark",
+    "source_name": "D2 27-95 1 registered_Full.e57",
+    "points": 40000,
+    "radius_m": 0.015,
+    "source_point_ids_sha256": "52049d7bc2a5e21498d304bd49df516c0bd959aa1d3a699846a313dddee79d30",
+    "source_points_sha256": "04fa8a77ef3b12a8fcf75d56528a204e7bd886e6b749aa5a6b9d8107b30ec285",
+    "runs": [
+      {
+        "name": "original_0181",
+        "seconds": 0.9078801950017805,
+        "cells": 39994,
+        "edge_checks": 1323,
+        "components": 2,
+        "root_sha256": "977da4a1e2ba68ec30d48662489a0ad1dbba44fe7a4cbc3dec87f77fce40e61b",
+        "point_label_sha256": "d9ae6b5b304b7c49f608d131f8468d893a314a549555e80fcd556aa73492f0bb"
+      },
+      {
+        "name": "forward_range_0182",
+        "seconds": 0.7183155890015769,
+        "cells": 39994,
+        "edge_checks": 1323,
+        "components": 2,
+        "root_sha256": "977da4a1e2ba68ec30d48662489a0ad1dbba44fe7a4cbc3dec87f77fce40e61b",
+        "point_label_sha256": "d9ae6b5b304b7c49f608d131f8468d893a314a549555e80fcd556aa73492f0bb"
+      }
+    ],
+    "same_components": true,
+    "same_original_point_labels": true,
+    "speedup": 1.2639015620748104
+  },
+  "real_bolt_patches": {
+    "source_name": "240808 27-95- 27_reduced.e57",
+    "source_count": 5936302,
+    "source_coordinate_sha256": "dc29830608621acdeebc728511c8b29adc1dd889a4d2a9a50b30392bd154ee8c",
+    "checks": [
+      {
+        "seed_source_id": 4899060,
+        "seed": [
+          2.627726231878844,
+          -6.008498644001094,
+          3.680689072828886
+        ],
+        "approx_y": -6.0,
+        "approx_theta": 20.0,
+        "statistics": {
+          "reference_rms_mm": 0.6035112005880897,
+          "reference_points": 8125,
+          "normal": [
+            -0.9151904075668857,
+            0.1764500781871256,
+            -0.36234222470658095
+          ],
+          "negative_recess_points": 387,
+          "rejected_components": 10,
+          "rejected_reasons": {
+            "insufficient_points": 8,
+            "oversize": 0,
+            "elongated": 2,
+            "unsupported": 0
+          },
+          "neighbour_checks": 1453,
+          "local_points": 10592,
+          "selected_points": 0,
+          "candidate_points": 8,
+          "seconds": 0.034
+        },
+        "groups": [
+          {
+            "id": 1,
+            "name": "Protruding bolt / fitting candidate 1",
+            "points": 8,
+            "unique_locations": 8,
+            "centre": [
+              2.7001162318788445,
+              -6.0834386440010935,
+              3.378550322828886
+            ],
+            "height_mm": 17.88714753608504,
+            "peak_height_mm": 21.163313373253896,
+            "diameter_mm": 42.45625924307006,
+            "elongation": 2.35431464576379,
+            "selected": false
+          }
+        ],
+        "warnings": [
+          "These are compact geometric protrusions, not identified hardware. Check the orange/cyan points and the protrusion side before removal.",
+          "Only measured points can be removed. No lining is added behind a bolt or fitting.",
+          "Rejected protrusion groups: 8 with too few distinct measured locations; 2 with elongated rather than compact. Review these checks before changing the search settings."
+        ],
+        "exact_original_ids_verified": true,
+        "seconds": 0.035762769999564625
+      },
+      {
+        "seed_source_id": 4630120,
+        "seed": [
+          1.460696231878844,
+          -5.972788644001094,
+          5.245669072828886
+        ],
+        "approx_y": -6.0,
+        "approx_theta": 50.0,
+        "statistics": {
+          "reference_rms_mm": 0.5398653316212324,
+          "reference_points": 8484,
+          "normal": [
+            -0.6132682806974193,
+            0.1263705373688111,
+            -0.7797002649579831
+          ],
+          "negative_recess_points": 287,
+          "local_points": 10489,
+          "selected_points": 0,
+          "candidate_points": 0,
+          "seconds": 0.04
+        },
+        "groups": [],
+        "warnings": [
+          "No compact protrusions passed the selected height and support checks. Recesses are not bolt-head candidates."
+        ],
+        "exact_original_ids_verified": true,
+        "seconds": 0.040793875999952434
+      },
+      {
+        "seed_source_id": 4187640,
+        "seed": [
+          0.2736762318788439,
+          -6.076888644001093,
+          5.868619072828887
+        ],
+        "approx_y": -6.0,
+        "approx_theta": 75.0,
+        "error": "The reference needs measured lining around the seed, not just on one side. Move the seed or enlarge Search radius.",
+        "seconds": 0.09384596499876352
+      },
+      {
+        "seed_source_id": 3372340,
+        "seed": [
+          -2.255303768121156,
+          -6.002818644001094,
+          5.829579072828887
+        ],
+        "approx_y": -6.0,
+        "approx_theta": 110.0,
+        "statistics": {
+          "reference_rms_mm": 0.5395040796002597,
+          "reference_points": 4559,
+          "normal": [
+            0.388757630988917,
+            -0.043346506005944474,
+            -0.9203198274322689
+          ],
+          "negative_recess_points": 167,
+          "rejected_components": 1,
+          "rejected_reasons": {
+            "insufficient_points": 1,
+            "oversize": 0,
+            "elongated": 0,
+            "unsupported": 0
+          },
+          "neighbour_checks": 4,
+          "local_points": 5967,
+          "selected_points": 0,
+          "candidate_points": 0,
+          "seconds": 0.06
+        },
+        "groups": [],
+        "warnings": [
+          "No compact protrusions passed all height, size and surrounding-support checks.",
+          "These are compact geometric protrusions, not identified hardware. Check the orange/cyan points and the protrusion side before removal.",
+          "Only measured points can be removed. No lining is added behind a bolt or fitting.",
+          "Rejected protrusion groups: 1 with too few distinct measured locations. Review these checks before changing the search settings."
+        ],
+        "exact_original_ids_verified": true,
+        "seconds": 0.060870065997733036
+      },
+      {
+        "seed_source_id": 3019000,
+        "seed": [
+          -3.838283768121156,
+          -5.995568644001093,
+          4.748549072828887
+        ],
+        "approx_y": -6.0,
+        "approx_theta": 140.0,
+        "statistics": {
+          "reference_rms_mm": 0.7751746630299917,
+          "reference_points": 8076,
+          "normal": [
+            0.7484884127555079,
+            -0.11478430535699224,
+            -0.6531383155308325
+          ],
+          "negative_recess_points": 533,
+          "local_points": 10567,
+          "selected_points": 0,
+          "candidate_points": 0,
+          "seconds": 0.069
+        },
+        "groups": [],
+        "warnings": [
+          "No compact protrusions passed the selected height and support checks. Recesses are not bolt-head candidates."
+        ],
+        "exact_original_ids_verified": true,
+        "seconds": 0.06961262299955706
+      },
+      {
+        "seed_source_id": 2938440,
+        "seed": [
+          -4.518263768121157,
+          -6.012328644001093,
+          3.6455290728288863
+        ],
+        "approx_y": -6.0,
+        "approx_theta": 160.0,
+        "statistics": {
+          "reference_rms_mm": 0.6791659700862052,
+          "reference_points": 8017,
+          "normal": [
+            0.9167798068247449,
+            -0.15430547614534834,
+            -0.36838106062871995
+          ],
+          "negative_recess_points": 297,
+          "local_points": 10224,
+          "selected_points": 0,
+          "candidate_points": 0,
+          "seconds": 0.071
+        },
+        "groups": [],
+        "warnings": [
+          "No compact protrusions passed the selected height and support checks. Recesses are not bolt-head candidates."
+        ],
+        "exact_original_ids_verified": true,
+        "seconds": 0.072495518001233
+      },
+      {
+        "seed_source_id": 5161120,
+        "seed": [
+          3.200796231878844,
+          -3.016508644001093,
+          3.6502990728288864
+        ],
+        "approx_y": -3.0,
+        "approx_theta": 20.0,
+        "statistics": {
+          "reference_rms_mm": 0.6921342115092297,
+          "reference_points": 8030,
+          "normal": [
+            -0.9259798760685116,
+            0.17084728585097014,
+            -0.33670829219593196
+          ],
+          "negative_recess_points": 556,
+          "rejected_components": 8,
+          "rejected_reasons": {
+            "insufficient_points": 5,
+            "oversize": 0,
+            "elongated": 3,
+            "unsupported": 0
+          },
+          "neighbour_checks": 1726,
+          "local_points": 10586,
+          "selected_points": 0,
+          "candidate_points": 21,
+          "seconds": 0.043
+        },
+        "groups": [
+          {
+            "id": 1,
+            "name": "Protruding bolt / fitting candidate 1",
+            "points": 21,
+            "unique_locations": 21,
+            "centre": [
+              3.2896662318788437,
+              -2.8309876916201406,
+              3.4408671680669816
+            ],
+            "height_mm": 14.95299054269222,
+            "peak_height_mm": 18.53800548750035,
+            "diameter_mm": 70.4386278476796,
+            "elongation": 3.8953015279895125,
+            "selected": false
+          }
+        ],
+        "warnings": [
+          "These are compact geometric protrusions, not identified hardware. Check the orange/cyan points and the protrusion side before removal.",
+          "Only measured points can be removed. No lining is added behind a bolt or fitting.",
+          "Rejected protrusion groups: 5 with too few distinct measured locations; 3 with elongated rather than compact. Review these checks before changing the search settings."
+        ],
+        "exact_original_ids_verified": true,
+        "seconds": 0.04479486699710833
+      },
+      {
+        "seed_source_id": 5002920,
+        "seed": [
+          2.062766231878844,
+          -3.0067986440010928,
+          5.2652790728288865
+        ],
+        "approx_y": -3.0,
+        "approx_theta": 50.0,
+        "statistics": {
+          "reference_rms_mm": 0.7403929476258566,
+          "reference_points": 8985,
+          "normal": [
+            -0.6288199158095394,
+            0.13134711962417478,
+            -0.7663768313615154
+          ],
+          "negative_recess_points": 669,
+          "rejected_components": 1,
+          "rejected_reasons": {
+            "insufficient_points": 1,
+            "oversize": 0,
+            "elongated": 0,
+            "unsupported": 0
+          },
+          "neighbour_checks": 1,
+          "local_points": 11656,
+          "selected_points": 0,
+          "candidate_points": 0,
+          "seconds": 0.053
+        },
+        "groups": [],
+        "warnings": [
+          "No compact protrusions passed all height, size and surrounding-support checks.",
+          "These are compact geometric protrusions, not identified hardware. Check the orange/cyan points and the protrusion side before removal.",
+          "Only measured points can be removed. No lining is added behind a bolt or fitting.",
+          "Rejected protrusion groups: 1 with too few distinct measured locations. Review these checks before changing the search settings."
+        ],
+        "exact_original_ids_verified": true,
+        "seconds": 0.053818481999769574
+      },
+      {
+        "seed_source_id": 4497920,
+        "seed": [
+          0.8167462318788439,
+          -3.039908644001093,
+          5.946249072828886
+        ],
+        "approx_y": -3.0,
+        "approx_theta": 75.0,
+        "error": "The reference needs measured lining around the seed, not just on one side. Move the seed or enlarge Search radius.",
+        "seconds": 0.11824728899955517
+      },
+      {
+        "seed_source_id": 3007020,
+        "seed": [
+          -1.7192537681211564,
+          -3.006848644001093,
+          5.905199072828887
+        ],
+        "approx_y": -3.0,
+        "approx_theta": 110.0,
+        "statistics": {
+          "reference_rms_mm": 0.6040176474346004,
+          "reference_points": 4464,
+          "normal": [
+            0.37880681751352685,
+            -0.05074255569435038,
+            -0.9240836477542924
+          ],
+          "negative_recess_points": 574,
+          "local_points": 6341,
+          "selected_points": 0,
+          "candidate_points": 0,
+          "seconds": 0.074
+        },
+        "groups": [],
+        "warnings": [
+          "No compact protrusions passed the selected height and support checks. Recesses are not bolt-head candidates."
+        ],
+        "exact_original_ids_verified": true,
+        "seconds": 0.07455077900158358
+      },
+      {
+        "seed_source_id": 2763200,
+        "seed": [
+          -3.346223768121156,
+          -2.995578644001093,
+          4.776169072828886
+        ],
+        "approx_y": -3.0,
+        "approx_theta": 140.0,
+        "statistics": {
+          "reference_rms_mm": 0.5758834087282864,
+          "reference_points": 7979,
+          "normal": [
+            0.7556019890400966,
+            -0.12029552996224602,
+            -0.643890223275484
+          ],
+          "negative_recess_points": 236,
+          "local_points": 10150,
+          "selected_points": 0,
+          "candidate_points": 0,
+          "seconds": 0.075
+        },
+        "groups": [],
+        "warnings": [
+          "No compact protrusions passed the selected height and support checks. Recesses are not bolt-head candidates."
+        ],
+        "exact_original_ids_verified": true,
+        "seconds": 0.0761977760012087
+      },
+      {
+        "seed_source_id": 2722080,
+        "seed": [
+          -3.9931937681211562,
+          -2.991348644001093,
+          3.684149072828886
+        ],
+        "approx_y": -3.0,
+        "approx_theta": 160.0,
+        "statistics": {
+          "reference_rms_mm": 0.5630581362870306,
+          "reference_points": 7968,
+          "normal": [
+            0.9229280278639992,
+            -0.15393792501102982,
+            -0.35285545287889214
+          ],
+          "negative_recess_points": 27,
+          "local_points": 9638,
+          "selected_points": 0,
+          "candidate_points": 0,
+          "seconds": 0.082
+        },
+        "groups": [],
+        "warnings": [
+          "No compact protrusions passed the selected height and support checks. Recesses are not bolt-head candidates."
+        ],
+        "exact_original_ids_verified": true,
+        "seconds": 0.08290768499864498
+      },
+      {
+        "seed_source_id": 5451820,
+        "seed": [
+          3.7518662318788443,
+          -0.009528644001092573,
+          3.695919072828886
+        ],
+        "approx_y": 0.0,
+        "approx_theta": 20.0,
+        "statistics": {
+          "reference_rms_mm": 0.6009054567569071,
+          "reference_points": 12323,
+          "normal": [
+            -0.9285458826742131,
+            0.17840385789985191,
+            -0.3255374129884549
+          ],
+          "negative_recess_points": 385,
+          "rejected_components": 3,
+          "rejected_reasons": {
+            "insufficient_points": 0,
+            "oversize": 1,
+            "elongated": 2,
+            "unsupported": 0
+          },
+          "neighbour_checks": 3092,
+          "local_points": 15717,
+          "selected_points": 0,
+          "candidate_points": 0,
+          "seconds": 0.153
+        },
+        "groups": [],
+        "warnings": [
+          "No compact protrusions passed all height, size and surrounding-support checks.",
+          "These are compact geometric protrusions, not identified hardware. Check the orange/cyan points and the protrusion side before removal.",
+          "Only measured points can be removed. No lining is added behind a bolt or fitting.",
+          "Rejected protrusion groups: 1 with larger than Maximum fitting diameter; 2 with elongated rather than compact. Review these checks before changing the search settings."
+        ],
+        "exact_original_ids_verified": true,
+        "seconds": 0.1545394809982099
+      },
+      {
+        "seed_source_id": 5440440,
+        "seed": [
+          2.5908262318788444,
+          -0.009828644001092762,
+          5.348899072828886
+        ],
+        "approx_y": 0.0,
+        "approx_theta": 50.0,
+        "statistics": {
+          "reference_rms_mm": 0.5423784291393839,
+          "reference_points": 10067,
+          "normal": [
+            -0.6286563564015077,
+            0.13861438307397533,
+            -0.7652301865197177
+          ],
+          "negative_recess_points": 317,
+          "local_points": 12692,
+          "selected_points": 0,
+          "candidate_points": 0,
+          "seconds": 0.159
+        },
+        "groups": [],
+        "warnings": [
+          "No compact protrusions passed the selected height and support checks. Recesses are not bolt-head candidates."
+        ],
+        "exact_original_ids_verified": true,
+        "seconds": 0.16001092699661967
+      },
+      {
+        "seed_source_id": 5408380,
+        "seed": [
+          1.347816231878844,
+          -0.009938644001092595,
+          6.028869072828886
+        ],
+        "approx_y": 0.0,
+        "approx_theta": 75.0,
+        "error": "The reference needs measured lining around the seed, not just on one side. Move the seed or enlarge Search radius.",
+        "seconds": 0.17130066000027
+      },
+      {
+        "seed_source_id": 2519980,
+        "seed": [
+          -1.2081837681211562,
+          0.0051313559989071,
+          5.976819072828887
+        ],
+        "approx_y": 0.0,
+        "approx_theta": 110.0,
+        "statistics": {
+          "reference_rms_mm": 0.5423583941626618,
+          "reference_points": 4702,
+          "normal": [
+            0.39062503160670503,
+            -0.04529725962578679,
+            -0.9194347409972363
+          ],
+          "negative_recess_points": 210,
+          "local_points": 6199,
+          "selected_points": 0,
+          "candidate_points": 0,
+          "seconds": 0.152
+        },
+        "groups": [],
+        "warnings": [
+          "No compact protrusions passed the selected height and support checks. Recesses are not bolt-head candidates."
+        ],
+        "exact_original_ids_verified": true,
+        "seconds": 0.15331726799922762
+      },
+      {
+        "seed_source_id": 2508700,
+        "seed": [
+          -2.8331637681211563,
+          0.0003913559989071336,
+          4.829779072828886
+        ],
+        "approx_y": 0.0,
+        "approx_theta": 140.0,
+        "statistics": {
+          "reference_rms_mm": 0.5427891897139971,
+          "reference_points": 8146,
+          "normal": [
+            0.7636349821049587,
+            -0.11406220543691403,
+            -0.6354930584958629
+          ],
+          "negative_recess_points": 467,
+          "local_points": 10639,
+          "selected_points": 0,
+          "candidate_points": 0,
+          "seconds": 0.132
+        },
+        "groups": [],
+        "warnings": [
+          "No compact protrusions passed the selected height and support checks. Recesses are not bolt-head candidates."
+        ],
+        "exact_original_ids_verified": true,
+        "seconds": 0.13320175700209802
+      },
+      {
+        "seed_source_id": 2506640,
+        "seed": [
+          -3.5041337681211564,
+          -0.021348644001092737,
+          3.656759072828886
+        ],
+        "approx_y": 0.0,
+        "approx_theta": 160.0,
+        "statistics": {
+          "reference_rms_mm": 0.6342658558981126,
+          "reference_points": 8431,
+          "normal": [
+            0.9305637046759272,
+            -0.16207975515874307,
+            -0.3283006922129404
+          ],
+          "negative_recess_points": 340,
+          "local_points": 10503,
+          "selected_points": 0,
+          "candidate_points": 0,
+          "seconds": 0.116
+        },
+        "groups": [],
+        "warnings": [
+          "No compact protrusions passed the selected height and support checks. Recesses are not bolt-head candidates."
+        ],
+        "exact_original_ids_verified": true,
+        "seconds": 0.11758253999869339
+      },
+      {
+        "seed_source_id": 5757100,
+        "seed": [
+          4.310946231878844,
+          2.9684613559989073,
+          3.712529072828886
+        ],
+        "approx_y": 3.0,
+        "approx_theta": 20.0,
+        "statistics": {
+          "reference_rms_mm": 0.6566894039336487,
+          "reference_points": 9906,
+          "normal": [
+            -0.9349703106279794,
+            0.17101651653496874,
+            -0.3107794544632327
+          ],
+          "negative_recess_points": 265,
+          "rejected_components": 16,
+          "rejected_reasons": {
+            "insufficient_points": 11,
+            "oversize": 0,
+            "elongated": 5,
+            "unsupported": 0
+          },
+          "neighbour_checks": 7231,
+          "local_points": 13716,
+          "selected_points": 0,
+          "candidate_points": 181,
+          "seconds": 0.112
+        },
+        "groups": [
+          {
+            "id": 1,
+            "name": "Protruding bolt / fitting candidate 1",
+            "points": 34,
+            "unique_locations": 34,
+            "centre": [
+              4.42674358482002,
+              3.232643120704789,
+              3.3623243669465337
+            ],
+            "height_mm": 33.73818839155111,
+            "peak_height_mm": 38.828610796932644,
+            "diameter_mm": 62.91108730863336,
+            "elongation": 3.4918594700793215,
+            "selected": false
+          },
+          {
+            "id": 2,
+            "name": "Protruding bolt / fitting candidate 2",
+            "points": 128,
+            "unique_locations": 128,
+            "centre": [
+              4.4009343568788415,
+              3.2438123716239082,
+              3.4937936822038873
+            ],
+            "height_mm": 26.62856741778228,
+            "peak_height_mm": 37.59334796861756,
+            "diameter_mm": 148.06468446304297,
+            "elongation": 2.44704813347573,
+            "selected": false
+          },
+          {
+            "id": 3,
+            "name": "Protruding bolt / fitting candidate 3",
+            "points": 11,
+            "unique_locations": 11,
+            "centre": [
+              4.415770777333389,
+              3.388208628726181,
+              3.589528163737977
+            ],
+            "height_mm": 12.156111048427523,
+            "peak_height_mm": 13.203430414833935,
+            "diameter_mm": 70.09046472084319,
+            "elongation": 3.879311668612901,
+            "selected": false
+          },
+          {
+            "id": 4,
+            "name": "Protruding bolt / fitting candidate 4",
+            "points": 8,
+            "unique_locations": 8,
+            "centre": [
+              4.383198731878844,
+              3.4068463559989075,
+              3.6446228228288864
+            ],
+            "height_mm": 27.397631142949884,
+            "peak_height_mm": 49.298873245610274,
+            "diameter_mm": 46.66253666389913,
+            "elongation": 2.5896698707530876,
+            "selected": false
+          }
+        ],
+        "warnings": [
+          "These are compact geometric protrusions, not identified hardware. Check the orange/cyan points and the protrusion side before removal.",
+          "Only measured points can be removed. No lining is added behind a bolt or fitting.",
+          "Rejected protrusion groups: 11 with too few distinct measured locations; 5 with elongated rather than compact. Review these checks before changing the search settings."
+        ],
+        "exact_original_ids_verified": true,
+        "seconds": 0.11474250799801666
+      },
+      {
+        "seed_source_id": 20560,
+        "seed": [
+          3.1968962318788443,
+          2.911151355998908,
+          5.358499072828886
+        ],
+        "approx_y": 3.0,
+        "approx_theta": 50.0,
+        "statistics": {
+          "reference_rms_mm": 0.6162340795891376,
+          "reference_points": 12887,
+          "normal": [
+            -0.6598348233968853,
+            0.13901285137826513,
+            -0.7384398641626043
+          ],
+          "negative_recess_points": 848,
+          "local_points": 16365,
+          "selected_points": 0,
+          "candidate_points": 0,
+          "seconds": 0.099
+        },
+        "groups": [],
+        "warnings": [
+          "No compact protrusions passed the selected height and support checks. Recesses are not bolt-head candidates."
+        ],
+        "exact_original_ids_verified": true,
+        "seconds": 0.10046894400147721
+      },
+      {
+        "seed_source_id": 461080,
+        "seed": [
+          1.8678762318788438,
+          2.8780313559989077,
+          6.1024590728288866
+        ],
+        "approx_y": 3.0,
+        "approx_theta": 75.0,
+        "error": "The reference needs measured lining around the seed, not just on one side. Move the seed or enlarge Search radius.",
+        "seconds": 0.10664331999942078
+      },
+      {
+        "seed_source_id": 2047700,
+        "seed": [
+          -0.7211137681211561,
+          3.0181013559989074,
+          6.035429072828887
+        ],
+        "approx_y": 3.0,
+        "approx_theta": 110.0,
+        "statistics": {
+          "reference_rms_mm": 0.9909834247848934,
+          "reference_points": 5039,
+          "normal": [
+            0.40637301814107346,
+            -0.053545091258144106,
+            -0.9121369926327247
+          ],
+          "negative_recess_points": 139,
+          "local_points": 6487,
+          "selected_points": 0,
+          "candidate_points": 0,
+          "seconds": 0.061
+        },
+        "groups": [],
+        "warnings": [
+          "No compact protrusions passed the selected height and support checks. Recesses are not bolt-head candidates."
+        ],
+        "exact_original_ids_verified": true,
+        "seconds": 0.06249124299938558
+      },
+      {
+        "seed_source_id": 2247180,
+        "seed": [
+          -2.3240837681211564,
+          3.065381355998908,
+          4.861409072828886
+        ],
+        "approx_y": 3.0,
+        "approx_theta": 140.0,
+        "statistics": {
+          "reference_rms_mm": 0.9770351549690544,
+          "reference_points": 8046,
+          "normal": [
+            0.77320101657522,
+            -0.1261581466418651,
+            -0.6214855670109611
+          ],
+          "negative_recess_points": 627,
+          "local_points": 10325,
+          "selected_points": 0,
+          "candidate_points": 0,
+          "seconds": 0.041
+        },
+        "groups": [],
+        "warnings": [
+          "No compact protrusions passed the selected height and support checks. Recesses are not bolt-head candidates."
+        ],
+        "exact_original_ids_verified": true,
+        "seconds": 0.04199241799869924
+      },
+      {
+        "seed_source_id": 2284660,
+        "seed": [
+          -2.9880637681211564,
+          3.0196413559989077,
+          3.642379072828886
+        ],
+        "approx_y": 3.0,
+        "approx_theta": 160.0,
+        "statistics": {
+          "reference_rms_mm": 0.5199226515821114,
+          "reference_points": 8112,
+          "normal": [
+            0.9396639544004236,
+            -0.16589157109799635,
+            -0.2991849585777949
+          ],
+          "negative_recess_points": 200,
+          "rejected_components": 1,
+          "rejected_reasons": {
+            "insufficient_points": 1,
+            "oversize": 0,
+            "elongated": 0,
+            "unsupported": 0
+          },
+          "neighbour_checks": 1,
+          "local_points": 9871,
+          "selected_points": 0,
+          "candidate_points": 0,
+          "seconds": 0.033
+        },
+        "groups": [],
+        "warnings": [
+          "No compact protrusions passed all height, size and surrounding-support checks.",
+          "These are compact geometric protrusions, not identified hardware. Check the orange/cyan points and the protrusion side before removal.",
+          "Only measured points can be removed. No lining is added behind a bolt or fitting.",
+          "Rejected protrusion groups: 1 with too few distinct measured locations. Review these checks before changing the search settings."
+        ],
+        "exact_original_ids_verified": true,
+        "seconds": 0.03381256699867663
+      },
+      {
+        "seed_source_id": 134080,
+        "seed": [
+          4.894016231878844,
+          6.012461355998909,
+          3.616159072828886
+        ],
+        "approx_y": 6.0,
+        "approx_theta": 20.0,
+        "statistics": {
+          "reference_rms_mm": 0.5022428817965223,
+          "reference_points": 7874,
+          "normal": [
+            -0.9483048446411566,
+            0.17319887834399206,
+            -0.2659324541504757
+          ],
+          "negative_recess_points": 76,
+          "rejected_components": 13,
+          "rejected_reasons": {
+            "insufficient_points": 11,
+            "oversize": 0,
+            "elongated": 2,
+            "unsupported": 0
+          },
+          "neighbour_checks": 697,
+          "local_points": 9958,
+          "selected_points": 0,
+          "candidate_points": 9,
+          "seconds": 0.076
+        },
+        "groups": [
+          {
+            "id": 1,
+            "name": "Protruding bolt / fitting candidate 1",
+            "points": 9,
+            "unique_locations": 9,
+            "centre": [
+              4.938344009656621,
+              6.246794689332242,
+              3.6293168506066635
+            ],
+            "height_mm": 18.692437473222178,
+            "peak_height_mm": 22.70167901966345,
+            "diameter_mm": 52.6941779171892,
+            "elongation": 2.927285439046899,
+            "selected": false
+          }
+        ],
+        "warnings": [
+          "These are compact geometric protrusions, not identified hardware. Check the orange/cyan points and the protrusion side before removal.",
+          "Only measured points can be removed. No lining is added behind a bolt or fitting.",
+          "Rejected protrusion groups: 11 with too few distinct measured locations; 2 with elongated rather than compact. Review these checks before changing the search settings."
+        ],
+        "exact_original_ids_verified": true,
+        "seconds": 0.07722820500202943
+      },
+      {
+        "seed_source_id": 342580,
+        "seed": [
+          3.7389562318788445,
+          5.927121355998908,
+          5.438119072828886
+        ],
+        "approx_y": 6.0,
+        "approx_theta": 50.0,
+        "statistics": {
+          "reference_rms_mm": 0.4773914485667532,
+          "reference_points": 8073,
+          "normal": [
+            -0.6466772252893909,
+            0.1322744832530478,
+            -0.7512070469398927
+          ],
+          "negative_recess_points": 168,
+          "local_points": 10524,
+          "selected_points": 0,
+          "candidate_points": 0,
+          "seconds": 0.084
+        },
+        "groups": [],
+        "warnings": [
+          "No compact protrusions passed the selected height and support checks. Recesses are not bolt-head candidates."
+        ],
+        "exact_original_ids_verified": true,
+        "seconds": 0.08499213100003544
+      },
+      {
+        "seed_source_id": 769380,
+        "seed": [
+          2.414946231878844,
+          5.937001355998907,
+          6.1850890728288865
+        ],
+        "approx_y": 6.0,
+        "approx_theta": 75.0,
+        "error": "The reference needs measured lining around the seed, not just on one side. Move the seed or enlarge Search radius.",
+        "seconds": 0.05726937800136511
+      },
+      {
+        "seed_source_id": 1651000,
+        "seed": [
+          -0.19105376812115615,
+          5.982081355998908,
+          6.104039072828886
+        ],
+        "approx_y": 6.0,
+        "approx_theta": 110.0,
+        "statistics": {
+          "reference_rms_mm": 0.5649529892377341,
+          "reference_points": 4890,
+          "normal": [
+            0.4026605364504492,
+            -0.048956548227114816,
+            -0.9140392490320769
+          ],
+          "negative_recess_points": 170,
+          "local_points": 6526,
+          "selected_points": 0,
+          "candidate_points": 0,
+          "seconds": 0.093
+        },
+        "groups": [],
+        "warnings": [
+          "No compact protrusions passed the selected height and support checks. Recesses are not bolt-head candidates."
+        ],
+        "exact_original_ids_verified": true,
+        "seconds": 0.09417337299964856
+      },
+      {
+        "seed_source_id": 2007500,
+        "seed": [
+          -1.8310237681211563,
+          6.058361355998908,
+          4.876019072828886
+        ],
+        "approx_y": 6.0,
+        "approx_theta": 140.0,
+        "statistics": {
+          "reference_rms_mm": 0.6767146206877218,
+          "reference_points": 8274,
+          "normal": [
+            0.7857101761504316,
+            -0.12722288760233558,
+            -0.6053708416861362
+          ],
+          "negative_recess_points": 133,
+          "rejected_components": 1,
+          "rejected_reasons": {
+            "insufficient_points": 1,
+            "oversize": 0,
+            "elongated": 0,
+            "unsupported": 0
+          },
+          "neighbour_checks": 4,
+          "local_points": 10349,
+          "selected_points": 0,
+          "candidate_points": 0,
+          "seconds": 0.038
+        },
+        "groups": [],
+        "warnings": [
+          "No compact protrusions passed all height, size and surrounding-support checks.",
+          "These are compact geometric protrusions, not identified hardware. Check the orange/cyan points and the protrusion side before removal.",
+          "Only measured points can be removed. No lining is added behind a bolt or fitting.",
+          "Rejected protrusion groups: 1 with too few distinct measured locations. Review these checks before changing the search settings."
+        ],
+        "exact_original_ids_verified": true,
+        "seconds": 0.038355516000592615
+      },
+      {
+        "seed_source_id": 2073980,
+        "seed": [
+          -2.4609937681211562,
+          6.012621355998908,
+          3.656999072828886
+        ],
+        "approx_y": 6.0,
+        "approx_theta": 160.0,
+        "statistics": {
+          "reference_rms_mm": 0.5770716089647518,
+          "reference_points": 7049,
+          "normal": [
+            0.9444974755810057,
+            -0.16575530164729974,
+            -0.28363656075499233
+          ],
+          "negative_recess_points": 87,
+          "local_points": 8881,
+          "selected_points": 0,
+          "candidate_points": 0,
+          "seconds": 0.026
+        },
+        "groups": [],
+        "warnings": [
+          "No compact protrusions passed the selected height and support checks. Recesses are not bolt-head candidates."
+        ],
+        "exact_original_ids_verified": true,
+        "seconds": 0.026436950000061188
+      }
+    ],
+    "best": {
+      "seed_source_id": 5757100,
+      "seed": [
+        4.310946231878844,
+        2.9684613559989073,
+        3.712529072828886
+      ],
+      "approx_y": 3.0,
+      "approx_theta": 20.0,
+      "statistics": {
+        "reference_rms_mm": 0.6566894039336487,
+        "reference_points": 9906,
+        "normal": [
+          -0.9349703106279794,
+          0.17101651653496874,
+          -0.3107794544632327
+        ],
+        "negative_recess_points": 265,
+        "rejected_components": 16,
+        "rejected_reasons": {
+          "insufficient_points": 11,
+          "oversize": 0,
+          "elongated": 5,
+          "unsupported": 0
+        },
+        "neighbour_checks": 7231,
+        "local_points": 13716,
+        "selected_points": 0,
+        "candidate_points": 181,
+        "seconds": 0.112
+      },
+      "groups": [
+        {
+          "id": 1,
+          "name": "Protruding bolt / fitting candidate 1",
+          "points": 34,
+          "unique_locations": 34,
+          "centre": [
+            4.42674358482002,
+            3.232643120704789,
+            3.3623243669465337
+          ],
+          "height_mm": 33.73818839155111,
+          "peak_height_mm": 38.828610796932644,
+          "diameter_mm": 62.91108730863336,
+          "elongation": 3.4918594700793215,
+          "selected": false
+        },
+        {
+          "id": 2,
+          "name": "Protruding bolt / fitting candidate 2",
+          "points": 128,
+          "unique_locations": 128,
+          "centre": [
+            4.4009343568788415,
+            3.2438123716239082,
+            3.4937936822038873
+          ],
+          "height_mm": 26.62856741778228,
+          "peak_height_mm": 37.59334796861756,
+          "diameter_mm": 148.06468446304297,
+          "elongation": 2.44704813347573,
+          "selected": false
+        },
+        {
+          "id": 3,
+          "name": "Protruding bolt / fitting candidate 3",
+          "points": 11,
+          "unique_locations": 11,
+          "centre": [
+            4.415770777333389,
+            3.388208628726181,
+            3.589528163737977
+          ],
+          "height_mm": 12.156111048427523,
+          "peak_height_mm": 13.203430414833935,
+          "diameter_mm": 70.09046472084319,
+          "elongation": 3.879311668612901,
+          "selected": false
+        },
+        {
+          "id": 4,
+          "name": "Protruding bolt / fitting candidate 4",
+          "points": 8,
+          "unique_locations": 8,
+          "centre": [
+            4.383198731878844,
+            3.4068463559989075,
+            3.6446228228288864
+          ],
+          "height_mm": 27.397631142949884,
+          "peak_height_mm": 49.298873245610274,
+          "diameter_mm": 46.66253666389913,
+          "elongation": 2.5896698707530876,
+          "selected": false
+        }
+      ],
+      "warnings": [
+        "These are compact geometric protrusions, not identified hardware. Check the orange/cyan points and the protrusion side before removal.",
+        "Only measured points can be removed. No lining is added behind a bolt or fitting.",
+        "Rejected protrusion groups: 11 with too few distinct measured locations; 5 with elongated rather than compact. Review these checks before changing the search settings."
+      ],
+      "exact_original_ids_verified": true
+    },
+    "source_unchanged": true,
+    "final_coordinate_sha256": "dc29830608621acdeebc728511c8b29adc1dd889a4d2a9a50b30392bd154ee8c",
+    "truth": "Unlabelled supplied scan: execution, geometry support, counts and exact IDs verified; true bolt identity, precision and recall are not established."
+  },
+  "registered_real_bolt_edit": {
+    "source_name": "240808 27-95- 27_reduced.e57",
+    "source_points": 5936302,
+    "seed_source_id": 5757100,
+    "virtual_rotation": [
+      [
+        0.9004471023526769,
+        -0.43496553411123023,
+        0.0
+      ],
+      [
+        0.43496553411123023,
+        0.9004471023526769,
+        0.0
+      ],
+      [
+        0.0,
+        0.0,
+        1.0
+      ]
+    ],
+    "virtual_translation": [
+      410000.0,
+      380000.0,
+      -17.0
+    ],
+    "preview_local_points": 13716,
+    "candidate_groups": 4,
+    "candidate_points": 181,
+    "exact_candidate_ids_invariant_under_pose": true,
+    "exact_delete_mask": true,
+    "undo_redo_and_final_undo": true,
+    "statistics": {
+      "reference_rms_mm": 0.6566894040896308,
+      "reference_points": 9906,
+      "normal": [
+        -0.9162775974496655,
+        -0.25268853376630174,
+        -0.31077945446072436
+      ],
+      "negative_recess_points": 265,
+      "rejected_components": 16,
+      "rejected_reasons": {
+        "insufficient_points": 11,
+        "oversize": 0,
+        "elongated": 5,
+        "unsupported": 0
+      },
+      "neighbour_checks": 7229,
+      "local_points": 13716,
+      "selected_points": 181,
+      "candidate_points": 181,
+      "seconds": 0.115
+    },
+    "seconds": 0.15223057399998652,
+    "original_xyz_unchanged": true,
+    "original_attributes_unchanged": true,
+    "source_hashes": {
+      "file": "dc29830608621acdeebc728511c8b29adc1dd889a4d2a9a50b30392bd154ee8c",
+      "attributes_file": "23537af9c6fad4acb9247eff623bfd0c8efa541f91edb75c9ee6705d7f3a4a7a"
+    },
+    "limitations": "Local reversible checks on unlabelled real scan geometry; no manual bolt identity ground truth and no native Windows execution."
+  },
+  "original_coordinate_changes": false,
+  "semantic_segment_type_recognition": false,
+  "physical_segment_ground_truth_available": false,
+  "semantic_bolt_accuracy_validated": false,
+  "native_windows_execution": false,
+  "whole_350_million_point_benchmark": false,
+  "complete_application_7GB_memory_guarantee": false,
+  "prior_evidence": "0.18.0 and 0.18.1 evidence retained as historical validation, with their documented limits."
+}

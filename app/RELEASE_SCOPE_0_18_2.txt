@@ -1,0 +1,74 @@
+Tunnel Studio 0.18.2 - scope and remaining limits
+30 October 2026
+
+Cumulative repair over delivered 0.18.1. Existing 0.18.0 registration, whole-project
+comparison/section streaming, indexed Delete, coloured overview and storage
+repairs remain. The 0.18.1 measured-section baseline guard and research review
+remain. This release does not introduce a new trained semantic model.
+
+REPAIRED
+- Registered preview picks now agree with the pose-aware source revision and
+  recover exact original point identities in the correct registered frame.
+  Local block pruning uses the inverse pose; precise tests and visibility
+  predicates use world coordinates. Bounded owned reads close on cancellation.
+- Round protruding fittings use actual planar diameter rather than a box
+  diagonal. Elongation is measured in the component principal frame. Duplicate
+  returns preserve IDs but cannot fabricate distinct spatial support.
+- E57 import handles intensity/colour validity flags through libE57 buffers,
+  preserving wide colour values and applying the declared scan pose once.
+- Flat or quantized intensity backgrounds no longer disable contrasting seams.
+  Shallow seam depth has an independent 4 mm setting, with an adaptive four-MAD
+  noise gate; bolt/recess depth retains its separate 12 mm default.
+- Seam fits require concentration relative to their flanks and revalidation
+  after refinement. A conflicting local boundary no longer discards every
+  independent panel in the same observed ring interval.
+- Incomplete or width-inconsistent classification bands are withheld locally,
+  preserving independently supported separated bands elsewhere.
+- Exact connectivity uses fewer indexed cell-range probes without altering
+  original-coordinate edge tests. No new input-point cutoff is introduced.
+- Analyse exposes Segment panels directly. Lining clusters explicitly describes
+  connected groups, with a direct route to measured seam segmentation. Empty,
+  partial and single-component results have explicit review diagnostics.
+
+REAL-SCAN FINDINGS
+Both previously supplied E57s imported: 5,921,285 and5,936,302 original points.
+All three segment comparisons label/retain every 5,921,285 original IDs and leave
+source XYZ unchanged. Detailed segmentation took 32.09 s and produced 60 candidate
+regions in 15/19 observed intervals. More detailed took 156.12 s and produced 151
+candidate regions in 23/25 observed intervals. These counts are not accuracy.
+Missing accepted ring boundaries can leave long intervals, including about 19 m,
+and candidate regions can contain several physical panels. Full automatic
+physical segmentation of this scan remains unverified and visibly incomplete.
+
+Default 15 mm connectivity completed all 5,921,285 points in 521.07 s using the same
+previously fitted GuSAC model. Preparation was separately recorded at 57.39 s;
+their sum is not a fresh single-run wall-clock measurement. The result still
+fragments this scan and has zero supported ring bands. The 6,000 named-group
+metadata budget remains: 7,003 further qualifying groups/293,059 points are
+retained unnamed. Undersized groups and insufficient-evidence points are also
+retained. Connectivity colours do not establish physical segment types.
+
+Thirty actual local bolt seed patches were inspected. Twenty-five completed,
+five lacked surrounding support, and seven geometric candidates appeared in
+four patches. The reviewed candidates include seam-edge fragments. They must
+not be called seven verified bolts. Exact registered selection/Delete/Undo/Redo
+works, but reliable hardware recognition and whole-tunnel bolt discovery are
+not established. Recesses and protruding fittings are distinct tools.
+
+VALIDATION
+273 application tests passed, including 40 new regressions. The browser checked
+classification diagnostics, seam candidate selection/isolation and registered
+bolt picking, preview, exact 877-point deletion and Undo. Native Windows/WebView2
+execution, segment-type accuracy, real 350M-point performance and a universal
+whole-application 7 GB limit were not tested. Process RSS reported for seam runs
+is a Linux worker measurement, not the full desktop application memory budget.
+Installer payload, source and unchanged runtime hashes are checked separately.
+
+USE
+Close Tunnel Studio, run the full 0.18.2 installer, then confirm the version.
+Use Analyse > Segment panels for observed seam boundaries; review missing and
+ambiguous intervals. More detailed uses a 10 mm evidence grid; original XYZ are
+not resampled or changed. Use Clean > Protruding bolts for a local raised fitting,
+and the lining recess tool for negative holes/pockets. Review candidates before
+editing. Correct project segment layout and labelled examples are still needed
+to establish actual segment-type and bolt-recognition accuracy.

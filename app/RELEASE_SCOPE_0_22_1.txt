@@ -1,0 +1,54 @@
+Tunnel Studio 0.22.1
+6 November 2026
+
+Merge selected registered setups
+Ctrl-click or tick two or more registered setups in the Project Explorer,
+right-click one of the selected rows, and choose Merge scans. Review the exact
+source list, new cloud name and required disk space before starting. Only the
+selected setups are copied, even when another setup connects them in the bundle.
+Saved registration connections are required; bundle labels alone do not count.
+Current saved rigid poses and deletion masks are respected. Temporary clipping
+does not trim the merged cloud; overlapping observations are retained.
+
+The result is a complete, independent full-density Registered cloud. Source
+coordinates and links remain unchanged. Existing edited merged results are
+preserved. Publication rechecks source revisions and is atomic with project save.
+Stop removes the incomplete result; Undo and Redo restore workspace metadata.
+
+Named visual project browser
+Home > Open project now shows project cards with the actual saved title,
+date, storage summary and a small geometry thumbnail. Search names, select a
+card, then orbit, zoom, view Top/Front or Fit its isolated 3D overview before
+opening it. Previewing a different project does not replace the live workspace.
+A late response cannot replace the latest selected project.
+
+New named and portable saves include a bounded, local-origin display sample
+inside their metadata (at most 12,000 points, not a source-cloud limit). There
+are no extra full-cloud copies for previews. Older local projects can display
+a bounded source sample without changing their saved snapshot. Portable files
+without a saved sample explicitly show geometry bounds rather than claiming
+full point detail. Previews are never analysis or measurement input.
+
+Browse a project folder reads saved names inside .tstudio files and UUID-named
+snapshot manifests. Opening an external item is an explicit project-copy import
+through the existing checked workflow. Its source stays unchanged. The storage
+folders keep their stable identities so saved asset links remain valid.
+
+The browser uses the shared Light/Dark palette. Project location and deletion
+controls have coordinated backgrounds and readable text. Reopening the browser
+reuses one isolated graphics context and clears old preview buffers.
+
+Cumulative from delivered 0.22.0, including the local measured-wall shape
+reference, circumference coverage diagnostics, shape library, independent scan
+colours, full-density pocket inspection, source-independent registered clouds,
+storage, cleaning and existing registration/measurement/mesh workflows.
+
+Checks use constructed data, the production HTTP server and Chromium on the
+build host. The complete user project and native Windows/WebView2 are not run
+here. Merging does not improve or certify registration; review its residuals
+and independent survey checks before measurement use.
+
+Validation: 721 application tests, 39 browser scenarios, syntax for 242 Python
+and 70 JavaScript files. Project browser text/control contrast checked in both
+themes; 29 production dialogs and detached review also exercised. Native Windows
+execution and the complete user project remain untested on this build host.

@@ -1,0 +1,121 @@
+Tunnel Studio 0.17.1 — alignment, Explorer, appearance and permanent point removal
+26 October 2026 (UTC)
+
+WHY THIS UPDATE
+The 0.17.0 redesign moved Create alignment into the fourth group of Model and
+shortened its label to Alignment. At narrower widths, that group became a
+dropdown. The functions were present, but the user could not find them.
+The user also requested a tidier Explorer whose height follows its contents,
+theme choices and a working way to permanently remove already-deleted points.
+This full update retains the earlier 0.17.0 release and addresses those reports.
+
+VISIBLE ALIGNMENT AND MODEL ENTRY POINTS
+Alignment is a dedicated top tab immediately before Model.
+Its first group shows Create alignment, Import alignment and Draw alignment
+in 3D as individual buttons. Coordinates, editing and scan fitting are also
+available directly. The existing common Import window handles alignment CSV.
+Model begins with a large Create 3D model from alignment button and a separate
+Edit tunnel design command. Advanced profile sweep remains under Build geometry
+and in the alignment dialog.
+
+FIVE CLEAR DESIGN STEPS
+1. Plan alignment: draw the centreline in a chosen 3D plane, or edit plan nodes.
+2. Heights / gradients: enter multiple chainage/height pairs. Heights interpolate
+   between those pairs and the calculated gradients are shown.
+3. Tunnel profiles: create named circles, rectangles, arches, lines-and-arcs
+   profiles, or reuse a supported closed CAD outline.
+4. Chainage ranges: use Constant theoretical profile or Interpolate between
+   profiles. Type start/end chainages or pick them along the 3D alignment.
+5. Preview & build: review the geometry, spacing and orientation, then create
+   the 3D model. Reopen it with Edit tunnel design to update or make a copy.
+
+Each step has a visible explanation. Active alignments initialize new models at
+Tunnel profiles. Draw alignment in 3D deliberately opens the plan step even
+when another alignment is active. Edit tunnel design preserves the selected
+model or saved-design editing route. On short windows, the editor and preview
+share a scrollable middle area while the heading, steps and footer remain usable.
+
+CONTENT-SIZED PROJECT EXPLORER
+The Explorer grows and shrinks as items and expanded folders change. It scrolls
+only when its contents exceed the available view height. Its width remains
+resizable. The view extends underneath the compact card, so a short item list
+does not reserve an empty full-height sidebar below it. The header keeps a
+collapse control and an overflow menu with named docking and window actions.
+Rows align selection, the independent yellow/grey visibility bulb, expanders,
+names and counts. Long names have tooltips. No Find scan/model search is added.
+In short windows, the drawing command bar starts compact to leave room for the
+scan and Explorer rows. Show commands expands coordinate entry and drawing
+options; Hide commands folds them away. A manual choice is retained while the
+window is resized. The Explorer remains capped correctly when changing docks.
+
+APPEARANCE
+Settings > Appearance offers Light, Dark and Follow Windows. The choice applies
+immediately to the workspace, ribbons, Explorer, menus, tools and dialogs.
+Follow Windows reacts when the operating-system preference changes.
+The Windows desktop saves this as a separate preference for the current user,
+so it survives launches on a different local port. A failed preference save is
+reported. Changing appearance does not alter project data, scan RGB, class or
+heatmap colours, visibility bulb meanings, or the chosen 3D background.
+Detached tool windows receive the same appearance.
+
+PERMANENTLY REMOVE DELETED POINTS
+Edit > Permanently remove deleted points is a directly visible ribbon command.
+The selected scan's context menu and its Deleted points folder provide related
+access. The review identifies the scan, deleted and retained point counts,
+cleaning restoration groups, temporary disk requirements and the consequence
+for Undo/Redo. The user must acknowledge that consequence before applying it.
+
+Ordinary Delete remains reversible. Permanent removal writes the retained
+original coordinates and aligned attributes to replacement working caches in
+bounded 100,000-point blocks, commits the cleaned state and then reclaims old
+unreferenced caches. No downsampling is introduced. A fully deleted scan is
+removed cleanly. A scan already cleaned by an algorithm can permanently forget
+its restoration groups even when it has no ordinary masked deleted rows; that
+case does not rewrite its retained XYZ cache. Forgotten restoration groups do
+not reappear automatically after saving or reopening.
+
+This permanent operation clears the workspace's entire Undo and Redo history,
+because that history stores whole-workspace snapshots. The review says this
+explicitly. Point-dependent selections and stale analysis previews are cleared.
+Original imported files, other scans and saved project/recovery references are
+protected. Consequently, reclaimed space depends on what other copies still
+reference. The result reports actual cache and disk changes; cleanup failures
+after a successful commit are warnings, not a false claim that nothing changed.
+The operation rejects stale reviews or changed source files. Cancellation and
+failures before commit preserve the prior saved state. A point already removed
+from the working cache can still exist in an original import or another saved
+project; this command does not erase those independent copies.
+
+RETAINED METHODS AND PROJECT DATA
+Alignment and tunnel geometry calculations remain unchanged. Creating a model
+copies an active alignment into an editable design. Designer chainages follow
+horizontal distance; an imported alignment with different supplied chainages
+remains available unchanged. Advanced profile sweep retains imported chainages.
+The interface reports when designer chainages are recalculated.
+All previous cleaning and clustering methods, including primary GuSAC and
+TMatch, local bolts and region growth, meshing, measurement, registration,
+six comparison modes, import/export choices and the startup metadata repair
+remain. This update changes permanent removal and appearance persistence; it
+does not introduce a new cleaning/classification method or claim new accuracy.
+
+REFERENCE SCOPE
+Six user-supplied Amberg Tunnel screenshots show plan alignment, a separate
+height/gradient table, named theoretical profiles and chainage sections with
+constant profiles or transitions. The model workflow follows that organisation
+and terminology. It does not claim Amberg file compatibility, all Cyclone
+functions or additional construction-stage tools.
+
+VALIDATION AND PRACTICAL LIMITS
+See VALIDATION_0_17_1.json for current focused backend, actual-browser, source
+correspondence and installer evidence. Historical 0.17.0 reports remain as
+baseline evidence, not as new runs of this update. Current interface checks use
+production HTTP and Chromium on Linux, including narrow laptop-equivalent
+windows. Exact retained coordinates, attributes, archived groups, disk-cache
+protection, cancellation and save/reopen are checked with generated fixtures.
+The largest new permanent-removal fixture contains 550,003 points.
+Native Windows/WebView2 execution and the user's full 550-million-point project
+are not available on this build host. This update therefore makes no new full
+550-million-point timing, memory or universal deletion-speed claim.
+
+All earlier product scope and numerical/performance limitations remain recorded
+in RELEASE_SCOPE_0_17_0.txt and the complete consolidated requirements history.

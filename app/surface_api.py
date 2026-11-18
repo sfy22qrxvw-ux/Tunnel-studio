@@ -45,6 +45,24 @@ def result_source_changed(s, r):
                 and not same_geometry(current, saved))
 
 
+def reviewed_scene_scan(s, r):
+    if r.get('source_kind') not in ('survey','separate'):
+        return None
+    ident=r.get('source_item_id')
+    if not ident and r['source_kind']=='survey':
+        ident=s.STATE.get('active_job_scan')
+    return next((item for item in s.STATE.get('job_items', [])
+                 if item['id']==ident and item['kind']=='scan'
+                 and same_geometry(item['meta'],r['source_meta'])),None)
+
+
+def can_apply_review(s,r):
+    return (reviewed_scene_scan(s,r) is not None or
+            (r['source_kind']=='survey' and not r.get('source_item_id')
+             and not s.STATE.get('active_job_scan')
+             and same_geometry(source(s,'survey'),r['source_meta'])))
+
+
 def patch_fingerprint(item):
     meta=item['meta'];files=[]
     for key in ('file','mask_file'):
@@ -87,7 +105,7 @@ def result(s):
 
 
 def result_arrays(r):
-    n = r['statistics']['input_points']
+    n = r.get('stored_point_count', r['statistics']['input_points'])
     return (np.memmap(r['point_ids_file'], '<i8', 'r', shape=(n,)),
             np.memmap(r['labels_file'], '<i4', 'r', shape=(n,)))
 
@@ -122,6 +140,8 @@ def metrics(r):
     ids, labels = result_arrays(r)
     truth = np.memmap(meta['truth_file'], 'u1', 'r', shape=(meta['count'],))[ids].astype(bool)
     predicted = np.isin(labels, r['kept'])
+    live = ~np.isin(labels, r.get('deleted_cluster_ids', ()))
+    predicted, truth = predicted[live], truth[live]
     tp = int((predicted & truth).sum()); fp = int((predicted & ~truth).sum()); fn = int((~predicted & truth).sum())
     return {'scope':'Synthetic selected area only; not a real-scan accuracy estimate', 'tp':tp, 'fp':fp, 'fn':fn,
             'iou':tp/(tp+fp+fn) if tp+fp+fn else None,
@@ -139,7 +159,7 @@ def public_result(s, r):
     out['reviewed_kept_points'] = kept_count(r)
     out['review_exclusion_error'] = review_exclusion_error(r)
     out['source_changed'] = result_source_changed(s, r)
-    out['can_apply'] = r['source_kind'] == 'survey' and same_geometry(source(s, 'survey'), r['source_meta'])
+    out['can_apply'] = can_apply_review(s,r)
     out['can_delete_patches'] = patch_source(s,r) is not None
     out['evaluation'] = metrics(r)
     return out
@@ -174,7 +194,9 @@ def _selection_spec(s,meta,key,selection):
         start=float(selection['start']);end=float(selection['end'])
         if not np.isfinite([start,end]).all() or start>=end:raise ValueError('Enter an increasing, finite chainage range.')
         spec.update(start=start,end=end)
-    elif mode!='full':raise ValueError('Choose full scan, current 3D selection, coordinate box or chainage range.')
+    elif mode=='visible':
+        spec['visibility']=selection['visibility']
+    elif mode!='full':raise ValueError('Choose whole scan, visible points, current 3D selection, coordinate box or chainage range.')
     if mode in ('full','chainage') and selection.get('clip_box'):
         clip=selection['clip_box'];spec['clip_box']=jobdata.selection_spec({'mode':'box',**clip,'invert':False})
     return spec,lo,hi,start,end
@@ -198,7 +220,7 @@ def _area_count(s,meta,key,selection,cancelled=lambda:False,max_selected=None):
     import surface_streaming
     spec,lo,hi,start,end=_selection_spec(s,meta,key,selection)
     total=int(meta['count']);read_points=max(1,min(int(pointio.CHUNK),100000))
-    if surface_streaming.index_box(spec):
+    if spec["mode"]=="visible" or surface_streaming.index_box(spec):
         selected = 0
         for ids, _, _ in surface_streaming.batches(s,meta,key,spec,read_points,cancelled):
             selected += len(ids)
@@ -245,6 +267,17 @@ def _area_batches(s,meta,key,selection,block_points,cancelled=lambda:False):
     block_points=int(block_points)
     if block_points<1:raise ValueError('Selection batch size must be positive.')
     block_points=min(block_points,500000)
+    if spec['mode']=='visible':
+        lo,hi=registration_pose.world_bounds(meta)
+        pad=np.maximum(.001,16*np.finfo(float).eps*np.maximum(np.abs(lo),np.abs(hi)))
+        bounds={'mode':'box','minimum':(lo-pad).tolist(),'maximum':(hi+pad).tolist()}
+        def checkpoint(message):
+            if cancelled():raise ValueError('Surface extraction cancelled. The previous result is unchanged.')
+            s.progress(message)
+        for ids,points in jobdata.selection_rows(meta,bounds,checkpoint,visibility=spec['visibility']):
+            for start in range(0,len(ids),block_points):
+                yield ids[start:start+block_points],points[start:start+block_points],spec
+        return
     if surface_streaming.index_box(spec):
         yield from surface_streaming.batches(s,meta,key,spec,block_points,cancelled)
         return
@@ -335,9 +368,14 @@ def run(s, body):
     mode=area.get('mode','full')
     body['processing_area']=None
     limit=item.get('limit_box') if item else None
+    if mode=='visible':
+        if item is None:raise ValueError('Choose a scene scan to process its visible points.')
+        area={'mode':'visible','visibility':{k:copy.deepcopy(item[k]) for k in
+              ('hidden_boxes','isolate_box','limit_box','limit_hide_outside') if k in item}}
+        body['processing_area']='visible'
     if mode=='limit_box' and not limit:
         raise ValueError('The saved limit box changed. Set it again or choose another processing area.')
-    if limit and not (mode=='full' and body.get('ignore_limit_box') is True):
+    if limit and mode!='visible' and not (mode=='full' and body.get('ignore_limit_box') is True):
         if mode in ('full','limit_box'):
             area={'mode':'box',**limit}
             body['processing_area']='limit_box'
@@ -394,6 +432,32 @@ def _run(s, body, cached=None):
     source_item_id=s.STATE.get('surface_source_item') if key=='separate' else s.STATE.get('active_job_scan') if key=='survey' else None
     selection=body.get('selection',{'mode':'full'})
     area_batches=__import__('surface_streaming').batches if settings['method']=='lining_features' else _area_batches
+    run_key=None
+    if selection.get('mode','full')=='full' and not selection.get('clip_box'):
+        paths=[meta.get(k) for k in ('file','attributes_file','mask_file')]
+        stamps=[]
+        for value in paths:
+            if value:
+                st=Path(value).stat()
+                stamps.append((value,st.st_size,st.st_mtime_ns,st.st_ctime_ns))
+            else:stamps.append(None)
+        item=source_item(s,key)
+        scanner=__import__('reflection_cleaning').scanner_origin(item) if settings['method']=='reflection' else None
+        run_key=hashlib.sha256(json.dumps(
+            ['storage-review-v1',key,source_item_id,registration_pose.revision(meta),
+             meta['count'],stamps,settings,selection],
+            sort_keys=True).encode())
+        if scanner is not None:run_key.update(np.asarray(scanner,dtype='<f8').tobytes())
+        run_key=run_key.hexdigest()
+        previous=s.STATE.get('surface_result') or {}
+        if not CANCEL.is_set() and previous.get('whole_review_key')==run_key:
+            rows=previous.get('stored_point_count',previous['statistics']['input_points'])
+            try:
+                if (Path(previous['point_ids_file']).stat().st_size==rows*8 and
+                    Path(previous['labels_file']).stat().st_size==rows*4):
+                    s.progress('Reusing the existing review for this scan and settings')
+                    return
+            except FileNotFoundError:pass
     if cached:selected_total,count_spec=cached[2:]
     elif settings['method']=='smrg':
         count_spec=_selection_spec(s,meta,key,selection)[0]
@@ -427,8 +491,8 @@ def _run(s, body, cached=None):
         import clean_tunnel
         try:
             progress=lambda message:s.progress(f'{"Whole retained scan" if count_spec["mode"]=="full" else "Selected area only"} · {selected_total:,} points · {message}')
-            source_item=next((x for x in s.STATE.get('job_items',[]) if x['id']==source_item_id),None)
-            fingerprint=patch_fingerprint(source_item) if source_item and settings['method'] in ('irregular','lining_features') else None
+            scan_item=next((x for x in s.STATE.get('job_items',[]) if x['id']==source_item_id),None)
+            fingerprint=patch_fingerprint(scan_item) if scan_item and settings['method'] in ('irregular','lining_features') else None
             if settings['method'] in ('gusac','tmatch'):
                 engine=__import__(settings['method'])
                 r=engine.run_batches(batches,s.WORK,idpath,labelpath,settings,progress,CANCEL.is_set,selected_total)
@@ -443,7 +507,7 @@ def _run(s, body, cached=None):
                 _,attributes=pointio.arrays(meta)
                 intensity=(lambda ids:np.asarray(attributes[ids,0])) if attributes is not None else None
                 r=reflection_cleaning.run_batches(batches,idpath,labelpath,settings,progress,CANCEL.is_set,selected_total,
-                    origin=reflection_cleaning.scanner_origin(source_item),intensity_for_ids=intensity)
+                    origin=reflection_cleaning.scanner_origin(scan_item),intensity_for_ids=intensity)
                 method='Reflection candidates: lining, mirrored geometry, scanner visibility and intensity evidence'
             elif settings['method']=='combined_denoise':
                 import combined_denoising
@@ -467,7 +531,7 @@ def _run(s, body, cached=None):
             r.update(settings=settings,method=method,doi='10.3390/app15062926' if settings['method'] in ('gusac','tmatch') else '10.1016/j.measurement.2026.123609' if settings['method']=='ray_box' else '',
                 id=ident,revision=uuid.uuid4().hex,created_at=time.time(),source_kind=key,source_meta=meta,
                 source_item_id=source_item_id,source_fingerprint=fingerprint,processing_area=body.get('processing_area'),
-                point_ids_file=str(idpath),labels_file=str(labelpath),selection=count_spec,review_log=[],outputs={})
+                point_ids_file=str(idpath),labels_file=str(labelpath),selection=count_spec,review_log=[],outputs={},whole_review_key=run_key)
             commit_result(s,r)
         except Exception:
             idpath.unlink(missing_ok=True);labelpath.unlink(missing_ok=True);raise
@@ -509,7 +573,7 @@ def _run(s, body, cached=None):
         r={'kept':sorted(kept),'clusters':clusters,'settings':settings,'warnings':warnings,
            'statistics':{'input_points':total,'unique_points':unique,'duplicate_locations':duplicates,'supervoxels':supervoxels,'expected_supervoxels':expected,'merge_passes':passes,'initial_edges':initial_edges,'removed_edges':removed_edges,'retained_edges':retained_edges,'clusters':len(clusters),'kept_points':kept_points,'noise_points':noise,'spacing_m':spacing_sum/max(total,1),'seconds':round(seconds,3),'processing_blocks':blocks},
            'method':('Tunnel Studio tunnel-envelope extraction; block-processed and merged for tunnel lining review.' if settings.get('method')=='tunnel_envelope' else 'SMRG research implementation, Song et al. 2026; independent interpretation, automatically block-processed for large selections.'),'doi':('' if settings.get('method')=='tunnel_envelope' else '10.1038/s41598-026-73755-6')}
-        r.update(id=ident,revision=uuid.uuid4().hex,created_at=time.time(),source_kind=key,source_meta=meta,point_ids_file=str(idpath),labels_file=str(labelpath),selection=spec or {'mode':'full'},review_log=[],outputs={})
+        r.update(id=ident,revision=uuid.uuid4().hex,created_at=time.time(),source_kind=key,source_meta=meta,point_ids_file=str(idpath),labels_file=str(labelpath),selection=spec or {'mode':'full'},review_log=[],outputs={},whole_review_key=run_key)
         if CANCEL.is_set():raise ValueError('Surface extraction cancelled. The previous result is unchanged.')
         r.update(source_item_id=source_item_id,processing_area=body.get('processing_area'))
         commit_result(s,r)
@@ -535,7 +599,8 @@ def review_selection(s,body):
     spec=jobdata.selection_spec(body.get('selection'))
     ids,labels=result_arrays(r)
     newpath=asset_folder(s.WORK,'analysis')/(uuid.uuid4().hex+'.surface_labels')
-    new_id=max((c['id'] for c in r['clusters']),default=-1)+1
+    removed=r.get('deleted_cluster_ids', ())
+    new_id=max([-1, *removed, *(c['id'] for c in r['clusters'])])+1
     counts={};sums={};changed=0
     try:
         with newpath.open('wb') as out:
@@ -544,11 +609,12 @@ def review_selection(s,body):
                 q=jobdata._display_rows(r['source_meta']['file'],r['source_meta']['count'],ids[start:start+pointio.CHUNK])
                 q=registration_pose.points(r['source_meta'],q)
                 lab=np.array(labels[start:start+len(q)],copy=True)
-                chosen=jobdata.selection_mask(q,spec)
+                live=~np.isin(lab,removed) if removed else np.ones(len(lab),bool)
+                chosen=jobdata.selection_mask(q,spec)&live
                 if kind:chosen &= np.isin(lab,candidates)
                 changed+=int(chosen.sum());lab[chosen]=new_id
                 lab.astype('<i4').tofile(out)
-                for k in np.unique(lab):
+                for k in np.unique(lab[live]):
                     use=lab==k;key=int(k);counts[key]=counts.get(key,0)+int(use.sum());sums[key]=sums.get(key,np.zeros(3))+q[use].sum(0)
         if not changed:raise ValueError('No detected bolt points are inside this 3D selection.' if kind else 'No processed points are inside this 3D selection.')
         next_r=copy.deepcopy(r);by_id={c['id']:c for c in next_r['clusters']}
@@ -588,6 +654,10 @@ def add_clean_scan(s,body):
     if body.get('revision')!=r['revision']:raise ValueError('The result changed. Review the current result.')
     if body.get('reviewed') is not True:raise ValueError('Inspect the cleaning preview before creating the cleaned scan.')
     import job_api
+    if any(item.get('kind')=='scan' and
+           (item.get('cleaning_provenance') or {}).get('revision')==r['revision'] and
+           Path(item['meta']['file']).is_file() for item in job_api.items(s)):
+        raise ValueError('A cleaned scan already exists for this review. Select it in Project Explorer.')
     meta=copy.deepcopy(filtered_cloud(s));meta['name']='Tunnel · '+r['source_meta']['name']
     jobdata.preview_cache(meta,asset_folder(s.WORK,'derived'))
     entry={'id':uuid.uuid4().hex,'kind':'scan','name':meta['name'],'meta':meta,'visible':True,'source_bytes':0,
@@ -663,13 +733,24 @@ def preview(s, requested=None):
             positions=np.unique(np.r_[positions,detailed])
             shown=int(np.isin(labels[positions],list(wanted)).sum());total=sum(c['points'] for c in rows)
             detail=dict(clusters=sorted(wanted),selected_points=total,displayed_points=shown,complete=shown==total)
+        removed=r.get('deleted_cluster_ids')
+        if removed:
+            positions=positions[~np.isin(labels[positions],removed)]
+            if not len(positions):
+                for start in range(0,len(labels),pointio.CHUNK):
+                    live=np.flatnonzero(~np.isin(labels[start:start+pointio.CHUNK],removed))
+                    if len(live):
+                        positions=start+live[:1]
+                        break
+        if not len(positions):
+            raise ValueError('No retained points are available for preview.')
         sample_ids=np.asarray(ids[positions]);q=jobdata._display_rows(r['source_meta']['file'],r['source_meta']['count'],sample_ids)
         q=registration_pose.points(r['source_meta'],q)
         origin = (q.min(0)+q.max(0))/2
         if requested is not None and (result(s) is not r or patch_source(s,r) is None):
             raise ValueError('The source or analysis changed while loading points. Select the current result again.')
         return {'origin':origin.tolist(),'points':np.column_stack((q-origin,labels[positions],sample_ids)).tolist(),
-                'sample_count':len(q),'source_count':len(ids),'stride':step,'result_id':r['id'],'revision':r['revision'],'detail':detail}
+                'sample_count':len(q),'source_count':r['statistics']['input_points'],'stride':step,'result_id':r['id'],'revision':r['revision'],'detail':detail}
     finally:
         ids._mmap.close();labels._mmap.close()
 
@@ -715,30 +796,45 @@ def delete_patches(s,body):
     requested=body.get('clusters');allowed={c['id'] for c in r['clusters'] if c.get('irregular_candidate') or c.get('feature_kind') in ('bolt_hole','bolt_fitting','lining_departure')}
     if not isinstance(requested,list) or not requested or any(type(k) is not int or k not in allowed for k in requested):raise ValueError('Select detected bolts or irregular candidate patches. Other lining points are retained.')
     selected=set(requested);ids,labels=result_arrays(r);ident=uuid.uuid4().hex
-    reject=asset_folder(s.WORK,'working')/(ident+'.patch_ids');newids=asset_folder(s.WORK,'analysis')/(ident+'.surface_ids');newlabels=asset_folder(s.WORK,'analysis')/(ident+'.surface_labels')
-    previous=copy.deepcopy(s.STATE);old_selection=getattr(s,'SELECTION',None);mask_path=None;count=0;edit_paths=[]
+    reject=asset_folder(s.WORK,'working')/(ident+'.patch_ids')
+    previous=copy.deepcopy(s.STATE);old_selection=getattr(s,'SELECTION',None);count=0;edit_paths=[]
+    expected=sum(c['points'] for c in r['clusters'] if c['id'] in selected)
+    wanted=np.asarray(sorted(selected),dtype='<i4')
     try:
-        representatives={}
-        with reject.open('wb') as deleted,newids.open('wb') as keptids,newlabels.open('wb') as keptlabels:
-            for start in range(0,len(ids),pointio.CHUNK):
-                use=np.isin(labels[start:start+pointio.CHUNK],list(selected));part=ids[start:start+len(use)];lab=labels[start:start+len(use)]
-                remaining_lab=lab[~use];offset=start-count
-                for k in np.unique(remaining_lab):
-                    if int(k) not in representatives:
-                        positions=np.flatnonzero(remaining_lab==k)
-                        representatives[int(k)]=(offset+positions[np.linspace(0,len(positions)-1,min(32,len(positions)),dtype=int)]).tolist()
-                part[use].astype('<i8').tofile(deleted);part[~use].astype('<i8').tofile(keptids);lab[~use].astype('<i4').tofile(keptlabels);count+=int(use.sum())
+        with reject.open('wb') as deleted:
+            detail=getattr(s,'_surface_recess_detail',None)
+            if detail and detail['key']==(r['id'],r['revision']) and detail['complete'] and selected<=detail['groups']:
+                positions=detail['positions'][np.isin(detail['labels'],wanted)]
+                ids[positions].astype('<i8',copy=False).tofile(deleted)
+                count=len(positions)
+            else:
+                with open(r['labels_file'],'rb') as labfile,open(r['point_ids_file'],'rb') as idfile:
+                    for start in range(0,len(labels),pointio.CHUNK):
+                        stop=min(start+pointio.CHUNK,len(labels))
+                        size=stop-start
+                        block=np.fromfile(labfile,'<i4',count=size)
+                        if len(block)!=size:raise ValueError('The analysis label file is incomplete.')
+                        use=block==wanted[0] if len(wanted)==1 else np.isin(block,wanted)
+                        if use.any():
+                            idfile.seek(start*8)
+                            block_ids=np.fromfile(idfile,'<i8',count=size)
+                            if len(block_ids)!=size:raise ValueError('The analysis point IDs are incomplete.')
+                            block_ids[use].tofile(deleted)
+                            count+=int(use.sum())
+                        if start//pointio.CHUNK%8==0 or stop==len(labels):
+                            s.progress(f'Finding reviewed points · {stop:,}/{len(labels):,}')
+        if count!=expected:raise ValueError('The reviewed point counts changed. Run the analysis again.')
         if not count:raise ValueError('Those patches contain no remaining points.')
         import scan_edits
-        edit=scan_edits.apply(s,item,'separate_selection' if body.get('action')=='separate_patches' else 'delete_selection',selected_file=dict(file=str(reject),count=count),reason=('Lining departures' if r['settings'].get('lining_task')=='departures' else 'Bolt removal' if r['settings']['method']=='lining_features' else 'Irregular surfaces')+' · '+str(len(selected))+' reviewed groups',commit=False)
+        edit=scan_edits.apply(s,item,'separate_selection' if body.get('action')=='separate_patches' else 'delete_selection',selected_file=dict(file=str(reject),count=count),reason=('Lining departures' if r['settings'].get('lining_task')=='departures' else 'Bolt removal' if r['settings']['method']=='lining_features' else 'Irregular surfaces')+' · '+str(len(selected))+' reviewed groups',commit=False,rollback_state=False)
         edit_paths=edit['created_paths']
-        mask_path=item['meta'].get('mask_file')
+        if edit['count']!=count:raise ValueError('The scan selection changed. Run the analysis again before deleting these points.')
         next_r=copy.deepcopy(r);next_r['clusters']=[c for c in next_r['clusters'] if c['id'] not in selected]
-        for c in next_r['clusters']:
-            if c.get('preview_indices'):c['preview_indices']=representatives.get(c['id'],[])
         remaining=r['statistics']['input_points']-count
         if remaining:
-            next_r.update(source_meta=copy.deepcopy(item['meta']),source_fingerprint=patch_fingerprint(item),point_ids_file=str(newids),labels_file=str(newlabels),kept=[k for k in r['kept'] if k not in selected],revision=uuid.uuid4().hex,outputs={})
+            next_r.update(source_meta=copy.deepcopy(item['meta']),source_fingerprint=patch_fingerprint(item),
+                          stored_point_count=len(ids),deleted_cluster_ids=sorted(selected.union(r.get('deleted_cluster_ids',()))),
+                          kept=[k for k in r['kept'] if k not in selected],revision=uuid.uuid4().hex,outputs={})
             stats=next_r['statistics'];stats.setdefault('original_processed_points',stats['input_points']);stats.update(input_points=remaining,clusters=len(next_r['clusters']),kept_points=kept_count(next_r),noise_candidates=sum(c['points'] for c in next_r['clusters'] if c.get('irregular_candidate')),irregular_patches=sum(c.get('irregular_candidate',False) for c in next_r['clusters']))
             if next_r['settings']['method']=='lining_features':
                 next_r['features']=[f for f in next_r.get('features',[]) if f['id'] not in selected]
@@ -747,18 +843,18 @@ def delete_patches(s,body):
                 if next_r['settings'].get('lining_task')=='departures':
                     stats.update(raised_points=sum(c['points'] for c in next_r['clusters'] if c['id']==1),recessed_points=sum(c['points'] for c in next_r['clusters'] if c['id']==2))
                     next_r['detection']['summary']=f"Remaining departures: {stats['raised_points']:,} raised and {stats['recessed_points']:,} recessed points outside the selected tolerance."
-            next_r['automatic']=dict(labels_file=str(newlabels),clusters=copy.deepcopy(next_r['clusters']),kept=[c['id'] for c in next_r['clusters'] if c['automatic_keep']])
+            next_r['automatic']=dict(labels_file=r['labels_file'],clusters=copy.deepcopy(next_r['clusters']),kept=[c['id'] for c in next_r['clusters'] if c['automatic_keep']])
             next_r['review_log'].append(dict(time=time.time(),action='delete_patches',clusters=sorted(selected),points=count))
             s.STATE['surface_result']=next_r
         else:s.STATE['surface_result']=None
         s.SELECTION=None;s.progress(f'Saving {count:,} reviewed point changes. Undo reverses this operation.');s.save()
     except Exception:
         s.STATE.clear();s.STATE.update(previous);s.SELECTION=old_selection
-        for p in (newids,newlabels):p.unlink(missing_ok=True)
         for path in edit_paths:Path(path).unlink(missing_ok=True)
-        if mask_path:Path(mask_path).unlink(missing_ok=True)
         raise
-    finally:reject.unlink(missing_ok=True)
+    finally:
+        ids._mmap.close();labels._mmap.close()
+        reject.unlink(missing_ok=True)
 
 
 def filtered_cloud(s, included=True):
@@ -771,7 +867,7 @@ def filtered_cloud(s, included=True):
     if cached and Path(cached['file']).is_file():
         return {**cached,'name':output_name}
     count=kept_count(r) if included else r['statistics']['input_points']-kept_count(r)
-    total=int(r['statistics']['input_points']);block=max(1,min(int(pointio.CHUNK),100000))
+    total=int(r.get('stored_point_count',r['statistics']['input_points']));block=max(1,min(int(pointio.CHUNK),100000))
     def batches():
         # Result files can themselves exceed RAM. Read only owned ID/label
         # blocks; the coordinate gatherer separately bounds its source windows.
@@ -784,6 +880,7 @@ def filtered_cloud(s, included=True):
                     raise ValueError('The cleaning result cache is incomplete. Run the analysis again.')
                 use=np.isin(labels,r['kept'])
                 if not included:use=~use
+                if r.get('deleted_cluster_ids'):use &= ~np.isin(labels,r['deleted_cluster_ids'])
                 yield ids[use]
     stream=batches()
     try:meta=jobdata.extract_ids(r['source_meta'],stream,count,s.WORK,output_name,s.progress)
@@ -798,14 +895,15 @@ def apply(s, body):
     if body.get('revision') != r['revision'] or body.get('reviewed') is not True: raise ValueError('Review the current result before applying it.')
     error=review_exclusion_error(r)
     if error:raise ValueError(error)
-    if r['source_kind'] != 'survey' or not same_geometry(source(s,'survey'),r['source_meta']):
-        raise ValueError('The active survey differs from this result. Run extraction on the current survey before applying; the saved result can still be exported.')
+    if not can_apply_review(s,r):
+        raise ValueError('The active survey differs or the source scan changed. Run cleaning again before applying; the saved result can still be exported.')
+    active=reviewed_scene_scan(s,r)
     rejected_count=r['statistics']['input_points']-kept_count(r)
     if not rejected_count: raise ValueError('All processed points are kept; there is nothing to exclude.')
     if not kept_count(r): raise ValueError('Keep at least one surface cluster before applying.')
     path = asset_folder(s.WORK,'working')/(uuid.uuid4().hex+'.selection')
     try:
-        total=int(r['statistics']['input_points']);block=max(1,min(int(pointio.CHUNK),100000));written=0
+        total=int(r.get('stored_point_count',r['statistics']['input_points']));block=max(1,min(int(pointio.CHUNK),100000));written=0
         with path.open('wb') as out,open(r['point_ids_file'],'rb') as idfile,open(r['labels_file'],'rb') as labfile:
             for start in range(0,total,block):
                 size=min(block,total-start)
@@ -815,15 +913,17 @@ def apply(s, body):
                     raise ValueError('The cleaning result cache is incomplete. Run the analysis again.')
                 if (ids<0).any() or (ids>=r['source_meta']['count']).any():
                     raise ValueError('The cleaning result contains invalid source point IDs.')
-                use=~np.isin(labels,r['kept']);ids[use].tofile(out);written+=int(use.sum())
+                use=~np.isin(labels,r['kept'])
+                if r.get('deleted_cluster_ids'):use &= ~np.isin(labels,r['deleted_cluster_ids'])
+                ids[use].tofile(out);written+=int(use.sum())
                 s.progress(f'Preparing reviewed exclusions · {start+size:,}/{total:,}')
         if written!=rejected_count:raise ValueError('The cleaning result counts changed. Review or run the analysis again.')
         selection = {'file':str(path),'count':rejected_count,'spec':{'surface_result':r['id'],'revision':r['revision'],'area':r['selection']}}
-        active=next((x for x in s.STATE.get('job_items',[]) if x['id']==s.STATE.get('active_job_scan')),None)
         if active:
             import scan_edits,job_api
-            job_api.sync_active(s)
-            scan_edits.apply(s,active,'delete_selection',selected_file=selection,reason='Reviewed cleaning: excluded points')
+            if r['source_kind']=='survey':job_api.sync_active(s)
+            scan_edits.apply(s,active,'delete_selection',selected_file=selection,
+                             reason='Reviewed cleaning: excluded points',respect_limit=False)
             return
         entry = editing.apply_edit(s.STATE['cloud'],selection,s.WORK,s.STATE.setdefault('edits',[]),'Reviewed '+r['method']+': exclude other points inside processed area')
         s.STATE.setdefault('audit',[]).append({'action':'surface_extract','time':entry['time'],'count':entry['count'],'result_id':r['id']})

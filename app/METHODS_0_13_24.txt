@@ -1,0 +1,110 @@
+TUNNEL STUDIO 0.13.24 — METHOD AND VERIFICATION NOTES
+15 October 2026
+
+CLEANING: GEOMETRY SUPPORT HAS PRIORITY OVER LOW DENSITY
+The previous combined cleaner could label sparse, genuine wall points as
+isolated after those points had already matched the fitted lining. Its local
+profile could also shift inwards onto a dense pipe, causing wall behind the
+pipe to be labelled outside the lining. Both failures were reproduced with
+known synthetic wall/pipe labels before editing the algorithm.
+
+Neighbour support is still computed from every selected retained original
+point using the spatial-halo filter. Calibration now includes a bounded sample
+of all selected measured points, so sparse wall evidence is not discarded
+before fitting. The actual-point sample remains deterministic and bounded at
+140,000 points. Radius/spacing labels strengthen off-lining rejection only;
+they cannot override a geometrically supported wall match. Uncertain points
+stay retained. No XYZ or attributes are adjusted.
+
+For the measured lining model, the local reference uses returns within 60 mm
+of the surrounding longitudinal angular profile. Previously the gate was at
+least 160 mm and grew with the retention tolerance, allowing a foreground
+pipe into local reference estimation. Missing local support uses the existing
+bounded gap rules; unresolved areas remain uncertain and retained. The
+60 mm gate is an implementation setting, not a survey tolerance or accuracy.
+It can retain more uncertain material; real protrusions and recesses may still
+be candidates. Review before applying. This does not recover unmeasured wall.
+
+Synthetic fixture: radius 3 m, length 12 m, 83,784 measured wall points with
+1 mm Gaussian radial noise; two 120 mm-radius longitudinal pipes in front of
+the lining. A partially obscured area leaves 243 wall returns with 200 mm
+longitudinal and approximately 157 mm circumferential spacing. There are
+15,424 pipe points and 800 scattered returns. Coordinates use a large survey
+offset. Before: combined measured/cylinder modes rejected all 243 sparse wall
+points; default lining retained about 25.9%. After: all wall points retained
+and all pipe points flagged in the fixture, for measured/cylinder combined
+modes at 20 mm and default lining at 80 mm. Logs retain before/after counts.
+This fixture has no ground-truth relationship to the user's field scan.
+Existing flat-floor, feature, source-ID, export, selection, cancellation and
+rollback tests also pass. Neighbour-only cleaning remains a density filter;
+use Combined denoising or Clean tunnel for this wall protection.
+
+RING EVIDENCE
+A new ring_suggestions module replaces the uninspected installed-core joint
+candidate routine. The existing core projection still provides chainage and
+radial deviation. Cache reuse now checks source fingerprint and exact file
+length (four float64 values per original point). Angular position is computed
+from original XYZ and the local alignment frame; no assumption is made about
+the other two projection columns. The selected scan, deletion mask and enabled
+limit box define the search domain. Auto range uses its retained extent.
+
+Each chainage bin has 24 angular sectors. Two full-density streaming passes
+form sector means and exclude returns beyond max(2 mm, 2.5 standard deviations)
+from the initial sector mean. This is clipped-mean evidence, not a median fit
+or a reproduction of GuSAC/TMatch. A longitudinal median baseline removes
+slow profile variation. Both sides of a bin need measured context. A candidate
+needs at least the chosen 8/12/16 observed sectors and agreement in at least
+six and 60% of observed sectors, with the same radial-change sign. Peaks are
+separated by about 0.45 times the entered expected pitch to avoid duplicate
+suggestions. Pitch never creates missing candidates. Bin-centre positions are
+not measurement precision. A partial view has weaker evidence than broad
+circumferential coverage. Flush/intensity-only or skew joints may be missed;
+fixtures or defects across enough sectors can be false positives.
+
+Search allocations are bounded by 30,000 bins and 200,000-point chunks.
+Progress and cancellation are checked during point passes and sector
+assessment. Wrong range, missing band support, low angular coverage and no
+radial evidence have different feedback. Failure rolls back active analysis
+state and removes a newly created projection file. Tests cover known rings,
+partial coverage, a local pipe impostor, deleted/limited regions, empty results,
+wrong settings, cancellation, projection reuse and truncated-cache rebuild.
+Exact Windows installation and the failing user scan were not available for
+end-to-end reproduction.
+
+MEASUREMENT / OVERVIEW / ESTIMATED REFERENCE
+Distance lines store both picked float coordinates, norm(B−A), horizontal norm
+and signed height difference in scene_objects. Existing project persistence
+and metadata Undo handle them. View selection uses distance to the projected
+segment. Deletion operates on the selected geometry ID before any stale target
+selection, and never on point-cloud masks. Points come from the displayed
+cloud picking workflow; lines are fixed world-coordinate annotations, not
+constraints that follow later registration transforms.
+
+The overview has its own scale/centre. Wheel zoom preserves the cursor's world
+position; right/middle pan changes only that view transform. Cut picking uses
+the inverse transform. Reconfiguring the same plane/path retains zoom; Fit
+restores the overview. Escape cancels a gesture. The section plane, CSV and
+original points are unchanged by navigation.
+
+Estimated alignment comparison uses the same existing circular-reference
+calculation as imported alignment comparison: nearest 3D centreline-segment
+radial distance minus interpolated node radius. It is not shortest distance
+to a general curved/tapered surface. Results record reference_kind and name;
+CSV, preview/heatmap and UI display estimated provenance. Source/alignment
+changes invalidate results. An estimate fitted from the same scan can absorb
+broad geometry errors and cannot independently demonstrate design compliance.
+
+VERIFICATION
+143 focused checks: 66 backend, 77 production-JavaScript UI checks with mocked
+HTTP/WebGL. The existing affected section, cleaning, review and selection suites
+were rerun alongside the new regressions. No claim of native Windows/GPU/field
+verification. The base core.py/pointio.py and optional Open3D engine are not
+available here. An accidentally broad older test runner attempted two unchanged
+Open3D cases; they failed to start for the missing dependency. The relevant
+seven alignment cases were run separately and passed. Logs retain this detail.
+
+Native Leica decoder files are byte-identical to 0.13.23. This release does not
+change calibration, photographs, RGB or raw-format support. The updater checks
+component imports in the installed runtime, backs up application files and
+restores the backup on its component-check failure. User projects and source
+scan files are not rewritten by installing the update.

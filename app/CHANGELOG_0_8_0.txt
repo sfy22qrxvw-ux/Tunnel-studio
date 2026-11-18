@@ -1,0 +1,32 @@
+Tunnel Studio 0.8.0
+
+SURFACE EXTRACTION
+- New recommended Tunnel lining envelope method: PCA tunnel direction + angular/axial radial envelope.
+- Processes the entire selected area in bounded memory-safe batches rather than imposing a total point cap.
+- Pre-counts selection to report batch X/Y.
+- Auto-infers tunnel interior; optional 3D Pick interior point workflow.
+- Important warnings now surface through central dialogs.
+- Cleaner Setup / Review / Output tool modes.
+
+MESH
+- Working Create mesh path from the scan selected in the main scene.
+- Leica/3DR-familiar workflow presets: Regular sampling, Rough mesh, Refine from cloud, Refine with interpolation.
+- Mesh is added to the main scene as a persistent mesh item.
+- Advanced underlying tunnel-grid reconstruction settings remain available.
+
+REGISTRATION / TARGETS
+- Whole-active-scan automatic checker target search using intensity and RGB when available.
+- Original-density neighbourhood validation rejects generic textured/planar surfaces.
+- Partial/sparse checker manual fitting retained.
+- Candidate Accept / Reject / Remove / Clear suggestions controls.
+- Registration drawer grouped into Targets / Match-QA / Apply modes.
+
+UI / USABILITY
+- Compact right-side tool panels with sticky primary actions.
+- Improved View slider spacing.
+- Clearer surface warnings and interior-point guidance.
+
+IMPORTANT
+- Original survey files are never overwritten.
+- Experimental extraction/registration results require review and independent survey validation.
+- General Poisson/BPA/Alpha/TSDF meshing remains planned for a future native performance core.

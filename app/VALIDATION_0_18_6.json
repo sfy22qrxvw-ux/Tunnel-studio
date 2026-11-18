@@ -1,0 +1,1048 @@
+{
+  "version": "0.18.6",
+  "date_utc": "2026-11-01",
+  "baseline": {
+    "version": "0.18.5",
+    "installer": "TunnelStudio_Setup_0.18.5_x64.exe",
+    "bytes": 244705578,
+    "sha256": "e6f75bcde8bf139c80ebe9cd64eaf9a9d8475280fda9b6ff943ed32f07b18bb7",
+    "source": "Exact delivered installer extracted and hash-verified against its manifest."
+  },
+  "scope": "Immediate target inclusion, fixed-setup registration with mixed 2D/3D links, progressive measured-colour rendering, compact analysis display and nonblocking legacy edited-project inventory.",
+  "application_tests": {
+    "tests_run": 386,
+    "seconds": 52.10475413600034,
+    "success": true,
+    "failures": [],
+    "errors": [],
+    "skipped": [],
+    "expected_failures": [],
+    "unexpected_successes": [],
+    "source_files_changed_during_tests": [],
+    "native_windows_execution": false
+  },
+  "syntax": {
+    "python_files": 182,
+    "javascript_files": 51,
+    "success": true,
+    "failures": []
+  },
+  "installer_tests": {
+    "tests": 83,
+    "seconds": 3.4017865119994894,
+    "success": true,
+    "failures": [],
+    "errors": [],
+    "skipped": [],
+    "platform": "linux",
+    "native_windows_execution": false,
+    "modules": [
+      "test_installer",
+      "test_component_diagnostics",
+      "test_release_registry",
+      "test_release_cleanup",
+      "test_upgrade_integration"
+    ]
+  },
+  "registration_backend": {
+    "version": "0.18.6",
+    "status": "passed",
+    "new_workflow_tests": 10,
+    "targeted_registration_tests": 30,
+    "failures": 0,
+    "errors": 0,
+    "platform": "Linux",
+    "native_windows_execution": false,
+    "actual_fit_examples": {
+      "sphere_rms_mm": 6.330909287272374,
+      "sphere_previous_rejection_limit_mm": 4.97,
+      "checker_plane_rms_mm": 16.20839437342091,
+      "checker_previous_rejection_limit_mm": 11.0
+    },
+    "coverage": [
+      "actual picked sphere API immediately inserts usable target row",
+      "finite sphere/checker RMS above old thresholds retained with numeric quality warnings",
+      "pending legacy target migration respects rejected/off targets",
+      "2-target 2D then >=3-target 3D across save/reopen",
+      "any fixed setup in either component retains exact current pose",
+      "connected network mixed per-link modes",
+      "rotated vertical group adjusted with an external anchor",
+      "independent checks and explicit exclusions retained",
+      "registration above residual tolerance still applied with residual report",
+      "insufficient/degenerate geometry produces no transform",
+      "virtual poses and immutable original XYZ; no duplicate cloud allocation",
+      "legacy24-setup chain and merged-cloud coherence"
+    ],
+    "changed_files": [
+      "app/registration.py",
+      "app/registration_workspace.py",
+      "app/registration_network.py",
+      "app/workflows.py",
+      "app/test_registration_coherence_0180.py",
+      "app/test_registration_workflow_0186.py"
+    ]
+  },
+  "registration_independent_review": {
+    "status": "no_remaining_blocker_in_reviewed_registration_changes",
+    "independent_tests": 8,
+    "failures": 0,
+    "errors": 0,
+    "findings": [
+      {
+        "id": "R1",
+        "title": "Register setups rollback did not cover draft creation/removal",
+        "reproduced": [
+          "cancel before commit retained new draft",
+          "save failure retained new draft",
+          "failed new solve removed prior draft"
+        ],
+        "fix": "Root added complete STATE and SELECTION rollback around solve plus accept.",
+        "verified": true
+      },
+      {
+        "id": "R2",
+        "title": "Re-solving an existing rotated vertical edge replaced its stored up axis with world Z",
+        "reproduced": "A-B and B-C 2D links rotated together by A-D 3D registration; rerunning A-B 2D then raised inconsistent vertical directions.",
+        "fix": "Root preserves and validates the existing vertical edge axis when replacing that edge in vertical mode.",
+        "verified": true
+      }
+    ],
+    "positive_coverage": [
+      "successful API action has one Undo checkpoint and exact Undo/Redo",
+      "original XYZ/attribute files and file inventory unchanged by virtual registration",
+      "cancel, solve failure, save failure and mid-Apply failure restore complete state and history",
+      "non-finite and collinear correspondences cannot apply a transform",
+      "noisy four-setup loop with two differently oriented vertical groups retains exact constraints",
+      "each of four selected fixed setups retains its existing pose exactly",
+      "re-solving an existing rotated 2D edge retains its up axis"
+    ],
+    "source_hashes": {
+      "registration.py": "01838416a0a6d0f154b424e2169c705f65f868a88d764dfacc4762216b430c84",
+      "registration_workspace.py": "1f9c281f2abf0d197b08d6f06fdc50ed1a6bdd67c19cac524adbe401a4a4929e",
+      "registration_network.py": "710210b0935c011e1c17b13931d73e891344a7eae7a1fbbf4362b2da9dc8fed3",
+      "workflows.py": "a86344f163e3ef0bcc59efa30f3e28fa359a1ee31a21487b82db15086c8230e7",
+      "web/registration-ui.js": "6588841f7b9e381797bc7f7faf9ba777823bbe5a07b0dd6a7709003589c2067e",
+      "web/scan-registration-ui.js": "48aa0c75249f5caf9cdc5a0ed3d216ccd06cdd2d275581bc7bc777f23d9bd49f"
+    },
+    "packaged_regression_file": "/workspace/scratch/0d497fbe0eff/tunnel_studio/app/test_registration_transaction_0186.py",
+    "packaged_regression_sha256": "a6488cdee6b571a7be4924ea48eec7e5800e4da7bf54275085a0f587df087e89",
+    "limitations": [
+      "Linux execution",
+      "Production API, solver and history code with controlled synchronous job execution",
+      "Native Windows process scheduling and WebView2 not exercised by this independent pass",
+      "UI source reviewed; browser scenarios were run by the UI author separately"
+    ]
+  },
+  "registration_browser": {
+    "status": "passed",
+    "scenarios": 10,
+    "checks": [
+      "automatic common targets",
+      "fixed setup choice",
+      "2D to 3D pair transition",
+      "independent check/excluded roles",
+      "no accept gate",
+      "high-RMS target display",
+      "stale result rejection",
+      "hidden preview avoided",
+      "correspondence deletion removes target",
+      "blank manual-row deletion"
+    ],
+    "platform": "Linux Chromium141, controlled API responses, actual production registration markup/scripts."
+  },
+  "render_browser": {
+    "status": "passed",
+    "scenarios": [
+      "No hidden overview, section or registration preview requests",
+      "Setup opens on coloured coarse perspective points while fine response is held",
+      "Refresh point detail retries a failed response without requiring camera movement",
+      "Fine response preserves measured coordinates and RGB colours",
+      "Drag automatically requests one coalesced quick/fine detail pair",
+      "Wheel reuses covering detail and automatically loads a wider view",
+      "Wider viewport automatically refreshes horizontal perspective detail",
+      "Late response from previous setup cannot overwrite current setup",
+      "Repeated selection clear performs zero point-buffer uploads",
+      "Legacy remaining count refreshes automatically without geometry requests or GPU uploads",
+      "Binary analysis equals JSON colours, avoids flattening, uploads once per recolour",
+      "Background count completion preserves the active analysis layer and GPU buffer",
+      "Late normal scan response cannot replace an active analysis overlay",
+      "Restore from analysis resumes missing fine detail after aborted load",
+      "Pending deletion stays hidden through selection clear; failure restores source display"
+    ],
+    "browser": "Chromium 141, Linux, software WebGL",
+    "fixture": "Two synthetic four-point setups; delayed binary responses are controlled. This is not a large-cloud throughput benchmark.",
+    "page_errors": [],
+    "request_counts": {
+      "point_previews": 20,
+      "legacy_overview": 0,
+      "legacy_section": 0,
+      "hidden_registration": 0
+    }
+  },
+  "new_python_regression_tests": {
+    "registration_workflow": 10,
+    "registration_transaction": 8,
+    "display_buffers": 8,
+    "render_loading": 15,
+    "inventory_loading": 14,
+    "total": 55,
+    "included_in_full_application_total": true
+  },
+  "counts_overlap": "Focused numerical, storage and backend suites are included in the 386-test application run. Browser scenarios and 83 installer tests are separate; do not sum overlapping focused counts.",
+  "benchmarks": {
+    "backend_view_detail": {
+      "baseline": {
+        "first_seconds": 3.654511865999666,
+        "repeat_seconds": 2.9268149239997,
+        "displayed_points": 800000,
+        "output_sha256": "0a7d571ef4850144b2ed4afa60d748670b836fa860ccf82460ecbed300b1bb21",
+        "repeat_identical": true,
+        "peak_rss_mib": 306.55078125,
+        "source_sha256": {
+          "file": "5d4801fc8b89d0073b56471f57f34ac02b99f0b6e37931c7d0b27e6c9d1414de",
+          "attributes_file": "d78ec4ea9aae4fd209b8fc48bad73037108cdd06f45bfbe573aca99892e4898f"
+        }
+      },
+      "updated": {
+        "first_seconds": 1.0068501269997796,
+        "repeat_seconds": 0.0024494319995937985,
+        "displayed_points": 800000,
+        "output_sha256": "0a7d571ef4850144b2ed4afa60d748670b836fa860ccf82460ecbed300b1bb21",
+        "repeat_identical": true,
+        "peak_rss_mib": 182.35546875,
+        "source_sha256": {
+          "file": "5d4801fc8b89d0073b56471f57f34ac02b99f0b6e37931c7d0b27e6c9d1414de",
+          "attributes_file": "d78ec4ea9aae4fd209b8fc48bad73037108cdd06f45bfbe573aca99892e4898f"
+        },
+        "coloured_quick_seconds": 0.0682285420007247,
+        "coloured_quick_points": 250000
+      },
+      "actual_original_points": 5000003,
+      "first_detail_speedup": 3.629648314083657,
+      "repeat_detail_speedup": 1194.8953571624231,
+      "bit_identical_displayed_geometry_and_rgb": true,
+      "unchanged_source_xyz_and_attributes": true,
+      "limitations": "Synthetic real files on Linux with filesystem cache; not a Windows/GPU or billion-point benchmark."
+    },
+    "legacy_inventory": {
+      "baseline": {
+        "first_inventory_seconds": 0.6586724099997809,
+        "count_ready_seconds": 0.6586759949996122,
+        "repeat_inventory_seconds": 0.0006444809996537515,
+        "first_count": 4545276,
+        "first_count_exact": true,
+        "first_pending": false,
+        "retained_count": 4545276,
+        "original_count": 5000003,
+        "excluded_count": 454727,
+        "bounds_exact": true,
+        "exact_properties_stored": true,
+        "full_xyz_attribute_statistics_calls": 1,
+        "mask_bytes_read": 0,
+        "largest_read_bytes": 0,
+        "peak_rss_mib": 261.921875
+      },
+      "updated": {
+        "first_inventory_seconds": 0.004742219999570807,
+        "count_ready_seconds": 0.008678393000081996,
+        "repeat_inventory_seconds": 0.0012109509998481371,
+        "first_count": 5000003,
+        "first_count_exact": false,
+        "first_pending": true,
+        "retained_count": 4545276,
+        "original_count": 5000003,
+        "excluded_count": 454727,
+        "bounds_exact": false,
+        "exact_properties_stored": false,
+        "full_xyz_attribute_statistics_calls": 0,
+        "mask_bytes_read": 5000003,
+        "largest_read_bytes": 5000003,
+        "peak_rss_mib": 62.58203125
+      },
+      "actual_original_points": 5000003,
+      "expected_retained_points": 4545276,
+      "source_sha256_before": {
+        "file": "5d4801fc8b89d0073b56471f57f34ac02b99f0b6e37931c7d0b27e6c9d1414de",
+        "attributes_file": "d78ec4ea9aae4fd209b8fc48bad73037108cdd06f45bfbe573aca99892e4898f",
+        "mask_file": "9e817a5ec57e9ed8b8fc11c563aa7547521a1009d6d059c4dda9ccb141ad501d"
+      },
+      "source_sha256_after": {
+        "file": "5d4801fc8b89d0073b56471f57f34ac02b99f0b6e37931c7d0b27e6c9d1414de",
+        "attributes_file": "d78ec4ea9aae4fd209b8fc48bad73037108cdd06f45bfbe573aca99892e4898f",
+        "mask_file": "9e817a5ec57e9ed8b8fc11c563aa7547521a1009d6d059c4dda9ccb141ad501d"
+      },
+      "unchanged_source_and_deletion_mask": true,
+      "first_inventory_speedup": 138.8953718004213,
+      "limitations": "Synthetic real files on Linux with filesystem cache; wall time may include concurrent release verification. This measures backend inventory, not browser, Windows, GPU, or billion-point performance."
+    },
+    "analysis_response_preparation": {
+      "points": 100000,
+      "runs": 5,
+      "coordinate_extent_m": 5500,
+      "statistics": {
+        "count": 100000,
+        "mean_mm": 0.03491740524599745,
+        "rms_mm": 22.829103657532144,
+        "p95_abs_mm": 34.02044825826515
+      },
+      "baseline": "Exact preview functions extracted from delivered 0.18.5 installer; compact JSON encoding matches server.Handler.send.",
+      "cases": {
+        "design": {
+          "json_bytes": 9247051,
+          "binary_bytes": 3200296,
+          "json_sha256": "b69a747e9f2b990a27eb301978340afd863036c2b5e5bde443d2314ef6f276b8",
+          "binary_sha256": "8382dd502d9a9eccef89358328f613e385baa87129ac0fc345af1fb9a6ce24b1",
+          "legacy_module_sha256": "3a8a8383f9932ca691953776c2090d7e4d569f03c8500985da20b33b8ab3164f",
+          "new_module_sha256": "34782edbddf2accfe05dddce3ed60eb59f1a2d3e238fc5c82342b8134a97ef25",
+          "payload_reduction_percent": 65.3911717368056,
+          "old_json_prepare": {
+            "median_ms": 251.4303280004242,
+            "runs_ms": [
+              242.79669200041099,
+              251.4303280004242,
+              241.96378200031177,
+              265.3250299999854,
+              263.3296420008264
+            ]
+          },
+          "new_binary_prepare_uncached": {
+            "median_ms": 16.959575999862864,
+            "runs_ms": [
+              15.196446999652835,
+              16.274683000119694,
+              16.959575999862864,
+              17.857920000096783,
+              18.25779299997521
+            ]
+          },
+          "new_binary_cached_lookup": {
+            "median_ms": 0.18810400069924071,
+            "runs_ms": [
+              0.19631599934655242,
+              0.18810400069924071,
+              0.17517399919597665,
+              0.2758760001597693,
+              0.16653100010444177
+            ]
+          },
+          "result_file_sha256_before": "5c1927bc3612e1ee827b5afaa5c1fa721fc533b89cfc23e20800c7a5588000ef",
+          "result_file_sha256_after": "5c1927bc3612e1ee827b5afaa5c1fa721fc533b89cfc23e20800c7a5588000ef",
+          "result_metadata_unchanged": true,
+          "display_float32_arrays_identical": true,
+          "deviations_float64_identical": true
+        },
+        "inspection": {
+          "json_bytes": 9247149,
+          "binary_bytes": 3200400,
+          "json_sha256": "bbd475b152262b81d5a289cf5addb5aaad209467d1adde9e9bef19937911806a",
+          "binary_sha256": "19261888be1e1448a3e4ad2246d4b2a8dc86ffa6d8913b397347b580bff454bc",
+          "legacy_module_sha256": "96bd753bf766375e4f8d2850fe83677636c6afc652a50859c66c0da9290292b2",
+          "new_module_sha256": "5f411bdb590ef80b8226be7f19e7075b089625189a456c12b09bb13e16a7c677",
+          "payload_reduction_percent": 65.3904138453917,
+          "old_json_prepare": {
+            "median_ms": 241.14611899949523,
+            "runs_ms": [
+              332.37579300021025,
+              240.355726999951,
+              235.03788800007896,
+              241.14611899949523,
+              257.8871400000935
+            ]
+          },
+          "new_binary_prepare_uncached": {
+            "median_ms": 18.47427900065668,
+            "runs_ms": [
+              18.508080000174232,
+              18.045021999569144,
+              18.47427900065668,
+              17.546830999890517,
+              23.018662000140466
+            ]
+          },
+          "new_binary_cached_lookup": {
+            "median_ms": 0.2091350006594439,
+            "runs_ms": [
+              0.22025199996278388,
+              0.21958199977234472,
+              0.2091350006594439,
+              0.17962099991564173,
+              0.18086300042341463
+            ]
+          },
+          "result_file_sha256_before": "580a6ff10087f295ac0e8eb2f8f097f309e5e6a2b2e771f41d80b083af4853aa",
+          "result_file_sha256_after": "580a6ff10087f295ac0e8eb2f8f097f309e5e6a2b2e771f41d80b083af4853aa",
+          "result_metadata_unchanged": true,
+          "display_float32_arrays_identical": true,
+          "deviations_float64_identical": true
+        }
+      },
+      "scope": "Preview sampling, colour preparation and response serialization. Saved analytical record generation/comparison computation and GPU rendering excluded. OS filesystem cache is warm."
+    },
+    "analysis_response_browser": {
+      "points": 100000,
+      "runs": 5,
+      "browser": "141.0.7390.37",
+      "platform": "linux",
+      "node": "v24.22.1",
+      "codec_sha256": "92da9dbb50fc80de8733795559efbb2d12d96b12cbe61349fe8cb98638c4a3b6",
+      "payloads": {
+        "/design.json": {
+          "bytes": 9247051,
+          "sha256": "b69a747e9f2b990a27eb301978340afd863036c2b5e5bde443d2314ef6f276b8"
+        },
+        "/design.bin": {
+          "bytes": 3200296,
+          "sha256": "8382dd502d9a9eccef89358328f613e385baa87129ac0fc345af1fb9a6ce24b1"
+        },
+        "/inspection.json": {
+          "bytes": 9247149,
+          "sha256": "bbd475b152262b81d5a289cf5addb5aaad209467d1adde9e9bef19937911806a"
+        },
+        "/inspection.bin": {
+          "bytes": 3200400,
+          "sha256": "19261888be1e1448a3e4ad2246d4b2a8dc86ffa6d8913b397347b580bff454bc"
+        }
+      },
+      "scope": "Loopback HTTP response transfer and body read plus browser decode/display-array construction. Static prebuilt responses isolate transport and decoding from server preparation. Analytical computation, GPU upload/render and Windows WebView2 excluded. One warm-up and explicit GC before each measured run.",
+      "cases": {
+        "design": {
+          "verified_outputs": {
+            "float32_values_identical": 600000,
+            "float64_deviations_identical": 100000,
+            "metadata_identical": true
+          },
+          "json": {
+            "transfer": {
+              "median_ms": 44.60000000055879,
+              "runs_ms": [
+                54.200000000186265,
+                73.5,
+                44.60000000055879,
+                26.700000000186265,
+                31.09999999962747
+              ]
+            },
+            "decode_and_pack": {
+              "median_ms": 58.40000000037253,
+              "runs_ms": [
+                91.19999999925494,
+                59,
+                47,
+                45.39999999944121,
+                58.40000000037253
+              ]
+            },
+            "total_fetch_decode": {
+              "median_ms": 91.6000000005588,
+              "runs_ms": [
+                145.3999999994412,
+                132.5,
+                91.6000000005588,
+                72.09999999962747,
+                89.5
+              ]
+            },
+            "decode_only_preloaded": {
+              "median_ms": 47.09999999962747,
+              "runs_ms": [
+                85,
+                47.09999999962747,
+                41.60000000055879,
+                82,
+                45.200000000186265
+              ]
+            }
+          },
+          "binary": {
+            "transfer": {
+              "median_ms": 16.200000000186265,
+              "runs_ms": [
+                18.09999999962747,
+                24.600000000558794,
+                14.900000000372529,
+                12.399999999441206,
+                16.200000000186265
+              ]
+            },
+            "decode_and_pack": {
+              "median_ms": 3.5,
+              "runs_ms": [
+                4,
+                4.2999999998137355,
+                3.2999999998137355,
+                3.1000000005587935,
+                3.5
+              ]
+            },
+            "total_fetch_decode": {
+              "median_ms": 19.700000000186265,
+              "runs_ms": [
+                22.09999999962747,
+                28.90000000037253,
+                18.200000000186265,
+                15.5,
+                19.700000000186265
+              ]
+            },
+            "decode_only_preloaded": {
+              "median_ms": 4,
+              "runs_ms": [
+                5.599999999627471,
+                4,
+                4.7000000001862645,
+                3.1000000005587935,
+                3.3999999994412065
+              ]
+            }
+          }
+        },
+        "inspection": {
+          "verified_outputs": {
+            "float32_values_identical": 600000,
+            "float64_deviations_identical": 100000,
+            "metadata_identical": true
+          },
+          "json": {
+            "transfer": {
+              "median_ms": 34,
+              "runs_ms": [
+                59.200000000186265,
+                29.200000000186265,
+                26,
+                39.200000000186265,
+                34
+              ]
+            },
+            "decode_and_pack": {
+              "median_ms": 56,
+              "runs_ms": [
+                56,
+                59.19999999925494,
+                38.59999999962747,
+                56.59999999962747,
+                42.60000000055879
+              ]
+            },
+            "total_fetch_decode": {
+              "median_ms": 88.3999999994412,
+              "runs_ms": [
+                115.20000000018626,
+                88.3999999994412,
+                64.59999999962747,
+                95.79999999981374,
+                76.6000000005588
+              ]
+            },
+            "decode_only_preloaded": {
+              "median_ms": 43.90000000037253,
+              "runs_ms": [
+                43.90000000037253,
+                43.200000000186265,
+                44.59999999962747,
+                45,
+                41.299999999813735
+              ]
+            }
+          },
+          "binary": {
+            "transfer": {
+              "median_ms": 12.200000000186265,
+              "runs_ms": [
+                14.100000000558794,
+                11.099999999627471,
+                10.700000000186265,
+                12.200000000186265,
+                12.799999999813735
+              ]
+            },
+            "decode_and_pack": {
+              "median_ms": 3.099999999627471,
+              "runs_ms": [
+                3.099999999627471,
+                3.099999999627471,
+                3.7000000001862645,
+                2.7999999998137355,
+                4.900000000372529
+              ]
+            },
+            "total_fetch_decode": {
+              "median_ms": 15,
+              "runs_ms": [
+                17.200000000186265,
+                14.199999999254942,
+                14.400000000372529,
+                15,
+                17.700000000186265
+              ]
+            },
+            "decode_only_preloaded": {
+              "median_ms": 3.1000000005587935,
+              "runs_ms": [
+                3.1000000005587935,
+                3.300000000745058,
+                3.300000000745058,
+                2.7000000001862645,
+                3
+              ]
+            }
+          }
+        }
+      },
+      "page_errors": []
+    }
+  },
+  "preserved_behavior": [
+    "Registration applies virtual setup poses without modifying original XYZ/attributes or allocating a duplicate merged cloud.",
+    "Original stored comparison data, Float64 deviations/statistics and exports are unchanged by compact display transport.",
+    "Independent Check targets and explicit Exclude/rejected roles remain separate from Fit targets.",
+    "Pending point deletion stays hidden after clearing selection; failed deletion restores original display.",
+    "Exact analytical/editing properties remain separate from conservative inventory display metadata.",
+    "Earlier whole-input geometry/range, grouping/deletion, project storage, startup and installer lifecycle fixes remain in cumulative source and regression gates."
+  ],
+  "release_packaging_gates": [
+    "Verify all 20,001 Windows runtime files against the exact 0.18.5 manifest.",
+    "Run the actual production component/startup command on staged application and the isolated 21 MB recovery fixture before building.",
+    "Run installer/lifecycle tests again from staged build support and isolated bootstrap helper imports.",
+    "Verify staging manifest before and after NSIS build.",
+    "Independently extract completed EXE, compare all manifest members and frozen source hashes, verify executable version/architecture and bootstrap/uninstaller inventory.",
+    "Run the actual production component/startup command against extracted application; final gate results are recorded alongside the completed installer."
+  ],
+  "runtime_policy": "No bundled Windows runtime files changed. Linux validation packages are not replacements for the Windows payload.",
+  "changed_source_files": [
+    {
+      "path": "app/CHANGELOG_0_18_6.txt",
+      "change": "added"
+    },
+    {
+      "path": "app/RELEASE_SCOPE_0_18_6.txt",
+      "change": "added"
+    },
+    {
+      "path": "app/design_api.py",
+      "change": "modified"
+    },
+    {
+      "path": "app/design_compare.py",
+      "change": "modified"
+    },
+    {
+      "path": "app/detail_preview.py",
+      "change": "modified"
+    },
+    {
+      "path": "app/display_buffers.py",
+      "change": "added"
+    },
+    {
+      "path": "app/inspection.py",
+      "change": "modified"
+    },
+    {
+      "path": "app/inspection_api.py",
+      "change": "modified"
+    },
+    {
+      "path": "app/job_api.py",
+      "change": "modified"
+    },
+    {
+      "path": "app/jobdata.py",
+      "change": "modified"
+    },
+    {
+      "path": "app/preview_index.py",
+      "change": "modified"
+    },
+    {
+      "path": "app/preview_store.py",
+      "change": "modified"
+    },
+    {
+      "path": "app/registration.py",
+      "change": "modified"
+    },
+    {
+      "path": "app/registration_network.py",
+      "change": "modified"
+    },
+    {
+      "path": "app/registration_workspace.py",
+      "change": "modified"
+    },
+    {
+      "path": "app/release.py",
+      "change": "modified"
+    },
+    {
+      "path": "app/scan_edits.py",
+      "change": "modified"
+    },
+    {
+      "path": "app/server.py",
+      "change": "modified"
+    },
+    {
+      "path": "app/test_display_buffers_0186.py",
+      "change": "added"
+    },
+    {
+      "path": "app/test_inventory_loading_0186.py",
+      "change": "added"
+    },
+    {
+      "path": "app/test_preview_flow_0180.js",
+      "change": "modified"
+    },
+    {
+      "path": "app/test_registration_coherence_0180.py",
+      "change": "modified"
+    },
+    {
+      "path": "app/test_registration_transaction_0186.py",
+      "change": "added"
+    },
+    {
+      "path": "app/test_registration_ui_0186.js",
+      "change": "added"
+    },
+    {
+      "path": "app/test_registration_workflow_0186.py",
+      "change": "added"
+    },
+    {
+      "path": "app/test_render_loading_0186.py",
+      "change": "added"
+    },
+    {
+      "path": "app/test_render_ui_0186.js",
+      "change": "added"
+    },
+    {
+      "path": "app/web/app.js",
+      "change": "modified"
+    },
+    {
+      "path": "app/web/design-ui.js",
+      "change": "modified"
+    },
+    {
+      "path": "app/web/display-buffers.js",
+      "change": "added"
+    },
+    {
+      "path": "app/web/heatmap-ui.js",
+      "change": "modified"
+    },
+    {
+      "path": "app/web/index.html",
+      "change": "modified"
+    },
+    {
+      "path": "app/web/inspection-ui.js",
+      "change": "modified"
+    },
+    {
+      "path": "app/web/job-ui.js",
+      "change": "modified"
+    },
+    {
+      "path": "app/web/registration-ui.js",
+      "change": "modified"
+    },
+    {
+      "path": "app/web/ribbon-layout.js",
+      "change": "modified"
+    },
+    {
+      "path": "app/web/scan-registration-ui.js",
+      "change": "modified"
+    },
+    {
+      "path": "app/web/setup-camera-ui.js",
+      "change": "modified"
+    },
+    {
+      "path": "app/web/surface-ui.js",
+      "change": "modified"
+    },
+    {
+      "path": "app/workflows.py",
+      "change": "modified"
+    },
+    {
+      "path": "packaging/RELEASE_NOTES.txt",
+      "change": "modified"
+    },
+    {
+      "path": "packaging/TunnelStudio.nsi",
+      "change": "modified"
+    },
+    {
+      "path": "packaging/build_windows.py",
+      "change": "modified"
+    },
+    {
+      "path": "packaging/launcher.rc",
+      "change": "modified"
+    },
+    {
+      "path": "packaging/source_provenance.json",
+      "change": "modified"
+    },
+    {
+      "path": "packaging/verify_windows.py",
+      "change": "modified"
+    },
+    {
+      "path": "packaging/windows_installer.py",
+      "change": "modified"
+    },
+    {
+      "path": "app/VALIDATION_0_18_6.json",
+      "change": "added"
+    }
+  ],
+  "frozen_code_sha256": {
+    "app/alignment_model.py": "a9780ebb8b4d2d8349c141b470fcb87455d69d215e1db41f92ce72a4716db2c5",
+    "app/analysis_sources.py": "38beb9d5d02e7df41779e3fb5aa62dd586a8c8fa9081436dad8f30fc6625152d",
+    "app/analysis_tools.py": "19fa45d9111a79f64886f29644cd8a9fb9167414b289938851596774b9fc7005",
+    "app/bounded_rows.py": "4607168c8451dce1fb124cc63da7937cbbb132b44b088c64c6a2b35fb767816a",
+    "app/browser_mode.py": "8a08e27d90815e1a520fce0f36b3887c75c8fa612909f514ef5d197ebe4183ea",
+    "app/cad_api.py": "b62495acbd0d15fb300bf0256f6400d45175f64544a147774a3843653320dda7",
+    "app/cad_geometry.py": "7beeee64f261aae132fbe8766108e8daed5b098f0324e1a355cad5d6abcf0998",
+    "app/checker_evidence.py": "8c75aea056870cdba10b917f4ec82d2ff0ba926e720b86016c5e6221f2bf6aa9",
+    "app/clean_tunnel.py": "ca4e88d150a7778b2f58ed7f31455c1195d02fad3b3da46306aef6899962ab61",
+    "app/combined_denoising.py": "18a73ac7d3dead224149e15359ecddcebb3218f7d7f0595d805a2c22fd7146cc",
+    "app/core.py": "2ad4992a27e8e3b47a97917e49bf220dc705d2333fbb2d010c5f3306f7251165",
+    "app/demo_targets.py": "41037ceba4e2b298b5f88245c997a91954814bbb2a19bb7bce359f74af53f5cb",
+    "app/design_api.py": "3f2753a664870ddf77e475cddae376c41d9cf1d2b18adc8de84d537478dd0373",
+    "app/design_compare.py": "34782edbddf2accfe05dddce3ed60eb59f1a2d3e238fc5c82342b8134a97ef25",
+    "app/desktop.py": "5a7f2791d3b376a7b95ea4a45d1093ae96257bcc4e830b66e86a481a276a6ff3",
+    "app/detached_windows.py": "4bdfb1245073705a90b2d752c84095c0fb629209caf61198f1301bfbe5184163",
+    "app/detail_preview.py": "bf9cbcba2f3c74724edf78891a5d56cc27b896639b5d72d5e51fd8e05f1fbea3",
+    "app/display_buffers.py": "f6d4911bebebdf922be58ad8a34f574b2c88e84e9304f64913f8bf778b142c7d",
+    "app/e57_setup_photos.py": "34918a0b456763cf5f017825a0052be1807de9d9bf20c82e541d3bd7a3e57f0e",
+    "app/e57_worker.py": "76b12b19977809efbb1fb21c0d4e97a12c8da4a22d903deb7c4f1d895e22d61e",
+    "app/editing.py": "bd71c1a9a7b2eef44693dc00cd285c8d99d20e0b9e9bd8ef39200e8122a9894c",
+    "app/exchange.py": "15ba5bb19352a43787fa74819ae1ec728a63f80e65db39ad1623e4daf479e7fc",
+    "app/explorer_deletion.py": "c7d815e35673576974ef63f4e5b1962e3a64657a80c03685c139170d08588c08",
+    "app/feature_selection.py": "fac46c93c965dc77186961565d561cfdb4ca1aa4a1cc02db3909b458ed5137ba",
+    "app/geometry_tools.py": "a70325bb4ed67361b00b2fcd670ff33e733cb9f5069770ac3315bac4e49c181f",
+    "app/gusac.py": "340a0e762cba92d429d959a874cb1b497817e06a6d6c084bc535777e84b938cd",
+    "app/heatmap.py": "436c8d35d41623e9f656359f0d4620e2b4e6cb58e431369006c5069da9585b95",
+    "app/hspca_codec.py": "cf83ded72ad7af93c0e17a3087051ffc5dcce8d04c49e6c31e9038b134105023",
+    "app/hspca_import.py": "e9af4fa843553497e28fa95a576136c8c1d445f18309bd37306f25dacbda1074",
+    "app/hspca_worker.py": "9d660223deb20bb87b2296cfa47160140877ccc3751c420ed51cf087ab678143",
+    "app/inspection.py": "5f411bdb590ef80b8226be7f19e7075b089625189a456c12b09bb13e16a7c677",
+    "app/inspection_api.py": "b33ca1350f6a3b1308c00723280bf2c2c5b77bf87ac884370186c6b845921b82",
+    "app/inspection_geometry.py": "9ecfcbb16e54757fbd841131f8cb176b4c1d736ddf80a9940ed8125103064476",
+    "app/inspection_points.py": "6efcd3afb327ef537dc20f24230e39ac348d87b2cd1bcbbf0c62ff88bbfe7ba6",
+    "app/install_bundle.py": "2c5dfcac212dbbd4c4fe0e14dc223d500ad023d513af7d27b8090c9dacb4b8e0",
+    "app/install_windows.py": "b395d8de5a690e74c8b1ee381d6f442e85555971369d076e4c2eecbb6882276b",
+    "app/irregular_surfaces.py": "ea94aa7290f4702553fc0b956583053aaacaccd121e7f619fc1770c71fde3357",
+    "app/job_api.py": "3053da792ec528257f92e456f5a4f312b53bdb5a10f2b7e9d2916c8fc5ee0923",
+    "app/jobdata.py": "e1c6bc45c4105aecfbaa6f0c16735877588ce468196cfcd722ede34961659cb4",
+    "app/joint_detection.py": "36a8dc3795f3489523a33a93e6dc929d0f5cbd750cec167f163d01b1e9f351eb",
+    "app/joint_scan.py": "24f0f325c2bb0990b74f4a9ec22a5aabd906bfe39aea2813155bfc008e3da11b",
+    "app/large_sections.py": "12227c1f85e23c1e9bf20192d986ba8b7531e1e19eb6f16504fd21472dd4065b",
+    "app/leica_bridge.py": "059b50cbdfdb3119f4297c6a710f58432cb5ac0d80b475363dabc48246756f31",
+    "app/leica_e57_worker.py": "dba08fbe20822334b3ad7cef9183ec84dd9446fd7babff7ca0dd1fddd03d35a9",
+    "app/leica_project.py": "c5bd0199528f8e78525859640841a6b72eb9a8b97f26f92888b9c511b7c0c672",
+    "app/lining_features.py": "99974aeb8ec15bd6f8f7d78a6631e5f4846951776024728115451b5493be9984",
+    "app/lining_tiles.py": "78c76845b95aa9907a962dbff9e8e2a7555a8ad531b46344dbb36d85f69c91f2",
+    "app/mask_storage.py": "370be2197171fc141d6df7c82c566518897b8104376690f49a8dd1d78d12878c",
+    "app/measure_tools.py": "4d582257c4a2d04a4a54b57f1fa25abdd69b5c46a04249b31ec1531bf61483e5",
+    "app/mesh_geometry.py": "463a595b9c456639329391502d386c2d78e9573fe1a55eb4eebc8f9af207e27c",
+    "app/mesh_preview.py": "f96e9a196271044518d46267499ba6b3b23d6c7e8474b62747455c9ed21b5154",
+    "app/mesh_repair.py": "3922ecb533fa0c3fb43d256de70950dbecf367e7bb653d4aa2233070d9b1c647",
+    "app/mesh_sampling.py": "23976028d870b1567414d8d2302f43dd929a5f9cc1657c12f454238f245013b1",
+    "app/mesh_to_cloud.py": "c96fa93e00186d177d2a6ad2b4594eb6a2b70c129ecdf2fc6ed16af3fca5d9c6",
+    "app/mesh_workflows.py": "2cd9625eac08427aa88809604173c4c43076aed3654f8ac71b933b13ae75be2a",
+    "app/meshing.py": "acab62187752331bfd37edd64e9702d91822f042bfd04ad70d03e7d4b62b51f0",
+    "app/native_progress.py": "76c2b9f5ba6bf3173c9ed367c96f3ae9703f30d516c0877b86df867315657d3d",
+    "app/ply_ascii.py": "aa741a8ba3627897b84daf2a8b55d7e805560c963a9b0752e534de6708c99252",
+    "app/pointio.py": "d6b1a815221fe3581cee6bf5ad4cc3b53976c59f6491b6e76ff42bbe62a5a376",
+    "app/preview_index.py": "0b398c8d679f351b6bfea4dbb0b86945b429bc4d10c13d5eb730d5a7ba254ad7",
+    "app/preview_store.py": "9932e821d980f15138e183a0248d9dd0b64aee962af327e12b4fdee9ea7fe081",
+    "app/project_maintenance.py": "baf795a1758943924bba61b5e1a08e993a2f51e0e494ebe4d5f101cb0e0954fc",
+    "app/project_validation.py": "4ebe43b7ecbffa34db59266f44834db26b31c8fb14fedda8aa6071c5ca3358d1",
+    "app/projects.py": "edd09a78a6f0edda45184a63538b3d80b827a6f38ee5e9b6e4662a65389f1259",
+    "app/ray_box_extraction.py": "dce44a9b42f5feb36e5d3a7cf03bbf70af30f7f711a2ba9d8430946df4bc4fce",
+    "app/reflection_cleaning.py": "6334cc3efa39f38688fc033b1fcc099795c06b7448b332be4d40b47efcc923c5",
+    "app/registered_cloud.py": "56bcb9572d9abac76d12f30554fc3129e35241b2246e4c4bb4812f406a527e4f",
+    "app/registration.py": "01838416a0a6d0f154b424e2169c705f65f868a88d764dfacc4762216b430c84",
+    "app/registration_network.py": "710210b0935c011e1c17b13931d73e891344a7eae7a1fbbf4362b2da9dc8fed3",
+    "app/registration_pose.py": "29c440988411b186873d836cec59a5de1a7544b28d2154278d4000ba6bc72b46",
+    "app/registration_references.py": "fd3d6618dde24db277c1813c013751d6e86d4bb2e385adce4f13442e2112ca85",
+    "app/registration_review.py": "0931d6faf84ed1e6ec026e0c0626519afe70b272cc5d75b876140c98d5dec28b",
+    "app/registration_workspace.py": "1f9c281f2abf0d197b08d6f06fdc50ed1a6bdd67c19cac524adbe401a4a4929e",
+    "app/release.py": "50afcd73217fe7290da9927025982a855857e77ab766808ffcb3481c6c1572f2",
+    "app/reporting.py": "56185da652cf8198b79da836a6a10cf0011823a10b354f13b46ebf0287a95b53",
+    "app/ring_creep.py": "2a3c1958f2b5bcca538bd704f481942b00ef82f4b97b275c7abe2e18fa611c26",
+    "app/ring_suggestions.py": "b1b08ba5203fb156e620e1946b7a27bd06aa5177c9e1bd7902c83196412f2c12",
+    "app/robust_registration.py": "0210aceb0798f55497e08ac9719e51f4e1f3c335245428c940f6dcd1eeac40c0",
+    "app/rtc360_folder.py": "2a4049941899c99b79b15e8772cd7d6dbdf418407b0b06df2fa2925e9edfa87a",
+    "app/rtc360_image_probe.py": "ef447454b6d380a2fc7400be3f8126b8ba1c32cbeced141f592ee2944b28440d",
+    "app/rtc360_native.py": "fee8ceab4b9c678707414ab04a31efeff1c55bfede669fe351376d42550caf47",
+    "app/rtc360_native_worker.py": "a8924a339ac2d766d9c633ff2cdc1628466c88eb908f6aea66ded36190958f8c",
+    "app/rtc360_optics.py": "6b1b32523f51fbf85c847be89da0f9e87031a505cb58f2bcb99ceb4c2bdac3ed",
+    "app/rtc360_scan_probe.py": "a37757982a38fd11e9449654d280d62da726a2111359844b43796083ab2da737",
+    "app/rtc360_source.py": "1b8d4f2049fec205b8fbd3813030920b34560385bca160fbdcb3ba232d8c9e73",
+    "app/runtime_diagnostics.py": "a8d25d081cacb1fa30f0e2557da25f54e13b2278860242cb74d7d54ff565c97e",
+    "app/scan_compaction.py": "e56c68692f36435b758a51aff614c3b025c1729b0984f7781a2702e90c14f734",
+    "app/scan_edits.py": "44795c6d4ccdf70f1f691e97a69e025743bf65e01c802684e6ba6a285cba70f0",
+    "app/scan_export.py": "e44a500f621ff209bba8ca5be478ef9fcfbe3034d4beb3702a3d6ccb5e99bb34",
+    "app/scan_geometry.py": "647a0dd8c5c66e96a63a4e9a5e72c3c685cf247cfbb17bf4f2b28493bee1d98d",
+    "app/scene_objects.py": "281dddad9486555be39cada3bb065ed89c2e0bbf7367e93717507d9a5f1f74cb",
+    "app/section_api.py": "2ece54be96e483c6fc01afa752611285a6d5a883304084258bbdf0f97814b41e",
+    "app/section_path.py": "a55322f67860f4d6b3f0f1f4f683369f5f9188f44437a56d7b0cced354cb769d",
+    "app/section_research.py": "3bfa53971ff0091fc5b0784c23868885daf39340428e9b55a7c51983e0292d7d",
+    "app/section_shape.py": "e441079a452f9062936f91f2a5053405dc970603c914736e6a2655012ebc5576",
+    "app/server.py": "e6715b33cd4af6b7bc6526129a25529453de7b759ec7259452682f19299d69ca",
+    "app/session_start.py": "34f1d5da5786be31c2d55782733f0ff0680551ed7305d16414d41e133697c69e",
+    "app/setup_camera.py": "6eeb17cc746c492058a0b6cbbe685795eba3e449d433a24841d390ffaa3d1fc7",
+    "app/setup_photo_codec.py": "ca7b7e180991d69ea7fd90339d61ce74f61f0cfdab7724ebaba1a6e1b01ca1d6",
+    "app/setup_photos.py": "90dd7881dc6a85c351919f4de67abd87e9c904220ec4479397e83fe6cdf58603",
+    "app/setup_view.py": "1addf1c115fb1cb7ccf5f8ddd279f32ab591d97d9cc519486950add5b7b513fe",
+    "app/startup_support.py": "7768d113d19e47751040c8303f5f6c7eb8d1be2933616138961c00cf5b02e7b7",
+    "app/structures.py": "9c01a8be100497dd1bf6a50bf13315e0dc60ac6d62c04552bd9a456a01500572",
+    "app/surface_api.py": "9933e633758aee19339fc483358328a91d4cc1d75dfb79eeceb496da7432d734",
+    "app/surface_demo.py": "5f46da1ee0fef968dc4c8f799c1ee6d7c0c27d4203eeb95b8a0c2507d51f64dc",
+    "app/surface_extraction.py": "4649ee386fc0e007fde70fc9d7789b3d7775c090af0fcc4faa215ee5a520b3bb",
+    "app/surface_streaming.py": "4dccf887f04eaa630fef4f5c562329bebbb32ed3329b0d49ddf769daee778f93",
+    "app/target_ops.py": "3ad3303a85e6588c643fdc489c8330c067013f6edb778745f8e4b5f4c96afdd3",
+    "app/target_search.py": "7f49adb80dcdb06bb765c4e85399f191b5e133bb1c645df392d01ec3d0d6d791",
+    "app/target_thumbnail.py": "face7434722c5f283ce509801bf5e9d2efad7fef7cc6ae0629822b8713dc660a",
+    "app/test_alignment_range_0183.py": "a113fa45f4b1de3aecf43028b919c666fe689858c5d987a4563f7b3ca06a2ce3",
+    "app/test_bolts_0182.py": "cec5be96957d582eaaab993cfb9ad9b86ba40ac8cd3741353b4abbfa9e95db5e",
+    "app/test_classification_0182.py": "d33c2375ff27775029b94bdb4da249cc4a7143c3a670686778530ef3e29ce646",
+    "app/test_core.py": "047c7463cc8608cacff33b4022e22baa67ae6e6ea6504d89bc8e46ee7d0418da",
+    "app/test_desktop_backend.py": "a2ffa0f889d551fdef53ff6a37ea43a316afcaa28fc435b2c9ddaf16f7e34ed3",
+    "app/test_display_buffers_0186.py": "ecc5855eaff61319d5940442effc7d924439d76c4f778a8865ce7d37051cd9be",
+    "app/test_e57_flags_0182.py": "6346e8d7e12a35c528803bed10e99b2f58bd54738fdd14284668989a74d9a113",
+    "app/test_explorer_deletion_0183.py": "a32db5c76ee63efaed1c086a8326bfccd39d38bc3dfb88db87f464ffe3420606",
+    "app/test_features.py": "930d6df54459ccfbff5ade0665b23b27252a93529fc77eec411cf343c19c4516",
+    "app/test_full_tunnel_analysis_0180.py": "de10f150b7b21568cd1d4c3c83c0f1a55ad08221cd1b2eeb0a232db651211407",
+    "app/test_geometry_full_input_0183.py": "4817c68abb73072809aa0bc2b16d557b65934ee2de0e02c97ae82d591ae2fded",
+    "app/test_import_provenance_01712.py": "c9b039be9bc2ffa1c2cd629a20bac319666967c7999653810872b252d621402f",
+    "app/test_inspection.py": "64d3032ff2caf3328093cd608b37c94585dd437e539ee41e60aeb8f6103255a1",
+    "app/test_inspection_geometry.py": "66a02d825d0417dc8969b5f06990efbc3228b002e4d990cfa2dad6897c130e05",
+    "app/test_inspection_points.py": "c174461e4dc6d2f918c838f70054bcd9b4bc0a4b4c76d6fd03dda39ae08298dd",
+    "app/test_inventory_loading_0186.py": "aec09ab0da488a487109f4a2a7487938a1b4946b2ba3f955b9b1ab6c25dbee74",
+    "app/test_jobs.py": "4bbc51c0697309543439615e1631fa1d451db162b912e2d495ea14b926aa673d",
+    "app/test_joint_range_0183.py": "18e335311ca2a6ef4a5a8ab419061ef98c27924187335b65fa276b725659c478",
+    "app/test_lining_features_0182.py": "49e5f5a4bf76b7063e269a080f98ae1621633f09722ee57cb8959d3fa2732290",
+    "app/test_merge_release_0180.py": "e41ea06440cd6cfb7d775b38663d8fea075cf1907e8d8b0c0962d6010e94d27c",
+    "app/test_mesh_to_cloud.py": "95a5d69d60b890fb796dd5d4deb43823f6e2d3230eeb8a7b86941378088748fc",
+    "app/test_permanent_points_0177.py": "8e0b58c4713178c2e7e55a603c5190ddcfeaf3957fd54e04714ba6539591a388",
+    "app/test_point_delete_batch_0183.py": "f114553af5afcdbfaceb01f8ba1725c30c2506745652cc0fdc0b47bbf0951655",
+    "app/test_preview_flow_0180.js": "6f09022725a72a3970ea5a7457a5750ac95c1f1ee8ee49b7087113c52da5c6d0",
+    "app/test_preview_flow_0180.py": "c61332aaa618de25739721e5660fb0927fdaf49e761b818a050f9b88929bdbf2",
+    "app/test_preview_loading_0180.py": "3025a8db261cd5b87ffc6f1d4f2ba9844f0fd7b54a4a3018646c74b3e85d0bda",
+    "app/test_project_delete_0179.py": "afaad4d7c55c6e2f94cf4901ad9c50afc84f1540ff30393108552bd2abaf8304",
+    "app/test_project_storage.py": "284df14ed0ab080f9b0720aa3c9a086aeeb73067f9ec186585cf180f8efb5868",
+    "app/test_project_storage_bulk_01711.py": "d031f82df51f774c49cc5b78667d68bbd718d26f5121e0ec0c4dd342daab72ee",
+    "app/test_project_storage_ui_01711.py": "6461b022adb523aaf476bc196f0cb57043cdb0c07f3c4e2a5f48b5183a509091",
+    "app/test_ray_box.py": "ae83c2550f36676c31c3f7212e3b73b81bc7229e28901c130f6e420d7b0545ab",
+    "app/test_registered_feature_pick_0182.py": "c45277c282d233f524f2d2f7fa0c5a928dca3ad7b788a35d50238450d65152db",
+    "app/test_registered_processing_0180.py": "8d0329a962ce150f3e8abb31e262904dab43211ad586e8d856a952fb2e37f288",
+    "app/test_registration.py": "ba75bfd3a2235f764e1cadfb217302a5494113fcb9e3ae1019709372157d02dd",
+    "app/test_registration_coherence_0180.py": "dc0071fb8b5b6f6306b6851398b4b19b66f62309b80f1f1d2a823cd0896f89ed",
+    "app/test_registration_storage_0175.py": "f866356127b6a13595f20ab7a9ddc8124d47b14d04fec89cc32f7613c18a8976",
+    "app/test_registration_transaction_0186.py": "a6488cdee6b571a7be4924ea48eec7e5800e4da7bf54275085a0f587df087e89",
+    "app/test_registration_ui_0186.js": "1b215691ef834defa03fb6a5cce4d364fa9bcea3830393e5dadc6aaf42f184bb",
+    "app/test_registration_virtual_0176.py": "c56036c0376cbf21751bf739d18963a591920d9fe50430d80d29672167615102",
+    "app/test_registration_workflow_0186.py": "4aa9700d8c86838d987c4445db469da12d91a0b7122375fa4ad5716a243e712d",
+    "app/test_render_loading_0186.py": "39cea671f895967458ecaf1ac3953607259b842e9ce8e93cea7d977cc0c4c3c8",
+    "app/test_render_ui_0186.js": "61628f0db55e045fe0ffaccf375de01e2a58ecc6d4c82800ec9c196f73246921",
+    "app/test_section_baseline_0181.py": "2925b5edfe763416841e2fc22c2fe7db376e44625a6703e258c1479ae24c6fe7",
+    "app/test_selection_performance_0180.py": "54f4e6ee000280cbc146d9401b43bafff6cb79c716815f183cb53dad262eb877",
+    "app/test_startup.py": "2f34db8e59e5d9f26e9b2a025610405e72a783d1c9b046e7d9fedc7d94c5e443",
+    "app/test_storage_recovery_0180.py": "b7c8a50c06f00f34d924df94ee3ba1525ff4290501fbb3381c4823c106075cf6",
+    "app/test_storage_ui_01712.py": "173d74218534f9ccf1125b200dff87c7320038bb6fd5e53342533ef5f5dce46a",
+    "app/test_storage_universal_01712.py": "b5050cc0801475d35a2f1747c79123e02f14fb252fc135d8ea870446e773ba91",
+    "app/test_surface.py": "6b59139c3ab716db8221e15b2d3f10bf9ddfdf4d4d6cf27fc0f42f4d387437f7",
+    "app/test_update.py": "ce636e96c8f527827dfa74cb985c9b89847c9568aec6d43194ab26a62671875d",
+    "app/test_whole_cloud_workflows_0183.py": "c01d2b7ced0c6e5b9e731034cca67a1eef4ab14b8d3ca380d44ee5be899a3a5c",
+    "app/tmatch.py": "1fc2d65a10da7c26de45d948357bcd8edc9185d302191d3b73d3e6b7a19807dc",
+    "app/tunnel_axis_fit.py": "674e6c9dc22f1e42c1dc330cfeb5c05ca9b425118ed573843ca7366c8b335c34",
+    "app/tunnel_designer.py": "ef4e98309448229b82a79008016f4f857dd794370a72e0142a621e4dec031cfa",
+    "app/tunnel_lining.py": "3081bcafaf2c1278302fcd77a34c5e96b36b1b16a5f227f9cd953edab6cae06a",
+    "app/tunnel_surface.py": "8b1844dcce5c805fcbc279604c08bda8ac0d07050f3874461f3ef5361191a4c6",
+    "app/ui_preferences.py": "ae49ff380c05bb96bdee825a4c5e2001ee8de7a74fe4f124c8b1480312fc3a2a",
+    "app/upload_io.py": "60307819dcfcdd6017b97bc93b9a605d4e95ff423e343feb5ae04ce4212ac1e7",
+    "app/web/alignment-editor-ui.js": "d34081e191ecff5d92cac2e7cd42d5b097985da9610da9e6c3ee9f9991dad309",
+    "app/web/alignment-hub.js": "67974b574cad41220f593b2a1c9dd4229d9c1a448ca2919a67a1700ee1990136",
+    "app/web/app.js": "64d713fef93d1292e5e8175675905b3b694b9f581216e9796d0ad37e8b2eed9c",
+    "app/web/cad-math.js": "3c2d8272f86673c7475ec9f008ae1df4621ef8ec0a86a04f6b2a2231ef014cac",
+    "app/web/cad-ui.js": "b4cd9b70fa5a0c9329deba4fa29b5cf2634e88068c8e78d95d08fb9fead646e8",
+    "app/web/cleaning-help.js": "4f12b0583177cdbb780b4e17772f3f09060649a2dc715b0d0cd707c6a03ba440",
+    "app/web/design-ui.js": "16d294d610f213a34a01472ec5cc3b6e294885d71fb95f114f1bc21984098603",
+    "app/web/detached-client.js": "d8eaf043a7c631a52d3b11648b7212b7bc74518a330176fbc45e3850d4afa2fe",
+    "app/web/detached-ui.js": "a1e6d5cb2b9c488265dcdc2bbe9a0220b15b50a6969afdedb06fc87c16ebbaf2",
+    "app/web/display-buffers.js": "92da9dbb50fc80de8733795559efbb2d12d96b12cbe61349fe8cb98638c4a3b6",
+    "app/web/explorer-delete-ui.js": "0d1a1f4a6d305887d179b88a2dcb16ce8a88f901eef677b4d4ce9d5fdb1edd14",
+    "app/web/explorer-polish.js": "ebb096ed9c11b94711f1b5aaf6fee223086da6f1c96b0662ccb25df207bce5ef",
+    "app/web/export-ui.js": "e86f20a525c605ca0a7f1972b3467d04b1886ae7f6ca20aa4de093811a7ec713",
+    "app/web/feature-selection-ui.js": "f4f024a742d32dac2cafd9b3f55b42c0e4723b4688c2533a6b2aff30694f757e",
+    "app/web/file-drop-ui.js": "f2b2b2d96cd6308bd3188dcff8fc3569bdbca81f5cab33d1b21d9f200cc17975",
+    "app/web/geometry-tools-ui.js": "387d9b1873c3b583621325c9eeef1ec7d8f4c8409d6db3841e45e404206b5c07",
+    "app/web/heatmap-ui.js": "f89435206ae1901077cc86da45d11b0cb1a3c8ea7f7c9f04c37ff46900635e7c",
+    "app/web/history-ui.js": "108a2e587ce579499d12f9ad55a3c9d257c5e9e80c0d0768a2bf6dbca3e98d6e",
+    "app/web/inspection-ui.js": "04224d64e230cdbca8bb1c81532ecf6076cef710366af4057a0b0953d796e2ed",
+    "app/web/job-ui.js": "bb8d5766c345e2c18f5314cadcebda351a568d71f981bcd4c49869b9e3076a07",
+    "app/web/joint-ui.js": "62852da3d34e97ed94510f526488468d711fa9659055276b8e6aa565a9abd693",
+    "app/web/leica-bridge-ui.js": "5d84d1a1d626ecf149f58692eff8e72f086902dc94da9c8b0c36b29aca458655",
+    "app/web/limit-box-ui.js": "25b23659269b235ce7febaf9d0aadf46ff3bd77b9723b2e74688e943f2c28331",
+    "app/web/measure-tools-ui.js": "769998284fdfb8a36996ae0eb128da5d1d4e0c37c98f2db887b8c482718eb48c",
+    "app/web/mesh-repair-ui.js": "c915690f4a4f17e8496c3bc4d85d58932f9729d3384f1c692384e8477d5c15d6",
+    "app/web/mesh-results-ui.js": "8083a61040078c539ffb84e783412a305f31b1724dbebe3047d8d7edae614cee",
+    "app/web/mesh-to-cloud-ui.js": "5a0c0ba55fccdf20959cc2961f1880036819e7663548711e68c7bf29166a1b66",
+    "app/web/parameter-help.js": "f72a7b320b0146726b96ff34be36cdc2d48af45ee66d6c87658873b9c3f84a85",
+    "app/web/permanent-points-ui.js": "c5ddbc598cfe9db80f8cfde6b1f534229cc44c3f081baa6193e0d2bc80e6042c",
+    "app/web/registration-ui.js": "6588841f7b9e381797bc7f7faf9ba777823bbe5a07b0dd6a7709003589c2067e",
+    "app/web/ribbon-layout.js": "f150fa71f7d919a4762e1d338446e74f5e53c845e3183fb4bc947f54dd0acf12",
+    "app/web/ribbon.js": "ae91cc6fa1483dfde0873a4f1add220bcd28dfa82cd568f417dd018b2a82dc05",
+    "app/web/ring-creep-ui.js": "e113adc43ce2ca4487893741600f098c03d8e3354eb24b9dcbd2cb7631b83dd9",
+    "app/web/scan-registration-ui.js": "48aa0c75249f5caf9cdc5a0ed3d216ccd06cdd2d275581bc7bc777f23d9bd49f",
+    "app/web/scan-tools-ui.js": "37fa573e1c1ff662e6b85b54ac524f0b6a47b0ed3db9892c1b4f1caa22443c59",
+    "app/web/scene-objects-ui.js": "dc99a0436a7e871c702cc944ae3f131cba7af2fb045fbe7371b59b2de6205d8e",
+    "app/web/section-locator-ui.js": "c0880cae8ff19e37d12cde2b6d55827c8e98287fe971d9cbfdc92ae7d59a549b",
+    "app/web/section-plot-ui.js": "f9106ea662d2f16247abf4bb93e4014968fe0cd254c4e7f11dd5edc4e41ec23c",
+    "app/web/section-research-ui.js": "50cd6be4c19930a80d36f29665b87cf8f3226d25b40ad8f1a3ac4c88fe44133e",
+    "app/web/setup-backdrop.js": "f0c5921f0b85a75c75f80c312dbe524aaed5bc99a01a95157d751d1c8f65a701",
+    "app/web/setup-camera-ui.js": "9a3b489c7af686b4a61bb382cb91a596ef8401684011ef2c34acb6b47fe543e2",
+    "app/web/setup-photo-viewer.js": "1eb7bf8f02904f50473296dcebab71beea5a31f0bc8d286865c51f72938688fd",
+    "app/web/surface-ui.js": "0042135c65ad9c1f55e9a74ab1ef062a5c245cfcf7b745e218ca33d8ba4bbb2e",
+    "app/web/theme-ui.js": "4759ad0c33c521193116983466d1ecfb672034d5f18f943fc6419329cd7222d5",
+    "app/web/tunnel-designer-ui.js": "d9798b4fb2a17cb418b3cdb979448a2a196912520fa6b9620c70b5c6de08fdfb",
+    "app/web/ui-icons.js": "ca8a3fd3f6ddd1ede50c6d40f74f6127e69812427266ff1eb57c967007d929dc",
+    "app/web/work-status-ui.js": "25552d7a4e2b1c894a775cc564d1c1228e0bbf2f745bcbfc3e1a6b9313c00470",
+    "app/web/workspace-ui.js": "bad8d9ac67959f2be8c10ef9a8100a39610c32ff397184ea5757dbfa592d5320",
+    "app/work/checks/test_gusac.py": "2fe73c4acb181f829fa8aaa3d33518aeb00c475f7bcd740e7e952d021ce0c688",
+    "app/workflows.py": "a86344f163e3ef0bcc59efa30f3e28fa359a1ee31a21487b82db15086c8230e7",
+    "app/workspace_history.py": "86e96fb7157347765b4d249182fe366afa5c86722bd0c698f660a1ef1bc49fc2",
+    "app/workspace_tools.py": "78aa3981866344eba3b3a83bcd55ec823b5b6fe99a3a60b4139008907c24fd9e",
+    "packaging/build_windows.py": "9a253fb28a5db2f3fe8ddb6ff05401943e9be54c82641a15b53ee4f4a9bff774",
+    "packaging/finalize_validation.py": "3c20d5737ed72cc6aaa184a4d8ba82483e57bfd32e739a30fdde0ad96b5cbeda",
+    "packaging/finalize_validation_0_16_0.py": "4ba5a40eeafc1c8dda33c920c13108425db0cf3c71c06811ed6c8681dce2d251",
+    "packaging/release_cleanup.py": "d35494932ecfecf29b7ed1099f33138daa2d35194cdf3ab8428a22cca7aced6f",
+    "packaging/release_registry.py": "dc59a8890343115afecba56a094eb981b91dc6e68123b780b4f5dbc54e0686bf",
+    "packaging/startup_smoke.py": "9dc59a57623fee5aee9049f6dd17ac4c7311d4bb187cf9a4f2d3c2769b034b63",
+    "packaging/test_component_diagnostics.py": "bdefe2aaf360ff493cb2369a6c5c79703b473ca7de076f3693a7c5c8d0d2642b",
+    "packaging/test_installer.py": "8564deec324f5633245fa738a6e4fc1b0d6d428b6bd000f35549fdd43f6440af",
+    "packaging/test_release_cleanup.py": "97bf8b984b338cefb46631bcddbe2c938a66daa409abcf4ff28dadaf6b6f7a8d",
+    "packaging/test_release_registry.py": "f549d8fae9c64ba56a8cd952d1138b097a0909558fbc26cb2a2d1a0a4277798e",
+    "packaging/test_upgrade_integration.py": "29e84ba85f8822655baf378a649f108091888957444874c3aee63f055c5f32d7",
+    "packaging/verify_windows.py": "5717abe6dbd414d7a7c6932794fc23117f436b22b3d989f65349d9c154ff4834",
+    "packaging/windows_installer.py": "8442a77c6a99994ffeee5dc577e82be51c0cd29cff258e40d23dc1056b1c75c4"
+  },
+  "limitations": [
+    "Synthetic numerical/storage fixtures and Linux Chromium tests do not establish survey accuracy for the user tunnel.",
+    "Native Windows installation/registry, WebView2, workstation GPU and cold-disk loading were not executed on this build host.",
+    "The viewport display budget remains bounded at up to 1 million points; this does not cap retained originals processed by full-input analytical workflows.",
+    "Rendering benchmarks measure the named stage only. Browser/server medians are separate experiments and must not be added into a total latency claim.",
+    "No instantaneous whole-tunnel computation, universal 7 GB memory cap or 350-million-to-five-billion-point end-to-end benchmark is claimed.",
+    "Semantic segment classification and bolt detection still require validation against representative user data; this release does not certify every historical reported issue fixed."
+  ]
+}

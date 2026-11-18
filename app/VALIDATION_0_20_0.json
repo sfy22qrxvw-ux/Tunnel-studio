@@ -1,0 +1,157 @@
+{
+  "version": "0.20.0",
+  "release_name": "PERFORMANCE",
+  "date": "2026-11-03",
+  "application_tests": {
+    "tests_discovered": 556,
+    "tests_run": 556,
+    "seconds": 82.08021510599792,
+    "success": true,
+    "failures": [],
+    "errors": [],
+    "skipped": [],
+    "source_files_changed_during_tests": [],
+    "native_windows_execution": false
+  },
+  "syntax": {
+    "python_files_parsed": 205,
+    "javascript_files_checked": 56,
+    "errors": [],
+    "passed": true
+  },
+  "browser_scenarios_passed": 71,
+  "browser_checks": {
+    "raw_import_ui_result.json": {
+      "status": "passed",
+      "scenarios": [
+        "Raw Positioning is visible and enabled after inspection; registered choice positions the scan before one import commit and shows the required notice",
+        "Unregistered choice preserves scanner-local coordinates and does not apply available VIS data",
+        "Missing saved position produces a truthful receipt and retains the imported source",
+        "Manual starting positions remains available, recognises auto-positioned scans and offers the unregistered scan for positioning"
+      ],
+      "browser": "141.0.7390.37",
+      "platform": "Linux Chromium; real server/UI/VIS; synthetic decoder and observed-schema XML fixture"
+    },
+    "bundle_monitoring_ui_result.json": {
+      "status": "passed",
+      "scenarios": [
+        "Bundle ribbon, added cloud loop and joint review work without changing saved poses",
+        "Plan/elevation before-and-after preview renders the fixed and adjusted cloud samples",
+        "Apply saves all virtual poses and the loop atomically; fixed scan and raw files are unchanged; Workspace Undo restores the chain",
+        "Stop cancels bundle work without saving positions or links",
+        "Reopening after Stop clears stale setup details and waits for inspection before allowing a settings edit or retry",
+        "Editing settings invalidates an earlier bundle review",
+        "Monitoring imports and persists separate epochs and renders downward-positive settlement",
+        "Named ring chords produce positive closure and retain user-defined review levels",
+        "CSV export includes epochs, datum, baseline and monitoring values",
+        "Printable report includes settlement, convergence and sign conventions",
+        "Monitoring data, baseline and chords survive reload; dark theme and narrow layout remain usable"
+      ],
+      "browser": "141.0.7390.37",
+      "platform": "Linux Chromium/software WebGL; synthetic scans and entered observations; real server and UI"
+    },
+    "measure_live_ui_result.json": {
+      "status": "passed",
+      "scenarios": [
+        "Picking three original plane points immediately draws a transparent filled plane before a measured point exists",
+        "Hover snaps to the front displayed point and clicking recovers exact float64 survey coordinates; result updates without Calculate",
+        "Cursor movement previews perpendicular distance; Escape preserves the last confirmed measurement",
+        "Editing coordinates automatically refreshes the validated result and Save state",
+        "Late calculation responses cannot overwrite newer input",
+        "The filled plane and perpendicular line reproject as the camera rotates",
+        "Repeated hovering uses the cached display index without scan-recovery requests; hidden cloud cannot snap",
+        "Live limit-box clipping excludes hidden points from hover snapping and restoring the view restores snapping",
+        "Perspective projection snaps to the same displayed scan point under the cursor",
+        "A selected planar CAD reference supports the same live filled-plane display",
+        "Saving retains the translucent plane after closing the tool",
+        "Saved transparent plane is restored when the workspace is reloaded",
+        "Coincident or collinear plane points show an error and cannot be saved"
+      ],
+      "browser": "141.0.7390.37",
+      "platform": "Linux Chromium/software WebGL; synthetic survey coordinates; original production UI and API"
+    },
+    "mesh_selection_result.json": {
+      "status": "passed",
+      "scenarios": [
+        "Ribbon opens selected CAD surface; curves excluded",
+        "Selected CAD surface reaches real boundary inspection",
+        "Explorer-selected mesh reaches the same dialog",
+        "Switching source clears old inspection, canvas and repair selection",
+        "Multiple selected meshes require explicit source choice",
+        "No selection offers meshes instead of false selection error",
+        "Late response cannot replace a newer selected source",
+        "Unavailable source is reported; another source remains selectable",
+        "Chosen source produces the repaired copy; original topology remains unchanged",
+        "Repair undo removes the derived copy and updates the dialog"
+      ],
+      "browser": "141.0.7390.37",
+      "platform": "Linux Chromium with software WebGL; synthetic meshes and real application/API"
+    },
+    "visual_registration_ui_result.json": {
+      "status": "passed",
+      "scenarios": [
+        "Plan drag changes only horizontal moving-group placement",
+        "Switching side/front elevation preserves alignment; height-only drag changes Z without shifting plan",
+        "Tilt stays locked unless explicitly enabled; Undo reverses a tilt edit",
+        "Ctrl-pan and 3D orbit change only the camera, not registration",
+        "Pick pivot, rotation steps, local Undo and Redo work across view changes",
+        "Join and lock saves a manual link and moving pose, with fixed coordinates and original XYZ files unchanged",
+        "Workspace Undo restores previous poses and removes the manual link",
+        "Cancel discards the preview without saving a transform",
+        "Pair changes invalidate Apply; selecting the same setup is rejected",
+        "Registration ribbon opens the workspace; dark theme and smaller viewport retain accessible controls",
+        "Stale-position rejection keeps the draft visible and reports reload guidance"
+      ],
+      "browser": "141.0.7390.37",
+      "platform": "Linux Chromium/software WebGL; synthetic scans; real server and UI"
+    },
+    "cloud_vis_ui_result.json": {
+      "status": "passed",
+      "scenarios": [
+        "Cloud-to-cloud command is discoverable; six-axis tilt correction requires an explicit choice",
+        "Real ICP completes into a review preview with inlier plane statistics and no saved pose or link",
+        "Manual edits invalidate cloud statistics; local Undo and Redo restore the correct reviewed candidate",
+        "Join and lock saves a cloud link and virtual pose to disk, preserves the fixed scan and all raw XYZ bytes",
+        "Saved registration review labels plane distances separately from target residuals",
+        "Workspace Undo restores the pre-refinement poses and removes the saved cloud link",
+        "Stop refinement cancels the real background job without saving a pose",
+        "Unconverged refinement is refused and leaves the manual draft available without claiming a cloud result",
+        "RTC360 review discovers matching setup IDs and downloads a read-only XML inspection report",
+        "RTC360 review defaults to all raw setups despite one highlighted scan; readable source labels, selected scope and Show in 3D work",
+        "Positioned setups are distinguished from missing data and lead directly into pair refinement without reapplying their poses",
+        "Applying RTC360 positions persists virtual poses with provenance and one undo checkpoint; dark theme and narrow viewport remain usable"
+      ],
+      "browser": "141.0.7390.37",
+      "platform": "Linux Chromium/software WebGL; synthetic full-density XYZ; real server and UI; two-second cancellable fixture pause before normals"
+    },
+    "merged_cleaning_ui": {
+      "status": "passed",
+      "scenarios": [
+        "16-scan connected component without bundle adjustment",
+        "selection-sensitive availability",
+        "missing-setup guard",
+        "matched merge receipt selects Registered cloud",
+        "existing cache controls preserved",
+        "disk preflight",
+        "cancelled merge retains prior selection",
+        "stale receipt rejection",
+        "failed job retains prior selection",
+        "duplicate-job exclusion"
+      ],
+      "platform": "Linux Chromium headless_shell; production UI with controlled merge responses"
+    }
+  },
+  "native_windows_execution": false,
+  "native_webview2_execution": false,
+  "user_921_million_point_project_tested": false,
+  "two_billion_point_end_to_end_tested": false,
+  "fixed_speedup_claim": false,
+  "scope": "Complete cumulative application with the eight requested performance-release items; noise cleaning limit is method-specific.",
+  "limits": [
+    "Native Windows and WebView2 execution remain unverified on the Linux build host.",
+    "No real 921-million-point or two-billion-point end-to-end benchmark has been performed.",
+    "Dense noise-support regions can be refused by memory or disk guards.",
+    "Pairwise fallback is mathematical alignment and must pass geometry and loop checks; it is not converged full bundle adjustment or survey control.",
+    "Poisson and ball-pivoting remain global algorithms; no new GPU reconstruction engine is included."
+  ]
+}

@@ -9,8 +9,11 @@ def index_box(spec):
     return spec.get('clip_box') or (spec if spec['mode'] in ('box','oriented_box') and not spec.get('invert') else None)
 
 def batches(s,meta,key,selection,block,cancelled=lambda:False):
-    from surface_api import _selection_spec
+    from surface_api import _area_batches,_selection_spec
     spec,_,_,start,end=_selection_spec(s,meta,key,selection)
+    if spec['mode']=='visible':
+        yield from _area_batches(s,meta,key,spec,block,cancelled)
+        return
     total=meta['count'];pending_ids=[];pending_points=[];pending_count=selected=0
     area=index_box(spec)
 

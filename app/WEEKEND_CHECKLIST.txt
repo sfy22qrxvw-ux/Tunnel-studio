@@ -1,0 +1,89 @@
+TUNNEL STUDIO 0.5.0 - FIRST LAPTOP TRIAL
+Copyright (c) 2026 Damian Gulczynski
+
+1. UPDATE
+Follow READ_ME_FIRST.txt and confirm 0.5.0 appears in the app.
+
+2. TRY ONE SCAN AND THE MODEL
+Open the Job ribbon.
+Expand "Large jobs: import directly from local paths".
+In Windows Explorer, select a local E57 file and use "Copy as path".
+Paste it into the app. Put each complete file path on its own line.
+Add your triangular OBJ path, or the ZIP containing that one OBJ.
+Click "Import listed files". Quoted Windows paths are accepted.
+Alternatively use "Add scans..." and "Add OBJ model..." for small examples.
+Direct paths avoid creating the extra temporary upload copy.
+
+3. REVIEW THE OVERVIEW
+Check the names and full point/vertex/triangle counts in the table.
+Select an item and try "Isolate selected", then "Show all".
+Use "Fit all visible", orbit, zoom, Top and Side views.
+Gold represents an OBJ model; other colours distinguish scans.
+These colours are not deviation values. The overview is a display sample.
+The mesh is shown as sampled vertices; all triangles stay in its disk cache.
+Try the Light 100,000-point budget if navigation feels slow.
+
+Your supplied reduced model should show:
+  8,800,000 vertices; 17,592,519 triangles; 5 degenerate/tiny-area triangles.
+Those triangles are reported and retained. The model was made from design
+information, so treat it as reference design, not an as-built.
+
+4. SAVE AND REOPEN
+Use File > Save As to create a clearly named trial project.
+Close the application, reopen with the usual shortcut and open that project.
+Check both items, visibility and counts. Named projects share immutable disk
+caches; do not move or delete the application's data folder by hand.
+Portable .tstudio export copies the cached data and can become very large.
+
+5. ADD THE OTHER SETUPS
+Copy the paths for the remaining scan files, one per line, and import them.
+Setups in a multi-record E57 remain separate entries. A combined unstructured
+E57 containing only one record remains one entry.
+Imports run sequentially. Previously completed items are kept if an import
+is cancelled or a later file fails. The incomplete item's cache is discarded.
+Cancel takes effect at a safe checkpoint; it is not instantaneous. If using
+the file picker, stopping during transfer may wait until that transfer and
+import finish. Prefer local paths for the full job.
+Save again when the queue finishes. Check free space on the project drive.
+
+6. REGISTER AND ANALYSE A SELECTED SCAN
+Select a scan and choose "Use for registration". Review target centres and
+control matches, solve, inspect residuals/check targets, and apply the result.
+Back in Job, "Keep positioned scan" adds that transformed result separately.
+The current tools operate on one selected setup; they do not solve a linked
+network of all setups. Importing preserves file poses where available; it
+does not prove the scans are positioned correctly.
+
+For survey calculations, load your own alignment CSV, select a positioned
+scan and choose "Use for survey analysis". Confirm metres and the alignment
+coordinate system only after checking them. This prepares full-density data
+for that one scan. The existing section/ovality/creep and circular-design
+heatmap tools then use their own documented inputs and processing limits.
+OBJ reference surfaces do not yet drive those deviation calculations.
+
+"Extract surface" sends the selected scan to the existing processing panel.
+Use a coordinate box or chainage range: extraction retains its bounded
+processing limit (default 300,000; maximum 750,000 points per selected area).
+
+STORAGE AND PERFORMANCE
+32 GB of RAM does not mean the entire source job must fit in memory. Import
+and overview data are processed in chunks and stored on disk. This helps
+large jobs, but does not make every analysis operation unlimited.
+An imported scan needs about 24 bytes per point for XYZ, plus 16 bytes per
+point while importing attributes; the attribute file remains if any channel
+is present. Analysis, registration copies, masks and portable exports need
+additional space. Compressed source sizes do not predict cache sizes.
+The model cache uses 24 bytes per vertex plus 12 bytes per triangle, plus a
+small preview. ZIP import also temporarily extracts the OBJ.
+The default data folder is %LOCALAPPDATA%\TunnelStudio on the system drive.
+Free space on a different drive does not help that folder automatically.
+
+PLEASE RECORD DURING THE FULL-JOB TRIAL
+- Number of setup entries, formats and total source-file size.
+- Import duration and available SSD space before/after.
+- Whether orbiting at Light and Normal budgets feels usable.
+- Whether the saved project reopens with all expected items.
+- Any exact error message or screenshot, and the step that produced it.
+
+The supplied individual files have been tested. A complete 25 GB or 60 GB
+field job and Windows desktop performance still require this local trial.

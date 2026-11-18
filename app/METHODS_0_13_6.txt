@@ -1,0 +1,79 @@
+TUNNEL STUDIO 0.13.6 - ROTATED LIMIT BOX AND CLEANING GROUPS
+13 October 2026
+
+The box is stored in the scan's existing coordinate system, in metres:
+centre c, three right-handed perpendicular unit axes a0, a1, a2, and positive
+half-sizes h0, h1, h2. Coordinates and point attributes are never rotated or
+rewritten merely to display or use the box.
+
+For each full-density point p:
+  ui = (p - c) dot ai
+  inside = all(abs(ui) <= hi + 1e-8 metres), for i = 0, 1, 2.
+This tests the actual rotated volume, not its larger axis-aligned envelope.
+The tolerance handles floating-point roundoff near a face. Full point data
+is read in chunks; masked/deleted points remain excluded. Legacy min/max
+boxes are supported with their original inclusive min/max comparison.
+
+When Hide outside is enabled, this mask intersects the chosen editing or
+cleaning selection. Inverting an editing selection cannot include points
+outside the active limit box. Preview uses the same predicate on its display
+sample. Processing uses the retained full-density source, not just that sample.
+When Hide outside is disabled, the stored box is only a visible editing guide;
+it imposes no extra restriction on the scan's point operations.
+
+Dragging one face changes its half-size and centre by half the signed
+movement along that box axis, keeping the opposite face fixed. Corner drag
+movement is taken in the camera's view plane and resolved along box axes;
+the opposite corner is fixed. A dimension cannot be dragged through zero
+and is clamped to at least 0.001 metres. Rotate the camera for another view
+or use a face handle to adjust depth independently.
+
+Edge handles use rotation around the box axis parallel to that edge, with
+the centre fixed. A view-ray intersection with the perpendicular rotation
+plane gives the angle. Near edge-on views use the projected tangent instead.
+Shift rounds rotation to 15-degree increments. Axes are re-orthogonalised
+after rotation. The API rejects nonfinite dimensions, nonpositive sizes and
+axes that are not a right-handed orthonormal basis within 1e-6 tolerance.
+
+Only the box wire and number fields update during a handle drag. Releasing
+commits the geometry and refreshes clipping; pointer cancellation or Escape
+restores the drag's starting box. A save failure restores the previous saved
+geometry and visibility state. Existing projects lacking the new visibility
+flag keep their old enabled limit; new UI-created boxes default to off.
+
+Cleaning Review labels are membership decisions, not semantic ground truth:
+green means retained by the proposed or reviewed result, red means removed.
+Red totals include both rejected clusters and unassigned density-noise points.
+Magenta only identifies the current selection. Showing or hiding a group
+does not change membership. Keep/Remove changes membership explicitly.
+
+Output concatenates the retained point IDs into one new scan, copying their
+original coordinates and available attributes. The complementary export uses
+removed point IDs within the processed area. Neither colour is written over
+the original point RGB. A named output and optional source visibility change
+make the result recognisable without creating a separate file for every piece.
+
+CROSS-SECTION LOCATOR
+The locator reads a bounded sample (maximum 40,000 displayed points) from the
+selected scan, excluding deleted points and applying an enabled limit box.
+It estimates an initial direction from principal components of that sample;
+the user can instead choose a fixed coordinate plane or custom normal.
+The overview is a display guide, not a replacement for full-density data.
+
+A fixed origin c and unit normal n define a section at position t with
+centre c + t*n. Each retained full-density point p belongs to the slice when:
+  abs((p - c) dot n - t) <= thickness / 2.
+The locator sends this fixed frame, so dragging does not recalculate the
+normal. A fixed-frame section reads the retained source once, obtaining full
+station limits and exporting every intersecting point with original XYZ.
+Optional current-selection and enabled limit-box masks are intersected first.
+
+The normal's E/N projection positions a line in plan. At slice-centre height,
+its centre is the projected c + t*n; line direction is perpendicular to the
+projected normal. A pointer location maps to t by projection divided by the
+squared projected-normal length. If that normal is nearly vertical (E/N
+length below 0.2), the locator uses an E/H side view instead, labelled clearly.
+The translucent band represents the slice thickness in that viewing plane.
+The line and numeric field update while dragging. Full calculation starts on
+release; cancellation restores the previous position without launching a job.
+A pending or failed calculation cannot offer the old CSV as the new slice.

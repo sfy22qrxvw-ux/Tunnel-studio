@@ -1,0 +1,42 @@
+Tunnel Studio 0.22.0
+6 November 2026
+
+Full-circumference pocket matching and local wall reference
+Find similar shapes now follows nearby measured lining instead of relying only
+on a single longitudinal profile. Robust local quadratic patches follow gradual
+wall changes at the crown, sides and invert. A small central exclusion region
+and iterative rejection keep compact recesses from defining their own wall.
+Unsupported areas remain unselected and are identified in the result.
+
+Near-square and round footprints also compare quarter-turn depth patterns when
+rotation matching is enabled. This corrects a principal-direction ambiguity
+that could reject an otherwise matching rotated pocket.
+
+The Search coverage panel reports every region: original observations checked,
+usable measured wall support, points outside the chosen lining band, and matched
+original points. It distinguishes missing reference from failed shape matches.
+The previous longitudinal reference remains available in Advanced settings.
+Whole-cloud matching remains streamed with no point-count admission cap.
+
+Modern shared workspace
+Light/dark surfaces, controls, tables, statistics, retained/excluded cards and
+selected rows use coordinated text/background colours. Detached review windows
+receive the same theme. Dialogs, tool drawers and the Explorer use calmer
+spacing, clearer typography, rounded panels and restrained visual depth.
+The header appearance button switches themes; Settings retains System mode.
+The native long-job progress window uses the saved application appearance.
+Hover snapping recovers when a limit-box/view refresh replaces its display
+buffer; an invalidated screen lookup is retried against the current view.
+Measured scan colours, plots, analysis classifications and exported attributes
+are preserved.
+
+This is cumulative from delivered 0.21.7, including the confirmed multi-example
+shape library, independent per-scan colours, full-density pocket inspection,
+source-independent registered clouds, cleaning, storage and existing workflows.
+The complete installer replaces manual source-file patches.
+
+Validation distinguishes constructed algorithm checks, browser contrast checks,
+installer integrity and native Windows execution. Similarity is geometric, not
+a probability or verified object identity. A small wall-fit residual is not
+survey accuracy. Review detections before deletion. Native Windows/WebView2
+and the complete user project are not executed on the build host.

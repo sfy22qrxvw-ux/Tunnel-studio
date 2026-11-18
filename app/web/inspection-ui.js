@@ -355,7 +355,7 @@
  }
  for(const id of ['inspection-mode','inspection-source','inspection-reference'])byId(id).onchange=()=>{choices();bandAreaChange();};
  for(const id of ['inspection-tolerance','inspection-sign','inspection-spacing','inspection-band'])byId(id).onchange=render;
- byId('inspection-area').onchange=bandAreaChange;
+ byId('inspection-area').onchange=()=>{window.AnalysisArea.describe('inspection-area',source());bandAreaChange();};
  byId('inspection-wall-only').onchange=()=>{wallChoices();resetBandReview();};
  for(const id of ['inspection-keep-inward','inspection-keep-outward'])byId(id).oninput=resetBandReview;
  byId('inspection-keep-review').onclick=reviewBand;

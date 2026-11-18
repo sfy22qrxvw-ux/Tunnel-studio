@@ -1,0 +1,224 @@
+TUNNEL STUDIO 0.17.0 — RIBBONS, LOCAL CLEANING, GEOMETRY AND MEASUREMENT
+26 October 2026
+
+This is the complete application update based on the working 0.16.1 startup
+repair. It retains the earlier import, registration, cleaning, comparison,
+meshing, drawing, tunnel design, save, recovery and exchange workflows. It adds
+the requested task ribbons and the geometry, local feature selection and
+measurement tools described below. VALIDATION_0_17_0.json contains the current
+test evidence. Earlier validation records describe their earlier releases.
+
+1. FINDING THE TOOLS
+
+Home: Import, Open project, Save, Save As, Export, Refresh 3D and view fitting.
+Edit: Box, polygon, lasso and brush selection; Limit box; hide/isolate/show;
+      Delete, separate and copy points; reversible edit history.
+Registration: Join scans, target detection/picking, matching and registration QA.
+Clean: Primary Clean Tunnel (GuSAC), other tunnel methods, local protruding
+       bolts/fittings, seeded region growing, stray points and review/removal.
+Model: Create plane, best-fit plane/cylinder, drawing, editable geometry,
+       model modification, alignments, tunnel design and model exchange.
+Meshing: Create surfaces, smooth, reduce triangles, review/repair selected holes,
+         keep the largest component, flip normals, transform and mesh-to-cloud.
+Analyse: Cloud vs Mesh and Cloud vs Cloud, the remaining comparison modes,
+         lining classification/inspection, cross-sections and tunnel QA.
+Measure: Point information, distances, angles, surface/geometry measurements,
+         saved labels, comments, tolerances and measurement export.
+Report, View, Settings and Help retain their dedicated workflows.
+
+Commands are grouped by task, with dropdowns for related alternatives. Narrow
+windows condense command groups while keeping their commands reachable. The
+View controls use a responsive grid instead of stacking over each other.
+Tool panels respect the actual ribbon height. Hovering or keyboard-focusing a
+command shows practical guidance; parameter help explains units and effects.
+An optional explanation toggle shows the guidance beside the settings.
+
+The left Project explorer retains adjustable width and content-dependent
+height. Yellow bulbs mean visible; grey bulbs mean hidden. Visibility remains
+independent of object selection. The scan/model search and duplicate bottom
+launcher strip remain removed. The Model tab now displays saved editable
+geometry after reopening a project and keeps the cloud available as a reference.
+The orthographic scale bar follows zoom and window size. A single scale is not
+shown in perspective view, where scale depends on depth.
+
+2. CLEANING AND CLASSIFICATION
+
+GuSAC remains the primary paper-based tunnel cleaning method. TMatch remains
+available under Analyse for cluster/ring visualisation of supported lining.
+The implementation choices, equation corrections and differences from the
+paper remain documented in GUSAC_TMATCH_METHOD_0_15_0.txt. This release does not
+replace those algorithms with SMRG or attach the paper's reported accuracy
+to an unlabelled user scan.
+
+Clean > Protruding bolts finds local candidates in front of the surrounding
+measured lining. It uses local surface support, signed height and connected
+component size checks. Recesses/holes and protruding heads are treated
+separately; an elongated pipe is not deliberately labelled as a bolt head.
+Choose a scan, pick a visible lining area, set the local radius and dimensions,
+preview, select the required candidates, then refine or remove them. Candidates
+are not deleted merely by calculating a preview.
+
+Clean > Region growing starts from a picked original point and grows a locally
+connected surface using distance, normal and surface-offset limits. Nearby
+disconnected surfaces are not joined merely because their normals are similar.
+The local result retains exact original point IDs. Refine it using a 3D point
+selection, review its full selected count, then use the normal Delete command.
+Undo/Redo restores/repeats the exact edit. The bounded display is separate from
+the original points selected for removal.
+
+Both local tools have a point budget (default 500,000; maximum 1,000,000 original
+local points). They reject an over-budget neighbourhood with guidance to reduce
+the radius, rather than silently selecting from a sampled subset. Source or
+mask changes invalidate stale results. Stop/cancellation leaves the original
+input unchanged. Removing a service or bolt never invents lining measurements
+behind it; occluded regions remain missing observations.
+
+SMRG remains an advanced local geometric surface-grouping option. Its surface
+recovery step now reuses grouped point indices and spatial structures instead
+of repeatedly scanning all labels and rebuilding the same index. A 22,500-point,
+401-cluster recovery fixture retained exactly the same decisions/order and ran
+3.560 seconds before versus 1.422 seconds after. This 2.50x figure applies only
+to that recovery step, not to the complete algorithm or a real tunnel.
+
+SMRG requests over 3,000,000 selected original points stop with a local-selection
+recommendation before building the full calculation. The unmasked whole-scan
+case can reject using metadata without reading XYZ. This prevents the reported
+550-million-point whole-area request from launching the same expensive path.
+The guard does not apply to GuSAC or the other methods. SMRG's geometry grouping
+does not guarantee a semantic wall-versus-pipe distinction. Attached services,
+sparse observations and complex junctions still require review.
+
+3. GEOMETRY
+
+Create plane accepts a named centre, width, height and direction in the survey
+coordinate system. It previews before adding an editable plane to the project.
+Best-fit plane uses orthogonal least squares on every selected retained point.
+Best-fit cylinder uses bounded starting guesses followed by refinement against
+all selected retained points, and rejects insufficiently constrained or
+strongly non-cylindrical selections. Fits report point count, RMS, mean absolute
+and maximum deviation, plus applicable dimensions and coverage notes.
+
+The highlighted area (including depth) or selected whole scan can supply a fit.
+Display decimation does not reduce the final calculation. Whole-scan fitting
+can take substantial time and temporary disk space; select the intended surface
+first for local models. Source/revision checks prevent applying a stale preview.
+
+Added models have names, layers, colour and visibility, editable dimensions in
+Properties > Parameters, existing drawing/modification tools, project history,
+save/reopen and model exchange. Plane/cylinder representations remain usable as
+comparison references. A fit is a geometric estimate from the selected points;
+it is not a registration or survey accuracy certificate.
+
+4. MEASUREMENT
+
+Between Points: 3D distance, plan distance, height and E/N differences.
+Point Plane: perpendicular and signed distance to an infinite reference plane.
+Point Triangle: shortest distance to a finite triangle, including its edges.
+Between Planes: parallel separation and plane angle; intersecting infinite
+                planes have zero minimum separation.
+Three Points: angle at the middle point.
+Lines / Planes: smaller undirected angle between the selected directions.
+Measure Surface: complete triangle area or enclosed planar profile area.
+Measure Geometry: curve length, area, extents and validated closed CAD volume.
+
+Coordinates may be entered or recovered from actual retained scan points in
+float64. Calculate, review the result and then save it. Saved measurement
+objects support names, comments, label visibility, nominal/tolerance checking,
+editing, deletion, bulbs, Undo/Redo and CSV/JSON export. Distance tolerance is
+entered in millimetres; nominal distance is in metres. The saved coordinates
+form an explicit measurement snapshot and do not silently follow later edits.
+
+An open or unvalidated imported surface does not receive an invented solid
+volume. Stored triangle geometry and validated CAD-solid semantics determine
+reported area/volume. Tessellation can affect surface approximations. This
+release does not add every stockpile, cut/fill or volume operation in Cyclone.
+
+5. DELETE RESPONSIVENESS AND CORRECTNESS
+
+The first exact selection now builds its coarse spatial index during the same
+coordinate pass, removing a separate full-coordinate indexing read. Repeated
+selections reuse conservative block bounds and combine adjacent candidate blocks
+into bounded reads. The selection specification is validated once per command.
+Index publication is cancelled if processing stops or the source changes.
+Nonfinite points cannot become selected through inversion. Large file mappings
+used by point edits are closed promptly, including on failure/cancellation.
+
+Progress status-file writes are limited to a human refresh rate, while every
+checkpoint still checks cancellation. Start, finish and error states are forced
+to disk. The interface shows the selection/deletion phase, saving and view
+refresh separately, instead of leaving an unexplained long wait.
+
+Read-only preview/pick requests no longer make an unnecessary full-workspace
+history copy. A successful edit with a provably changed top-level list length
+does not serialise both full snapshots just to detect that change. Same-shape
+metadata changes retain the existing exact comparison. Actual edits still keep
+complete independent before/after snapshots, and save/cancel rollback is tested.
+In a generated 26.60 MB / 45,000-patch project, the excluded pick wrapper dropped
+from 1.694 s to 0.000031 s and the successful-Delete comparison from 1.883 s to
+0.000022 s. Total request-plus-worker time was 9.631 s versus 6.418 s in that
+paired run. Other stages varied with host load, so the whole observed difference
+is not attributed to the code change. These are generated-metadata measurements,
+separate from the real scan timings below.
+
+These changes preserve full-density original IDs, exact clipping/depth/brush
+semantics, immutable source data and reversible masks. They do not approximate
+the selected points or permanently compact the source cloud on each Delete.
+
+On a deterministic 4,000,003-point fixture, first-selection coordinate reads
+fell from 192 MB to 96 MB; repeated adjacent-block reads fell from 245 to 41.
+Elapsed times varied with host load. These I/O counts are the stable improvement.
+
+Two ordinary deletion cases on the supplied 10,125,420-point scan were checked
+against independent selected-ID/mask references and through Undo/Redo:
+- 6,700,941-point box: baseline 6.302 s; new 7.644 s.
+- 412,225-point depth-limited polygon: baseline 2.700 s; new 2.510 s.
+The large-box run was slower. A reversed-order local polygon repeat measured
+3.160 s versus 2.826 s, mostly selection/index time. No universal speed gain
+or instant 550-million-point deletion is claimed.
+
+A separate reviewed local region selected 34,989 original points on the same
+source. The final run took 3.789 s to find the region, 0.061 s to delete its
+already known IDs and save, 0.004 s for Undo and 0.002 s for Redo. Its standalone
+Python peak was 76.33 MiB. Those are separate stages and exclude HTTP history,
+full desktop refresh and Windows filesystem/GPU behaviour.
+
+6. RETAINED EXCHANGE AND RECOVERY
+
+All six comparisons remain available: Cloud vs Cloud, Cloud vs Mesh, Cloud vs
+CAD, Cloud vs Geometry, Mesh vs Mesh and Mesh vs CAD. The default comparison is
+directed and unsigned; oriented mesh sign depends on face winding. Mesh-source
+statistics use area-weighted surface samples, not a continuous maximum proof.
+See RELEASE_SCOPE_0_16_0.txt for exact retained comparison semantics.
+
+Home > Export provides explicit output formats and destination selection,
+including the direct full-path fallback. Current regression gates exercise
+E57, LAS, LAZ, PLY, PTS, XYZ and CSV with reversible edits and independent
+readback; OBJ meshes, editable CAD DXF/JSON and portable .tstudio restoration
+are also exercised. Neutral point-cloud files remain unstructured. They do not
+export scanner setups, panoramas, acquisition row/column grids, classifications,
+return numbers or native registration links. Export notes state the coordinate
+precision and intensity/RGB conversions for each format.
+
+The 0.16.1 startup repair is retained: consistent bounded metadata handling,
+atomic saves, preservation of the original autosave and previous-session
+recovery. The installer checks startup and reopening with isolated metadata
+larger than 20 MB before activating the new release. It does not test against
+or alter the user's real survey project during that component check.
+
+7. VALIDATION BOUNDARIES
+
+Current numerical and workflow tests, actual Chromium interface gates, exact
+source hashes and installer verification are recorded with this release.
+Generated lining/head/recess cases test specified geometry and original-ID
+behaviour; they do not establish field accuracy for all cables, pipes or bolts.
+The available real scan has 10,125,420 points and no reviewed semantic truth.
+The user's 550-million-point whole project and complete 7 GB desktop memory
+budget have not been benchmarked. All source files used by real-data tests
+remain unchanged by hash.
+
+The build host is Linux. Native Windows installation execution, WebView2, GPU,
+Windows save dialogs and DPI behaviour have not been executed here. Actual UI
+checks use Chromium with software WebGL at several effective window widths.
+This is a functioning independent application release with the described
+features; it is not a claim of complete Cyclone feature parity or validation
+of every project/hardware configuration.

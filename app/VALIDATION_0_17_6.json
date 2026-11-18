@@ -1,0 +1,18 @@
+{
+  "version": "0.17.6",
+  "focus": "transform-only large-network registration",
+  "checks": [
+    "24 setup / 23 link chain with registration disk allocator forced to fail",
+    "no new xyz64 cache files created by Apply geometry",
+    "virtual world poses reproduce common geometry",
+    "main preview applies virtual pose",
+    "optional physical merge applies virtual poses",
+    "0.17.5 registration storage regression tests",
+    "project storage/startup/updater portable regression tests",
+    "Python compilation and frontend JavaScript syntax"
+  ],
+  "portable_tests": 21,
+  "python_files_compiled": 132,
+  "javascript_files_checked": 46,
+  "windows_runtime_tested": false
+}

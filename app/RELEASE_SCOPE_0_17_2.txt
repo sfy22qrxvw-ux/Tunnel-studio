@@ -1,0 +1,148 @@
+Tunnel Studio 0.17.2 - measured support, joined triangles and mesh visibility
+
+RELEASE BASE AND PURPOSE
+This is a cumulative update to the delivered 0.17.1 application. It preserves
+the earlier alignment/model workflow, Explorer, appearance, point editing and
+analysis tools while addressing the report that meshing appeared to add points
+or disconnected patches instead of a useful joined triangle surface.
+
+The release changes source sampling, radial-grid support, numerical grid ties,
+PCA unwrap construction, connectivity reporting, triangle display, mesh export
+and publication of completed mesh operations. It does not claim a new semantic
+cleaning/classification method or complete reproduction of a supplied research
+paper's reconstruction algorithm.
+
+ALL RETAINED SUPPORT FOR CREATE TUNNEL SURFACE
+The direct lining-grid workflow reads every retained finite source point in the
+chosen area through bounded blocks. Masks, selections and active limit boxes
+are respected. Exact cell-support counts replace dependence on a global display
+or row-stratified point sample. Bounded deterministic reservoirs estimate cell
+radii: small cells use exact medians; larger cells use an explicitly reported
+approximation. Effective grid detail and reservoir capacity remain automatic
+resource choices, with their actual values available in the mesh summary.
+
+Physical gap interpolation needs admissible original support in both angular
+and axial directions. It uses local physical distances and radial changes,
+runs once, and does not propagate inferred values across long slits, missing
+rings, portals or large openings. Faces built from inferred cells are marked.
+The operation reports observed support retained in faces and faces removed by
+the edge limit; sparse output is not declared a complete lining.
+
+Float64 storage is preserved. Stable cell-boundary ties, centred statistics,
+local-coordinate averaging and a stable transverse frame for nearly equal
+radial eigenvalues address numerical seams on regularly sampled surfaces and
+large survey offsets. Roundoff treatment is separate from physical gap filling.
+The detailed method and its limitations are in MESH_METHOD_0_17_2.txt.
+
+SPATIAL SAMPLING FOR GENERIC METHODS
+Auto, PCA unwrap and other generic reconstruction engines use bounded spatial
+representatives drawn from original measured rows. Dense scanner regions no
+longer receive most working points solely because they occupy most source rows.
+The chosen method, working resolution and any support/edge limits are reported.
+Method-specific restrictions remain; one radial surface cannot represent every
+overlapping service, junction, interior object or curved branch correctly.
+
+ACTUAL TRIANGLE DISPLAY AND REVIEW
+Meshes have a separate triangle display path from point-cloud rendering.
+Solid, Solid + wire and Wire controls are available in the mesh result panel.
+The panel shows saved faces, edge-connected pieces, the main piece's area share,
+measured-cell retention when applicable, display status and review reasons.
+Source visibility can be changed independently while inspecting the surface.
+
+Connected preview simplification preserves the full saved mesh. Saved and
+displayed triangle counts are distinguished. A failed preview is reported with
+a reason and Retry preview rather than being silently replaced by mesh vertices.
+Mixed scenes retain usable models and identify partial display failures.
+Fragmented geometry remains explicitly labelled for review even if its preview
+renders successfully. All components remain available; small islands are not
+automatically deleted to improve a statistic.
+
+FULL OBJ EXPORT AND ATOMIC MESH PUBLICATION
+OBJ export writes the full saved geometry in original project coordinates,
+using bounded block reads and 17 significant digits for float64 coordinate
+round trips. It exports full face connectivity and available inferred-repair
+groups, not the simplified screen preview. Invalid caches or indices cause a
+reported failure. A temporary export replaces the destination only after a
+complete write, and the save dialog can be cancelled without publishing a file.
+
+Creation and refinement stage assets in private operation directories. Source
+geometry and mask revisions are checked before committing the new scene item.
+Cancellation or a pre-commit failure cleans the unpublished operation directory
+and preserves the previous workspace and original scan. Failed saves restore
+the in-memory state. No cancellable work follows successful publication.
+
+RETAINED 0.17.1 INTERFACE AND WORKFLOWS
+The dedicated Alignment tab retains Create alignment, Draw alignment in 3D,
+coordinate entry, import, editing and scan fitting. Model retains the prominent
+Create 3D model from alignment and Edit tunnel design commands. The five-step
+designer still covers plan, heights/gradients, named profiles, chainage ranges
+and preview/build, with constant profiles, transitions, 3D range picking and
+editing of a saved model or a separate copy.
+
+The Project Explorer remains a compact content-sized overlay with a resizable
+width, available-height cap, aligned rows and independent yellow/grey visibility
+bulbs. No Find scan/model search is introduced. Short-window command controls
+and docking behaviour remain. Light, Dark and Follow Windows remain separate
+per-PC preferences, independent of project geometry and scan colours.
+
+Ordinary point deletion remains reversible. Permanently remove deleted points
+retains its explicit review, stale-review checks, bounded float64/attribute
+compaction or archive-only cleanup, protection of external originals and saved
+references, and the acknowledgement that workspace Undo/Redo history is cleared.
+The command does not erase independent original imports or other saved copies.
+
+Registration and Join scans, local selection and limit boxes, GuSAC primary
+tunnel cleaning, TMatch classification, clustering visualization, bolt/local
+feature selection, region growth, geometry drawing/fitting, plane and cylinder
+tools, the Measure tab, cross sections, reporting, import/export choices and
+save/reopen remain included. The six comparison routes remain cloud-cloud,
+cloud-mesh, cloud-CAD, cloud-geometry, mesh-mesh and mesh-CAD, subject to their
+existing supported-input and measurement limitations. The startup oversized
+metadata repair and earlier recovery protections remain.
+
+RESEARCH SCOPE
+IPCMS informs support/connectivity/opening considerations and triangle-quality
+reporting. This radial-grid workflow is not the complete unit-sphere/splat graph
+algorithm. Point2Mesh informs area-weighted surface sampling in the diagnostic;
+its neural mesh-deformation pipeline is not implemented. A connected displayed
+surface with open portals is not automatically a watertight volume. Existing
+cleaning methods remain separate from meshing and are not replaced by a claim
+that radial medians identify every cable, pipe, bolt or service.
+
+VALIDATION AND EVIDENCE BOUNDARIES
+VALIDATION_0_17_2.json is the final release evidence index and records current
+source correspondence, geometry, transaction, browser, export and retained
+feature checks. Earlier release reports remain historical evidence. The source
+work/validation_0_17_2/real_comparison.json contains fixed-setting comparisons
+on the available real scan with excluded validation points and independent
+triangle-interior distances. Archived iterations are kept separately; final
+decisions use the records bound to the released source.
+
+No final output counts or accuracy figures are repeated here: the validation
+records contain the precise data, settings, source hashes and method details.
+The raw scan has no semantic/analytic ground truth, contains internal geometry
+and has sparse distant regions. Coverage improvement, connectivity improvement
+and point-weighted fit are assessed separately. A coarse-resolution check is a
+stated detail/support comparison, not a new default or a performance claim.
+
+Native Windows/WebView2, native GPU/DPI behaviour and the user's complete
+550-million-point cloud were not benchmarked on the Linux build host. Browser
+and numerical tests on that host do not establish universal Windows timings,
+memory use, semantic-recognition accuracy or a complete single solid for every
+scan. Original coordinates and attributes are checked for preservation.
+
+RUNTIME AND INSTALLATION
+The application base is the delivered 0.17.1 source. All 20,001 functional
+Windows runtime files remain the verified 0.16.0 baseline unchanged, including
+Open3D 0.20.0 and scikit-image 0.26.0. They are not replaced by packages from the
+Linux validation environment. The versioned installer preserves the prior
+release and survey workspace. Close Tunnel Studio before installing.
+
+Earlier scope and restrictions remain in RELEASE_SCOPE_0_17_1.txt,
+RELEASE_SCOPE_0_17_0.txt and the consolidated requirements history. PDF Drawing
+and its separate PDFium engine remain absent; printable survey reports remain.
+Private reference scans, projects and screenshots are not installer content.
+
+Explorer sizing correction: docking or resizing that resets the inline panel
+height now triggers a new content measurement, restoring the available-height
+cap in short windows while retaining the independent visibility bulbs.

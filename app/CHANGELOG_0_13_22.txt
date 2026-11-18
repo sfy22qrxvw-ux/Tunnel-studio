@@ -1,0 +1,15 @@
+Tunnel Studio 0.13.22 - Direct RTC360 raw conversion (experimental)
+
+The scanner-folder import now defaults to conversion inside Tunnel Studio.
+No REGISTER 360, Leica licence, SDK or intermediate E57 is needed by this route.
+
+Select the setup folders, convert them, then work with their editable clouds.
+Includes intensity, separate setup views, stored HDR photograph previews,
+progress, cancellation, duplicate protection and a clear import receipt.
+
+Both supplied complete setups were converted and their cache data checked.
+Existing editing, cleaned export and target-registration workflows are reused.
+
+Factory calibration and Leica's validity/double-scan filtering remain unverified.
+The imported data is explicitly experimental and unfiltered. Read READ_ME_FIRST.txt
+before using reconstructed coordinates for survey measurements.

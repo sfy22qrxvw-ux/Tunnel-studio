@@ -1,0 +1,104 @@
+Tunnel Studio 0.18.6 — registration workflow and display loading
+1 November 2026
+
+Release basis
+
+The application and build support were recovered from the exact delivered
+TunnelStudio_Setup_0.18.5_x64.exe (244,705,578 bytes), SHA256
+e6f75bcde8bf139c80ebe9cd64eaf9a9d8475280fda9b6ff943ed32f07b18bb7.
+All 20,001 listed Windows runtime files remain unchanged. Prior release notes,
+validation reports and cumulative source are retained in the installer.
+
+Registration behavior
+
+Finite usable sphere and checkerboard fits are included immediately, including
+fits exceeding the old RMS rejection threshold. Their numerical quality errors
+and warnings are retained. Existing explicit Check, Exclude and rejected choices
+are respected. Removing a target removes its linked correspondences as well.
+
+Register setups matches common target names when no explicit match list is
+supplied, holds the selected setup/component fixed, solves the applicable pair
+or network and applies virtual poses in one Undo operation. Each pair uses its
+own mode; an earlier two-target vertical link does not lock later full 3D links.
+Existing vertical directions are transformed and retained when components rotate.
+The whole action restores prior state/selection on failure or cancellation.
+
+No target-quality score is represented as survey approval. Numerical RMS warnings
+are advisory; a transform still requires sufficient finite, nondegenerate geometry.
+Independent Check targets remain outside the model fit. Original source coordinates
+remain unchanged and registration creates no second physical merged cloud.
+
+Point-cloud display
+
+The first frame uses measured source colours/intensities where present. Coarse
+display remains interactive while fine detail loads. Setup navigation, wheel zoom
+and canvas resizing coalesce automatic detail refreshes. A manually requested
+refresh remains available. The viewport retains its current useful buffer during
+movement, and stale responses cannot overwrite a different setup or analysis.
+
+Deterministic viewport sampling uses buffered top-k selection, bounded file reads
+and one-pass legacy index creation. Reusable detail samples include source/mask,
+pose, clipping, view and display revisions in their keys. Source-frame overview
+levels retain measured attributes across RGB/intensity and pose changes. Cache
+ownership and the existing disposable disk-cache budget are retained.
+
+The viewport still has a bounded display budget up to one million points. The
+whole cloud remains on disk; navigating requests local detail from the original
+points. A display sample is not an analysis input cap or a promise to render every
+point of a multi-gigabyte cloud simultaneously. No scan is downsampled on disk.
+
+Older edited-project inventory
+
+Explorer/preview display metadata is separate from analytical retained properties.
+If a legacy edited scan lacks cached exact metadata, the viewer immediately uses
+conservative original source bounds and explicitly labels the original count as
+an upper bound. One coalesced worker reads only deletion-mask bytes in bounded
+blocks and publishes the exact retained count for the current file revision.
+Repeated requests reuse that count; changed source/mask revisions invalidate it.
+Exact bounds and attribute statistics are still calculated by analytical/editing
+callers when required. Display bounds never overwrite those exact properties.
+
+Synchronizing the active scan retains a valid current properties cache instead
+of overwriting it with a stale alias. The UI refreshes pending counts without
+reloading geometry or replacing an analysis layer. A missing or damaged mask
+does not acquire an exact-looking retained count.
+
+Analysis display
+
+Inspection and design-comparison previews can use TSDP version 1 binary arrays:
+float32 local display XYZ/RGB, float64 deviations, and original-precision origin
+and statistics in the metadata. The existing JSON API remains available. Saved
+analytical results, computation scope, source XYZ, exports and report precision
+are unchanged by this display transport. Invalid/inconsistent buffers are rejected.
+
+The browser decodes into typed arrays and recolours with a single display upload.
+Analysis keeps its base-cloud snapshot without repeatedly restoring it. A normal
+cloud response cannot replace an active analysis; Restore resumes an incomplete
+normal load. Repeated clear-selection calls do not re-upload an unchanged cloud,
+and pending deleted points remain hidden until success or rollback.
+
+Existing cumulative features and remaining limits
+
+The 0.18.3 full-input plane/cylinder, analysis range, grouping and batch-deletion
+corrections remain, as do 0.18.4 startup and 0.18.5 installer registry/cleanup fixes.
+Those retained behaviors are covered by cumulative application and lifecycle
+regression gates. Earlier algorithm-review documents remain historical evidence.
+
+This release does not establish correctness of every semantic segment, segment
+classification or bolt result on the user's tunnel. It also does not establish a
+global seven-GB memory ceiling, native Windows/WebView2/GPU performance or a
+350-million-to-five-billion-point end-to-end throughput guarantee.
+
+Validation approach
+
+Use the exact results in VALIDATION_0_18_6.json. Tests exercise actual numerical,
+storage and API code with synthetic files, plus production UI scripts in Chromium.
+Controlled-latency browser tests check first-frame responsiveness and stale-result
+safety; separate real-file benchmarks measure backend loading and analysis-display
+transport. These measurements exclude native Windows execution.
+
+The full installer is built from the frozen source, then independently extracted
+and checked against its manifest and the unchanged runtime. The actual production
+startup/component command is run against staged and extracted application code
+on Linux. On Windows, the installer repeats its component checks before activation,
+retaining the previous release and user workspace if those checks fail.

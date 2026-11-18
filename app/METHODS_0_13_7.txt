@@ -1,0 +1,121 @@
+TUNNEL STUDIO 0.13.7 - IMPLEMENTATION AND VALIDATION NOTES
+
+LINING MODEL (INDEPENDENT IMPLEMENTATION)
+The old envelope method fitted a PCA frame and local radial quantiles per
+input block. The new production streaming path calibrates one model for
+the entire selected area and then classifies every original point.
+
+Calibration: deterministic spatial-cell centres, at most 140,000 cells.
+Spacing = clamp(resolution / 4, 0.02, 0.075) metres. Stable cell hashes bound
+memory independently of block order. This sample is used only to estimate
+the model; output is never the calibration cloud.
+
+Initial frame: compare robust circle support across all three PCA axes;
+refine a cylinder with robust radial residuals. Fit local cross-section
+centres/radii on a common axis, using neighbouring longitudinal sections.
+The cylinder supplies a frame, not a forced circular output surface.
+
+Profile: learn a supported angular radial reference across the area, then
+local station/angle offsets close to it. Bounded gap support and angular
+median filtering reduce object occlusions. Supported noncircular features
+such as a flat floor can remain in the measured profile. No fitted or
+interpolated point replaces an original scan point.
+
+For point p and local section centre c(t), rho = radial distance in the
+perpendicular frame; R(t,theta) = measured reference radius + local offset.
+d = rho - R(t,theta). Keep when |d| <= the chosen lining distance.
+Classify d < -distance as interior; d > distance as outside. Unsupported
+sections/cells form a separate review group, rather than pretending that
+their geometry has been established. Long unsupported gaps are not bridged
+for cleaning. Every original selected ID is written once with a label.
+
+This is a geometric lining classifier, not a semantic object recognizer,
+certified acceptance method, design deviation check or junction solver.
+Different linings, missing walls, persistent protrusions and major curves
+need review. The neighbour-based stray-point filter and SMRG are separate
+methods; their classifications have not been silently redefined.
+
+SCAN-DERIVED ALIGNMENT
+The established supported-fit route remains for clear, gently curved,
+approximately circular branches. For ambiguous direction, all PCA axes
+are compared for circular support. Where sections cannot be fitted,
+robust slice centres and unverified radius guesses create an editable
+starting line. It is flagged tentative, never adopted automatically.
+3D node distances recalculate chainage after coordinate editing. Plan
+changes E/N; elevation changes H. The preview is a bounded scan sample.
+
+UNDO
+Before/after metadata snapshots cover one completed API action or job.
+Immutable coordinate, attribute, mask and result caches are referenced;
+large clouds are not duplicated in RAM for each checkpoint. Multi-scan
+gestures carry one group identifier. Session history is bounded to 30
+actions and is not serialized as part of a saved project. Draft alignment
+node history is local until Save; one completed drag is one step. Restore
+checks cache availability and rolls back if saving fails. Export/report
+readiness is invalidated because generated files are not rolled back.
+
+REAL E57 VALIDATION
+one scan for damian.e57; 10,125,420 points; pye57 0.4.19 used for the test
+reader, with its scan pose applied. Production lining and cleaned-output
+functions processed the full-density caches; missing base importer/session
+components are narrow fixtures in this runtime. Exact retained XYZ and
+intensity/RGB arrays, ID coverage and unchanged source hashes were checked.
+No scan bytes are included in this update archive.
+
+Default parameters: Detailed, 0.20 m resolution, 3-degree cells, 0.70
+reference quantile, 0.08 m lining distance. Calibration used 140,000 cells
+and 139 fitted sections. Output: 9,868,812 lining; 242,369 interior;
+7,117 outside/stray; 7,122 insufficient support. Four selected sections
+were visually inspected against the original point positions.
+
+Observed cached-XYZ calibration/classification time: 14.763 seconds.
+Cleaning plus output/array verification: 16.755 seconds in this runtime,
+with one BLAS thread. E57 reading and initial caching are excluded.
+This is not a Windows timing guarantee or a real-scan accuracy measurement.
+
+See tests/real_scan_cleaning_0_13_7.json and release_validation_0_13_7.json.
+UI tests execute production JavaScript against API/canvas/WebGL fixtures.
+Native Windows installation, rendering and mouse input remain unverified.
+
+LIVE DISPLAY CLIPPING
+While the box editor is open, the server supplies a bounded scan sample with
+limit clipping disabled, preserving point deletions and other visibility rules.
+The point vertex shader checks |(p-c) dot axis_j| <= half_size_j for all three
+box axes on each draw. Expansion can reveal points without a new disk read.
+Point buffers are not rebuilt on each mouse move; model and overlay geometry
+use separate unclipped buffers. Closing the editor restores the normal preview.
+
+3D DEVIATIONS
+The existing full-density Cloud vs Design engine writes a distance for each
+retained finite source point and exposes signed deviations for up to 100,000
+display points. For circular design, d = distance to nearest 3D centreline
+segment - interpolated radius. This is radial deviation, not shortest distance
+to a general curved/tapered surface. Mesh comparison uses nearest triangles;
+unsigned or oriented-face sign follows the selected mode. Actual design,
+coordinate agreement and the existing stale-input checks remain required.
+For a signed colour scale L, t=min(1,abs(1000*d)/L); colour=(1-t)*green+t*
+(blue if d<0 else red). Tolerance mode uses green for abs(1000*d)<=L.
+No start/end chainage fields participate in the 3D heat-map request.
+
+LARGE SECTION FALLBACK
+The legacy section function remains for ordinary sections. Only its explicit
+2-million-point guard invokes the new fallback; other errors are preserved.
+At station s, interpolate the centre and radius and use the forward segment
+for a 3D tangent n. right=unit(n cross global_up), up=right cross n. Points
+with abs((p-centre) dot n)<=width/2 and abs(hypot(u,v)-R)<=band enter results.
+Deleted, non-finite and points outside the alignment's projected domain are
+excluded. Work uses 100,000-row blocks, a disk-backed uv/deviation cache and
+in-place exact percentile selection. The stored uv and deviation arrays contain
+every admitted point. Display alone is capped at 6,000. Full section CSV is
+written to disk and streamed to the browser, avoiding a giant response string.
+
+Exact median radius/angle within each occupied one-degree bin balances the fit.
+The robust section module fits an ellipse with a 20 mm residual threshold;
+least-squares circle residuals use the same balanced bins. Coverage below
+24 bins or a gap above 60 degrees withholds the fit, preserving radial stats.
+This fallback's fit is explicitly labelled and may differ from the legacy fit.
+A plane can intersect another tunnel branch; use one branch for interpretation.
+Results are cached by source/mask timestamps, alignment and section settings.
+A 2,100,000-point test verifies all counts, exact deviations, mean, extrema,
+95th absolute percentile, tolerance counts, fit support and repeat-cache output.
+The installed base report generator was unavailable and remains unchanged.

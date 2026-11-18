@@ -1,0 +1,60 @@
+TUNNEL STUDIO 0.5.0 - VALIDATION RECORD
+Date: 9 October 2026
+
+AUTOMATED CHECKS
+51 tests passed in 12.668 seconds on the development host.
+Includes existing survey, registration, exchange, project, surface, startup
+and update checks, plus six Job-workspace tests covering:
+- Float64 OBJ import, triangular topology, ZIP import and portable reopen.
+- Invalid input, low-space checks and cancellation cleanup.
+- Global overview budget, visibility and exclusion masks across 20 synthetic
+  scan entries. This is not a 20-setup full-size field-job benchmark.
+- Registration target rows surviving a switch between job scans.
+- Separate imports of two scan records from a synthetic E57.
+- Cancellation leaving no incomplete scan cache.
+Desktop dependency checks use a stubbed Windows backend; they do not test
+an actual Windows desktop launch or WebView2 installation.
+
+REAL FILES
+E57 source bytes:                 194,016,256
+E57 retained points:              10,125,420
+E57 cache with preview bytes:     407,399,256
+OBJ ZIP source bytes:             388,952,799
+Uncompressed OBJ bytes:           940,618,658
+OBJ vertices:                    8,800,000
+OBJ triangles:                   17,592,519
+Degenerate/tiny-area triangles:   5 (reported, retained)
+OBJ cache with preview bytes:     424,710,228
+Combined job cache bytes:         832,109,484
+Combined overview sample:         199,269 points/vertices
+Named project save/reopen:        Passed
+Peak Python process RSS:          537.234375 MiB
+Real-file script elapsed time:    97.1789 seconds
+
+These memory and timing measurements are from a Linux development host,
+for the import/reopen script only. They exclude the browser, operating
+system and unrelated processes. They are not Windows laptop benchmarks.
+The model retains source coordinate values. Its units/CRS are not inferred.
+
+ACTUAL BROWSER WORKFLOW
+WebGL available; no page errors recorded.
+Passed: real OBJ display; hide/isolate/show all; job scan to registration;
+job scan to surface extraction; Save As/reopen; queued multi-file import;
+100,000-point global display budget. Camera fit was corrected and the
+workflow rechecked. The delivered PNG is an actual application screenshot.
+
+UNVERIFIED / OUT OF SCOPE
+- A full 25 GB, 15-setup field job or a 60 GB field job.
+- Actual Windows desktop launch, GPU performance and installation here.
+- Automatic multi-setup network registration/adjustment (not implemented).
+- Scan-to-imported-OBJ deviation heatmaps (not implemented).
+- Native Cyclone 3DR project parsing (not implemented).
+- Accuracy certification or equivalence to Amberg / Cyclone products.
+
+The existing circular-alignment heatmap and single-scan registration remain
+separate from the new reference-model overview. Display decimation does not
+subsample the full cached coordinates used by supported calculations.
+
+Reproduction evidence is in validation/ and application unit tests are in
+payload/app/test_*.py. Existing method documents retain their original
+version names because the corresponding algorithms were not replaced.

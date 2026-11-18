@@ -1,0 +1,31 @@
+{
+  "version": "0.17.11",
+  "scope": "Fast project storage management, bulk delete, background purge, cumulative virtual-registration and permanent-point-deletion regression.",
+  "focused_tests": {
+    "passed": 35,
+    "failed": 0,
+    "files": [
+      "test_project_storage_bulk_01711.py",
+      "test_project_storage_ui_01711.py",
+      "test_project_delete_0179.py",
+      "test_project_storage.py",
+      "test_permanent_points_0177.py",
+      "test_registration_virtual_0176.py",
+      "test_registration_storage_0175.py"
+    ]
+  },
+  "static_checks": {
+    "python_modules_compiled": 135,
+    "python_compile_errors": 0,
+    "frontend_js_files_checked": 46,
+    "frontend_js_syntax_errors": 0
+  },
+  "storage_quarantine_benchmark": {
+    "fixture": "80 sparse cache files at 2 GiB logical size each",
+    "logical_size_gib": 160,
+    "host_return_seconds": 0.0075,
+    "note": "Synthetic same-volume Linux metadata-rename benchmark only. It validates that delete returns after quarantine instead of waiting for physical erase; it is not a Windows/Defender timing promise."
+  },
+  "broader_registration_note": "Known-diameter sphere, large-coordinate registration, spatial-index fitting and project save/portable tests pass when optional exchange-format dependencies are not required. The Linux host lacks pye57, laspy and plyfile for existing E57/LAS/LAZ/PLY round-trip tests.",
+  "windows_limit": "Native Windows/WebView2/NTFS junction and antivirus behavior cannot be exercised on the Linux build host."
+}

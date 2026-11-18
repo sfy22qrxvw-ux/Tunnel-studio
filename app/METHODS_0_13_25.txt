@@ -1,0 +1,71 @@
+TUNNEL STUDIO 0.13.25 — IMPLEMENTATION AND VALIDATION NOTES
+
+DATA AND GEOMETRY
+Bundles are project metadata persisted with the normal project state/history.
+They do not rewrite coordinate caches, solve registration or merge scan assets.
+Exports stream float64 XYZ and optional float32 intensity/RGB caches, checking
+immutable deletion masks. Highlight selection is evaluated against the captured
+3D box/oriented box/screen polygon, with per-source view filters. Review exports
+map full result labels back through stored int64 source point IDs. Temporary
+compact caches are removed on completion/failure. Whole-object exports include
+all retained points; selection exports include only their visible highlight.
+Prepared exports check identities, geometry/mask revisions and file stamps.
+E57/LAS/PLY/PTS/CSV retain the attributes their existing writers support; XYZ is
+coordinates only. LAS precision and RGB conversions are unchanged from 0.13.24.
+Multiple scan exports concatenate existing coordinates, without registration.
+Multiple OBJ meshes adjust face indices by cumulative vertex offsets.
+Geometry JSON includes available metadata/coordinates, not a portable project.
+Experimental RTC360 reconstruction warnings remain attached to point exports.
+
+DISPLAY AND MENUS
+Analysis and cleaning previews have explicit owners; stale comparison IDs cannot
+clear another tool's current overlay. Preview v2 includes point ownership ranges
+for right-click picking; legacy v1 remains supported. Cached previews keep their
+ownership map. Fit uses the selected item's world bounds. Menus use measured
+screen bounds and scrolling, with Escape/arrows/Home/End navigation.
+
+NATIVE WINDOWS
+pywebview creates independent resizable windows. Their views relay control
+changes to the existing live DOM and render snapshots/canvas images from it;
+there is one project state, not separate copies of the app. Refresh is about
+200 ms when idle, so a satellite can feel less immediate than the main viewport.
+Point clouds remain in the main viewport; detached analysis canvases forward
+normalised pointer coordinates. Events carry stable node IDs and stale IDs are
+ignored. Form values survive docking. A satellite close does not run the main
+app shutdown guard. Saved off-screen positions are discarded when their monitor
+is absent. Browser-only recovery cannot create these native windows.
+Official API reference used: https://pywebview.flowrl.com/api/
+
+TEST COVERAGE
+See validation_0_13_25.json and its linked per-suite logs for final results.
+Backend tests cover retained exports, masks/attributes, review point identities,
+empty/stale selection rejection, mesh face offsets, bundle transaction rollback,
+ownership ranges, and native bridge lifecycle/negative monitor coordinates.
+Existing regressions cover numerical analysis, meshing, registration, direct
+native import synthetic cases, cleaning, targets, sections, history and recovery.
+Production JS tests use JSDOM with mocked local APIs/WebGL. The detached view was
+also rendered in Chromium and exercised for typing, checkbox changes, exactly
+one action invocation, canvas pointer forwarding, resize and redocking.
+
+VALIDATION BOUNDARY
+This update archive is not the whole original installation. Some base modules
+and style.css belong to the installed app and are absent here; narrowly scoped
+fixtures substitute missing base modules in isolated tests. Original private
+HSPCA/photo/database fixtures are absent and their tests are marked skipped.
+Windows installer execution, real pywebview/WebView2 windows, OS DPI scaling,
+multi-monitor placement, real GPU rendering, very large project stress tests,
+and accuracy on the user's field scans remain installation checks. No blanket
+claim that everything works perfectly is made.
+
+QUICK WINDOWS ACCEPTANCE CHECK
+1. Install and confirm 0.13.25. Open a saved project, create/rename a bundle,
+   move scans into it, save/reopen and expand connections under original setups.
+2. Show an older design comparison, generate a new heat map, close its options,
+   switch tools and change the colour scale. Confirm colours and camera persist.
+3. Highlight a small area, export CSV/E57 and compare its full count/bounds;
+   delete/undo points and verify masks are respected. Test review-patch export.
+4. Prepare mesh A, select mesh B, and confirm A is never offered as B's export.
+5. Open Properties/cleaning/section/export in separate windows. Move them to the
+   second monitor, resize, edit a value, dock back and restart to test layout.
+6. Check right-click menus at the bottom of a short viewport and scroll them.
+7. Retest direct RTC360 import and your normal measurement/section workflow.

@@ -1,0 +1,380 @@
+{
+  "version": "0.22.0",
+  "date": "2026-11-06",
+  "baseline": "Delivered 0.21.7",
+  "application_tests": {
+    "tests_discovered": 701,
+    "tests_run": 701,
+    "seconds": 152.35610670800088,
+    "success": true,
+    "failures": [],
+    "errors": [],
+    "skipped": [],
+    "source_files_changed_during_tests": [],
+    "native_windows_execution": false
+  },
+  "browser_scenario_count": 111,
+  "browser_checks": {
+    "circle_clean_ui.json": {
+      "scenarios": [
+        "Clean / Local circles fits the full 1,125,000-observation curved cloud, defaults to overlapping 5 m windows, preserves every good-wall observation at the tested 8 mm bands and preselects no candidates.",
+        "View circle displays only the local fitting window along its perpendicular frame; Reverse view looks from the other end without changing inward/outward classification or source selection.",
+        "Independent inward / outward / both / clear controls use exact original observation IDs across the whole cloud, with the expected signed departures and no sampled-only edits.",
+        "Separate selected writes unchanged original XYZ observations into the child, masks only the reviewed source IDs and reverses both changes with one workspace Undo.",
+        "Confirmed removal edits only the exact reviewed inward/outward masks; one Undo restores all observations and original files stay byte-identical.",
+        "Stop during a replacement circle fit preserves the last completed review, current project items and immutable source observations."
+      ],
+      "errors": [],
+      "platform": "Linux Chromium/software WebGL; production HTTP application and 1,125,000 independently constructed curved-tunnel observations.",
+      "status": "passed"
+    },
+    "shape_matching_ui.json": {
+      "scenarios": [
+        "A pointer-drawn example searches all 1,134,000 retained observations through real lining calibration, with no local workload cap; original XYZ and attributes remain byte-identical.",
+        "Select all / Clear selection update exact original IDs and preview colours while removal remains disabled for an empty selection.",
+        "Separate selected creates a full-density child with unchanged original coordinates, masks only the reviewed source IDs and reverses the entire edit with one workspace Undo.",
+        "Lasso and Polygon pointer gestures capture examples through the real selection callback; polygon finishing preserves the whole-cloud search scope.",
+        "Stop during a new whole-cloud search preserves the previous completed review, immutable source files and current project items."
+      ],
+      "errors": [],
+      "platform": "Linux Chromium/software WebGL; production server and 1,134,000 synthetic original observations.",
+      "status": "passed"
+    },
+    "bolt_scope_ui.json": {
+      "scenarios": [
+        "Whole-cloud recess runs without a seed or local budget, fits the real synthetic tunnel, classifies every retained point and selects measured candidate point groups.",
+        "Whole-cloud raised runs without a seed or local budget, fits the real synthetic tunnel, classifies every retained point and selects measured candidate point groups.",
+        "Whole-cloud departures runs without a seed or local budget, fits the real synthetic tunnel, classifies every retained point and selects measured candidate point groups.",
+        "Reviewed both-sided departures separate into a new scan with an exact source mask; one Undo restores the source and removes the child item.",
+        "Local scope retains its explicit neighbourhood budget and seed requirement; recessed-pocket labels describe depth into a dip."
+      ],
+      "errors": [],
+      "platform": "Linux Chromium/software WebGL; production server, real lining fitting and streamed original IDs on a synthetic tunnel.",
+      "review_notices": [
+        "Open in separate window \u2197iSurface extraction needs reviewCandidate features require review on the original scan. No published accuracy or field validation is claimed.\n\nOne near-circular tunnel branch with walls and crown is required. Station is a local axis coordinate, not design chainage; ring numbers are local interval numbers.\n\nSeam curves are fitted guides, including across gaps. Coverage and fit RMS describe observed support, not surveying accuracy. Sector edges labelled inferred use the configured layout. High/medium/low describe boundary evidence. Check panel counts and offset against the installed ring design.ContinueClose",
+        "Open in separate window \u2197iSurface extraction needs reviewCandidate features require review on the original scan. No published accuracy or field validation is claimed.\n\nOne near-circular tunnel branch with walls and crown is required. Station is a local axis coordinate, not design chainage; ring numbers are local interval numbers.\n\nSeam curves are fitted guides, including across gaps. Coverage and fit RMS describe observed support, not surveying accuracy. Sector edges labelled inferred use the configured layout. High/medium/low describe boundary evidence. Check panel counts and offset against the installed ring design.ContinueClose",
+        "Open in separate window \u2197iSurface extraction needs reviewEvery supported retained point outside the band is a candidate, including isolated points, joints and pockets. Review before removing or separating.\n\nThe reference follows measured lining, not a design surface or survey control. Unsupported areas remain retained. No diameter or bolt-shape filter is used.\n\nUse one tunnel branch with sufficient walls and crown. A small wall crop uses the local picked-point scope. No missing lining is reconstructed.ContinueClose"
+      ],
+      "status": "passed"
+    },
+    "deleted_restore_ui.json": {
+      "scenarios": [
+        "The export context option adds the measured wall within the same drawn area while leaving original exclusions and scans unchanged.",
+        "A drawn deleted-point area exports through the normal XYZ save dialog at original density, without restoring points or changing source groups.",
+        "box selection restores only the drawn deleted area, leaves the other group intact, and is reversible in one Undo.",
+        "lasso selection restores only the drawn deleted area, leaves the other group intact, and is reversible in one Undo.",
+        "polygon selection restores only the drawn deleted area, leaves the other group intact, and is reversible in one Undo.",
+        "brush selection restores only the drawn deleted area, leaves the other group intact, and is reversible in one Undo.",
+        "Ribbon Restore selected handles posed cleaning archives as a separate four-point scan; unselected exclusions stay archived and Back to scan reloads current retained points.",
+        "Saved group remainders and independently restored scans survive a browser/workspace reload."
+      ],
+      "errors": [],
+      "platform": "Linux Chromium, software WebGL, production HTTP routes and immutable synthetic XYZ/attributes.",
+      "status": "passed"
+    },
+    "bundle_independence_ui.json": {
+      "scenarios": [
+        "Opening an old project places the completed registered cloud and cleaned tunnel outside the 16-setup source bundle.",
+        "Bundle deletion review selects only the 16 source setups and explicitly identifies the registered cloud being kept.",
+        "Confirmed source-bundle deletion retains both full clouds and the cleaned tunnel edit mask byte for byte.",
+        "Workspace reload and named saved-project manifest retain the two independent cloud items after source removal.",
+        "Explicitly selecting the registered result still permits its own separate reviewed deletion."
+      ],
+      "errors": [],
+      "platform": "Linux Chromium/software WebGL; real API, 16 synthetic setups, saved cloud files and retained-point mask.",
+      "status": "passed"
+    },
+    "shape_library_ui.json": {
+      "scenarios": [
+        "Create Pocket 1 and save a pointer-drawn pocket as an independent measured object plus separate wall context; source coordinates and attributes stay byte-identical.",
+        "Full-circumference coverage explains checked observations, measured wall support, offset candidates and matched points under the new local reference.",
+        "Search all 1,134,000 retained observations using a saved example without a new drawn selection; complete original point IDs populate the review.",
+        "Remove and teach copies confirmed complete objects before the atomic edit, keeps exact source bytes, and removes precisely the selected original IDs.",
+        "One workspace Undo restores points and teaching labels together; Redo restores both. The library counts refresh with history.",
+        "Reload the actual UI, choose the existing type, and search again with no drawn example. Recognition never adds unconfirmed detections to the library.",
+        "Mark selected detections as incorrect: negative examples are saved explicitly and selection clears, while the source scan remains untouched.",
+        "Teaching a wrong match is reversible, and saved object/context geometry can be viewed independently from the source selection.",
+        "Choose a hidden existing separated scan containing two pockets; capture both with independent context from the main tunnel, without drawing selections or modifying either scan.",
+        "One Undo reverses the entire multi-pocket separated-scan teaching operation."
+      ],
+      "errors": [],
+      "platform": "Linux Chromium/software WebGL; production HTTP services and measured-shape algorithms on 1,134,000 constructed observations.",
+      "drawn_spec": {
+        "mode": "screen_polygon",
+        "target": [
+          9,
+          0,
+          0.14
+        ],
+        "right": [
+          1,
+          0,
+          0
+        ],
+        "up": [
+          0,
+          0,
+          1
+        ],
+        "forward": [
+          0,
+          1,
+          0
+        ],
+        "scale": 2,
+        "aspect": 1.8641464855286474,
+        "polygon": [
+          [
+            -0.125,
+            0.22310689350450386
+          ],
+          [
+            0.125,
+            0.22310689350450386
+          ],
+          [
+            0.125,
+            -0.22428822841295037
+          ],
+          [
+            -0.125,
+            -0.22428822841295037
+          ]
+        ],
+        "depth_min": -1.09779078810847,
+        "depth_max": 1.0610495582278945,
+        "invert": false
+      },
+      "status": "passed"
+    },
+    "shape_inspection_ui.json": {
+      "scenarios": [
+        "Set two scans to different custom colours through their own Explorer controls; both render correctly and camera, source XYZ and measured attributes are preserved.",
+        "Per-scan styles survive UI reload; one Undo/Redo restores only the changed scan style.",
+        "Use global setting clears only the selected scan override; the other scan retains its chosen colour.",
+        "Click a pocket name: zoom to its posed original bounds and load all 1,100,003 observations in 12 binary pages, despite a four-point match thumbnail; selection and revision remain unchanged.",
+        "Switch highlight off for measured intensity: geometry stays identical and all original pocket observations remain loaded.",
+        "Change a scan colour while reviewing a pocket: review colours, full-detail pages and removal selection remain intact.",
+        "Previous/Next inspect complete neighbouring objects; Back to matches releases graphics pages and restores the prior camera without requesting the whole-cloud preview.",
+        "Choose another match while a full-density page is delayed: the superseded request is aborted and cannot replace the latest pocket.",
+        "Stop loading detail aborts pending pages, releases graphics resources and leaves the complete review selection available."
+      ],
+      "errors": [],
+      "platform": "Linux Chromium/software WebGL; production HTTP, original-point reader and renderer. Constructed review IDs isolate inspection from detection accuracy.",
+      "status": "passed",
+      "full_detail_points": [
+        1100003,
+        130137
+      ]
+    },
+    "modern_workspace_ui.json": {
+      "scenarios": [
+        "light theme: inspected 28 production dialogs and 472 visible text/control colour pairs.",
+        "dark theme: inspected 28 production dialogs and 472 visible text/control colour pairs.",
+        "Dark appearance persists across reload and uses the modern shared surface palette.",
+        "The header appearance control changes and saves the theme through the existing preference system.",
+        "Real cleaning output: retained/excluded cards, statistics and selected magenta rows remain readable in dark mode.",
+        "dark detached review receives shared styles and keeps text/background contrast.",
+        "light detached review receives shared styles and keeps text/background contrast.",
+        "Individual scan-colour controls use the same modern dialog theme."
+      ],
+      "errors": [],
+      "contrast_checks": [
+        {
+          "theme": "dark",
+          "dialog": "real lining review",
+          "checked": 97,
+          "issues": []
+        },
+        {
+          "theme": "dark",
+          "dialog": "detached review",
+          "checked": 103,
+          "issues": []
+        },
+        {
+          "theme": "light",
+          "dialog": "detached review",
+          "checked": 103,
+          "issues": []
+        },
+        {
+          "theme": "dark",
+          "dialog": "scan colour",
+          "checked": 10,
+          "issues": []
+        }
+      ],
+      "platform": "Linux Chromium/software WebGL, production HTTP and real cleaning review. Detached-window transport is controlled; native WebView2 is not executed.",
+      "colour_pair_failures": [],
+      "status": "passed"
+    },
+    "visual_registration_ui_result.json": {
+      "source": "/workspace/scratch/270bc034b4ff/pocket218/source/app",
+      "scenarios": [
+        "Plan drag changes only horizontal moving-group placement",
+        "Switching side/front elevation preserves alignment; height-only drag changes Z without shifting plan",
+        "Tilt stays locked unless explicitly enabled; Undo reverses a tilt edit",
+        "Ctrl-pan and 3D orbit change only the camera, not registration",
+        "Pick pivot, rotation steps, local Undo and Redo work across view changes",
+        "Join and lock saves a manual link and moving pose, with fixed coordinates and original XYZ files unchanged",
+        "Workspace Undo restores previous poses and removes the manual link",
+        "Cancel discards the preview without saving a transform",
+        "Pair changes invalidate Apply; selecting the same setup is rejected",
+        "Registration ribbon opens the workspace; dark theme and smaller viewport retain accessible controls",
+        "Stale-position rejection keeps the draft visible and reports reload guidance"
+      ],
+      "errors": [],
+      "platform": "Linux Chromium/software WebGL; synthetic scans; real server and UI",
+      "status": "passed",
+      "browser": "151.0.7922.34"
+    },
+    "measure_live_ui_result.json": {
+      "baseline": false,
+      "source": "/workspace/scratch/270bc034b4ff/pocket218/source/app",
+      "scenarios": [
+        "Picking three original plane points immediately draws a transparent filled plane before a measured point exists",
+        "Hover snaps to the front displayed point and clicking recovers exact float64 survey coordinates; result updates without Calculate",
+        "Cursor movement previews perpendicular distance; Escape preserves the last confirmed measurement",
+        "Editing coordinates automatically refreshes the validated result and Save state",
+        "Late calculation responses cannot overwrite newer input",
+        "The filled plane and perpendicular line reproject as the camera rotates",
+        "Repeated hovering uses the cached display index without scan-recovery requests; hidden cloud cannot snap",
+        "Live limit-box clipping excludes hidden points from hover snapping and restoring the view restores snapping",
+        "Perspective projection snaps to the same displayed scan point under the cursor",
+        "A selected planar CAD reference supports the same live filled-plane display",
+        "Saving retains the translucent plane after closing the tool",
+        "Saved transparent plane is restored when the workspace is reloaded",
+        "Coincident or collinear plane points show an error and cannot be saved"
+      ],
+      "errors": [],
+      "platform": "Linux Chromium/software WebGL; synthetic survey coordinates; original production UI and API",
+      "hover24MovesMs": 424,
+      "displayedPoints": 44105,
+      "status": "passed",
+      "browser": "151.0.7922.34"
+    },
+    "mesh_selection_result.json": {
+      "baseline": false,
+      "source": "/workspace/scratch/270bc034b4ff/pocket218/source/app",
+      "scenarios": [
+        "Ribbon opens selected CAD surface; curves excluded",
+        "Selected CAD surface reaches real boundary inspection",
+        "Explorer-selected mesh reaches the same dialog",
+        "Switching source clears old inspection, canvas and repair selection",
+        "Multiple selected meshes require explicit source choice",
+        "No selection offers meshes instead of false selection error",
+        "Late response cannot replace a newer selected source",
+        "Unavailable source is reported; another source remains selectable",
+        "Chosen source produces the repaired copy; original topology remains unchanged",
+        "Repair undo removes the derived copy and updates the dialog"
+      ],
+      "errors": [],
+      "platform": "Linux Chromium with software WebGL; synthetic meshes and real application/API",
+      "status": "passed",
+      "browser": "151.0.7922.34"
+    },
+    "volume_ui.json": {
+      "passed": true,
+      "checks": [
+        "Explicit range required; only job meshes available.",
+        "Pick start station in the actual 3D viewer and project it onto the loaded alignment.",
+        "Real volume job reports 48 m\u00b3 for 6 m of a prism with an 8 m\u00b2 cross-section.",
+        "Saved range, mesh and measured volume survive reload.",
+        "Incomplete wall is refused; previous saved measurement preserved."
+      ],
+      "errors": []
+    },
+    "segment_review_ui.json": {
+      "status": "passed",
+      "scenarios": [
+        "Real detector classifies six panels from two observed rings and three longitudinal joints, with medium boundary evidence in the review summary.",
+        "Vivid and Standard visibly change the actual main WebGL point colour buffer.",
+        "Measured and inferred four-sided outlines and panel numbers render on the classified cloud and reproject when the 3D camera rotates.",
+        "Minimum confidence filters panel points, numbers and outlines together and preserves full-density kept classifications.",
+        "Boundary and number toggles operate independently and release the unneeded overlay.",
+        "Layout count, measured-only mode, angular offset, task visibility and cleanup on leaving Review work through the normal controls."
+      ],
+      "errors": [],
+      "browser": "151.0.7922.34",
+      "platform": "Linux Chromium/software WebGL, real detector and HTTP API, synthetic tunnel with observed ring and side joints"
+    },
+    "merged_cleaning_ui.json": {
+      "status": "passed",
+      "scenarios": 10,
+      "checks": [
+        "16-scan connected component without bundle adjustment",
+        "selection-sensitive availability",
+        "missing-setup guard",
+        "matched merge receipt selects Registered cloud",
+        "existing cache controls preserved",
+        "disk preflight",
+        "cancelled merge retains prior selection",
+        "stale receipt rejection",
+        "failed job retains prior selection",
+        "duplicate-job exclusion"
+      ]
+    }
+  },
+  "syntax": {
+    "status": "passed",
+    "python_files": 239,
+    "javascript_files": 68,
+    "python_check": "AST parse",
+    "javascript_check": "node --check",
+    "seconds": 8.5
+  },
+  "measured_crop_check": {
+    "status": "passed",
+    "file": "pockets1.e57",
+    "sha256": "0cbd77f124cb75c8aedd5f90faa74741f4dcf7695987322069694493b76f5607",
+    "points": 587543,
+    "coordinate_fields": [
+      "cartesianX",
+      "cartesianY",
+      "cartesianZ",
+      "intensity"
+    ],
+    "occupied_voxels": 16353,
+    "voxel_mm": 10.0,
+    "connected_groups": 172,
+    "groups_with_at_least_eight_points": 32,
+    "partitioned_original_points": 587350,
+    "small_unsupported_groups": 140,
+    "largest_read_points": 100000,
+    "all_partitioned_coordinates_and_duplicate_observations_preserved": true,
+    "independent_graph_agrees": true,
+    "input_file_unchanged": true,
+    "seconds": 2.776,
+    "wall_reference_available": false,
+    "teaching_labels_saved": false,
+    "independent_semantic_labels": false,
+    "field_recognition_accuracy_established": false,
+    "note": "These are connected measured groups, not verified counts of physical pockets. The corresponding full lining scan was not supplied; no wall context or field accuracy was invented, and no user examples are packaged in the installer.",
+    "full_density_inspection": {
+      "status": "passed",
+      "original_points": 130137,
+      "binary_pages": 2,
+      "max_coordinate_roundtrip_error_m": 7.439680871357268e-09,
+      "largest_read_points": 100000,
+      "source_selection_unchanged": true,
+      "context_points": 0,
+      "note": "Largest connected group inspected by original IDs. No wall reference was invented; this is not a semantic pocket-count or recognition-accuracy check."
+    }
+  },
+  "scope": "RELEASE_SCOPE_0_22_0.txt",
+  "quality_limits": [
+    "Geometric similarity is not semantic identity or a confidence probability.",
+    "Constructed eight-position recovery is not a field recognition rate.",
+    "Unsupported or insufficiently precise measured wall patches remain unselected.",
+    "Dialogue contrast checks cover the tested visible controls and review states; this is not a full accessibility certification.",
+    "The supplied E57 does not include the full matching wall-reference cloud and was not automatically taught or packaged.",
+    "Native Windows/WebView2 and the complete 921-million-point user project were not executed on this host."
+  ],
+  "native_windows_execution": false,
+  "native_progress_validation": {
+    "saved_light_dark_palette_tests_passed": true,
+    "winforms_namespace_and_assembly_loading_checked_against_bundled_backend": true,
+    "native_windows_window_execution": false
+  }
+}

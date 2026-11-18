@@ -1,0 +1,72 @@
+TUNNEL STUDIO 0.13.16
+Consistent contrast, photographs and faster setup navigation
+14 October 2026
+
+INSTALL
+1. Save your project and close Tunnel Studio completely.
+2. Extract the whole ZIP into a new folder.
+3. Run UPDATE_TUNNEL_STUDIO.bat.
+4. Restart Tunnel Studio and confirm version 0.13.16. Refresh browser mode
+   after restarting the application if you use it in a browser.
+
+This updates your existing Windows installation. The updater backs up the
+application files. RESTORE_PREVIOUS_VERSION.bat restores those files.
+Existing imported scans can be used without importing their points again.
+
+WHAT CHANGED
+- Consistent contrast across the scan. Broad and detailed previews now use
+  the same intensity range, taken from the original scan. A point keeps the
+  same colour when another area loads, avoiding differently shaded patches.
+  Contrast and brightness controls stay in sync. 100% means neutral contrast;
+  higher percentages increase contrast. Changes apply to the whole view.
+- Faster movement in setup view. Turning or zooming reuses the loaded
+  photographs and cloud preview. It no longer launches another detailed point
+  scan after every movement. More point detail here requests detail explicitly.
+  Recent setup previews and decoded photographs are cached with memory limits.
+- Scanner photographs in the main 3D viewport. When attached, photographs open
+  first, without waiting for a dense cloud preview. Choose Photographs, Point
+  cloud or Both in the inline setup bar. Fast and Detailed control image detail.
+  Failed image loads fall back to points; failed detail upgrades keep the ready
+  images and restore the detail setting. Return to normal 3D exits setup view.
+- Other setups appear as labelled spheres at their saved scanner positions.
+  Double-click a sphere to move to that setup in the same viewport. Labels
+  include the setup name and distance. Setup spheres can be switched off.
+  Only setups linked or known to share Leica project coordinates are shown.
+
+HOW TO USE IT
+Select an individual setup under Scans & models, then Go to setup view.
+Drag to look around and use the wheel to zoom. Change Display if you want
+photographs, points or both. Use More point detail here when you need extra
+cloud detail in the current direction. The original full scan remains stored.
+
+If photographs are missing, expand Load scanner photographs from the Leica
+project folder. Choose or paste the original main folder containing
+SetupsFolder, then click Load photographs. This attaches matching photographs
+to existing project imports and returns to the same setup. Photographs require
+the supported Leica containers and calibration; a standalone scan without its
+original project identity may need to be imported through Import Leica project.
+
+Pick point on a photograph retrieves the original measured XYZ from retained
+scan points. Name and save it as a manual target, or Fit target centre using
+the registration tools. Photograph pixels alone are not survey coordinates.
+Photographs show the recorded scene; deleting cloud points does not edit the
+photograph. Measured point lookup respects deletion and visibility masks.
+
+VALIDATION
+All 15 focused suites passed, including main-viewport photographs, setup
+switching, calibrated picking, target ownership, contrast consistency, cached
+navigation, sphere interaction, attachment, failure and cancellation handling.
+Production HTTP script delivery, existing registration/measurement/surface UI,
+Leica feedback and updater dependency handling were also checked. Syntax was
+checked for 48 Python and 21 JavaScript files. ZIP and payload hashes verified.
+
+All three supplied Leica photograph containers decoded with their calibration.
+The real 36,694,551-point scan produced a bounded 193,130-point display preview
+in 6.827 seconds locally; exact original XYZ/index recovery took 0.077 seconds.
+These are local warm-cache backend timings, not Windows device benchmarks.
+Navigation uses the already-loaded display instead of repeating that preview.
+
+UI checks use JSDOM, simulated API/image completion and mocked WebGL. Actual
+Windows/WebView input and GPU rendering have not been tested here. Details:
+tests/validation_0_13_16.json, tests/run_0_13_16/ and
+tests/real_setup_camera_0_13_16.json. Raw private scan/photo files are not bundled.

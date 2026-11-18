@@ -197,7 +197,7 @@ def _remember(key, value):
     return value
 
 
-def candidate_blocks(meta, view, frame, boxes=None):
+def candidate_blocks(meta, view, frame, boxes=None, *, included=(), hidden=()):
     target, axes, scale, aspect = frame
     boxes = bounds(meta) if boxes is None else boxes
     valid = np.isfinite(boxes).all(axis=(1, 2))
@@ -217,23 +217,26 @@ def candidate_blocks(meta, view, frame, boxes=None):
         limits = np.asarray([scale * 1.15, scale / aspect * 1.15, np.inf])
         projected = delta @ axes.T; radius = half @ np.abs(axes).T
         valid &= (np.abs(projected) - radius <= limits + 1e-8).all(1)
+    candidates = np.flatnonzero(valid)
+    if len(candidates) and (included or hidden):
+        candidates = candidates[visible_box_mask(world_boxes(meta, boxes[candidates]), included, hidden)]
     n = int(meta['count'])
-    for b in np.flatnonzero(valid):
+    for b in candidates:
         start = int(b) * BLOCK
         yield start, min(n, start + BLOCK)
 
 
-def selection_blocks(meta,spec,progress=None,boxes=None):
+def selection_blocks(meta,spec,progress=None,boxes=None,*,hidden=()):
     """Conservative candidates; every surviving point still gets an exact test."""
     if boxes is None:boxes=bounds(meta,progress)
-    valid=selection_box_mask(boxes,spec)
+    valid=visible_box_mask(boxes,[spec] if spec is not None else [],hidden)
     for b in np.flatnonzero(valid):yield int(b)*BLOCK,min(meta['count'],(int(b)+1)*BLOCK)
 
 
-def indexed_selection_blocks(meta,spec,progress=None):
+def indexed_selection_blocks(meta,spec,progress=None,*,hidden=()):
     """Find possible world-space hits using the original-coordinate index."""
-    if not selection_possible(meta,spec):return
-    yield from selection_blocks(meta,spec,boxes=world_boxes(meta,bounds(meta,progress)))
+    if spec is not None and not selection_possible(meta,spec):return
+    yield from selection_blocks(meta,spec,boxes=world_boxes(meta,bounds(meta,progress)),hidden=hidden)
 
 
 def selection_box_mask(boxes,spec):
@@ -261,6 +264,74 @@ def selection_box_mask(boxes,spec):
     valid&=overlaps(spec)
     if spec.get('clip_box'):valid&=overlaps(spec['clip_box'])
     return valid
+
+
+def _projected_bounds(boxes, target, axes):
+    centre = boxes[:, 0] / 2 + boxes[:, 1] / 2
+    half = boxes[:, 1] / 2 - boxes[:, 0] / 2
+    projected = (centre - target) @ axes.T
+    radius = half @ np.abs(axes).T
+    # Expand the interval to account for rounding in survey coordinates and
+    # in the exact point predicate. A borderline block must still be read.
+    error = 32 * np.finfo(float).eps * ((np.abs(centre) + np.abs(target)) @ np.abs(axes).T + radius + 1)
+    return projected - radius - error, projected + radius + error
+
+
+def _selection_covers_boxes(boxes, spec):
+    """True only when every point in a finite world-space block is selected."""
+    if spec.get('invert'):
+        positive = {k: v for k, v in spec.items() if k not in ('invert', 'clip_box')}
+        covered = ~selection_box_mask(boxes, positive)
+    elif spec['mode'] == 'box':
+        covered = ((boxes[:, 0] >= spec['minimum']) & (boxes[:, 1] <= spec['maximum'])).all(1)
+    elif spec['mode'] == 'oriented_box':
+        lo, hi = _projected_bounds(boxes, spec['centre'], np.asarray(spec['axes']))
+        half = np.asarray(spec['half_size'])
+        covered = ((lo >= -half) & (hi <= half)).all(1)
+    elif spec['mode'] == 'screen_polygon':
+        from jobdata import _poly_mask
+        axes = [spec['right'], spec['up']]
+        forward = spec.get('forward')
+        if forward is not None:
+            axes.append(forward)
+        lo, hi = _projected_bounds(boxes, spec['target'], np.asarray(axes))
+        covered = np.ones(len(boxes), bool)
+        if forward is not None:
+            covered &= (lo[:, 2] >= spec['depth_min']) & (hi[:, 2] <= spec['depth_max'])
+        factors = np.asarray([1., spec['aspect']]) / spec['scale']
+        lo, hi = lo[:, :2] * factors, hi[:, :2] * factors
+        polygon = np.asarray(spec['polygon'])
+        covered &= ((lo > polygon.min(0)) & (hi < polygon.max(0))).all(1)
+        # A lasso can be concave or cross itself. A projected block is wholly
+        # inside if its centre is inside and no lasso edge can enter its bounds.
+        # Use edge envelopes for a conservative test, then read boundary blocks.
+        for a, b in zip(polygon, np.roll(polygon, -1, axis=0)):
+            ids = np.flatnonzero(covered)
+            if not len(ids):
+                break
+            touches = ((lo[ids] <= np.maximum(a, b)) & (hi[ids] >= np.minimum(a, b))).all(1)
+            covered[ids[touches]] = False
+        ids = np.flatnonzero(covered)
+        x, y = ((lo[ids] + hi[ids]) / 2).T
+        covered[ids] = _poly_mask(x, y, polygon)
+    else:
+        covered = np.zeros(len(boxes), bool)
+    if spec.get('clip_box'):
+        covered &= _selection_covers_boxes(boxes, spec['clip_box'])
+    return covered
+
+
+def visible_box_mask(boxes, included, hidden):
+    """Keep blocks that may contain a retained point in the requested area."""
+    keep = np.isfinite(boxes).all(axis=(1, 2))
+    for spec in included:
+        keep &= selection_box_mask(boxes, spec)
+    for spec in hidden:
+        ids = np.flatnonzero(keep)
+        if not len(ids):
+            break
+        keep[ids[_selection_covers_boxes(boxes[ids], spec)]] = False
+    return keep
 
 
 def retained_bounds(meta,excluded,progress):

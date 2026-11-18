@@ -1,0 +1,32 @@
+Tunnel Studio 0.21.4
+4 November 2026
+
+Find similar shapes across a registered cloud
+Clean > Find similar shapes lets you draw a box, lasso or polygon around one
+example: a bolt recess, raised fitting, or short pipe/ventilation section.
+Choose the side of the lining and minimum/maximum offset, then find matching
+footprints and depth patterns across the whole retained registered scan.
+
+There is no one-million-point admission limit in this tool. All original IDs
+are read in blocks of at most 100,000. The drawn example teaches the shape;
+it is not the search boundary. Limit boxes and hidden/isolated areas restrict
+the search only when Restrict search to current view filters is enabled.
+
+Review candidate groups in orange/cyan, select or deselect matches, and optionally
+keep/exclude a drawn area. Remove selected points or Separate selected to new
+scan uses full-density original IDs and supports one workspace Undo. Original
+XYZ/attribute caches and virtual registration coordinates remain unchanged.
+Stop preserves the prior completed result. Failed saves roll back scan edits.
+
+Compact examples compare footprint, edge surroundings and lining-relative depth.
+Continuing services may extend beyond the example; connected cells with matching
+offsets are followed to their measured ends. Inspect attached branches. Shapes
+are geometric candidates, not confirmed semantic identities or probabilities.
+Unsupported lining areas remain unselected. Missing wall is not reconstructed.
+
+The method independently adapts height/template matching and lining-offset ideas
+from the uploaded Shi et al. (2021) and Zhang et al. (2026) papers. It does not
+include a trained PointNet++ model or inherit the papers' accuracy claims.
+
+Cumulative from 0.21.3, including whole-cloud above/below-lining selection,
+deleted-area restore/export, and independent registered-cloud preservation.

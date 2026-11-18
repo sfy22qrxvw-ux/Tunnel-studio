@@ -1,0 +1,15 @@
+Tunnel Studio 0.11.0
+- Restored missing reference-structure controls to fix the 0.10 startup error.
+- Triangle-face rendering in the main workspace, solid/wire/both display modes,
+  bounded preview counts and full selected-scene-mesh OBJ export.
+- Periodic tunnel Delaunay triangulation supports sparse occupied cells/seams.
+- Added 3D Alpha Shape and Screened Poisson; improved Ball Pivoting normals and
+  spacing, Taubin smoothing, and target-count quadric reduction.
+- Preserved survey coordinates and added triangle cleanup, topology counts,
+  area-weighted sampled Chamfer and mesh-to-cloud diagnostics.
+- Dedicated Targets window: filtering, multi-select, linked pair deletion,
+  bounded undo, and synchronized 3D click/Ctrl-click/rectangle selection.
+- Bounded drawer and scene-panel scrolling; whole-row scene selection.
+- Optional numerical engines install separately from core runtime packages.
+See READ_ME_FIRST.txt and FORMULAS_AND_METHODS.txt in the update package for
+installation, test scope and reconstruction limits.

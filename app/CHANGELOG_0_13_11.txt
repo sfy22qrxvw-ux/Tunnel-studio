@@ -1,0 +1,114 @@
+TUNNEL STUDIO 0.13.11 - SETUP PICKING AND WORKSPACE FIXES
+14 October 2026
+
+INSTALL
+1. Save your project and close Tunnel Studio completely.
+2. Extract the whole ZIP into a new folder.
+3. Double-click UPDATE_TUNNEL_STUDIO.bat.
+4. Check version 0.13.11 after restart. Refresh browser mode if necessary.
+
+This updates your existing Windows installation; it is not a standalone app.
+The updater backs up application files. RESTORE_PREVIOUS_VERSION.bat restores
+those files. Existing point caches and saved projects are retained. The native
+reader dependency needs internet only if it is not already installed.
+
+INDIVIDUAL SCANNER SETUP VIEWS
+Select a native Leica scan in Scans & models. Go to setup view now appears
+near its name in the information panel and in the scan's right-click menu.
+The window opens immediately, showing that setup's name and loading progress.
+Choose another scan using Individual setup inside the window.
+The window uses each setup's saved scanner origin and orientation. It does
+not wait for the main 3D point preview to load. It shows a 360-degree intensity
+panorama, reconstructed from measured points, not scanner photographs.
+Wheel to zoom, drag to pan, Fit panorama to reset. First generation reads the
+source points; later visits reuse an unchanged setup's cached view.
+
+MANUAL TARGET PICKING
+1. Open the required individual setup and zoom to the target.
+2. Click the centre you want. Its measured X/Y/Z coordinates appear below.
+3. Enter a target name, e.g. dam1.
+4. Click Save picked point as target. A saved message identifies the scan.
+5. Pick the next target or switch to another setup and use matching names.
+
+No target size and no automatic recognition are required for manual saving.
+A duplicate target name in the same scan is rejected; matching names across
+separate scans are expected. Coordinates and target work remain scan-specific.
+A manual point is the measured point nearest the panorama click, not a fitted
+quadrant crossing. The panorama has 2048 x 1024 angular pixels; zoom does not
+add measurement detail. Fit target at picked point remains available when you
+want the full-density centre fitter. Where available, a manual target preview
+shows the clicked intensity patch and is labelled as a manual point.
+
+SCAN DETAILS AND A CLEANER LIST
+Selecting a scan shows its own targets, linked scans, recorded target pairs,
+and residuals where available. Click a linked scan to review its connection.
+Only the selected scan's target labels appear in the main 3D view. Individual
+target entries are no longer listed under Geometry & references.
+One Deleted points folder now sits at the bottom of Scans & models. Entries
+show their source scan and retain View and Restore. Deletion records remain
+attached to their correct source; identical group names do not mix scans.
+
+GEOMETRY BUTTONS
+Registration > Solve geometry now actually opens the scan-pair matcher and
+runs the matched-target solve. At least three non-collinear Fit pairs are
+required; surveyed coordinates are optional for matching two scans.
+Apply geometry opens the pending result for review. Review the residuals,
+tick the existing review box and press Apply geometry in that window.
+The window shows progress, completion, errors and a View positioned scans
+button. Failure or cancellation cannot display an unconfirmed success.
+Already-connected scans report the existing-group restriction clearly. To
+refit that connection, remove its saved link first; this leaves coordinates
+where they are. A new fit can then reposition the moving group. Existing
+linked moving scans move together. Network loop adjustment remains unsupported.
+The surveyed-control workflow remains available under Match / QA and Apply.
+
+LEICA IMPORT FEEDBACK
+Choosing the project folder now inspects it automatically. For a pasted path,
+click Inspect project. Select setups, then Import selected setups.
+Progress and success appear inside the same window with setup names and point
+counts. View imported scans closes it and opens the workspace. Completion is
+confirmed independently of the 3D preview. Repeated import clicks are blocked.
+New project imports retain the database's recorded target correspondences for
+saved links. Imported links can use a cloud-to-cloud method; recorded pairs
+are not presented as independently recomputed target fits. Older imports that
+lack match records show shared names as unconfirmed, not as targets used.
+Continue importing the main GUID folder containing SetupsFolder and the
+project_deliv_*.db database. Do not also import the combined PointCloud file or
+the same E57. The earlier native-format limitations still apply: no external
+Leica cleaning masks, RGB/HDR or scanner photographs; combined HSPCA unsupported.
+
+MAIN TUNNEL AND CROSS PASSAGE ALIGNMENTS
+Select one branch in the main 3D view, open Scan-derived alignment and give it
+a name such as Main tunnel or Cross passage. The source scan and processing
+area are shown explicitly. Use current 3D selection starts checked when an
+area was selected. The selection is captured before closing a preview can
+clear it. Deleted points and points outside an active clipping limit are
+excluded. If the selected area contains too few retained points, it reports
+an error instead of silently expanding to the whole scan.
+Create alignment from these points creates a separate editable scene item.
+Repeat for the other branch. Save changes edits the current line; creating a
+new line leaves earlier lines intact. Each is available in Scans & models.
+A stored line is marked when its source points have changed. Regenerate from
+the retained branch before using that stale result for chainage. The older
+line remains available to inspect and edit. A previous scan's result is not
+presented as a new estimate for another scan.
+An alignment fit uses up to 180,000 retained fitting samples and reports the
+sample and input counts. Original points remain intact. Estimated centrelines
+and radii are not design geometry; review nodes in plan and elevation.
+
+MEASUREMENTS
+2-point distance, Point XYZ and Selection stats work on the displayed scans
+without first promoting a scan to survey analysis. Distance prompts for the
+first and second point and reports 3D, horizontal and signed vertical distance.
+You can rotate between picks; Escape cancels. Selection stats requires a box
+or lasso and reports displayed-point counts and extents, not full-source totals.
+
+VALIDATION AND LIMITS
+See tests/validation_0_13_11.json for the exact checks run. This update was
+checked with production UI event harnesses, numerical/file-level tests and
+the supplied Leica project database. The complete installed Windows base and
+physical GPU/WebView session were unavailable, so these checks do not certify
+native Windows rendering or reproduce your precise scan interaction.
+The native point decoder is unchanged from 0.13.10, where both supplied full
+setups were imported. Their 75,094,568-point full import was not repeated for
+this interface update. The third complete setup remains unavailable here.

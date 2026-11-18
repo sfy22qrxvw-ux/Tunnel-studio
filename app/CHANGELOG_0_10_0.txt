@@ -1,0 +1,13 @@
+Tunnel Studio 0.10.0 — Meshing & Analysis expansion
+
+- Added Scan to Mesh (Auto) geometry-aware reconstruction.
+- Added Watertight Tunnel meshing with open-boundary closure.
+- Added optional voxel/Marching-Cubes watertight reconstruction when scikit-image is available.
+- Added Leica-style controlled mesh inputs: point sampling distance, noise gap, triangle-edge limit, smoothing and hole handling.
+- Added non-destructive mesh refinement: smooth, fill small holes, make watertight, reduce mesh, keep largest component, flip normals.
+- Improved tunnel-axis estimation for short tunnel portions by choosing the PCA axis from radial-variance consistency.
+- Added Cloud-vs-Cloud nearest-point QA with min/max/mean/median/RMS/P95/P99.
+- Added Geometry QA for point spacing, neighbourhood density and local plane roughness.
+- Kept generic meshing independent of design alignment. Alignment is only needed for alignment-grid/tunnel-design operations.
+- Preserved the single-workspace UI, left tool panel, right scene list, world-anchored selections and CAD navigation overlay.
+- No neural-network model is bundled in this release; research from the supplied deep-learning reference is used to guide practical denoising/downsampling/QA design without pretending an untrained AI model is production-ready.

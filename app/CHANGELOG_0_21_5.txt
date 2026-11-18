@@ -1,0 +1,32 @@
+Tunnel Studio 0.21.5
+5 November 2026
+
+Local-circle cleaning along a curved tunnel
+Clean > Local circles fits circular references perpendicular to a local 3D
+centreline. The default fitting length is 5 m, with 50% overlap. Circle offsets
+and radii are blended between neighbouring fitting windows instead of cutting
+the cloud with unrelated straight cylinders. Choose a scan-derived guide or the
+loaded project alignment; neither source coordinates nor the alignment change.
+
+Set separate inward/outward keep distances in millimetres. Preview processes
+the whole retained registered cloud without a million-point admission cap.
+Optional view filters are off by default. Every original point is classified
+in bounded blocks; bounded calibration samples are an internal fitting budget.
+
+Review each fit's radius, support residual and angular coverage. View circle
+looks through just its local fitting window; Reverse view looks from the other
+end. Viewing direction does not reverse the inward/outward classification.
+Green is within band, yellow lacks reference, cyan is a departure candidate,
+and orange is explicitly selected for an edit. No candidates are preselected.
+
+Poorly circular, poorly covered or uncertain windows remain unselected. Select
+inward, outward or both departure sides, review the original-point counts, then
+Remove selected or Separate selected to a new scan. Undo reverses an edit.
+Stop and failed saves preserve the previous completed review and source files.
+
+If previous cleaning removed genuine wall points, use Undo or Deleted points
+restoration before fitting this reference. A fitted circle is not design control,
+semantic service recognition, proof of survey accuracy, or missing-wall repair.
+Real non-circular lining and joints require review. The preview does not erase
+points automatically. Cumulative from verified 0.21.4, retaining its shape tool,
+whole-cloud lining selection, deleted-area restore/export and bundle protection.

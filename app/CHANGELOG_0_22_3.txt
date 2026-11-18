@@ -1,0 +1,10 @@
+Tunnel Studio 0.22.3 — 6 November 2026
+- Branded native captions for the Windows workspace and detached tool windows.
+- Caption controls remain outside WebView2 and use the existing close guards.
+- Shared Light/Dark colour handling and native DPI-aware layout.
+- Original sizing/system-menu styles retained; standard-caption failure fallback.
+- New Tunnel Studio installer artwork, coordinated surfaces and Segoe UI text.
+- Existing verified activation, rollback and protected-data handling retained.
+- Complete delivered 0.22.2 functionality retained; no point-cache rewriting.
+- Preview illustrations are labelled; native Windows interactions are untested
+  on this Linux build host and are not represented as validated field behavior.

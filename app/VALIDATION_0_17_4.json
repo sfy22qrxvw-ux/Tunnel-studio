@@ -1,0 +1,482 @@
+{
+  "version": "0.17.4",
+  "created_utc": "2026-10-27T17:10:11Z",
+  "scope": "Direct RTC360 raw-folder import/display sampling and explicit sphere/B&W survey-target fitting; cumulative 0.17.3 registration retained.",
+  "focused_tests": {
+    "target_registration_unit_tests": 7,
+    "indexed_sphere_and_raw_preview_tests": 3,
+    "robust_registration_tests": 24,
+    "registration_review_backend_tests": 20,
+    "javascript_syntax_files": 4,
+    "static_ui_checks": 9,
+    "all_focused_passed": true
+  },
+  "cumulative_portable_suite": {
+    "tests_run": 129,
+    "passed": 106,
+    "errors": 20,
+    "skipped": 3,
+    "error_classification": "All 20 errors are missing optional/bundled runtime dependencies on this Linux host: pye57, laspy, plyfile, pywebview or manifold3d. These components were packaged in the verified 0.17.3 Windows runtime; this application-only update does not replace that runtime.",
+    "log": "work/validation_0_17_4/unittest_all.log"
+  },
+  "real_rtc360_reference": {
+    "raw_setups": [
+      {
+        "path": "/mnt/data/rtc360_job/27-sFHX",
+        "setup_count": 1,
+        "setups": [
+          {
+            "id": "320ec3ea-1438-4202-bcfb-d61e4431ef2a",
+            "name": "27",
+            "rows": null,
+            "cols": null,
+            "point_count": null,
+            "source_bytes": 506410638,
+            "api_version": "6.4.204",
+            "native_available": true,
+            "slice_count": null
+          }
+        ]
+      },
+      {
+        "path": "/mnt/data/rtc360_job/32-n2GG",
+        "setup_count": 1,
+        "setups": [
+          {
+            "id": "2ab5a7c9-e2f1-44dc-9780-6967d28bd19b",
+            "name": "32",
+            "rows": null,
+            "cols": null,
+            "point_count": null,
+            "source_bytes": 509201112,
+            "api_version": "6.4.204",
+            "native_available": true,
+            "slice_count": null
+          }
+        ]
+      },
+      {
+        "path": "/mnt/data/rtc360_job/37-bcCv",
+        "setup_count": 1,
+        "setups": [
+          {
+            "id": "38ca826a-78e9-4b7b-a9f0-c029b1e405d7",
+            "name": "37",
+            "rows": null,
+            "cols": null,
+            "point_count": null,
+            "source_bytes": 514076804,
+            "api_version": "6.4.204",
+            "native_available": true,
+            "slice_count": null
+          }
+        ]
+      }
+    ],
+    "parent_job_setup_count": 3,
+    "parent_names": [
+      "27",
+      "32",
+      "37"
+    ],
+    "register_reference": {
+      "setups": [
+        {
+          "mId": 1,
+          "mName": "240808 27-95- 27",
+          "mPosition0": 0.05164374121956367,
+          "mPosition1": -0.0645482371355667,
+          "mPosition2": 0.001498865790997955,
+          "mRotation0": 0.00010062726476064579,
+          "mRotation1": -1.0935249509000808e-05,
+          "mRotation2": -1.1369500101320546e-05,
+          "mRotation3": 0.9999999948126541
+        },
+        {
+          "mId": 2,
+          "mName": "240808 27-95- 32",
+          "mPosition0": -1.7127190330476856,
+          "mPosition1": -9.952490555564008,
+          "mPosition2": -0.25489701890179367,
+          "mRotation0": 1.7831992519556667e-05,
+          "mRotation1": -5.743807598080892e-06,
+          "mRotation2": -0.01096435822170832,
+          "mRotation3": 0.9999398894422677
+        },
+        {
+          "mId": 3,
+          "mName": "240808 27-95- 37",
+          "mPosition0": -3.527530274557684,
+          "mPosition1": -19.786194205386742,
+          "mPosition2": -0.5120341023093584,
+          "mRotation0": -7.808193841175363e-05,
+          "mRotation1": -9.058358048448018e-05,
+          "mRotation2": -0.84199172825563,
+          "mRotation3": 0.5394904218305673
+        }
+      ],
+      "targets": [
+        {
+          "mId": 21,
+          "mSetupId": 1,
+          "mLabel": "l1",
+          "mType": 1,
+          "m3dPosX": 8.558785460050528,
+          "m3dPosY": 33.46887345201701,
+          "m3dPosZ": 0.8058128082503875,
+          "mRadius": 0.10172581748945603
+        },
+        {
+          "mId": 22,
+          "mSetupId": 1,
+          "mLabel": "l2",
+          "mType": 1,
+          "m3dPosX": 2.7404218273369705,
+          "m3dPosY": 0.3533020750409587,
+          "m3dPosZ": -0.0015088416265951784,
+          "mRadius": 0.0967248968684446
+        },
+        {
+          "mId": 20,
+          "mSetupId": 1,
+          "mLabel": "r1",
+          "mType": 1,
+          "m3dPosX": 3.6095638189661106,
+          "m3dPosY": 33.281369572283765,
+          "m3dPosZ": 0.639552008226131,
+          "mRadius": 0.10303227234577134
+        },
+        {
+          "mId": 23,
+          "mSetupId": 1,
+          "mLabel": "r2",
+          "mType": 1,
+          "m3dPosX": -2.3916376328968028,
+          "m3dPosY": 0.7607013906217821,
+          "m3dPosZ": -0.04542585082699359,
+          "mRadius": 0.09820085715520145
+        },
+        {
+          "mId": 27,
+          "mSetupId": 2,
+          "mLabel": "l1",
+          "mType": 1,
+          "m3dPosX": 9.36530275081243,
+          "m3dPosY": 43.594276249044704,
+          "m3dPosZ": 1.0668914198771018,
+          "mRadius": 0.12196950092181477
+        },
+        {
+          "mId": 24,
+          "mSetupId": 2,
+          "mLabel": "l2",
+          "mType": 1,
+          "m3dPosX": 4.280492300813603,
+          "m3dPosY": 10.337821879949066,
+          "m3dPosZ": 0.2583862648855893,
+          "mRadius": 0.10071784215883313
+        },
+        {
+          "mId": 26,
+          "mSetupId": 2,
+          "mLabel": "r1",
+          "mType": 1,
+          "m3dPosX": 4.430307906869503,
+          "m3dPosY": 43.25646075125975,
+          "m3dPosZ": 0.8968652225377766,
+          "mRadius": 0.08821103898570663
+        },
+        {
+          "mId": 25,
+          "mSetupId": 2,
+          "mLabel": "r2",
+          "mType": 1,
+          "m3dPosX": -0.8642994055775716,
+          "m3dPosY": 10.630325570165544,
+          "m3dPosZ": 0.21404250472086114,
+          "mRadius": 0.10069276324907481
+        },
+        {
+          "mId": 31,
+          "mSetupId": 3,
+          "mLabel": "bwr1",
+          "mType": 0,
+          "m3dPosX": 14.452652931213379,
+          "m3dPosY": 1.079239845275879,
+          "m3dPosZ": 0.18601782619953156,
+          "mRadius": 0.05715
+        },
+        {
+          "mId": 28,
+          "mSetupId": 3,
+          "mLabel": "l2",
+          "mType": 1,
+          "m3dPosX": -20.86493738391039,
+          "m3dPosY": -2.64364316031572,
+          "m3dPosZ": 0.5201232455586745,
+          "mRadius": 0.10049571045084196
+        },
+        {
+          "mId": 30,
+          "mSetupId": 3,
+          "mLabel": "r1",
+          "mType": 1,
+          "m3dPosX": -51.16598153528557,
+          "m3dPosY": -15.623255510275325,
+          "m3dPosZ": 1.1660888984833144,
+          "mRadius": 0.1250371811910931
+        },
+        {
+          "mId": 29,
+          "mSetupId": 3,
+          "mLabel": "r2",
+          "mType": 1,
+          "m3dPosX": -19.08734219859462,
+          "m3dPosY": -7.479207230458732,
+          "m3dPosZ": 0.4755509378401974,
+          "mRadius": 0.1006468047465515
+        }
+      ],
+      "nominal_sphere_diameter_m": 0.1988,
+      "nominal_sphere_radius_m": 0.0994,
+      "sphere_radius_median_m": 0.10069276324907481,
+      "sphere_radius_min_m": 0.08821103898570663,
+      "sphere_radius_max_m": 0.1250371811910931,
+      "note": "REGISTER 360 database is validation/reference only; Tunnel Studio raw-folder workflow does not depend on it."
+    }
+  },
+  "register360_target_reference_solve": {
+    "note": "Target-only solve from REGISTER 360 stored target centres; reference only. REGISTER final link may use cloud-to-cloud refinement.",
+    "pairs": [
+      {
+        "moving_setup": 2,
+        "fixed_setup": 1,
+        "targets": [
+          "l2",
+          "r2",
+          "r1",
+          "l1"
+        ],
+        "fit_rms_mm": 15.250757506490192,
+        "fit_max_mm": 21.46888294364683,
+        "residuals": [
+          {
+            "id": "l2",
+            "role": "fit",
+            "source": [
+              4.280492300813603,
+              10.337821879949066,
+              0.2583862648855893
+            ],
+            "control": [
+              2.7404218273369705,
+              0.3533020750409587,
+              -0.0015088416265951784
+            ],
+            "transformed": [
+              2.7411989010575386,
+              0.35370553330828614,
+              -0.0022768338306824454
+            ],
+            "residual_mm": [
+              0.7770737205681222,
+              0.40345826732746115,
+              -0.767992204087267
+            ],
+            "error_mm": 1.1646605368996064,
+            "within_limit": true
+          },
+          {
+            "id": "r2",
+            "role": "fit",
+            "source": [
+              -0.8642994055775716,
+              10.630325570165544,
+              0.21404250472086114
+            ],
+            "control": [
+              -2.3916376328968028,
+              0.7607013906217821,
+              -0.04542585082699359
+            ],
+            "transformed": [
+              -2.39592944998184,
+              0.7593074382970393,
+              -0.04477247624480685
+            ],
+            "residual_mm": [
+              -4.291817085037231,
+              -1.3939523247428198,
+              0.6533745821867415
+            ],
+            "error_mm": 4.559571835131132,
+            "within_limit": true
+          },
+          {
+            "id": "r1",
+            "role": "fit",
+            "source": [
+              4.430307906869503,
+              43.25646075125975,
+              0.8968652225377766
+            ],
+            "control": [
+              3.6095638189661106,
+              33.281369572283765,
+              0.639552008226131
+            ],
+            "transformed": [
+              3.6152863892330953,
+              33.261032162935436,
+              0.6385900704469345
+            ],
+            "residual_mm": [
+              5.72257026698475,
+              -20.33740934832906,
+              -0.9619377791965089
+            ],
+            "error_mm": 21.149074536563667,
+            "within_limit": false
+          },
+          {
+            "id": "l1",
+            "role": "fit",
+            "source": [
+              9.36530275081243,
+              43.594276249044704,
+              1.0668914198771018
+            ],
+            "control": [
+              8.558785460050528,
+              33.46887345201701,
+              0.8058128082503875
+            ],
+            "transformed": [
+              8.556577633148013,
+              33.490201355422755,
+              0.8068893636514842
+            ],
+            "residual_mm": [
+              -2.2078269025147534,
+              21.32790340574786,
+              1.076555401096746
+            ],
+            "error_mm": 21.46888294364683,
+            "within_limit": false
+          }
+        ]
+      },
+      {
+        "moving_setup": 3,
+        "fixed_setup": 2,
+        "targets": [
+          "l2",
+          "r2",
+          "r1"
+        ],
+        "fit_rms_mm": 20.988993307431343,
+        "fit_max_mm": 29.661296876420796,
+        "residuals": [
+          {
+            "id": "l2",
+            "role": "fit",
+            "source": [
+              -20.86493738391039,
+              -2.64364316031572,
+              0.5201232455586745
+            ],
+            "control": [
+              4.280492300813603,
+              10.337821879949066,
+              0.2583862648855893
+            ],
+            "transformed": [
+              4.278705625639162,
+              10.322281102859707,
+              0.2580681632200563
+            ],
+            "residual_mm": [
+              -1.786675174440866,
+              -15.540777089359636,
+              -0.31810166553297714
+            ],
+            "error_mm": 15.646378155654538,
+            "within_limit": false
+          },
+          {
+            "id": "r2",
+            "role": "fit",
+            "source": [
+              -19.08734219859462,
+              -7.479207230458732,
+              0.4755509378401974
+            ],
+            "control": [
+              -0.8642994055775716,
+              10.630325570165544,
+              0.21404250472086114
+            ],
+            "transformed": [
+              -0.8648437108399545,
+              10.61630276609371,
+              0.21376585305977
+            ],
+            "residual_mm": [
+              -0.5443052623829159,
+              -14.022804071833761,
+              -0.2766516610911429
+            ],
+            "error_mm": 14.036090566724045,
+            "within_limit": false
+          },
+          {
+            "id": "r1",
+            "role": "fit",
+            "source": [
+              -51.16598153528557,
+              -15.623255510275325,
+              1.1660888984833144
+            ],
+            "control": [
+              4.430307906869503,
+              43.25646075125975,
+              0.8968652225377766
+            ],
+            "transformed": [
+              4.432638887306327,
+              43.28602433242095,
+              0.8974599758644004
+            ],
+            "residual_mm": [
+              2.330980436823893,
+              29.563581161198726,
+              0.5947533266238425
+            ],
+            "error_mm": 29.661296876420796,
+            "within_limit": false
+          }
+        ]
+      }
+    ]
+  },
+  "static_ui": {
+    "passed": true,
+    "checks": {
+      "sphere_option": true,
+      "bw_known_option": true,
+      "bw_auto_option": true,
+      "sphere_default_198_8": true,
+      "sphere_pick_required": true,
+      "target_type_posted": true,
+      "survey_targets_ribbon": true,
+      "raw_folder_dialog": true,
+      "raw_balanced_preview": true
+    }
+  },
+  "important_limits": [
+    "The Windows-only native RTC360 decode/graphics path cannot run on this Linux build host; real-folder inspection succeeds but raw XYZ reconstruction and GPU display must be confirmed on Windows.",
+    "Balanced raw preview fixes display sampling aliasing; it does not claim to reproduce undocumented Leica validity/factory filtering or exact point RGB/HDR.",
+    "Sphere fitting is assisted by a user pick and known diameter; this release does not blind-search an entire 84-million-point setup for spheres.",
+    "REGISTER 360 databases and E57 files are validation references only, never required production inputs."
+  ]
+}

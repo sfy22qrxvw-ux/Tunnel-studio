@@ -1,0 +1,39 @@
+Tunnel Studio 0.21.1
+4 November 2026
+
+Home > Open project / Storage manager
+Open data folder works through the local Windows application even when the
+WebView native bridge is unavailable or loads after the dialog opens. Copy path
+provides the active project data directory. Disk usage distinguishes space used
+in the data folder from remaining space on its drive. Inspect disk usage shows
+actual file paths, sizes, types and owners. Project and recovery records can
+share the same scan, so the space a project uses can exceed the space that
+deleting it would release.
+
+Choose files to clear
+Review individual named snapshot manifests, generated temporary exports and
+reports, demonstration data, and unused processing/preview caches. Select files
+to see their size and confirm the exact reviewed list. Removing a manifest
+alone leaves the linked assets in place. A subsequent review can identify
+newly unreferenced files. Original imports, portable backups, program files,
+unrecognised files and assets protected by another project, recovery or Undo
+are protected from routine cleanup. Old output files with uncertain origin
+are retained. Closing or switching a project offers optional housekeeping.
+
+Home > Project folders
+Choose a parent folder on the desired drive. New dedicated project folders
+contain Clouds/Imported, Clouds/Registered, Clouds/Derived, Meshes, Analysis,
+CAD, GIS/Shapefiles, Exports and Working. Archived shapefile datasets keep their
+companion files together. The data folder changes at restart. In the standard
+Windows installation the saved choice lives separately from the project in
+%LOCALAPPDATA%\TunnelStudioSettings\workspace-folders.json. The original shared
+workspace remains available from the working-folder selector.
+
+Organise an existing project
+Open or save the named project to be copied. In Project folders enter the new
+folder name and parent location, then choose Review project copy. Review the
+linked bytes and free space and confirm. Tunnel Studio streams the assets to
+the new drive and independently checks the destination bytes. Once the new
+copy passes the project opening checks, it becomes the workspace for the next
+launch. Restart, then open the named project from that folder. The user can
+return to the previous workspace to review old projects and retained data.

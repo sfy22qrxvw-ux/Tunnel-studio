@@ -1,0 +1,28 @@
+TUNNEL STUDIO 0.14.3 — LINING FEATURES
+
+Model ribbon > Lining features:
+- Bolt holes: compact recess candidates and projected 3D centres.
+- Non-lining: separate interior/outside candidates; preserve recess allowance.
+- Seams: circumferential ring seams and longitudinal between-segment seams,
+  including tilted rings and sloping joints where sufficiently supported.
+- Segments: reviewable regions bounded by detected seams.
+Setup also offers All lining features.
+
+Choose Fast, Detailed or More detailed. These change map resolution,
+calibration size and robust fitting effort. All original selected points are
+labelled. Finer detail takes longer and is not a measurement-accuracy promise.
+
+Named results support search, highlight, isolate and full-density highlighted
+export. Distinct colours identify groups; magenta indicates selection and red
+indicates exclusions. CSV/JSON reports contain locations and support information.
+Bolt markers and seam guides are available in Geometry & references.
+
+Start with a short, well-scanned section showing both walls and crown. Detection
+retains points by default; Non-lining proposes exclusions requiring review.
+Missing seams can leave merged segment candidates. Local station is not design
+chainage. The existing Extract tunnel surface behaviour remains unchanged.
+
+Three distinct supplied research papers informed this independent geometric
+implementation. No trained neural model or project-specific bolt template is
+claimed. Read METHODS_0_14_3.txt for algorithms, thresholds, limits and tests.
+This cumulative update retains the previous modelling and cleaning fixes.

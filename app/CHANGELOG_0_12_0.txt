@@ -1,0 +1,90 @@
+TUNNEL STUDIO 0.12.0 — CLEAN TUNNEL AND ROBUST SECTIONS
+
+INSTALL
+1. Close Tunnel Studio completely.
+2. Extract the entire ZIP into a folder.
+3. Run UPDATE_TUNNEL_STUDIO.bat and check that the application shows 0.12.0.
+
+This is an incremental update for your existing Windows desktop installation,
+not a standalone installer. It backs up replaced application files, checks
+imports against the installed base and restores them if that check fails.
+Existing projects and full-density scan caches are kept.
+RESTORE_PREVIOUS_VERSION.bat restores the application backup for this update.
+
+CLEAN TUNNEL
+1. Select a scan in Scans & models; right-click > Clean Tunnel.
+2. Choose the whole retained scan or a Box/Lasso/coordinate/chainage area.
+3. Choose Remove noise. Start with support radius suited to the scan spacing.
+   Default radius is 0.10 m, minimum 3 distinct neighbours, up to 12 neighbours,
+   and distance threshold multiplier 3. Larger multiplier retains more points.
+4. Preview cleaning. Green = kept; orange = proposed removal in the main view.
+5. Draw a Box/Lasso and use Keep selected points / Remove selected points.
+   These decisions affect every processed point inside that 3D selection volume.
+   Restore automatic suggestion resets all manual decisions.
+6. Open Output, mark that you inspected the result and Create cleaned scan.
+   This adds a separate scene scan containing kept points from the processed
+   area. Select it to use the existing reconstruction engines. Original files
+   remain available; full coordinates and available intensity/RGB are preserved.
+
+Radius and local distance filtering removes sparse/spacing noise. Dense pipes,
+equipment and connected objects may remain. Existing tunnel-envelope and SMRG
+modes can propose lining extraction; inspect junctions, portals, joints and
+small features. A cleaned cloud is not itself a watertight mesh.
+
+ROBUST SECTION COMPARISON
+After loading an alignment and survey scan, open Cross-section and choose
+Robust fit / compare sections. Set chainage, width, wall band and fit threshold.
+The fitted ellipse reports support, approximate fit RMS, eccentricity, centre
+movement, semi-axis changes and common-origin radial change in millimetres.
+Save a named measured reference to compare a later survey at exactly the same
+section frame and width. Export comparison CSV includes a 360-angle radial curve.
+Near-circular orientation is withheld; low-coverage fits are rejected.
+Fit thresholds can hide defects, so inspect the raw scan as well as the ellipse.
+No structural-health percentage or survey accuracy certification is calculated.
+
+SCENE AND VIEW
+- Ctrl/Shift-click or use checkboxes to select multiple scans/models.
+- Right-click for information, rename, visibility, isolate, duplicate, Clean
+  Tunnel, mesh tools, registration, analysis and removal of selected entries.
+- Remove deletes scene entries only; source files and cache data remain.
+- Mesh rows show full triangle counts; newly created/refined mesh information
+  includes triangle Q quality (1 equilateral, 0 degenerate).
+- View controls for point size, display detail and scan colour are side by side.
+- Empty-project startup and previous-session recovery remain as in 0.11.1.
+- Target manager and 3D target selection/deletion remain available.
+
+TARGET DETECTION — STILL NEEDS WORK
+The latest report is many false detections and no real black-and-white targets.
+Display detail controls only the viewport; the background search has its own
+sampling/patch limits. 0.12 corrects misleading full-density messages and records
+those limits. It does not claim to resolve detection reliability. See
+TARGET_DETECTION_REVIEW_0_12_0.txt. A real target scan crop with intensity/RGB,
+printed dimensions and a close-up is needed for the next validation step.
+
+VALIDATION
+34 Python checks passed: 14 cleaning/section geometry, 6 cache/review/API workflow,
+8 existing mesh/target regression and 6 empty-start/recovery checks.
+17 production-script UI checks passed with synthetic API data and mocked WebGL.
+Tests preserve original coordinates/attributes and cover tile seams, input order,
+duplicate support, cancellation, manual review, stale revisions, save failure,
+ellipse comparison, triangle quality and existing mesh engines.
+
+The full base installation was not available here. Base importer/editor modules
+are narrowly stubbed in workflow tests. Actual Windows installer execution,
+WebView/GPU pixels, CSS layout and real survey datasets remain untested.
+
+OPTIONAL ENGINES
+Existing Poisson, Ball Pivoting, quadric and Marching Cubes can use the optional
+INSTALL_MESH_ENGINES.bat if not already installed. This is a dependency installer,
+not a meshing job. It may download several hundred MB. Clean Tunnel and robust
+sections use the NumPy/SciPy runtime already required by the application.
+
+REMAINING DEVELOPMENT
+Source-cloud adaptive Refine Mesh, connected mesh preview simplification, DXF
+contours/extrusion, tank analysis and actual detached multi-monitor windows are
+not added here. Existing floating panels remain inside the main window.
+
+See CLEAN_TUNNEL_METHOD_0_12_0.txt and SECTION_METHOD_0_12_0.txt for equations,
+interpretations, units and references. FORMULAS_AND_METHODS.txt covers earlier
+mesh/target functionality. The separate research document records detailed
+paper review and the retained roadmap.

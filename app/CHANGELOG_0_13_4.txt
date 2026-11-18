@@ -1,0 +1,89 @@
+TUNNEL STUDIO 0.13.4 - SCAN TOOLS UPDATE
+12 October 2026
+
+CLEAN TUNNEL
+- Fast, Detailed and Fine cleaning presets. Numerical controls are under
+  Advanced settings; manually changing them selects Custom.
+- All presets include every retained point in the processing area. Fine uses
+  more neighbours / smaller surface patches, not a survey-accuracy setting.
+- Current main 3D selection follows the latest visible box/lasso. Escape clears
+  it. Missing selections give an error instead of using a stale shape.
+- Progress distinguishes reading the source file from cleaning the selected
+  points. The source must still be read once to locate a new selection.
+- Selected areas are collected in one pass and then processed from that compact
+  set. Small noise-cleaning areas use one full neighbourhood tree, removing
+  repeated tile-file and halo work. Larger areas retain bounded spatial tiles.
+- In a local 12,301-point synthetic test the small-area path was approximately
+  three times faster and gave identical per-point classifications. This is not
+  a Windows/real-scan performance guarantee. SMRG remains a slower research mode.
+- Draw box in 3D view starts coordinate-box selection directly from Setup.
+
+LIMIT BOX
+- Visible Limit box button beside the main viewport; also Edit > Limit box.
+- Draw around visible scan points, then check/edit the minimum and maximum
+  X/E, Y/N and Z/H coordinates. This creates an axis-aligned 3D box.
+- Show inside box hides points outside it for all currently visible scans.
+  The cyan wire box remains anchored in world coordinates while orbiting.
+- Show whole scan / Show inside box toggles the limit without deleting points.
+- Point Delete, Separate, Copy, cleaning and scan geometry respect active limits.
+  Undo and an explicitly chosen Deleted points restoration restore their own
+  full edit group. Ordinary hidden/isolation filters remain independent.
+- Initial drawn bounds use displayed points: adjust the six coordinate limits
+  when precise bounds are needed. There are no face-drag gizmos in this release.
+
+POINT EDITING AND PROPERTIES
+- Separate moves selected retained points into an independent new scan and
+  excludes them from the source working scan. Original files remain immutable.
+- Both halves save together. Undo/Redo handles the source and separated item.
+  Undo is blocked if the separated item has later point edits, protecting them.
+- Ctrl+C / Ctrl+V remains a copy operation; Duplicate remains independent.
+- Each scan has a Deleted points subfolder with grouped counts, View and Restore.
+  View previews the group's points; Back to scan returns to the normal scene.
+- Groups restore independently. Undo and Redo include restorations.
+- Information and scene counts now report remaining, original and excluded
+  points, remaining bounds and remaining attribute availability. File/cache
+  size reflects stored immutable data, so it does not shrink after deletion.
+- Active survey/cleaning source aliases refresh with edits instead of reverting
+  a new mask. Updates to active survey results invalidate prior reports.
+
+CROSS-SECTIONS WITHOUT AN ALIGNMENT
+- Analyse > Cross-section or Cross-section beside the viewport.
+- Use the estimated tunnel direction, constant X, constant Y, horizontal Z,
+  or a custom plane normal. Pick a point to set the slice centre if desired.
+- Set thickness and position; the slider moves the section after the first cut.
+- Uses every retained point intersecting the slab (and any selected area/limit).
+  Up to 60,000 points are shown in the equal-scale 2D plot. CSV contains all
+  section points with original XYZ, section U/V and distance from the plane.
+- Design section remains a separate alignment-based command.
+
+GUESS ALIGNMENT
+- Analyse > Guess alignment or the button beside the viewport.
+- Estimates a centreline using a scan sample, PCA direction, angularly balanced
+  cross-sections, robust circle fits and optional smoothing. It does not move
+  the scan or change its original coordinates.
+- Review a pink 3D preview and editable chainage/E/N/H/radius nodes. Save changes,
+  export an alignment CSV, or explicitly confirm Use for chainage - estimated.
+- The estimate is for one approximately circular, gently curving branch. Gaps,
+  weak direction or poor section support are rejected. Junctions, missing
+  lining, flat floors and plant can bias otherwise accepted results.
+- Scan-derived centres and radii are not the design. Cloud vs Design requires
+  the real design alignment or a design mesh when a scan estimate is active.
+- Using an estimate replaces the active alignment and resets survey/ring/
+  alignment-object results, with that effect stated beside the Use button.
+  Imported scene scans remain available. Export-only leaves the active design.
+
+INCLUDED
+All prior 0.13.x source-binding, Escape, cleaning Review/Output, browser import,
+mesh preview and Cloud vs Design features remain included.
+
+VALIDATION AND LIMITS
+71 production-JavaScript UI checks, 34 Python numerical/workflow/static-route
+checks, and syntax/payload-digest checks. Python tests exercise real cache files
+and immutable masks; base-only importer/editor/alignment modules use narrow
+substitutes because the full Windows installation is not available here.
+UI tests use a mocked API/WebGL in JSDOM. Native Windows installation, GPU
+pixels, the user's current cleaning result and real-scan alignment accuracy
+remain unverified. This is an incremental update for an existing installation.
+
+Still queued: higher-detail adaptive viewing, target recognition investigation,
+Leica HSPCA import, drag-and-drop, improved mesh hole repair and mesh-to-cloud.

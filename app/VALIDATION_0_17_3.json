@@ -1,0 +1,1590 @@
+{
+  "version": "0.17.3",
+  "passed": true,
+  "date": "2026-10-27",
+  "timezone": "UTC",
+  "scope": "Optional robust review of named target correspondences; explicit exclusion adoption; existing joint coordinate-constrained solver retained. Complete delivered 0.17.2 features retained.",
+  "current_backend_and_installer_tests": 37,
+  "current_numerical_scenarios": 24,
+  "current_browser_and_disk_scenarios": 17,
+  "total_current_unittest_tests": 61,
+  "test_results": [
+    {
+      "id": "test_robust_registration_0173.RobustRegistrationTests.test_all_good_pairs_are_consistent",
+      "outcome": "passed"
+    },
+    {
+      "id": "test_robust_registration_0173.RobustRegistrationTests.test_cancellation_propagates_without_mutating_rows",
+      "outcome": "passed"
+    },
+    {
+      "id": "test_robust_registration_0173.RobustRegistrationTests.test_checks_and_off_rows_never_select_the_consensus",
+      "outcome": "passed"
+    },
+    {
+      "id": "test_robust_registration_0173.RobustRegistrationTests.test_collinear_and_nearly_collinear_geometry_rejected",
+      "outcome": "passed"
+    },
+    {
+      "id": "test_robust_registration_0173.RobustRegistrationTests.test_distant_mismatches_cannot_block_a_well_spread_majority",
+      "outcome": "passed"
+    },
+    {
+      "id": "test_robust_registration_0173.RobustRegistrationTests.test_distinct_equal_majority_consensuses_are_ambiguous",
+      "outcome": "passed"
+    },
+    {
+      "id": "test_robust_registration_0173.RobustRegistrationTests.test_duplicate_positions_ids_and_nonfinite_coordinates_rejected",
+      "outcome": "passed"
+    },
+    {
+      "id": "test_robust_registration_0173.RobustRegistrationTests.test_equal_quality_is_not_treated_as_a_useful_ranking",
+      "outcome": "passed"
+    },
+    {
+      "id": "test_robust_registration_0173.RobustRegistrationTests.test_four_pairs_with_only_three_agreeing_are_insufficient",
+      "outcome": "passed"
+    },
+    {
+      "id": "test_robust_registration_0173.RobustRegistrationTests.test_identical_inputs_and_seed_produce_identical_review",
+      "outcome": "passed"
+    },
+    {
+      "id": "test_robust_registration_0173.RobustRegistrationTests.test_input_limits_fail_explicitly",
+      "outcome": "passed"
+    },
+    {
+      "id": "test_robust_registration_0173.RobustRegistrationTests.test_kept_coordinate_mismatch_blocks_proposed_exclusions",
+      "outcome": "passed"
+    },
+    {
+      "id": "test_robust_registration_0173.RobustRegistrationTests.test_known_transform_noisy_pairs_and_two_outliers",
+      "outcome": "passed"
+    },
+    {
+      "id": "test_robust_registration_0173.RobustRegistrationTests.test_larger_sets_have_bounded_uniform_search",
+      "outcome": "passed"
+    },
+    {
+      "id": "test_robust_registration_0173.RobustRegistrationTests.test_minimal_three_pairs_do_not_support_outlier_claim",
+      "outcome": "passed"
+    },
+    {
+      "id": "test_robust_registration_0173.RobustRegistrationTests.test_misleading_match_quality_cannot_remove_uniform_fallback",
+      "outcome": "passed"
+    },
+    {
+      "id": "test_robust_registration_0173.RobustRegistrationTests.test_quality_on_check_rows_is_ignored_and_bad_fit_quality_rejected",
+      "outcome": "passed"
+    },
+    {
+      "id": "test_robust_registration_0173.RobustRegistrationTests.test_reflection_or_scale_is_never_used_as_rigid_alignment",
+      "outcome": "passed"
+    },
+    {
+      "id": "test_robust_registration_0173.RobustRegistrationTests.test_single_draw_budget_does_not_claim_a_ranked_fallback",
+      "outcome": "passed"
+    },
+    {
+      "id": "test_robust_registration_0173.RobustRegistrationTests.test_small_sets_are_fully_enumerated_without_inventing_quality",
+      "outcome": "passed"
+    },
+    {
+      "id": "test_robust_registration_0173.RobustRegistrationTests.test_survey_offsets_preserve_float64_geometry",
+      "outcome": "passed"
+    },
+    {
+      "id": "test_robust_registration_0173.RobustRegistrationTests.test_too_few_pairs_return_reviewable_insufficiency",
+      "outcome": "passed"
+    },
+    {
+      "id": "test_robust_registration_0173.RobustRegistrationTests.test_vertical_mode_preserves_up_and_detects_bad_pair",
+      "outcome": "passed"
+    },
+    {
+      "id": "test_robust_registration_0173.RobustRegistrationTests.test_vertical_mode_requires_horizontal_spread",
+      "outcome": "passed"
+    },
+    {
+      "id": "test_registration_review_backend_0173.ReviewBackendTests.test_adoption_changes_only_unkept_fit_pair_roles",
+      "outcome": "passed"
+    },
+    {
+      "id": "test_registration_review_backend_0173.ReviewBackendTests.test_api_returns_exact_review_id_and_authoritative_adoption",
+      "outcome": "passed"
+    },
+    {
+      "id": "test_registration_review_backend_0173.ReviewBackendTests.test_cancel_at_final_checkpoint_does_not_publish_or_resurrect",
+      "outcome": "passed"
+    },
+    {
+      "id": "test_registration_review_backend_0173.ReviewBackendTests.test_changed_point_file_identity_invalidates_adoption",
+      "outcome": "passed"
+    },
+    {
+      "id": "test_registration_review_backend_0173.ReviewBackendTests.test_every_matching_input_is_bound_to_review",
+      "outcome": "passed"
+    },
+    {
+      "id": "test_registration_review_backend_0173.ReviewBackendTests.test_existing_joint_solver_keeps_coordinates_and_records_adopted_review",
+      "outcome": "passed"
+    },
+    {
+      "id": "test_registration_review_backend_0173.ReviewBackendTests.test_failed_adoption_save_restores_exact_previous_metadata",
+      "outcome": "passed"
+    },
+    {
+      "id": "test_registration_review_backend_0173.ReviewBackendTests.test_failed_completed_review_save_does_not_leave_phantom_result",
+      "outcome": "passed"
+    },
+    {
+      "id": "test_registration_review_backend_0173.ReviewBackendTests.test_failed_initial_save_restores_previous_review_and_draft",
+      "outcome": "passed"
+    },
+    {
+      "id": "test_registration_review_backend_0173.ReviewBackendTests.test_independent_checks_never_change_fit_or_exclusions",
+      "outcome": "passed"
+    },
+    {
+      "id": "test_registration_review_backend_0173.ReviewBackendTests.test_invalid_inputs_do_not_clear_previous_review",
+      "outcome": "passed"
+    },
+    {
+      "id": "test_registration_review_backend_0173.ReviewBackendTests.test_kept_suspect_blocks_all_automatic_exclusions",
+      "outcome": "passed"
+    },
+    {
+      "id": "test_registration_review_backend_0173.ReviewBackendTests.test_old_review_id_cannot_adopt_an_identical_new_review",
+      "outcome": "passed"
+    },
+    {
+      "id": "test_registration_review_backend_0173.ReviewBackendTests.test_real_review_is_diagnostic_and_named_pairs_are_unranked",
+      "outcome": "passed"
+    },
+    {
+      "id": "test_registration_review_backend_0173.ReviewBackendTests.test_review_provenance_does_not_attach_to_different_solve",
+      "outcome": "passed"
+    },
+    {
+      "id": "test_registration_review_backend_0173.ReviewBackendTests.test_review_reopens_from_persisted_workspace_without_geometry_change",
+      "outcome": "passed"
+    },
+    {
+      "id": "test_registration_review_backend_0173.ReviewBackendTests.test_source_changes_during_worker_prevent_publication",
+      "outcome": "passed"
+    },
+    {
+      "id": "test_registration_review_backend_0173.ReviewBackendTests.test_target_mask_and_project_changes_invalidate",
+      "outcome": "passed"
+    },
+    {
+      "id": "test_registration_review_backend_0173.ReviewBackendTests.test_three_setups_with_three_common_centres_retain_normal_registration",
+      "outcome": "passed"
+    },
+    {
+      "id": "test_registration_review_backend_0173.ReviewBackendTests.test_vertical_mode_requires_explicit_confirmation",
+      "outcome": "passed"
+    },
+    {
+      "id": "test_registration.RegistrationTests.test_large_coordinates_rotation_fixed_scale_and_independent_checks",
+      "outcome": "passed"
+    },
+    {
+      "id": "test_registration.RegistrationTests.test_reject_collinear_duplicate_missing_and_too_few_targets",
+      "outcome": "passed"
+    },
+    {
+      "id": "test_registration.RegistrationTests.test_checker_positive_tilted_and_uniform_negative",
+      "outcome": "passed"
+    },
+    {
+      "id": "test_registration.RegistrationTests.test_text_attribute_alignment_and_no_guessing",
+      "outcome": "passed"
+    },
+    {
+      "id": "test_registration.RegistrationTests.test_project_save_as_and_portable",
+      "outcome": "passed"
+    },
+    {
+      "id": "test_installer.InstallerTests.test_active_application_blocks_installation",
+      "outcome": "passed"
+    },
+    {
+      "id": "test_installer.InstallerTests.test_component_failure_preserves_active_version",
+      "outcome": "passed"
+    },
+    {
+      "id": "test_installer.InstallerTests.test_damaged_payload_never_activates",
+      "outcome": "passed"
+    },
+    {
+      "id": "test_installer.InstallerTests.test_install_preserves_data_previous_release_and_index",
+      "outcome": "passed"
+    },
+    {
+      "id": "test_installer.InstallerTests.test_install_preserves_oversized_workspace_and_backup_byte_for_byte",
+      "outcome": "passed"
+    },
+    {
+      "id": "test_installer.InstallerTests.test_installer_leaves_staging_directory_before_activation",
+      "outcome": "passed"
+    },
+    {
+      "id": "test_installer.InstallerTests.test_marker_failure_rolls_back_both_directories",
+      "outcome": "passed"
+    },
+    {
+      "id": "test_installer.InstallerTests.test_path_traversal_rejected",
+      "outcome": "passed"
+    },
+    {
+      "id": "test_installer.InstallerTests.test_reinstall_retains_previous_same_version",
+      "outcome": "passed"
+    },
+    {
+      "id": "test_installer.InstallerTests.test_startup_metadata_self_check_failure_preserves_user_workspace_and_release",
+      "outcome": "passed"
+    },
+    {
+      "id": "test_installer.InstallerTests.test_startup_self_check_refuses_another_workspace_before_writing",
+      "outcome": "passed"
+    },
+    {
+      "id": "test_installer.InstallerTests.test_startup_self_check_refuses_existing_project_before_writing",
+      "outcome": "passed"
+    }
+  ],
+  "gates": {
+    "registration_numeric_checks": {
+      "version": "0.17.3",
+      "passed": true,
+      "test_results": [
+        {
+          "id": "test_robust_registration_0173.RobustRegistrationTests.test_all_good_pairs_are_consistent",
+          "outcome": "passed"
+        },
+        {
+          "id": "test_robust_registration_0173.RobustRegistrationTests.test_cancellation_propagates_without_mutating_rows",
+          "outcome": "passed"
+        },
+        {
+          "id": "test_robust_registration_0173.RobustRegistrationTests.test_checks_and_off_rows_never_select_the_consensus",
+          "outcome": "passed"
+        },
+        {
+          "id": "test_robust_registration_0173.RobustRegistrationTests.test_collinear_and_nearly_collinear_geometry_rejected",
+          "outcome": "passed"
+        },
+        {
+          "id": "test_robust_registration_0173.RobustRegistrationTests.test_distant_mismatches_cannot_block_a_well_spread_majority",
+          "outcome": "passed"
+        },
+        {
+          "id": "test_robust_registration_0173.RobustRegistrationTests.test_distinct_equal_majority_consensuses_are_ambiguous",
+          "outcome": "passed"
+        },
+        {
+          "id": "test_robust_registration_0173.RobustRegistrationTests.test_duplicate_positions_ids_and_nonfinite_coordinates_rejected",
+          "outcome": "passed"
+        },
+        {
+          "id": "test_robust_registration_0173.RobustRegistrationTests.test_equal_quality_is_not_treated_as_a_useful_ranking",
+          "outcome": "passed"
+        },
+        {
+          "id": "test_robust_registration_0173.RobustRegistrationTests.test_four_pairs_with_only_three_agreeing_are_insufficient",
+          "outcome": "passed"
+        },
+        {
+          "id": "test_robust_registration_0173.RobustRegistrationTests.test_identical_inputs_and_seed_produce_identical_review",
+          "outcome": "passed"
+        },
+        {
+          "id": "test_robust_registration_0173.RobustRegistrationTests.test_input_limits_fail_explicitly",
+          "outcome": "passed"
+        },
+        {
+          "id": "test_robust_registration_0173.RobustRegistrationTests.test_kept_coordinate_mismatch_blocks_proposed_exclusions",
+          "outcome": "passed"
+        },
+        {
+          "id": "test_robust_registration_0173.RobustRegistrationTests.test_known_transform_noisy_pairs_and_two_outliers",
+          "outcome": "passed"
+        },
+        {
+          "id": "test_robust_registration_0173.RobustRegistrationTests.test_larger_sets_have_bounded_uniform_search",
+          "outcome": "passed"
+        },
+        {
+          "id": "test_robust_registration_0173.RobustRegistrationTests.test_minimal_three_pairs_do_not_support_outlier_claim",
+          "outcome": "passed"
+        },
+        {
+          "id": "test_robust_registration_0173.RobustRegistrationTests.test_misleading_match_quality_cannot_remove_uniform_fallback",
+          "outcome": "passed"
+        },
+        {
+          "id": "test_robust_registration_0173.RobustRegistrationTests.test_quality_on_check_rows_is_ignored_and_bad_fit_quality_rejected",
+          "outcome": "passed"
+        },
+        {
+          "id": "test_robust_registration_0173.RobustRegistrationTests.test_reflection_or_scale_is_never_used_as_rigid_alignment",
+          "outcome": "passed"
+        },
+        {
+          "id": "test_robust_registration_0173.RobustRegistrationTests.test_single_draw_budget_does_not_claim_a_ranked_fallback",
+          "outcome": "passed"
+        },
+        {
+          "id": "test_robust_registration_0173.RobustRegistrationTests.test_small_sets_are_fully_enumerated_without_inventing_quality",
+          "outcome": "passed"
+        },
+        {
+          "id": "test_robust_registration_0173.RobustRegistrationTests.test_survey_offsets_preserve_float64_geometry",
+          "outcome": "passed"
+        },
+        {
+          "id": "test_robust_registration_0173.RobustRegistrationTests.test_too_few_pairs_return_reviewable_insufficiency",
+          "outcome": "passed"
+        },
+        {
+          "id": "test_robust_registration_0173.RobustRegistrationTests.test_vertical_mode_preserves_up_and_detects_bad_pair",
+          "outcome": "passed"
+        },
+        {
+          "id": "test_robust_registration_0173.RobustRegistrationTests.test_vertical_mode_requires_horizontal_spread",
+          "outcome": "passed"
+        },
+        {
+          "id": "test_registration_review_backend_0173.ReviewBackendTests.test_adoption_changes_only_unkept_fit_pair_roles",
+          "outcome": "passed"
+        },
+        {
+          "id": "test_registration_review_backend_0173.ReviewBackendTests.test_api_returns_exact_review_id_and_authoritative_adoption",
+          "outcome": "passed"
+        },
+        {
+          "id": "test_registration_review_backend_0173.ReviewBackendTests.test_cancel_at_final_checkpoint_does_not_publish_or_resurrect",
+          "outcome": "passed"
+        },
+        {
+          "id": "test_registration_review_backend_0173.ReviewBackendTests.test_changed_point_file_identity_invalidates_adoption",
+          "outcome": "passed"
+        },
+        {
+          "id": "test_registration_review_backend_0173.ReviewBackendTests.test_every_matching_input_is_bound_to_review",
+          "outcome": "passed"
+        },
+        {
+          "id": "test_registration_review_backend_0173.ReviewBackendTests.test_existing_joint_solver_keeps_coordinates_and_records_adopted_review",
+          "outcome": "passed"
+        },
+        {
+          "id": "test_registration_review_backend_0173.ReviewBackendTests.test_failed_adoption_save_restores_exact_previous_metadata",
+          "outcome": "passed"
+        },
+        {
+          "id": "test_registration_review_backend_0173.ReviewBackendTests.test_failed_completed_review_save_does_not_leave_phantom_result",
+          "outcome": "passed"
+        },
+        {
+          "id": "test_registration_review_backend_0173.ReviewBackendTests.test_failed_initial_save_restores_previous_review_and_draft",
+          "outcome": "passed"
+        },
+        {
+          "id": "test_registration_review_backend_0173.ReviewBackendTests.test_independent_checks_never_change_fit_or_exclusions",
+          "outcome": "passed"
+        },
+        {
+          "id": "test_registration_review_backend_0173.ReviewBackendTests.test_invalid_inputs_do_not_clear_previous_review",
+          "outcome": "passed"
+        },
+        {
+          "id": "test_registration_review_backend_0173.ReviewBackendTests.test_kept_suspect_blocks_all_automatic_exclusions",
+          "outcome": "passed"
+        },
+        {
+          "id": "test_registration_review_backend_0173.ReviewBackendTests.test_old_review_id_cannot_adopt_an_identical_new_review",
+          "outcome": "passed"
+        },
+        {
+          "id": "test_registration_review_backend_0173.ReviewBackendTests.test_real_review_is_diagnostic_and_named_pairs_are_unranked",
+          "outcome": "passed"
+        },
+        {
+          "id": "test_registration_review_backend_0173.ReviewBackendTests.test_review_provenance_does_not_attach_to_different_solve",
+          "outcome": "passed"
+        },
+        {
+          "id": "test_registration_review_backend_0173.ReviewBackendTests.test_review_reopens_from_persisted_workspace_without_geometry_change",
+          "outcome": "passed"
+        },
+        {
+          "id": "test_registration_review_backend_0173.ReviewBackendTests.test_source_changes_during_worker_prevent_publication",
+          "outcome": "passed"
+        },
+        {
+          "id": "test_registration_review_backend_0173.ReviewBackendTests.test_target_mask_and_project_changes_invalidate",
+          "outcome": "passed"
+        },
+        {
+          "id": "test_registration_review_backend_0173.ReviewBackendTests.test_three_setups_with_three_common_centres_retain_normal_registration",
+          "outcome": "passed"
+        },
+        {
+          "id": "test_registration_review_backend_0173.ReviewBackendTests.test_vertical_mode_requires_explicit_confirmation",
+          "outcome": "passed"
+        },
+        {
+          "id": "test_registration.RegistrationTests.test_large_coordinates_rotation_fixed_scale_and_independent_checks",
+          "outcome": "passed"
+        },
+        {
+          "id": "test_registration.RegistrationTests.test_reject_collinear_duplicate_missing_and_too_few_targets",
+          "outcome": "passed"
+        },
+        {
+          "id": "test_registration.RegistrationTests.test_checker_positive_tilted_and_uniform_negative",
+          "outcome": "passed"
+        },
+        {
+          "id": "test_registration.RegistrationTests.test_text_attribute_alignment_and_no_guessing",
+          "outcome": "passed"
+        },
+        {
+          "id": "test_registration.RegistrationTests.test_project_save_as_and_portable",
+          "outcome": "passed"
+        }
+      ],
+      "gates": [
+        {
+          "name": "numerical_review",
+          "passed": true,
+          "tests_run": 24,
+          "test_results": [
+            {
+              "id": "test_robust_registration_0173.RobustRegistrationTests.test_all_good_pairs_are_consistent",
+              "outcome": "passed"
+            },
+            {
+              "id": "test_robust_registration_0173.RobustRegistrationTests.test_cancellation_propagates_without_mutating_rows",
+              "outcome": "passed"
+            },
+            {
+              "id": "test_robust_registration_0173.RobustRegistrationTests.test_checks_and_off_rows_never_select_the_consensus",
+              "outcome": "passed"
+            },
+            {
+              "id": "test_robust_registration_0173.RobustRegistrationTests.test_collinear_and_nearly_collinear_geometry_rejected",
+              "outcome": "passed"
+            },
+            {
+              "id": "test_robust_registration_0173.RobustRegistrationTests.test_distant_mismatches_cannot_block_a_well_spread_majority",
+              "outcome": "passed"
+            },
+            {
+              "id": "test_robust_registration_0173.RobustRegistrationTests.test_distinct_equal_majority_consensuses_are_ambiguous",
+              "outcome": "passed"
+            },
+            {
+              "id": "test_robust_registration_0173.RobustRegistrationTests.test_duplicate_positions_ids_and_nonfinite_coordinates_rejected",
+              "outcome": "passed"
+            },
+            {
+              "id": "test_robust_registration_0173.RobustRegistrationTests.test_equal_quality_is_not_treated_as_a_useful_ranking",
+              "outcome": "passed"
+            },
+            {
+              "id": "test_robust_registration_0173.RobustRegistrationTests.test_four_pairs_with_only_three_agreeing_are_insufficient",
+              "outcome": "passed"
+            },
+            {
+              "id": "test_robust_registration_0173.RobustRegistrationTests.test_identical_inputs_and_seed_produce_identical_review",
+              "outcome": "passed"
+            },
+            {
+              "id": "test_robust_registration_0173.RobustRegistrationTests.test_input_limits_fail_explicitly",
+              "outcome": "passed"
+            },
+            {
+              "id": "test_robust_registration_0173.RobustRegistrationTests.test_kept_coordinate_mismatch_blocks_proposed_exclusions",
+              "outcome": "passed"
+            },
+            {
+              "id": "test_robust_registration_0173.RobustRegistrationTests.test_known_transform_noisy_pairs_and_two_outliers",
+              "outcome": "passed"
+            },
+            {
+              "id": "test_robust_registration_0173.RobustRegistrationTests.test_larger_sets_have_bounded_uniform_search",
+              "outcome": "passed"
+            },
+            {
+              "id": "test_robust_registration_0173.RobustRegistrationTests.test_minimal_three_pairs_do_not_support_outlier_claim",
+              "outcome": "passed"
+            },
+            {
+              "id": "test_robust_registration_0173.RobustRegistrationTests.test_misleading_match_quality_cannot_remove_uniform_fallback",
+              "outcome": "passed"
+            },
+            {
+              "id": "test_robust_registration_0173.RobustRegistrationTests.test_quality_on_check_rows_is_ignored_and_bad_fit_quality_rejected",
+              "outcome": "passed"
+            },
+            {
+              "id": "test_robust_registration_0173.RobustRegistrationTests.test_reflection_or_scale_is_never_used_as_rigid_alignment",
+              "outcome": "passed"
+            },
+            {
+              "id": "test_robust_registration_0173.RobustRegistrationTests.test_single_draw_budget_does_not_claim_a_ranked_fallback",
+              "outcome": "passed"
+            },
+            {
+              "id": "test_robust_registration_0173.RobustRegistrationTests.test_small_sets_are_fully_enumerated_without_inventing_quality",
+              "outcome": "passed"
+            },
+            {
+              "id": "test_robust_registration_0173.RobustRegistrationTests.test_survey_offsets_preserve_float64_geometry",
+              "outcome": "passed"
+            },
+            {
+              "id": "test_robust_registration_0173.RobustRegistrationTests.test_too_few_pairs_return_reviewable_insufficiency",
+              "outcome": "passed"
+            },
+            {
+              "id": "test_robust_registration_0173.RobustRegistrationTests.test_vertical_mode_preserves_up_and_detects_bad_pair",
+              "outcome": "passed"
+            },
+            {
+              "id": "test_robust_registration_0173.RobustRegistrationTests.test_vertical_mode_requires_horizontal_spread",
+              "outcome": "passed"
+            }
+          ],
+          "failures": [],
+          "skipped": []
+        },
+        {
+          "name": "review_backend",
+          "passed": true,
+          "tests_run": 20,
+          "test_results": [
+            {
+              "id": "test_registration_review_backend_0173.ReviewBackendTests.test_adoption_changes_only_unkept_fit_pair_roles",
+              "outcome": "passed"
+            },
+            {
+              "id": "test_registration_review_backend_0173.ReviewBackendTests.test_api_returns_exact_review_id_and_authoritative_adoption",
+              "outcome": "passed"
+            },
+            {
+              "id": "test_registration_review_backend_0173.ReviewBackendTests.test_cancel_at_final_checkpoint_does_not_publish_or_resurrect",
+              "outcome": "passed"
+            },
+            {
+              "id": "test_registration_review_backend_0173.ReviewBackendTests.test_changed_point_file_identity_invalidates_adoption",
+              "outcome": "passed"
+            },
+            {
+              "id": "test_registration_review_backend_0173.ReviewBackendTests.test_every_matching_input_is_bound_to_review",
+              "outcome": "passed"
+            },
+            {
+              "id": "test_registration_review_backend_0173.ReviewBackendTests.test_existing_joint_solver_keeps_coordinates_and_records_adopted_review",
+              "outcome": "passed"
+            },
+            {
+              "id": "test_registration_review_backend_0173.ReviewBackendTests.test_failed_adoption_save_restores_exact_previous_metadata",
+              "outcome": "passed"
+            },
+            {
+              "id": "test_registration_review_backend_0173.ReviewBackendTests.test_failed_completed_review_save_does_not_leave_phantom_result",
+              "outcome": "passed"
+            },
+            {
+              "id": "test_registration_review_backend_0173.ReviewBackendTests.test_failed_initial_save_restores_previous_review_and_draft",
+              "outcome": "passed"
+            },
+            {
+              "id": "test_registration_review_backend_0173.ReviewBackendTests.test_independent_checks_never_change_fit_or_exclusions",
+              "outcome": "passed"
+            },
+            {
+              "id": "test_registration_review_backend_0173.ReviewBackendTests.test_invalid_inputs_do_not_clear_previous_review",
+              "outcome": "passed"
+            },
+            {
+              "id": "test_registration_review_backend_0173.ReviewBackendTests.test_kept_suspect_blocks_all_automatic_exclusions",
+              "outcome": "passed"
+            },
+            {
+              "id": "test_registration_review_backend_0173.ReviewBackendTests.test_old_review_id_cannot_adopt_an_identical_new_review",
+              "outcome": "passed"
+            },
+            {
+              "id": "test_registration_review_backend_0173.ReviewBackendTests.test_real_review_is_diagnostic_and_named_pairs_are_unranked",
+              "outcome": "passed"
+            },
+            {
+              "id": "test_registration_review_backend_0173.ReviewBackendTests.test_review_provenance_does_not_attach_to_different_solve",
+              "outcome": "passed"
+            },
+            {
+              "id": "test_registration_review_backend_0173.ReviewBackendTests.test_review_reopens_from_persisted_workspace_without_geometry_change",
+              "outcome": "passed"
+            },
+            {
+              "id": "test_registration_review_backend_0173.ReviewBackendTests.test_source_changes_during_worker_prevent_publication",
+              "outcome": "passed"
+            },
+            {
+              "id": "test_registration_review_backend_0173.ReviewBackendTests.test_target_mask_and_project_changes_invalidate",
+              "outcome": "passed"
+            },
+            {
+              "id": "test_registration_review_backend_0173.ReviewBackendTests.test_three_setups_with_three_common_centres_retain_normal_registration",
+              "outcome": "passed"
+            },
+            {
+              "id": "test_registration_review_backend_0173.ReviewBackendTests.test_vertical_mode_requires_explicit_confirmation",
+              "outcome": "passed"
+            }
+          ],
+          "failures": [],
+          "skipped": []
+        },
+        {
+          "name": "retained_target_workflow",
+          "passed": true,
+          "tests_run": 5,
+          "test_results": [
+            {
+              "id": "test_registration.RegistrationTests.test_large_coordinates_rotation_fixed_scale_and_independent_checks",
+              "outcome": "passed"
+            },
+            {
+              "id": "test_registration.RegistrationTests.test_reject_collinear_duplicate_missing_and_too_few_targets",
+              "outcome": "passed"
+            },
+            {
+              "id": "test_registration.RegistrationTests.test_checker_positive_tilted_and_uniform_negative",
+              "outcome": "passed"
+            },
+            {
+              "id": "test_registration.RegistrationTests.test_text_attribute_alignment_and_no_guessing",
+              "outcome": "passed"
+            },
+            {
+              "id": "test_registration.RegistrationTests.test_project_save_as_and_portable",
+              "outcome": "passed"
+            }
+          ],
+          "failures": [],
+          "skipped": []
+        }
+      ],
+      "tests_run": 49,
+      "source_unchanged": true,
+      "tested_source_hashes": {
+        "app/robust_registration.py": "0210aceb0798f55497e08ac9719e51f4e1f3c335245428c940f6dcd1eeac40c0",
+        "app/registration_review.py": "0931d6faf84ed1e6ec026e0c0626519afe70b272cc5d75b876140c98d5dec28b",
+        "app/registration_workspace.py": "c29bcb132c7fa29e75d025c05059c41dd0a2b703bf4f59e0aa9b647fa1cd7f7d",
+        "app/registration.py": "2a5871bf23315fe5ab14caa0ca697a6da0860aa2404dd07d9dc5d943ea9b4628",
+        "app/registration_network.py": "e5b929175f9b6ba719442ba1901015df7a8fba3d1b67a69a53ed7d283633e163",
+        "app/registration_references.py": "fd3d6618dde24db277c1813c013751d6e86d4bb2e385adce4f13442e2112ca85",
+        "app/pointio.py": "6dc23a865d3c33ab8b806e5950b6cd9f87e0a2f5f00780429cacc108ce42ee5c",
+        "app/projects.py": "7065e3d4355cb31b56557c8b5da5388581128771b3bb248833320372be591c1b",
+        "app/job_api.py": "90ec899c9ee7fb9f67cd1414263fae86a4e4c329437d22d269255ac091d56499",
+        "app/demo_targets.py": "41037ceba4e2b298b5f88245c997a91954814bbb2a19bb7bce359f74af53f5cb",
+        "app/test_registration.py": "f9a426aa25d4255753f00decac5f2ad1b6847589d9a61c3285427931ea755693",
+        "work/checks/test_robust_registration_0173.py": "1322f0eebb5b8a767c61c34ae66ffa83f162cf9eae88bbb92bd976c065857bd8",
+        "work/checks/test_registration_review_backend_0173.py": "12d6b9c39b44c531c63cd1cbca948feca7ffe15327103478a2b195ac5faea29a",
+        "work/checks/run_registration_numeric_checks_0173.py": "6350458010e6593280511f03f63dee1ae1e3d2708030570fbd0d46504b3481e7"
+      },
+      "seconds": 1.632,
+      "runtime": {
+        "python": "3.12.14 (main, Aug 25 2026, 14:00:49) [Clang 22.1.3 ]",
+        "numpy": "2.3.5",
+        "scipy": "1.17.0"
+      },
+      "scope": "Synthetic numerical/API/persistence checks and five retained registration/import/project tests. E57/LAS export-format suite is historical, not rerun by this gate. No field accuracy or native Windows claim."
+    },
+    "registration_browser": {
+      "passed": true,
+      "checks": [
+        {
+          "name": "Registration ribbon Join scans opens the optional Review suspect matches step before Solve geometry",
+          "passed": true
+        },
+        {
+          "name": "Keyboard review runs real exhaustive geometry checks, safely renders target names, and leaves pairs, Check/Exclude roles and measured coordinates unchanged",
+          "passed": true
+        },
+        {
+          "name": "Review controls remain reachable in short/narrow windows and follow light/dark application themes",
+          "passed": true,
+          "layout": [
+            {
+              "viewport_width": 1366,
+              "viewport_height": 768,
+              "card": {
+                "scroll": 946,
+                "width": 946
+              }
+            },
+            {
+              "viewport_width": 911,
+              "viewport_height": 512,
+              "card": {
+                "scroll": 802,
+                "width": 802
+              }
+            },
+            {
+              "viewport_width": 768,
+              "viewport_height": 600,
+              "card": {
+                "scroll": 668,
+                "width": 668
+              }
+            }
+          ],
+          "dark": {
+            "background": "rgb(33, 55, 67)",
+            "text": "rgb(227, 238, 243)"
+          }
+        },
+        {
+          "name": "Editing pair identity, roles, kept coordinates, tolerance, mode, scan selection or vertical confirmation invalidates the displayed proposal",
+          "passed": true
+        },
+        {
+          "name": "A suspect kept target is visibly protected, blocks automatic exclusions and retains its Keep selection",
+          "passed": true
+        },
+        {
+          "name": "An independent Check mismatch is called out immediately and never becomes an automatic exclusion",
+          "passed": true
+        },
+        {
+          "name": "Too few independent Fit pairs and competing equal-support transformations remain review-only; the normal solver remains available",
+          "passed": true
+        },
+        {
+          "name": "Real late review responses are discarded after close or Escape and reopening; pending reviews disable editable pairs and Solve",
+          "passed": true
+        },
+        {
+          "name": "The started review ID is bound to the completed result; a newer real review cannot be mistaken for an older pending response",
+          "passed": true
+        },
+        {
+          "name": "A late adoption response cannot rewrite rows after its dialog closes and reopens",
+          "passed": true
+        },
+        {
+          "name": "Stop review cancels the real bounded search, clears the proposal and restores editable controls",
+          "passed": true
+        },
+        {
+          "name": "The larger named-target set reports actual uniform sampling without inventing a correspondence-quality ranking",
+          "passed": true
+        },
+        {
+          "name": "A failed review clears prior results and reports an actionable input error",
+          "passed": true
+        },
+        {
+          "name": "Explicit adoption changes only the two reviewed unkept Fit rows to Exclude; all kept coordinates and independent Check/Exclude choices are preserved",
+          "passed": true
+        },
+        {
+          "name": "The existing Solve geometry \u2192 reviewed Apply geometry workflow still registers and merges the two scans with all three chosen reference coordinates held",
+          "passed": true,
+          "mergedPoints": 2400
+        },
+        {
+          "name": "No JavaScript errors, failed HTTP requests or injected HTML dialogs in the reviewed registration workflow",
+          "passed": true
+        },
+        {
+          "name": "Independent disk read confirms merged point count, exact kept coordinates, unchanged original caches and frozen application source",
+          "passed": true
+        }
+      ],
+      "errors": [],
+      "httpErrors": [],
+      "dialogs": [],
+      "raceState": {
+        "held": {
+          "status": 200,
+          "body": {
+            "started": true,
+            "saved": true,
+            "review_id": "60571bace6ed4da9a20f3dce3485cc09"
+          }
+        },
+        "before": {
+          "busy": false,
+          "message": "Ready \u2014 saved on this laptop",
+          "error": null,
+          "started_at": 1793115067.5662065,
+          "kind": "job",
+          "cancelled": false
+        }
+      },
+      "requests": [
+        {
+          "at": 1793115053509,
+          "route": "/api/scan-registration",
+          "action": "review_matches"
+        },
+        {
+          "at": 1793115055890,
+          "route": "/api/scan-registration",
+          "action": "review_matches"
+        },
+        {
+          "at": 1793115056880,
+          "route": "/api/scan-registration",
+          "action": "review_matches"
+        },
+        {
+          "at": 1793115057873,
+          "route": "/api/scan-registration",
+          "action": "review_matches"
+        },
+        {
+          "at": 1793115058980,
+          "route": "/api/scan-registration",
+          "action": "review_matches"
+        },
+        {
+          "at": 1793115060009,
+          "route": "/api/scan-registration",
+          "action": "review_matches"
+        },
+        {
+          "at": 1793115061034,
+          "route": "/api/scan-registration",
+          "action": "review_matches"
+        },
+        {
+          "at": 1793115061929,
+          "route": "/api/scan-registration",
+          "action": "review_matches"
+        },
+        {
+          "at": 1793115062959,
+          "route": "/api/scan-registration",
+          "action": "review_matches"
+        },
+        {
+          "at": 1793115063935,
+          "route": "/api/scan-registration",
+          "action": "review_matches"
+        },
+        {
+          "at": 1793115064991,
+          "route": "/api/scan-registration",
+          "action": "review_matches"
+        },
+        {
+          "at": 1793115065927,
+          "route": "/api/scan-registration",
+          "action": "review_matches"
+        },
+        {
+          "at": 1793115066862,
+          "route": "/api/scan-registration",
+          "action": "review_matches"
+        },
+        {
+          "at": 1793115067231,
+          "route": "/api/scan-registration",
+          "action": "review_matches"
+        },
+        {
+          "at": 1793115067558,
+          "route": "/api/scan-registration",
+          "action": "review_matches"
+        },
+        {
+          "at": 1793115068253,
+          "route": "/api/scan-registration",
+          "action": "review_matches"
+        },
+        {
+          "at": 1793115068665,
+          "route": "/api/scan-registration",
+          "action": "review_matches"
+        },
+        {
+          "at": 1793115069490,
+          "route": "/api/scan-registration",
+          "action": "adopt_match_review"
+        },
+        {
+          "at": 1793115070565,
+          "route": "/api/scan-registration",
+          "action": "review_matches"
+        },
+        {
+          "at": 1793115070706,
+          "route": "/api/cancel-operation",
+          "action": null
+        },
+        {
+          "at": 1793115072103,
+          "route": "/api/scan-registration",
+          "action": "review_matches"
+        },
+        {
+          "at": 1793115073682,
+          "route": "/api/scan-registration",
+          "action": "review_matches"
+        },
+        {
+          "at": 1793115074764,
+          "route": "/api/scan-registration",
+          "action": "review_matches"
+        },
+        {
+          "at": 1793115075594,
+          "route": "/api/scan-registration",
+          "action": "adopt_match_review"
+        },
+        {
+          "at": 1793115075688,
+          "route": "/api/scan-registration",
+          "action": "review_matches"
+        },
+        {
+          "at": 1793115076513,
+          "route": "/api/scan-registration",
+          "action": "solve_targets"
+        },
+        {
+          "at": 1793115077413,
+          "route": "/api/scan-registration",
+          "action": "accept"
+        }
+      ],
+      "scope": "Production algorithms and HTTP in Linux Chromium with generated survey-scale targets and imported XYZ scans. Delayed response checks forward real responses. No real RTC360 data, native Windows UI or 550-million-point performance claim.",
+      "seconds": 29.396,
+      "tested_source_hashes": {
+        "app/web/scan-registration-ui.js": "5297b76baf85e670b5d3c9456dd38a6ad0066ac93d1260cf16fc51e5c2e07883",
+        "app/registration_review.py": "0931d6faf84ed1e6ec026e0c0626519afe70b272cc5d75b876140c98d5dec28b",
+        "app/robust_registration.py": "0210aceb0798f55497e08ac9719e51f4e1f3c335245428c940f6dcd1eeac40c0",
+        "app/registration_workspace.py": "c29bcb132c7fa29e75d025c05059c41dd0a2b703bf4f59e0aa9b647fa1cd7f7d",
+        "app/registration_network.py": "e5b929175f9b6ba719442ba1901015df7a8fba3d1b67a69a53ed7d283633e163",
+        "app/registration_references.py": "fd3d6618dde24db277c1813c013751d6e86d4bb2e385adce4f13442e2112ca85"
+      }
+    },
+    "installer_transactions": {
+      "release": "0.17.3",
+      "suite": "installer transactions and startup isolation",
+      "test_ids": [
+        "test_installer.InstallerTests.test_active_application_blocks_installation",
+        "test_installer.InstallerTests.test_component_failure_preserves_active_version",
+        "test_installer.InstallerTests.test_damaged_payload_never_activates",
+        "test_installer.InstallerTests.test_install_preserves_data_previous_release_and_index",
+        "test_installer.InstallerTests.test_install_preserves_oversized_workspace_and_backup_byte_for_byte",
+        "test_installer.InstallerTests.test_installer_leaves_staging_directory_before_activation",
+        "test_installer.InstallerTests.test_marker_failure_rolls_back_both_directories",
+        "test_installer.InstallerTests.test_path_traversal_rejected",
+        "test_installer.InstallerTests.test_reinstall_retains_previous_same_version",
+        "test_installer.InstallerTests.test_startup_metadata_self_check_failure_preserves_user_workspace_and_release",
+        "test_installer.InstallerTests.test_startup_self_check_refuses_another_workspace_before_writing",
+        "test_installer.InstallerTests.test_startup_self_check_refuses_existing_project_before_writing"
+      ],
+      "tests_run": 12,
+      "failures": [],
+      "errors": [],
+      "skipped": [],
+      "passed": true,
+      "elapsed_seconds": 0.10577936799927556,
+      "native_windows_execution": false,
+      "source_hashes": {
+        "packaging/test_installer.py": "537dc06401996303fcce0aa73c68e0faed3696ed8a0eb19006b9d7513974f81b",
+        "packaging/windows_installer.py": "0d4c9813ee9be02ad57adc3e243ea139d25b5f156f5cfd8609caed2f50a4fdc8",
+        "packaging/startup_smoke.py": "59c2562ccda52b90bf84712f0f23d9d074021cae921087c63b6e3532b4e4d411",
+        "packaging/TunnelStudio.nsi": "64fc8e08b6f554cccdcf8bd9abfe21eeabc4bd60c2329276d58f54ad1fb9dc06"
+      },
+      "scope": "Installer activation checks on Linux. Includes complete preservation and backup of a >20 MB existing project.json, rejection of nonisolated/existing self-check workspaces, and activation refusal on startup-check failure. No native Windows runtime claim."
+    },
+    "startup_self_check": {
+      "empty_workspace_persisted": true,
+      "fixture_data": "Synthetic metadata only; no scan points or user project paths.",
+      "fixture_metadata_bytes": 21000132,
+      "fixture_sha256": "17cac654d49c88fa4788d5c400cc118f4f61b5f9e83c5db05f9742b3cabfab4c",
+      "isolated_workspace_verified": true,
+      "passed": true,
+      "previous_autosave_bytes_preserved": true,
+      "previous_session_named_snapshot_reopened": true,
+      "recovery_sha256": "17cac654d49c88fa4788d5c400cc118f4f61b5f9e83c5db05f9742b3cabfab4c",
+      "saved_metadata_content_sha256": "fc9156a834667ae1d729e9e6280b7326f218fb854e2671d23120645bb7485ba8",
+      "startup_opened_blank": true,
+      "release": "0.17.3",
+      "backend_modules_imported": [
+        "geometry_tools",
+        "feature_selection",
+        "measure_tools",
+        "scan_compaction",
+        "ui_preferences",
+        "robust_registration",
+        "registration_review",
+        "registration_workspace"
+      ],
+      "elapsed_seconds": 2.3130519980004465,
+      "runtime": "/opt/codex/runtimes/codex-primary-runtime/dependencies/python/bin/python3",
+      "host": "Linux-6.18.55-x86_64-with-glibc2.39",
+      "native_windows_execution": false,
+      "scope": "The same oversized-metadata self-check body used before installer activation, executed on Linux with the explicitly recorded validation runtime. Native Windows execution occurs when the installer runs on Windows.",
+      "source_hashes": {
+        "packaging/startup_smoke.py": "59c2562ccda52b90bf84712f0f23d9d074021cae921087c63b6e3532b4e4d411",
+        "packaging/windows_installer.py": "0d4c9813ee9be02ad57adc3e243ea139d25b5f156f5cfd8609caed2f50a4fdc8",
+        "app/projects.py": "7065e3d4355cb31b56557c8b5da5388581128771b3bb248833320372be591c1b",
+        "app/session_start.py": "eef284234e82e0e6e467578341d6978e82620ba73c634f57ebbb224087967d66",
+        "app/server.py": "76a4039bd847e706761180aafd7139faf463a4d5b1815e282d4f2f1193da4aff",
+        "app/release.py": "7973b92503fc9a6b41f80b867e7c03e999a3f9a0b33550147da9f50dfc2b20e1",
+        "app/geometry_tools.py": "da62b1f4d4135ef0d825990201ab215126f6dc47c90a3ebb73ec6d17d701e4af",
+        "app/feature_selection.py": "668bbb0f6415ecf01a85bf968d8180abdd130612104fe7fc3ecd49284fef59f4",
+        "app/measure_tools.py": "4d582257c4a2d04a4a54b57f1fa25abdd69b5c46a04249b31ec1531bf61483e5",
+        "app/scan_compaction.py": "17b68496ecc8e427d988af3d1b95364abdafdcf9f275bd1a8d19354af13b7471",
+        "app/ui_preferences.py": "ae49ff380c05bb96bdee825a4c5e2001ee8de7a74fe4f124c8b1480312fc3a2a",
+        "app/desktop.py": "5a7f2791d3b376a7b95ea4a45d1093ae96257bcc4e830b66e86a481a276a6ff3",
+        "app/robust_registration.py": "0210aceb0798f55497e08ac9719e51f4e1f3c335245428c940f6dcd1eeac40c0",
+        "app/registration_review.py": "0931d6faf84ed1e6ec026e0c0626519afe70b272cc5d75b876140c98d5dec28b",
+        "app/registration_workspace.py": "c29bcb132c7fa29e75d025c05059c41dd0a2b703bf4f59e0aa9b647fa1cd7f7d"
+      }
+    },
+    "unchanged_runtime": {
+      "release": "0.17.3",
+      "passed": true,
+      "baseline_version": "0.17.2",
+      "baseline_library_file_id": "libfile_510a49f941148191ba887d561be9503b",
+      "baseline_installer_sha256": "eedd66ffc6d5ce8889ba0b18bd65a95c267bfadcefe18feda05a1c7a7a0e2052",
+      "baseline_installer_bytes": 244450488,
+      "baseline_manifest_sha256": "bcef43377f5acd66a94e4bcba0563cafb2b662c2458ecaf5d01b5d964fcd5816",
+      "verified_baseline_payload_files": 20313,
+      "archive_crc_test": {
+        "passed": true,
+        "exit_code": 0,
+        "elapsed_seconds": 2.992659580999316
+      },
+      "archive_extraction": {
+        "passed": true,
+        "exit_code": 0,
+        "elapsed_seconds": 4.511440679998486
+      },
+      "archive_missing_file_count": 0,
+      "archive_extra_file_count": 0,
+      "extracted_missing_file_count": 0,
+      "extracted_extra_file_count": 0,
+      "hash_mismatch_count": 0,
+      "runtime_files_staged_unchanged": 20001,
+      "staged_runtime_hash_mismatch_count": 0,
+      "application_source_frozen": false,
+      "application_source_copied": false,
+      "stage": "/workspace/scratch/bab272ca555f/tunnel_studio_registration_next/work/build_0_17_3/stage",
+      "baseline_manifest": "/workspace/scratch/bab272ca555f/tunnel_studio_registration_next/work/build_0_17_3/baseline/FILES_SHA256.json",
+      "native_windows_execution": false
+    }
+  },
+  "evidence_file_hashes": {
+    "work/validation_0_17_3/registration_numeric_checks.json": "f1a1f1663479f826b745ba383a736c910d9d18e53d3d8304574dadab232134fc",
+    "work/validation_0_17_3/robust_registration_browser.json": "c2fc10f313e9a577dca22e5843840deba4dacdd822bbb2c7f36a16c8f1d16bee",
+    "work/build_0_17_3/installer_transactions.json": "5c1d3636862fc03fd1bd7d2fc2ebc8f7f5edfc115b1616a26de22e60dae78537",
+    "work/build_0_17_3/startup_smoke.json": "f635789b652010d61ef1dcca9efb1783b4318dda53a9985ba14a44903a064cbf",
+    "work/build_0_17_3/baseline_runtime_verification.json": "0ebdba37ee20648f56821b28082efab77449c14868a383f952891efc22d51c4a",
+    "work/build_0_17_3/chromium_probe.json": "1f9e8398aa0c3c45ab14f2950bbe23720329c5025f4e83654625ab646b37763b",
+    "work/build_0_17_3/chromium_runtime.json": "95a0cdfa4e2998bdc4730280c1bd8a7ae52f3ed2d31a087deb7996d997b56e5d",
+    "work/build_0_17_3/toolchain_probe.json": "4e0f95f5f94a1652287dae34d3f4a709e7ff961c4992b6279eda1e894c629619",
+    "work/build_0_17_3/toolchain_packages.json": "53da429252a289fa5602ac319a2c42c1313017e5b31d7ce674175f8b0890aac9",
+    "work/checks/finalize_registration_0_17_3.py": "39c1172594530293b074120151edd171fd5d52c6d5d0cf246a3322711b162778",
+    "work/checks/package_source_0_17_3.py": "a9b20952eea56923a29d0ea484420b557a0866a90318d03e3bbfee2d9d78d9a1",
+    "work/checks/update_release_tracker_0_17_3.py": "30b5e2a555c7426b4149a3aff75a35f9a0765d20b117373441c8d523ae3fe54c",
+    "work/checks/ui_robust_registration_0173.cjs": "2cf231fea373633e7ce6675be9a4e129837eab44864db04c112287b689369602",
+    "work/checks/run_robust_registration_browser_0173.py": "e45d426a99e00a1eac135ff35816c9e546bfc9c0ce16fcf5d97f214a0a4eeabb"
+  },
+  "application_files": {
+    "CHANGELOG_0_10_0.txt": "cd9fe8f1e015c5015265ef4c177b700e3ae2d24ef9a22be18d12347881517733",
+    "CHANGELOG_0_11_0.txt": "a6fc42f5f61b81ae548fdb8df5cc75e1b9ed73fa825a4d47f0e3a4baaf46e52e",
+    "CHANGELOG_0_11_1.txt": "ec29473b57321931e084d32d1428002bee21e9fda67d5ab41f49a887481113d9",
+    "CHANGELOG_0_12_0.txt": "c5ccd3672b3e96f86f7f3609a2c68031cb0b0f23700e492de32011afd0a6a974",
+    "CHANGELOG_0_13_0.txt": "53cddb686c55ac2d3935bec800621c96a95962a9f1eda16acfde047948739ab9",
+    "CHANGELOG_0_13_1.txt": "ef63b461eeab95bda638ed4bcdf49bf5b63c200a48e6a7c3cef6762c226d641b",
+    "CHANGELOG_0_13_10.txt": "9912b041b7e021cc06e897cc5410ef715a425e0ef552dfd52a1d82e40c4ae99d",
+    "CHANGELOG_0_13_11.txt": "add7ac7cde66ed60ce947d70b73b8733667bba3363a106fbb123693b117e6658",
+    "CHANGELOG_0_13_12.txt": "5a0ad1380df3715c2237a7d723dafec46f03fc23c50d39bc23cf1b491f211dd3",
+    "CHANGELOG_0_13_13.txt": "c321557abf96f04ba0a903014668625fe0b49e3287fc44e39d1003e4af88398c",
+    "CHANGELOG_0_13_14.txt": "56a517d6b93fe64ee02ce5ad7a2b48a8202e8c2ffe7245d355328760c64cc433",
+    "CHANGELOG_0_13_15.txt": "91dfa43c80c4fa7ae6153f2d3e7500766f58155e78bcc789780aac248beca572",
+    "CHANGELOG_0_13_16.txt": "deb9b5900d4c13c93d776097cb54a522d6d3702f0a4ddae7ad8bd0e9971722f5",
+    "CHANGELOG_0_13_17.txt": "994902b852924cb5009375aa2f35c5d781dea2294100814201658f36468235a3",
+    "CHANGELOG_0_13_18.txt": "fa34d06cdcb88bfb4a8128de7c600e8a752c8724c11d8546d7a7916b77491a07",
+    "CHANGELOG_0_13_19.txt": "7afe0ed7ba23acef8514da67e4602b70b51789808b417290bc6604c1ba69aa26",
+    "CHANGELOG_0_13_2.txt": "f79ccac4f63d252ee016e5e5cbbcff3cf486604f2ada1746077d79a8c8570710",
+    "CHANGELOG_0_13_20.txt": "530174cf44275b1b323e377b77e3ebc512f3ca5e89323a28fe3d8570d8083aa0",
+    "CHANGELOG_0_13_22.txt": "24955ca548649359043669e34d2e35d6840d569bd778e01509b987e36dffeb82",
+    "CHANGELOG_0_13_23.txt": "1577dbbd64acf88b80b8d3fce4cf0c8344e765a12db5731669afe43aa0829f4e",
+    "CHANGELOG_0_13_24.txt": "328bf049b3cada3d09f42cf93f7ca494bde874a913a7909ff9483bd576f4f0a8",
+    "CHANGELOG_0_13_25.txt": "e861e7a79016f60ad5a5102cf5f4a55327b9c9571d78c653793ac1bca4fedea9",
+    "CHANGELOG_0_13_3.txt": "a9c7965dce1d60beb4398c04831d68f03dc1d9c5f044031f41dcc19657ff4088",
+    "CHANGELOG_0_13_4.txt": "863c5f9330d88aef08c2b9923477c7686fbc2e3d46706a45396c2773cfc43bf9",
+    "CHANGELOG_0_13_5.txt": "d728e0e55b67073fbc5118f6b47c0bc66ea256e14b7394634dd3d6317e87e059",
+    "CHANGELOG_0_13_6.txt": "62a0381da37171301367d70274e84ccc9dcb15d1a29ea3bfb5136c9cbc1deee6",
+    "CHANGELOG_0_13_7.txt": "6b08ea4679a14552868391c98f980a531f52d1a173d0eec47becaf7ee2a60675",
+    "CHANGELOG_0_13_8.txt": "884254764d3599f3b119cb5a10c1357c1c4b5ef177e99d05b86fce2c9b0df1cc",
+    "CHANGELOG_0_13_9.txt": "db3dc0fea8c73b136963f8e77b3b5eb3c9192ba62f8cad74e5261c33c6556387",
+    "CHANGELOG_0_14_0.txt": "e271e9dbeaf8cf56e9b2e129c445169bab53c2200681e78692f8185c46daa483",
+    "CHANGELOG_0_14_1.txt": "3d54f167d9a04733c9774855054b67174a55c1dbeb3295a11a4561cdfe012d48",
+    "CHANGELOG_0_14_2.txt": "12c6b14a2ac36434bddb91020ed55d72048486c92add7eec39475239d641bdf9",
+    "CHANGELOG_0_14_3.txt": "bdf7f36c71bea71f2fb043739c84a0cad31a32936c5e52c72a82eda306db210b",
+    "CHANGELOG_0_15_0.txt": "e2fcf5a7aa15971e9ef237af2ec6297b8cf9507185db34b7b6fd129e42dbdc6e",
+    "CHANGELOG_0_6_0.txt": "3ffd82d54212c05651e61d1a82f52a179cb42af0032f158d2080293e779d3f20",
+    "CHANGELOG_0_7_0.txt": "384a99c04a1283829aae635551a893bff044aa0a665912388d70461efa92e498",
+    "CHANGELOG_0_7_1.txt": "61342c2884ba6d07d7515b96f2723f962bf0aaf4098a36dceb19bedd8339afe1",
+    "CHANGELOG_0_7_2.txt": "8750f98b6747b3e5a77a9f631fffb595f12ee3bbadb1cdd2a5e6d5cb2c399b3a",
+    "CHANGELOG_0_8_0.txt": "8d4be7bfa0f09b4faea642b3020b0f51632f6756bc6458e6d413a1c6652713ff",
+    "CHANGELOG_0_9_0.txt": "d30282814729dadd10d2ef939f3583fe6e141c47b4c70927ddc40b339e911c6e",
+    "CLEAN_TUNNEL_METHOD_0_12_0.txt": "7c8297a9ba77c27d56de4a807347fbb142249d18e3c0ab20c1c366a6e88af52b",
+    "COPYRIGHT.txt": "1cbc46f6b41f915bc53cbb533dd4a90e912f9ce154660fc2ddc9022639865f06",
+    "DEVELOPMENT.txt": "aba6e97d16e7eb5c38cf019743dd1238208d73b4f5e95c7ef034a517042e7a80",
+    "DEVELOPMENT_0_3_0.txt": "a175375283cd58faf43c92929882e129fff8ff1aee642e1ebe6c1ebebe743de4",
+    "GEOMETRY_METHOD_0_17_0.txt": "25404fe40e23552d229c7cc426f46b88eb9aebe6079a4e6d9d3079710697a394",
+    "GUSAC_TMATCH_METHOD_0_15_0.txt": "d544b438e3c5d63e1c95a0d5a1a27c17409ce07a8779b0d97b8bf14dfbacd5f5",
+    "MESH_METHOD_0_17_2.txt": "05540154f7355f00c4dda2e97c85896a476d2c196263361de45930699729d3df",
+    "MESH_TO_CLOUD_0_15_0.txt": "417a948b9d9ac1e26dcb97d4362e5ea49ffeb7d1f48106f37d8ea229b74f4d5d",
+    "METHODS_0_13_0.txt": "1e67b4e6bfe1738df4ffbce02e5c5d13549bd5955fc1134ef0e47c95ec12e226",
+    "METHODS_0_13_22.txt": "71a72b075af34b1792f4378b4c4ce25ddef82346945b73aece852195292f7d6b",
+    "METHODS_0_13_23.txt": "9eb9340fc77b1688cf5a49fcf5cad6a150a3b6a9907deaa55a92233f770f988d",
+    "METHODS_0_13_24.txt": "0feb5de8426df9b5e09002bf8ff46f8ebe00c26a25a4f7469105593c62a4b55b",
+    "METHODS_0_13_25.txt": "479a5275f01e3cfdd0ca6e3a389b6f925fac90a9e9d30ec694bb5baed5e35f8c",
+    "METHODS_0_13_4.txt": "7c64a3dd539728524f2674858c5979ad6ff7a1a8d7180614604c33550304d1db",
+    "METHODS_0_13_6.txt": "e2bad2959340193c7f6927eee886fdb9726d0dd2aff9aa99ff8f66aeb208532a",
+    "METHODS_0_13_7.txt": "8bb48b9fbdfceb103c96a12669b446a5dc97adfe0059a47cb1b425330df19717",
+    "METHODS_0_13_8.txt": "a0674a8841f8ff70671b77aa11e842a4356e5383e2625e28f1d1927690d6f233",
+    "METHODS_0_14_2.txt": "c58835ba5c351104cfb0091b6293ef2a9b659050b60db7f960bf1908f320087d",
+    "METHODS_0_14_3.txt": "fc684379664bc2f25323ffde1c6f44b80be4656fa87bc9b5c6627465116c9e8b",
+    "METHODS_LOCAL_FEATURES_0_17_0.txt": "f2b72996ae0c0fe41bd30982781d6d6924028d4c67dc184053faf47efc791316",
+    "METHOD_RAY_BOX_0_14_10.txt": "4e8ef4078a43c617dd58a21f0077cac6d3744d38630afc4505b648be39c5791c",
+    "REFERENCES_0_10_0.txt": "50deef0c3eb14a09099677b0588c82bd90642231346f17db42a77b93ececa6ee",
+    "REFERENCES_0_11_0.txt": "60e5e294b6d1b8b0c69097c4eb375d05353ea53c025afc70313aba499044b856",
+    "RELEASE_SCOPE_0_15_0.txt": "a4bb77cc76890286f6b4740e5362a94d139216bb6f58a7cacd6416ec9a4b6b2f",
+    "RELEASE_SCOPE_0_16_0.txt": "c43b2eb65ca5e242fe471c64b51d5aa6a8e78633ae8223f63243cad6110867f4",
+    "RELEASE_SCOPE_0_16_1.txt": "e068720dc47a30b8cb7aab7f2bfd1509794dc4bc73ac715e6d23cdefd47235ce",
+    "RELEASE_SCOPE_0_17_0.txt": "7774c391669e9079719137382e68e8ed598784a3e57e91591a16f3976f0782eb",
+    "RELEASE_SCOPE_0_17_1.txt": "ce258a894b8bde6cba1cfcb3a1006ab3e89da0caba17eca27949247098ebc7f7",
+    "RELEASE_SCOPE_0_17_2.txt": "c8acfb57c2a93658752e57e06da3aaae816a98e04d5a7fc1188b2d43fdaaa461",
+    "RELEASE_SCOPE_0_17_3.txt": "799a0f7c5134b6b84fb86ed8cafdd4e1e13cfc6a81594d04f3245b7054c4d464",
+    "ROBUST_REGISTRATION_METHOD_0_17_3.txt": "ad21b31ea3b8644d8816905564925b7dded949c030834cde540f9b43a1f30453",
+    "SECTION_METHOD_0_12_0.txt": "77c4fcc39213d47406289dcd4a579e29517d01791af152400aff754160968dd4",
+    "SURFACE_METHOD_0_4_0.txt": "8bf37b8b2f799c58802bbd82be8c527ad78b8ba60ee9deb5ed4f0c035d0271c6",
+    "TARGET_DETECTION_REVIEW_0_12_0.txt": "25eb208e23e4f224af6b37d8ce3c392f2704e548489b25e5474b5c507598f402",
+    "TEST_RESULTS.txt": "bc11330c55380427b52cea1820f04c18001ed2ded0bc02c682744055097b57fb",
+    "TEST_RESULTS_0_5_0.txt": "e2eaf5c2787a46428d0b05b96a949eeeb54a1814295892c29e6810a4c0d231cc",
+    "THIRD_PARTY_NOTICES.txt": "d537040165dc369b81a3d5e9a3f2e3f82f1dc727a03ec4c31e340a94cae1189b",
+    "UPDATE_GUIDE_0_4_0.txt": "a141711194c103bd66f23a0024defd17254248f1dae038ba36008fcff0c9296b",
+    "UPDATE_GUIDE_0_5_0.txt": "ecbebbb46d1c308994719278f7cd676afe6b22f2679b16d29ed5a5dae7054ad2",
+    "VALIDATION_0_15_0.json": "fe4eb08c4678c2e4fa8c41a942389834a7fecb63cec7a31c0a96446928dfa1ac",
+    "VALIDATION_0_16_0.json": "133667e61dea4958c9e0130f65ff9aa9d3ff16c72f0eae8b46d4a2e13072acba",
+    "VALIDATION_0_16_1.json": "4ce9aa70825dbbd665e3c186b43302434d876d8e3d078c5a57b208541ada593c",
+    "VALIDATION_0_17_0.json": "2619fe5409ecbdd9805dc704ba1231bbe65fb43257bd399df39376b3b0100228",
+    "VALIDATION_0_17_1.json": "da7c5f7edd86fb27c4edaf0498c86c5cab1918ff2e58e6e92d73a7c78eb92656",
+    "VALIDATION_0_17_2.json": "84b9f8991251a4d0005168aec70c27f04757b0ae7c249aac1bdc50d82c6a7c46",
+    "WEEKEND_CHECKLIST.txt": "c389c9c3794952686b26766379839ea25934cba55a7a18a6e4821a898d7a18ca",
+    "alignment_model.py": "a9780ebb8b4d2d8349c141b470fcb87455d69d215e1db41f92ce72a4716db2c5",
+    "analysis_tools.py": "b633c75f2a073c22dbb5be219682473063f9f5450c8274f13a80a0901c891cec",
+    "browser_mode.py": "8a08e27d90815e1a520fce0f36b3887c75c8fa612909f514ef5d197ebe4183ea",
+    "cad_api.py": "fd38bbc18ccb5c3e3414491d33d70f8f15f99618d06126a2ee1df7629731e231",
+    "cad_geometry.py": "7beeee64f261aae132fbe8766108e8daed5b098f0324e1a355cad5d6abcf0998",
+    "checker_evidence.py": "8c75aea056870cdba10b917f4ec82d2ff0ba926e720b86016c5e6221f2bf6aa9",
+    "clean_tunnel.py": "ca4e88d150a7778b2f58ed7f31455c1195d02fad3b3da46306aef6899962ab61",
+    "combined_denoising.py": "18a73ac7d3dead224149e15359ecddcebb3218f7d7f0595d805a2c22fd7146cc",
+    "core.py": "5ee5f6cddbfee97f54a378dbdf4252f0b402cc1b4454561ead2f1bffca582024",
+    "demo_targets.py": "41037ceba4e2b298b5f88245c997a91954814bbb2a19bb7bce359f74af53f5cb",
+    "design_api.py": "304e22b46b030097e3a3d30b9286737a522c894595261f529efff4dc30e390d0",
+    "design_compare.py": "f3b0bb7b040713d5327e1a72aeb171670e6c581d1b53893ad578ed1c27ac3675",
+    "desktop.py": "5a7f2791d3b376a7b95ea4a45d1093ae96257bcc4e830b66e86a481a276a6ff3",
+    "detached_windows.py": "4bdfb1245073705a90b2d752c84095c0fb629209caf61198f1301bfbe5184163",
+    "detail_preview.py": "8ded0ebc1530f7d3f9778ef641aa74026d5028a709f4ef56b673b56a7f6925fc",
+    "e57_setup_photos.py": "34918a0b456763cf5f017825a0052be1807de9d9bf20c82e541d3bd7a3e57f0e",
+    "e57_worker.py": "76b12b19977809efbb1fb21c0d4e97a12c8da4a22d903deb7c4f1d895e22d61e",
+    "editing.py": "45cf3d7c4bc9114eb72a854759258f8c66e538ab7d34c507a2a81ccbe1591fd9",
+    "examples/SAMPLE_SURVEY_REPORT.html": "4f87e8b9cc1fdc353a9a987ebd482571a731d2c747ffd9db22861ff3d52125e9",
+    "examples/SAMPLE_SURVEY_REPORT.pdf": "df1f91eb749fd6cefd7a08a1cf9c212022176473623903613878565aa54d69f6",
+    "examples/alignment_template.csv": "9dc65c5a3a506161d72efdcd258fabd5b85c7b3ba680ba891fc2699fc1da8f5f",
+    "examples/control_template.csv": "aa2d00ae10d0ea62a3173b18db56540491c81f2f023fbb23c8cfba9cb3fd6f2c",
+    "examples/demo_alignment.csv": "c970fddbad074ab7cd9c83a4bf8d627a0f2fb61fec73470e6ec0e593aeb49f21",
+    "examples/demo_rings.csv": "efa9a04b483a730afc7bb319657cfb9419f8344275e16bf7880bdc8be1c62fc7",
+    "examples/points_template.csv": "bb8d2542567ef04ffe817aca925ac616df5096a85481fdb3fe037f1f4d557b1d",
+    "examples/ring_template.csv": "a52e713d60ebd07ea16c6252ade025a29ab2d0d997d5eb6048ca6ee45fee52df",
+    "exchange.py": "15ba5bb19352a43787fa74819ae1ec728a63f80e65db39ad1623e4daf479e7fc",
+    "feature_selection.py": "668bbb0f6415ecf01a85bf968d8180abdd130612104fe7fc3ecd49284fef59f4",
+    "geometry_tools.py": "da62b1f4d4135ef0d825990201ab215126f6dc47c90a3ebb73ec6d17d701e4af",
+    "gusac.py": "340a0e762cba92d429d959a874cb1b497817e06a6d6c084bc535777e84b938cd",
+    "heatmap.py": "83650ba586989909009ee614efe2baf7ff591b5e8d0b6568bb71dcb4a88d7c26",
+    "hspca_codec.py": "cf83ded72ad7af93c0e17a3087051ffc5dcce8d04c49e6c31e9038b134105023",
+    "hspca_import.py": "55eab9f6d403eb4f21cc0ebb4669ad2c47bde13712ffb916fb1b2e1838ccf32c",
+    "hspca_worker.py": "9d660223deb20bb87b2296cfa47160140877ccc3751c420ed51cf087ab678143",
+    "inspection.py": "ec090186c37686668b202a3ce51e297aac8ec31eb0884d1d2c42d752c99c5432",
+    "inspection_api.py": "8cb17bbe9948d9264a453f1f300289d311db337fde3e03feaa52a9841ded6b8b",
+    "inspection_geometry.py": "9ecfcbb16e54757fbd841131f8cb176b4c1d736ddf80a9940ed8125103064476",
+    "inspection_points.py": "384ec40bdb109a86bcaf21d05172b0f05426497ae387a1e774f5359803032246",
+    "install_bundle.py": "2c5dfcac212dbbd4c4fe0e14dc223d500ad023d513af7d27b8090c9dacb4b8e0",
+    "install_windows.py": "b395d8de5a690e74c8b1ee381d6f442e85555971369d076e4c2eecbb6882276b",
+    "irregular_surfaces.py": "ea94aa7290f4702553fc0b956583053aaacaccd121e7f619fc1770c71fde3357",
+    "job_api.py": "90ec899c9ee7fb9f67cd1414263fae86a4e4c329437d22d269255ac091d56499",
+    "jobdata.py": "a29797b7ce4fc4897a6537eb7214f623c569f15aa759595a75f640c8c03dd80f",
+    "joint_scan.py": "24f0f325c2bb0990b74f4a9ec22a5aabd906bfe39aea2813155bfc008e3da11b",
+    "large_sections.py": "8100090f33b5183fef761ff87a1915da6bb4fdeabd1038428be336add7ecf626",
+    "leica_bridge.py": "1b1339a15947de9c4121a80182ffdb9e18b82526bd2b9d1e4b25052826f5aebd",
+    "leica_e57_worker.py": "06b6ca2bac9f9df51934ae20669b1e733be05f750f6880930afa26532c3c61b5",
+    "leica_project.py": "c5bd0199528f8e78525859640841a6b72eb9a8b97f26f92888b9c511b7c0c672",
+    "lining_features.py": "e95da5c807853e0285d86953e8c54ff18f764cebb011ecf2c81a771678b4815c",
+    "lining_tiles.py": "9c0d269cff1372ce6ea512d387dac6ab5972b24c1670b12e7be9f3efaa88323f",
+    "mask_storage.py": "370be2197171fc141d6df7c82c566518897b8104376690f49a8dd1d78d12878c",
+    "measure_tools.py": "4d582257c4a2d04a4a54b57f1fa25abdd69b5c46a04249b31ec1531bf61483e5",
+    "mesh_geometry.py": "463a595b9c456639329391502d386c2d78e9573fe1a55eb4eebc8f9af207e27c",
+    "mesh_preview.py": "f96e9a196271044518d46267499ba6b3b23d6c7e8474b62747455c9ed21b5154",
+    "mesh_repair.py": "3922ecb533fa0c3fb43d256de70950dbecf367e7bb653d4aa2233070d9b1c647",
+    "mesh_sampling.py": "ecb17b342827517245ea0fbae7026b9c5dd8b8a7c0e310cbd291c8e93c5065ee",
+    "mesh_to_cloud.py": "c96fa93e00186d177d2a6ad2b4594eb6a2b70c129ecdf2fc6ed16af3fca5d9c6",
+    "mesh_workflows.py": "460e0b89da930a35b39217d1b2bc0e2ea73f5eb5f01f67e0dcf4eb1a9ab18ca7",
+    "meshing.py": "c5887a93c2d7b8d009a3971bef5a1cde8e02934b622310bf8191a59cbcbe6f54",
+    "native_progress.py": "76c2b9f5ba6bf3173c9ed367c96f3ae9703f30d516c0877b86df867315657d3d",
+    "ply_ascii.py": "aa741a8ba3627897b84daf2a8b55d7e805560c963a9b0752e534de6708c99252",
+    "pointio.py": "6dc23a865d3c33ab8b806e5950b6cd9f87e0a2f5f00780429cacc108ce42ee5c",
+    "preview_index.py": "c70aba1cb11da6c35d2ddb1d957b82a2d976ac389412705cc75561f1bbe28549",
+    "preview_store.py": "fd6bffa65426f54d9fd75a0e46ebd6e1a40a400a70ca6a84410ede889e10e2c2",
+    "project_maintenance.py": "baf795a1758943924bba61b5e1a08e993a2f51e0e494ebe4d5f101cb0e0954fc",
+    "project_validation.py": "4ebe43b7ecbffa34db59266f44834db26b31c8fb14fedda8aa6071c5ca3358d1",
+    "projects.py": "7065e3d4355cb31b56557c8b5da5388581128771b3bb248833320372be591c1b",
+    "ray_box_extraction.py": "dce44a9b42f5feb36e5d3a7cf03bbf70af30f7f711a2ba9d8430946df4bc4fce",
+    "reflection_cleaning.py": "6334cc3efa39f38688fc033b1fcc099795c06b7448b332be4d40b47efcc923c5",
+    "registered_cloud.py": "92f5fdfe301df57ab0c8ee2e7dc1e388d1e43985e36b86d302bb912a5157c23c",
+    "registration.py": "2a5871bf23315fe5ab14caa0ca697a6da0860aa2404dd07d9dc5d943ea9b4628",
+    "registration_network.py": "e5b929175f9b6ba719442ba1901015df7a8fba3d1b67a69a53ed7d283633e163",
+    "registration_references.py": "fd3d6618dde24db277c1813c013751d6e86d4bb2e385adce4f13442e2112ca85",
+    "registration_review.py": "0931d6faf84ed1e6ec026e0c0626519afe70b272cc5d75b876140c98d5dec28b",
+    "registration_workspace.py": "c29bcb132c7fa29e75d025c05059c41dd0a2b703bf4f59e0aa9b647fa1cd7f7d",
+    "release.py": "7973b92503fc9a6b41f80b867e7c03e999a3f9a0b33550147da9f50dfc2b20e1",
+    "reporting.py": "56185da652cf8198b79da836a6a10cf0011823a10b354f13b46ebf0287a95b53",
+    "requirements-desktop.txt": "89e2f0fc59ad44c88a3b2a20bc1026ecbf9185c73d888c547d1c86e684f0fe1b",
+    "requirements.txt": "318975e04056bf18adf20564cbc4e4b7f515db0e7c23d691a950139e626bfa68",
+    "ring_creep.py": "2a3c1958f2b5bcca538bd704f481942b00ef82f4b97b275c7abe2e18fa611c26",
+    "ring_suggestions.py": "b1b08ba5203fb156e620e1946b7a27bd06aa5177c9e1bd7902c83196412f2c12",
+    "robust_registration.py": "0210aceb0798f55497e08ac9719e51f4e1f3c335245428c940f6dcd1eeac40c0",
+    "rtc360_folder.py": "2a4049941899c99b79b15e8772cd7d6dbdf418407b0b06df2fa2925e9edfa87a",
+    "rtc360_image_probe.py": "ef447454b6d380a2fc7400be3f8126b8ba1c32cbeced141f592ee2944b28440d",
+    "rtc360_native.py": "90a3c37e5f32d15636b51b66d3de890e62db8bca10c03262cbadc39c6f25ff70",
+    "rtc360_native_worker.py": "366c9ad04159067fa05e2885295b55c856539c6fb0d32081c58ccf007023245f",
+    "rtc360_optics.py": "6b1b32523f51fbf85c847be89da0f9e87031a505cb58f2bcb99ceb4c2bdac3ed",
+    "rtc360_scan_probe.py": "a37757982a38fd11e9449654d280d62da726a2111359844b43796083ab2da737",
+    "rtc360_source.py": "1b8d4f2049fec205b8fbd3813030920b34560385bca160fbdcb3ba232d8c9e73",
+    "runtime_diagnostics.py": "a8d25d081cacb1fa30f0e2557da25f54e13b2278860242cb74d7d54ff565c97e",
+    "scan_compaction.py": "17b68496ecc8e427d988af3d1b95364abdafdcf9f275bd1a8d19354af13b7471",
+    "scan_edits.py": "97180faf0308fe3f709e575f632618ef31c5b1a6f6fb4357cd90a2ffdd6d8896",
+    "scan_export.py": "93b6aed46bab5fce4eacd591db937a8f339484794570a3b987418785e52ede1e",
+    "scan_geometry.py": "60270cee4090b550ce909d02255d0d579dd503a21f1370ec947bc06defc0b931",
+    "scene_objects.py": "d8f166826cad52ca628baba5e7f0b4246daac9399695ab1ce232c9c16645cfbd",
+    "section_api.py": "2ece54be96e483c6fc01afa752611285a6d5a883304084258bbdf0f97814b41e",
+    "section_path.py": "a55322f67860f4d6b3f0f1f4f683369f5f9188f44437a56d7b0cced354cb769d",
+    "section_research.py": "e6ef5f66c1659b30cdb56bab91e1ce3a2f282ee6eabfd930fe18424806e7c24f",
+    "section_shape.py": "e441079a452f9062936f91f2a5053405dc970603c914736e6a2655012ebc5576",
+    "server.py": "76a4039bd847e706761180aafd7139faf463a4d5b1815e282d4f2f1193da4aff",
+    "session_start.py": "eef284234e82e0e6e467578341d6978e82620ba73c634f57ebbb224087967d66",
+    "setup_camera.py": "dbdad22ad6c38d6e58533cada3db2b462bc44c79f786533e3bcbc1b9edd5b9d5",
+    "setup_photo_codec.py": "ca7b7e180991d69ea7fd90339d61ce74f61f0cfdab7724ebaba1a6e1b01ca1d6",
+    "setup_photos.py": "90dd7881dc6a85c351919f4de67abd87e9c904220ec4479397e83fe6cdf58603",
+    "setup_view.py": "1addf1c115fb1cb7ccf5f8ddd279f32ab591d97d9cc519486950add5b7b513fe",
+    "startup_support.py": "7768d113d19e47751040c8303f5f6c7eb8d1be2933616138961c00cf5b02e7b7",
+    "structures.py": "9c01a8be100497dd1bf6a50bf13315e0dc60ac6d62c04552bd9a456a01500572",
+    "surface_api.py": "b91162433f81762838556ddb50608bc2f6f4e99b7c2dffe8cc8f9bacf5fd904a",
+    "surface_demo.py": "5f46da1ee0fef968dc4c8f799c1ee6d7c0c27d4203eeb95b8a0c2507d51f64dc",
+    "surface_extraction.py": "c32ba305b4820a23fa6a2f4b5601df36730ce45d9b411240e1e8c9171da5c167",
+    "surface_streaming.py": "bc4544688a61bd1fd36e02df03ddb4e7e8f315057773fdac0458f8b4cf0c4810",
+    "target_ops.py": "3ad3303a85e6588c643fdc489c8330c067013f6edb778745f8e4b5f4c96afdd3",
+    "target_search.py": "7f49adb80dcdb06bb765c4e85399f191b5e133bb1c645df392d01ec3d0d6d791",
+    "target_thumbnail.py": "face7434722c5f283ce509801bf5e9d2efad7fef7cc6ae0629822b8713dc660a",
+    "test_core.py": "047c7463cc8608cacff33b4022e22baa67ae6e6ea6504d89bc8e46ee7d0418da",
+    "test_desktop_backend.py": "a2ffa0f889d551fdef53ff6a37ea43a316afcaa28fc435b2c9ddaf16f7e34ed3",
+    "test_features.py": "930d6df54459ccfbff5ade0665b23b27252a93529fc77eec411cf343c19c4516",
+    "test_inspection.py": "64d3032ff2caf3328093cd608b37c94585dd437e539ee41e60aeb8f6103255a1",
+    "test_inspection_geometry.py": "66a02d825d0417dc8969b5f06990efbc3228b002e4d990cfa2dad6897c130e05",
+    "test_inspection_points.py": "c174461e4dc6d2f918c838f70054bcd9b4bc0a4b4c76d6fd03dda39ae08298dd",
+    "test_jobs.py": "98bd957a3bc7b9cac869a3d0c1ebb8d28bf5af2c2eb0c265311af0b87b192e99",
+    "test_mesh_to_cloud.py": "95a5d69d60b890fb796dd5d4deb43823f6e2d3230eeb8a7b86941378088748fc",
+    "test_project_storage.py": "284df14ed0ab080f9b0720aa3c9a086aeeb73067f9ec186585cf180f8efb5868",
+    "test_ray_box.py": "ae83c2550f36676c31c3f7212e3b73b81bc7229e28901c130f6e420d7b0545ab",
+    "test_registration.py": "f9a426aa25d4255753f00decac5f2ad1b6847589d9a61c3285427931ea755693",
+    "test_startup.py": "2f34db8e59e5d9f26e9b2a025610405e72a783d1c9b046e7d9fedc7d94c5e443",
+    "test_surface.py": "6b59139c3ab716db8221e15b2d3f10bf9ddfdf4d4d6cf27fc0f42f4d387437f7",
+    "test_update.py": "ce636e96c8f527827dfa74cb985c9b89847c9568aec6d43194ab26a62671875d",
+    "tmatch.py": "0cfcc1078af13401ca603f6676aca3999c7786508b102bdcd627f7f0a2d9ca86",
+    "tunnel_axis_fit.py": "b098101170ce6dae70a1fae7d6edde09d94219031b3c7a3edf227f3f016a96a2",
+    "tunnel_designer.py": "ef4e98309448229b82a79008016f4f857dd794370a72e0142a621e4dec031cfa",
+    "tunnel_lining.py": "3081bcafaf2c1278302fcd77a34c5e96b36b1b16a5f227f9cd953edab6cae06a",
+    "tunnel_surface.py": "8b1844dcce5c805fcbc279604c08bda8ac0d07050f3874461f3ef5361191a4c6",
+    "ui_preferences.py": "ae49ff380c05bb96bdee825a4c5e2001ee8de7a74fe4f124c8b1480312fc3a2a",
+    "upload_io.py": "60307819dcfcdd6017b97bc93b9a605d4e95ff423e343feb5ae04ce4212ac1e7",
+    "web/alignment-editor-ui.js": "d34081e191ecff5d92cac2e7cd42d5b097985da9610da9e6c3ee9f9991dad309",
+    "web/alignment-hub.js": "67974b574cad41220f593b2a1c9dd4229d9c1a448ca2919a67a1700ee1990136",
+    "web/app.js": "02f922bcc53dbf94e5c9ff22845013ba330b307df80563baf4444822a7fccddf",
+    "web/cad-math.js": "3c2d8272f86673c7475ec9f008ae1df4621ef8ec0a86a04f6b2a2231ef014cac",
+    "web/cad-ui.js": "7f01387e1a08706bfcbc0cf2416d1af8860d1332dfcb28ab1e2987de9001cf5d",
+    "web/cad.css": "46d66230e823ad9f87606ceb05f8d3aee807f6c89b008e6226f35e50516b97c2",
+    "web/cleaning-help.js": "f203843706bdfd511c4289157968dc415c81381aab1dcae7282fd2495f4dcade",
+    "web/design-ui.js": "909bf96e63fbf562737b6fb4e2e000e5ee60fac0cdcaa0aef77e1dcc3342144a",
+    "web/detached-client.js": "d8eaf043a7c631a52d3b11648b7212b7bc74518a330176fbc45e3850d4afa2fe",
+    "web/detached-ui.js": "a1e6d5cb2b9c488265dcdc2bbe9a0220b15b50a6969afdedb06fc87c16ebbaf2",
+    "web/detached.html": "f3762c59486e7be9902f77cad67bd1eae7ddbdb682b48e5d017280208a19d7f5",
+    "web/explorer-polish.css": "c43b730827e24bfa7077300adadda65cf0cea8d22f0a4a1173dff5631094632e",
+    "web/explorer-polish.js": "ebb096ed9c11b94711f1b5aaf6fee223086da6f1c96b0662ccb25df207bce5ef",
+    "web/export-ui.js": "e86f20a525c605ca0a7f1972b3467d04b1886ae7f6ca20aa4de093811a7ec713",
+    "web/feature-selection-ui.css": "109f2223f820b24051755bcc9d505ac494bc10ab09471972d313d370173fadc7",
+    "web/feature-selection-ui.js": "f4f024a742d32dac2cafd9b3f55b42c0e4723b4688c2533a6b2aff30694f757e",
+    "web/file-drop-ui.js": "f2b2b2d96cd6308bd3188dcff8fc3569bdbca81f5cab33d1b21d9f200cc17975",
+    "web/geometry-tools-ui.css": "4564d0da3b15925f9991fe64c47f309f52a6df5b17b7e6e0ee12ceefcfd30406",
+    "web/geometry-tools-ui.js": "027c88b6f01ece88812c26e25f6c62d58b61b66d19e3b68db5468b9f4860ccd5",
+    "web/heatmap-ui.js": "e1b4e1d0034f315b53372d42148a180026991432e11e36af46fc9daccf2d2524",
+    "web/history-ui.js": "108a2e587ce579499d12f9ad55a3c9d257c5e9e80c0d0768a2bf6dbca3e98d6e",
+    "web/index.html": "a1e8f24017ffa1b41b6f77cb153f78bb51e541854b99e48a1b196e91bdee36a8",
+    "web/inspection-ui.css": "98aada7f625790740396ed4fe64c2ae43d8795bf3dc47a584c9c405df2231e33",
+    "web/inspection-ui.js": "197d9bd5d14bf448bb55de9e83f801bc9cea1949b41a8c5320a95ef1c0fe8a62",
+    "web/job-ui.js": "6bca0e47fbcced987b71706a1e7d845d919dc7b03538dc42b00ef8eea1bb5a2a",
+    "web/job.css": "52fdf258fc4865dd2f56a6ce37afbcf8a73513bfa68dc84480c553070ee267b7",
+    "web/joint-ui.js": "62852da3d34e97ed94510f526488468d711fa9659055276b8e6aa565a9abd693",
+    "web/leica-bridge-ui.js": "5d84d1a1d626ecf149f58692eff8e72f086902dc94da9c8b0c36b29aca458655",
+    "web/limit-box-ui.js": "25b23659269b235ce7febaf9d0aadf46ff3bd77b9723b2e74688e943f2c28331",
+    "web/measure-tools-ui.css": "ce1ad2138ffa1d124c2822df0f10536b02989b81271853c55cffacc281cfc817",
+    "web/measure-tools-ui.js": "769998284fdfb8a36996ae0eb128da5d1d4e0c37c98f2db887b8c482718eb48c",
+    "web/mesh-repair-ui.js": "c915690f4a4f17e8496c3bc4d85d58932f9729d3384f1c692384e8477d5c15d6",
+    "web/mesh-results-ui.css": "06ee037a98f282f9cb42e7578a812b408aac53dc320db211dc209aa47f36e896",
+    "web/mesh-results-ui.js": "8083a61040078c539ffb84e783412a305f31b1724dbebe3047d8d7edae614cee",
+    "web/mesh-to-cloud-ui.js": "5a0c0ba55fccdf20959cc2961f1880036819e7663548711e68c7bf29166a1b66",
+    "web/parameter-help.js": "71d8afb89216a9465adb3e61c231eabd6573aaf5bf4efee066db65fccac81437",
+    "web/permanent-points-ui.css": "b0dcb3636934b1b0cb8df2e6b014e99cc8b41cc522740e889560dec88999f9db",
+    "web/permanent-points-ui.js": "5ba4d9ff7953d4013a453ec79ce17555f56045af87ed1c16ed1138909752079c",
+    "web/registration-ui.js": "24e29b91a3898e18fc05876d8c6e14e4a6c3f6a53697566f529604104547fa66",
+    "web/ribbon-layout.js": "2b0c66929d230397b78b568ff262e283b2dfae69bac83d572b78065aa6f75b98",
+    "web/ribbon-modern.css": "371730970ca458bf81eefdf43b6c81d7ed5e3bc4f3741f96a4535ef62b8816f1",
+    "web/ribbon.css": "bbe31f02a4fe7f084b698c96318da4bd99c1e968d9544fe804b088d2be8d5dcb",
+    "web/ribbon.js": "bd43daaaa686c75b9a3077aae0a5726400abada01cce01c350b118c4981ba887",
+    "web/ring-creep-ui.js": "e113adc43ce2ca4487893741600f098c03d8e3354eb24b9dcbd2cb7631b83dd9",
+    "web/scan-registration-ui.js": "5297b76baf85e670b5d3c9456dd38a6ad0066ac93d1260cf16fc51e5c2e07883",
+    "web/scan-tools-ui.js": "70b12d25150d4837053df7adec425d5579ed04f66d18270de46bb45123f9ae66",
+    "web/scene-objects-ui.js": "e02b50fd099b061957f7980f658988a162acbeb7a4ea723ff3a579947960a037",
+    "web/section-locator-ui.js": "c0880cae8ff19e37d12cde2b6d55827c8e98287fe971d9cbfdc92ae7d59a549b",
+    "web/section-plot-ui.js": "f9106ea662d2f16247abf4bb93e4014968fe0cd254c4e7f11dd5edc4e41ec23c",
+    "web/section-research-ui.js": "50cd6be4c19930a80d36f29665b87cf8f3226d25b40ad8f1a3ac4c88fe44133e",
+    "web/setup-backdrop.js": "f0c5921f0b85a75c75f80c312dbe524aaed5bc99a01a95157d751d1c8f65a701",
+    "web/setup-camera-ui.js": "ca0048c9c5d4e1929b31caded03e189f49cc8d6576fe197d7424be3d7d6ddd15",
+    "web/setup-photo-viewer.js": "1eb7bf8f02904f50473296dcebab71beea5a31f0bc8d286865c51f72938688fd",
+    "web/style.css": "59e259b597d37c30f77183c47dd11f277837d9b27c8be4b6343685dd61b5adc6",
+    "web/surface-ui.js": "ba0874fcc2c4e06e4b454f39b371b052cc4c98933ce15ae6d95ede52c6dfb97a",
+    "web/surface.css": "152fa39a079989330b144fe2158c51be7a016e7e2b4a16ad7b9c17d6076ee9e9",
+    "web/theme-ui.css": "8204d44fb3f36f55fcbdbcb12e38d71764dfd01e8b95dfa6a59712071c69696b",
+    "web/theme-ui.js": "4759ad0c33c521193116983466d1ecfb672034d5f18f943fc6419329cd7222d5",
+    "web/tunnel-designer-ui.js": "d9798b4fb2a17cb418b3cdb979448a2a196912520fa6b9620c70b5c6de08fdfb",
+    "web/tunnel.ico": "703a4b80cfa64e8419482e1a2e68f60ca2b0087ff8bd94d0b707108f794cce6f",
+    "web/ui-icons.js": "ca8a3fd3f6ddd1ede50c6d40f74f6127e69812427266ff1eb57c967007d929dc",
+    "web/work-status-ui.js": "25552d7a4e2b1c894a775cc564d1c1228e0bbf2f745bcbfc3e1a6b9313c00470",
+    "web/workspace-ui.js": "3c53c23d092ca42f75cd00e4849a77d9f6e370dbada57563bcb53194c8f22d5c",
+    "windows/launcher.c": "81d48b783f307a469b9106d2e58be3136080fe8a4629cff0fc9a85b913361f71",
+    "windows/version.rc": "eb760dbd5343f88ab6d2b323989428a222b78412b2c81e842bd234f9336e6f66",
+    "work/checks/gusac_synthetic_report.json": "c4d9c446ef697e2b914c8bdd1120d41a8f1ea99c4a8fb163f8058b20158dfa67",
+    "work/checks/test_gusac.py": "2fe73c4acb181f829fa8aaa3d33518aeb00c475f7bcd740e7e952d021ce0c688",
+    "workflows.py": "de13d6055019463eb2ffb7dbb2f5780fbec45fa27fe05c78583c90fab976821f",
+    "workspace_history.py": "4b1f4772392e7b21dac2ed5604546872bf57e36988f9e00773a6407da2660633",
+    "workspace_tools.py": "80ab68b207e75a3b94b62c46b05a3de9ab3f0158c2898a5deb4eb0e956888d58"
+  },
+  "packaging_files": {
+    "RELEASE_NOTES.txt": "efe96b8d28ea93ee067964f18158dccfea303008257770305083e0f525e19e39",
+    "TunnelStudio.nsi": "64fc8e08b6f554cccdcf8bd9abfe21eeabc4bd60c2329276d58f54ad1fb9dc06",
+    "build_windows.py": "af73d9183558cd1dd27f5644cbe63b1ad62fcb9c8971fdcca59f39d55bbabca7",
+    "finalize_validation.py": "3c20d5737ed72cc6aaa184a4d8ba82483e57bfd32e739a30fdde0ad96b5cbeda",
+    "finalize_validation_0_16_0.py": "4ba5a40eeafc1c8dda33c920c13108425db0cf3c71c06811ed6c8681dce2d251",
+    "launcher.c": "f2c1aaedcfe099cc714644175a0ceae63f68e4825512ad8fa9cba6aef78f5280",
+    "launcher.rc": "606e26a65dcdf1248c67cf3643d3c2a0bce0adfce032085762b9955ee232266a",
+    "source_provenance.json": "75038507d3873491b786828dce213f3c56e9e3c92c3e7fc817978b385e1b203a",
+    "startup_smoke.py": "59c2562ccda52b90bf84712f0f23d9d074021cae921087c63b6e3532b4e4d411",
+    "test_installer.py": "537dc06401996303fcce0aa73c68e0faed3696ed8a0eb19006b9d7513974f81b",
+    "verify_windows.py": "73336fbf39f2a29374d3f1a269f76c168a0bcfa57cd6fa11b93b146ab1de2587",
+    "windows_installer.py": "0d4c9813ee9be02ad57adc3e243ea139d25b5f156f5cfd8609caed2f50a4fdc8"
+  },
+  "syntax": {
+    "python_files": 136,
+    "python_paths": [
+      "app/alignment_model.py",
+      "app/analysis_tools.py",
+      "app/browser_mode.py",
+      "app/cad_api.py",
+      "app/cad_geometry.py",
+      "app/checker_evidence.py",
+      "app/clean_tunnel.py",
+      "app/combined_denoising.py",
+      "app/core.py",
+      "app/demo_targets.py",
+      "app/design_api.py",
+      "app/design_compare.py",
+      "app/desktop.py",
+      "app/detached_windows.py",
+      "app/detail_preview.py",
+      "app/e57_setup_photos.py",
+      "app/e57_worker.py",
+      "app/editing.py",
+      "app/exchange.py",
+      "app/feature_selection.py",
+      "app/geometry_tools.py",
+      "app/gusac.py",
+      "app/heatmap.py",
+      "app/hspca_codec.py",
+      "app/hspca_import.py",
+      "app/hspca_worker.py",
+      "app/inspection.py",
+      "app/inspection_api.py",
+      "app/inspection_geometry.py",
+      "app/inspection_points.py",
+      "app/install_bundle.py",
+      "app/install_windows.py",
+      "app/irregular_surfaces.py",
+      "app/job_api.py",
+      "app/jobdata.py",
+      "app/joint_scan.py",
+      "app/large_sections.py",
+      "app/leica_bridge.py",
+      "app/leica_e57_worker.py",
+      "app/leica_project.py",
+      "app/lining_features.py",
+      "app/lining_tiles.py",
+      "app/mask_storage.py",
+      "app/measure_tools.py",
+      "app/mesh_geometry.py",
+      "app/mesh_preview.py",
+      "app/mesh_repair.py",
+      "app/mesh_sampling.py",
+      "app/mesh_to_cloud.py",
+      "app/mesh_workflows.py",
+      "app/meshing.py",
+      "app/native_progress.py",
+      "app/ply_ascii.py",
+      "app/pointio.py",
+      "app/preview_index.py",
+      "app/preview_store.py",
+      "app/project_maintenance.py",
+      "app/project_validation.py",
+      "app/projects.py",
+      "app/ray_box_extraction.py",
+      "app/reflection_cleaning.py",
+      "app/registered_cloud.py",
+      "app/registration.py",
+      "app/registration_network.py",
+      "app/registration_references.py",
+      "app/registration_review.py",
+      "app/registration_workspace.py",
+      "app/release.py",
+      "app/reporting.py",
+      "app/ring_creep.py",
+      "app/ring_suggestions.py",
+      "app/robust_registration.py",
+      "app/rtc360_folder.py",
+      "app/rtc360_image_probe.py",
+      "app/rtc360_native.py",
+      "app/rtc360_native_worker.py",
+      "app/rtc360_optics.py",
+      "app/rtc360_scan_probe.py",
+      "app/rtc360_source.py",
+      "app/runtime_diagnostics.py",
+      "app/scan_compaction.py",
+      "app/scan_edits.py",
+      "app/scan_export.py",
+      "app/scan_geometry.py",
+      "app/scene_objects.py",
+      "app/section_api.py",
+      "app/section_path.py",
+      "app/section_research.py",
+      "app/section_shape.py",
+      "app/server.py",
+      "app/session_start.py",
+      "app/setup_camera.py",
+      "app/setup_photo_codec.py",
+      "app/setup_photos.py",
+      "app/setup_view.py",
+      "app/startup_support.py",
+      "app/structures.py",
+      "app/surface_api.py",
+      "app/surface_demo.py",
+      "app/surface_extraction.py",
+      "app/surface_streaming.py",
+      "app/target_ops.py",
+      "app/target_search.py",
+      "app/target_thumbnail.py",
+      "app/test_core.py",
+      "app/test_desktop_backend.py",
+      "app/test_features.py",
+      "app/test_inspection.py",
+      "app/test_inspection_geometry.py",
+      "app/test_inspection_points.py",
+      "app/test_jobs.py",
+      "app/test_mesh_to_cloud.py",
+      "app/test_project_storage.py",
+      "app/test_ray_box.py",
+      "app/test_registration.py",
+      "app/test_startup.py",
+      "app/test_surface.py",
+      "app/test_update.py",
+      "app/tmatch.py",
+      "app/tunnel_axis_fit.py",
+      "app/tunnel_designer.py",
+      "app/tunnel_lining.py",
+      "app/tunnel_surface.py",
+      "app/ui_preferences.py",
+      "app/upload_io.py",
+      "app/work/checks/test_gusac.py",
+      "app/workflows.py",
+      "app/workspace_history.py",
+      "app/workspace_tools.py",
+      "packaging/build_windows.py",
+      "packaging/finalize_validation.py",
+      "packaging/finalize_validation_0_16_0.py",
+      "packaging/startup_smoke.py",
+      "packaging/test_installer.py",
+      "packaging/verify_windows.py",
+      "packaging/windows_installer.py"
+    ],
+    "changed_javascript_files": 1,
+    "javascript_paths": [
+      "app/web/scan-registration-ui.js"
+    ],
+    "failures": 0
+  },
+  "baseline_correspondence": {
+    "version": "0.17.2",
+    "removed_application_files": [],
+    "modified_application_files": [
+      "registration_workspace.py",
+      "release.py",
+      "web/scan-registration-ui.js"
+    ],
+    "added_application_files": [
+      "RELEASE_SCOPE_0_17_3.txt",
+      "ROBUST_REGISTRATION_METHOD_0_17_3.txt",
+      "registration_review.py",
+      "robust_registration.py"
+    ],
+    "unchanged_application_files": 284,
+    "unchanged_target_recognition_and_ordinary_solver": true,
+    "unchanged_cleaning_meshing_alignment_modelling_editing_comparison_export": true,
+    "historical_validation_sha256": "84b9f8991251a4d0005168aec70c27f04757b0ae7c249aac1bdc50d82c6a7c46"
+  },
+  "host": "Linux-6.18.55-x86_64-with-glibc2.39",
+  "limitations": [
+    "Linux software/browser/build checks; no native Windows/WebView2 or user-PC installation was executed.",
+    "Synthetic correspondence, target and cloud fixtures; the newly described three-setup/three-sphere sample, sphere centre fitting and field millimetre accuracy are not validated. This release does not add automatic sphere recognition.",
+    "Review uses at most 200 target matches, not the full 550-million-point cloud; no whole-project runtime or 7 GB RAM guarantee is established by these tests.",
+    "Source-preserved historical functionality is not claimed as fully retested. E57/LAS export-format tests were not rerun in this registration update.",
+    "Largest observed consensus does not prove physical target identity. Bounded searches can miss alternative solutions; no correctness probability is reported.",
+    "The Varga/Laki keypoint+FPFH+FGR paper was assessed as future cloud-registration guidance; no Harris/ISS/FPFH/FGR pipeline or detector change is shipped here."
+  ]
+}

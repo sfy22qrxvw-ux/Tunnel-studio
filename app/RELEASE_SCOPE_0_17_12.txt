@@ -1,0 +1,24 @@
+TUNNEL STUDIO 0.17.12 — RECOVERY HISTORY AND UNIVERSAL IMPORT STORAGE
+
+PURPOSE
+Remove confusing automatic previous-session project entries and make the same reference-aware storage model visible for every supported import workflow.
+
+PROJECT HISTORY
+- Normal Open Project contains only user-named projects.
+- Startup keeps one hidden last-session recovery JSON for crash recovery; it does not create a named project.
+- Legacy automatically named previous-session project manifests are retired to diagnostics and no longer count as live project references.
+- Older startup recovery manifests no longer protect stale cache assets; only the newest hidden recovery is live.
+
+UNIVERSAL STORAGE
+- Home > Storage manager directly exposes project and current imported-data storage.
+- Point-cloud cache-producing formats: RTC360 raw, HSPCA, E57, LAS/LAZ, PLY, PTS, XYZ, TXT, CSV.
+- Reference-mesh cache-producing formats: OBJ and ZIP containing supported OBJ.
+- Portable .tstudio assets use the same local-reference protection after opening.
+- DXF/model JSON, alignment/design CSV/TXT, ring CSV and survey-control CSV are stored mainly in project metadata and are removed with their project metadata/derived data rather than as multi-gigabyte point caches.
+- Source provenance metadata is added to new point-cloud/model imports. External original source files are not project cache assets and are not deleted by project cleanup.
+
+CUMULATIVE
+Retains direct RTC360 workflow and 198.8 mm sphere fitting, virtual registration, bulk/faster permanent point compaction, background project deletion, orphan cleanup and the fast shared-runtime updater.
+
+VALIDATION BOUNDARY
+Focused storage/import/recovery regression: 49 tests passed before packaging. Full discovery exercised 167 tests; 20 errors are missing Linux-host optional/runtime dependencies (pye57, laspy, plyfile, pywebview, manifold3d) and 3 tests were skipped. Windows/WebView2 execution is still confirmed only on the user's machine.

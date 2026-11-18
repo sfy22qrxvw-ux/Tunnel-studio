@@ -416,7 +416,9 @@ def run_batches(batches,ids_path,labels_path,settings,progress,cancel,selected_t
         return result
     lo=np.inf;hi=-np.inf
     for _,p,_ in batches():
-        emit('2/5 Measuring analysis extent');t,_=frame(p,m);lo=min(lo,t.min());hi=max(hi,t.max())
+        emit('2/5 Measuring analysis extent')
+        stations=(np.asarray(p,float)-m['reference'])@m['axis']
+        lo=min(lo,stations.min());hi=max(hi,stations.max())
     with ExitStack() as resources:
         na=int(np.ceil(2*np.pi*m['radius']/cfg['cell']))
         nt=int(np.ceil((hi-lo+cfg['cell'])/cfg['cell']))+1
@@ -428,15 +430,19 @@ def run_batches(batches,ids_path,labels_path,settings,progress,cancel,selected_t
         for ids,p,_ in batches():
             for start in range(0,len(ids),25000):
                 emit('2/5 Unwrapping all original points');ix=ids[start:start+25000];detector.accumulate(p[start:start+25000],intensity_for_ids(ix) if intensity_for_ids else None)
-        detector.analyse();n=detector.next_id;counts=np.zeros(n,np.int64);sums=np.zeros((n,3));reps={i:[] for i in range(n)};written=0
+        detector.analyse();n=detector.next_id;counts=np.zeros(n,np.int64);sums=np.zeros((n,3));reps={i:[] for i in range(n)};remaining_reps=np.full(n,16,np.int32);written=0
         with open(ids_path,'wb') as out,open(labels_path,'wb') as labs:
             for ids,p,_ in batches():
                 for start in range(0,len(ids),25000):
                     ix=np.asarray(ids[start:start+25000]);q=np.asarray(p[start:start+25000],float);emit(f'5/5 Labelling original points · {written+len(ix):,}/{selected_total:,}')
                     labels=detector.classify(q);ix.astype('<i8').tofile(out);labels.astype('<i4').tofile(labs)
-                    counts+=np.bincount(labels,minlength=n)
+                    batch_counts=np.bincount(labels,minlength=n)
+                    counts+=batch_counts
                     for axis in range(3):sums[:,axis]+=np.bincount(labels,weights=q[:,axis],minlength=n)
-                    for k in np.unique(labels):reps[k].extend((written+np.flatnonzero(labels==k)[:max(0,16-len(reps[k]))]).tolist())
+                    for k in np.flatnonzero((batch_counts>0)&(remaining_reps>0)):
+                        positions=np.flatnonzero(labels==k)[:remaining_reps[k]]
+                        reps[k].extend((written+positions).tolist())
+                        remaining_reps[k]-=len(positions)
                     written+=len(ix)
         if written!=selected_total:raise ValueError('The scan selection changed during lining analysis.')
         cleaning=settings.get('lining_task')=='non_lining';names=['Lining / unassigned regions','Interior non-lining candidates','Outside recess allowance · review','Uncertain support · retained']

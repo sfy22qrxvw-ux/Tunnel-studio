@@ -1,0 +1,17 @@
+Tunnel Studio 0.21.2 | Independent registered and cleaned results
+
+Cumulative application based on 0.21.1, with the same bundled Windows runtime.
+
+This patch corrects source-bundle membership and deletion expansion. A completed
+Registered cloud owns its XYZ and attribute caches. A cleaned cloud created by
+Clean Tunnel owns the stored retained points. Reference-aware deletion preserves
+assets still needed by either cloud and by retained saved outputs or recovery.
+
+The source-bundle deletion change does not recover caches already physically
+removed by an earlier explicit deletion. A reviewed item deletion that releases
+exclusive data remains permanent. Read the item list before confirming.
+
+Verification uses synthetic survey coordinates and temporary data. The GUI check
+uses 16 joined setups, a materialised Registered cloud, and a separately stored
+cleaned cloud with deleted-point masks. Native Windows/WebView2 and the user's
+actual 921-million-point workspace are not executed on the Linux build host.

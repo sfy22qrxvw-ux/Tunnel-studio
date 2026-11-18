@@ -1,0 +1,113 @@
+Tunnel Studio 0.17.0 — local feature selection and SMRG workload improvements
+
+SEEDED REGION GROWTH
+Pick one retained scan point. Search radius bounds a spherical local area in
+project/world metre coordinates; the current point mask, hidden regions,
+isolation and limit box are respected. An optional drawn selection further
+restricts that area. Conservative source-block bounds reduce repeated reads;
+the first use may need to build the block index from the entire source.
+
+Every retained original point in the local area is read and checked. There is
+no silent sampling or downsampling of the selection. Coincident coordinates
+share a geometric calculation but every original row ID is preserved.
+
+Local normals use the chosen number of nearest distinct measured locations.
+The seed grows through exact radius neighbours whose normals agree within the
+maximum surface turn and whose symmetric point-to-tangent-plane step is within
+the surface step limit. Ambiguous high-curvature corners do not propagate.
+Growth can follow a smoothly curving surface; it is not a semantic pipe/lining
+classifier. It can join touching objects with compatible geometry. Reaching
+the search-radius boundary is reported so the user can enlarge and rerun.
+
+PROTRUDING BOLTS / FITTINGS
+Look towards the lining from inside the tunnel, and pick on or near a fitting.
+The view direction at the picked seed defines the positive protrusion side.
+The explicit Reverse protrusion side option reverses that sign. Viewpoints
+nearly tangent to the inferred surface are rejected.
+
+A robust quadratic reference is fitted to an annulus of surrounding measured
+lining, using local float64 coordinates. The fit must have enough consistent
+support, acceptable residual roughness and measured support in at least six
+of eight angular sectors. This allows a locally curved lining without claiming
+an exact cylinder. All local original points are classified against that fit.
+Reported height is the signed residual along the local reference normal axis,
+not an exact shortest distance to a curved quadratic surface.
+
+Only positive deviations above the larger of the requested minimum height and
+four reference RMS values, and below maximum protrusion, enter candidates.
+Negative deviations are recesses on the selected side and are not bolt heads.
+Candidates must be connected at the requested connection distance, have the
+minimum original-point count, fit within maximum diameter, and avoid strongly
+elongated footprints. At least six of eight nearby surrounding support probes
+must have a measured lining neighbour. The outer search band is excluded to
+reduce unsupported extrapolation at the edge of the area.
+
+These are geometric protrusion candidates. Compact debris or other fittings
+can have the same shape as a bolt. This is not hardware identification, and
+no field precision/recall is claimed without labelled scans. Settings need
+to reflect scan spacing, noise and the size of the feature. Deep occlusions,
+sharp corners, broad equipment and poorly supported patches may yield no
+candidate or a rejected fit. The original measured points are never moved;
+the method creates no lining behind a removed object.
+
+REVIEW, REFINE, REMOVE, UNDO
+Orange points are selected; cyan points are unselected candidates; grey points
+provide measured context. The display is bounded to 60,000 local points, with
+space reserved for small candidates. Display count and exact selection count
+are reported separately. All removal uses the exact original signed int64 IDs,
+not the displayed sample. Group selection can be trimmed by a drawn box,
+polygon, or lasso. Re-selecting groups resets that trimming.
+
+Preview, group selection and refinement do not alter the scan. Source geometry,
+mask and visible-area fingerprints and preview revisions must still match
+before removal. Confirmed removal uses the application's immutable exclusion
+mask and existing edit history. Undo/Redo restore exact rows; project save and
+export use the normal retained-point workflow. Preview caches are temporary
+and need to be recalculated after switching/reopening a project.
+
+WORKLOAD LIMITS
+The local point budget can be 100,000, 250,000, 500,000 (default), or 1,000,000
+original retained points. Exceeding it stops before replacing the previous
+preview; reduce radius or draw a limit box. This limit is not a sample count.
+An exact-neighbour graph exceeding 30,000,000 neighbour visits stops and asks
+for a smaller connection distance/radius. Progress and cancellation are checked
+between bounded source reads, normal batches, graph batches and fit passes.
+
+SMRG GROUP SURFACE PATCHES
+SMRG remains an independent geometric grouping method. Its largest connected
+region and boundary-overlap suggestion do not identify all pipes versus lining.
+GuSAC remains the primary full-scan tunnel-cleaning choice. No method is silently
+switched to another method.
+
+The recovery step previously rescanned all point labels for every cluster and
+rebuilt the growing retained KD tree after every accepted cluster. Version
+0.17.0 indexes cluster rows once and uses a logarithmic forest of exact KD trees.
+Nearest-support distances, cluster order and overlap decisions remain the same.
+The 22,500-point / 401-cluster synthetic step benchmark and equivalence tests are
+included in the validation report. This is not a whole-algorithm or 550-million-
+point speed benchmark and does not improve SMRG's semantic classification.
+
+SMRG now rejects selections above 3,000,000 retained original points before
+extraction. An unmasked whole-cloud request can be rejected from count metadata
+without reading XYZ; masked counts use bounded mask reads. Drawn selections
+are counted at full density, stopping once the limit is exceeded. The prior
+review and scan remain intact. This prevents the previous unbounded whole-area
+workflow from silently launching thousands of independent memory blocks.
+
+VALIDATION BOUNDARIES
+Generated labelled fixtures cover curved and rotated lining at large survey
+coordinates, protrusions versus recesses, elongated pipe rejection, unsupported
+fits, connected/disconnected surfaces, duplicate rows, masks, local cap failures,
+stale state, cancellation, exact-ID refinement, removal, Undo/Redo, save/reopen
+metadata and failed-save rollback. Existing SMRG surface tests remain unchanged.
+UI event checks exercise the production panel against stateful API fixtures.
+An isolated production HTTP/Chromium workflow additionally imports a generated
+labelled scan through the visible ribbon and file picker, clicks measured seeds,
+reviews and refines exact candidates, removes through ordinary Delete, and
+verifies keyboard Undo/Redo and original source/cache identity. A separate local
+selection/delete benchmark uses the supplied 10,125,420-point E57 cache and
+checks exact IDs, persisted masks, Undo/Redo and unchanged original data.
+These checks do not establish semantic accuracy on the real scan, performance
+on the user's 550-million-point scan, native Windows display/GPU behaviour or
+whole-desktop memory/refresh time on that scan. Measured timings and source
+hashes are in the accompanying validation reports.

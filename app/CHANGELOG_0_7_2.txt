@@ -1,0 +1,13 @@
+Tunnel Studio 0.7.2 — single-scene functionality repair
+
+- Registration target picking now uses a more tolerant robust partial-plane checker fit for sparse/occluded real survey targets.
+- Automatic Find B&W Targets no longer invents fallback centres from generic planar/high-contrast tunnel surfaces; only checker-pattern candidates that pass validation are shown.
+- Fixed the persistent screen-space selection outline: after selection, the selected 3D points themselves remain highlighted and move correctly with orbit/pan/zoom.
+- Extract Surface source list now deduplicates internal workflow aliases so one imported scan is shown once.
+- Extract Surface uses the current main 3D box/lasso selection; duplicate mini-view selection is removed from the normal workflow.
+- Registration and Surface tool drawers no longer present a second working 3D viewport in the single-workspace layout.
+- Added prominent tool-drawer actions: Use main 3D selection / Extract surface, Pick target / Find B&W targets, Create tunnel mesh, Analyse current section, Generate heatmap.
+- Duplicate scan-import controls inside Registration/Surface drawers are hidden; the main ribbon Import remains the single import entry point.
+- Surface progress wording now says Processing batch instead of the ambiguous Block label.
+
+Survey target centres and registration solutions remain review aids until checked against project control and independent residual/check observations.

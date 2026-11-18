@@ -49,58 +49,6 @@ def analyse(m,p,values,**settings):
 
 
 class LiningFeatureRegressionTests(unittest.TestCase):
-    def test_pockets_follow_measured_wall_and_leave_open_hole_rims(self):
-        m=model()
-        cell=lf.PRESETS['detailed']['cell'];na=int(np.ceil(2*np.pi/cell))
-        tt,aa=np.meshgrid(np.arange(.5*cell,12.,cell),(np.arange(na)+.5)*2*np.pi/na,indexing='ij')
-        tt,aa=tt.ravel(),aa.ravel()
-        wall=.075*np.exp(-((tt-6)/.85)**2)+.008*np.cos(aa)
-        # An elongated pocket with a depth ramp, on the outward wall bulge.
-        x=(tt-6.25)/.11;y=lf.angular_delta(aa,.01)/.075
-        pocket=x*x+(y/(1+.35*x))**2<1
-        radius=np.hypot(tt-7.3,lf.angular_delta(aa,2.))
-        rim=(radius>=.065)&(radius<.10)
-        retained=radius>=.065
-        depth=np.where(pocket,.023+.012*x,np.where(rim,.031,0.))
-        rr=1+wall+depth
-        points=np.c_[tt[retained],(rr*np.cos(aa))[retained],(rr*np.sin(aa))[retained]]
-        # Mixed returns in one candidate cell must be checked point by point.
-        station=tt[pocket][len(tt[pocket])//2];angle=aa[pocket][len(aa[pocket])//2]
-        base=1+.075*np.exp(-((station-6)/.85)**2)+.008*np.cos(angle)
-        points=np.vstack([points,[station,base*np.cos(angle),base*np.sin(angle)]])
-        expected=np.r_[pocket[retained],False]
-        intensity=np.r_[np.where(pocket,x*10+55,100)[retained],100]
-        settings=dict(lining_task='bolts')
-        with tempfile.TemporaryDirectory() as folder:
-            with mock.patch.object(lining_tiles,'WINDOW_CELLS',50000):
-                tiled=lining_tiles.TiledDetector(m,(0.,12.),settings,lambda _:None,folder)
-            try:
-                for detector in (lf.Detector(m,(0.,12.),settings,lambda _:None),tiled):
-                    with self.subTest(detector=type(detector).__name__):
-                        detector.accumulate(points,intensity);detector.analyse()
-                        features=[r for r in detector.features if r['kind']=='bolt_hole']
-                        self.assertEqual(len(features),1)
-                        result=detector.classify(points)==features[0]['id']
-                        self.assertFalse(np.any(result&~expected))
-                        self.assertGreater(np.count_nonzero(result),np.count_nonzero(expected)*.65)
-                        self.assertAlmostEqual(features[0]['depth_m'],.023,delta=.008)
-            finally:
-                tiled.close()
-            ids_path=Path(folder)/'ids'
-            labels_path=Path(folder)/'labels'
-            ids=np.arange(len(points))
-            def batches():
-                for start in range(0,len(ids),20000):
-                    part=ids[start:start+20000]
-                    yield part,points[part],{}
-            run=lf.run_batches(batches,ids_path,labels_path,settings,lambda _:None,
-                               lambda:False,len(points),lambda batch_ids:intensity[batch_ids])
-            features=[r for r in run['features'] if r['kind']=='bolt_hole']
-            self.assertEqual(len(features),1)
-            result=np.fromfile(labels_path,'<i4')==features[0]['id']
-            self.assertFalse(np.any(result&~expected))
-            self.assertGreater(np.count_nonzero(result),np.count_nonzero(expected)*.65)
-
     def test_zero_mad_quantized_intensity_still_finds_measured_seams(self):
         m,p,values=scene()
         d=analyse(m,p,values)

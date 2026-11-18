@@ -1,0 +1,21 @@
+0.2.1 — 1 October 2026
+- Added actual Windows x64 GUI launchers: TunnelStudio.exe and SetupTunnelStudio.exe.
+- Bundled Python 3.12.10 and 15 application packages; no customer build or pip required.
+- Per-user installation with desktop and Start menu shortcuts; versioned program folders.
+- Added Damian Gulczynski copyright in UI, reports, source and executable metadata.
+- Added Help / About, versioned feedback export and full project backup action.
+- Retained all 0.2 survey, editing, heatmap, reporting and meshing functions.
+
+Verification:
+- 17 Python calculation/file/feature tests passed on Linux.
+- Chromium UI workflow passed: edit, undo/redo, heatmaps, structures, mesh transforms,
+  CSV/OBJ exports and report generation; no JavaScript exceptions.
+- Copyright, feedback download and backup workflow tested separately.
+- Windows x64 GUI PE format and executable version resources inspected.
+- Bundled wheel dependency closure checked for Windows / CPython 3.12.
+- Source and complete bundle retained for future updates.
+
+Not yet verified:
+- Running the launchers/installer/native .NET WebView2 window on Windows.
+- Large real-world scan performance or equivalence to your Amberg/Leica results.
+- This is an unsigned customer-preview build, not a validated production release.

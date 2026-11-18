@@ -1,0 +1,22 @@
+TUNNEL STUDIO 0.17.7 — BULK / FASTER PERMANENT DELETE
+
+Purpose: make irreversible point-cache compaction practical when cleaning many large RTC360 setups.
+
+The user can select multiple scans in the permanent-removal dialog and review them together. Scans are physically compacted sequentially. This avoids simultaneous multi-gigabyte temporary copies and produces stable progress for long batches.
+
+Performance changes:
+- streaming block increased from 100,000 to 1,000,000 points;
+- preview samples are written during the compaction pass;
+- the old second full read of the replacement XYZ cache is removed;
+- archive-only restoration cleanup remains metadata-only and does not rewrite the cloud.
+
+Safety:
+- all selected reviews are checked before the first commit;
+- each scan remains independently atomic;
+- Stop never rewinds scans that already completed, but leaves the current incomplete scan unchanged;
+- original imported files and saved/snapshot references remain protected;
+- workspace Undo/Redo is cleared as already required for irreversible removal.
+
+Physical compaction cannot be instant: reclaiming storage requires reading source rows and writing retained rows once. This release removes avoidable I/O rather than pretending that safe cache compaction can occur without disk writes.
+
+Retained cumulative scope: 0.17.6 virtual registration, raw RTC360 import, survey target fitting, cleaning, meshing, modelling, analysis, export and project recovery remain.

@@ -115,10 +115,13 @@ def _copy_verified(path, target, signature, progress, label):
     target.parent.mkdir(parents=True,exist_ok=True)
     digest=hashlib.sha256()
     with path.open('rb') as src,target.open('xb') as dst:
-        if _signature(os.fstat(src.fileno()))!=signature:raise ValueError('An asset changed. Review the copy again.')
+        opened=_signature(os.fstat(src.fileno()))
+        if opened[:4]!=signature[:4] or _signature(path.stat())!=signature:
+            raise ValueError('An asset changed. Review the copy again.')
         projects._copy_stream(src,dst,signature[2],progress,label,digest)
         dst.flush();os.fsync(dst.fileno())
-        if _signature(os.fstat(src.fileno()))!=signature:raise ValueError('An asset changed during copying.')
+        if _signature(os.fstat(src.fileno()))!=opened or _signature(path.stat())!=signature:
+            raise ValueError('An asset changed during copying.')
     second=hashlib.sha256()
     with target.open('rb') as stream:
         amount=0

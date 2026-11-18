@@ -1,0 +1,48 @@
+TUNNEL STUDIO 0.14.2 — 16 October 2026
+
+CLEARER MODELLING
+- Primary commands have visible short names alongside distinct symbols.
+- Track midpoint: choose Circle, hover over one corner until marker 1 appears,
+  then the opposite corner until marker 2 appears. Click the centre marker.
+- Opposite corners on the same planar model face give its exact midpoint and
+  lock the new circle to that face, including vertical and tilted faces.
+  Two arbitrary points alone do not define a plane: the current work plane is
+  used if there is no common face. The prompt makes this explicit.
+- Model view shows editable models separately. Clean/Edit/Analyse show scan
+  work without those model overlays. Each view remembers its camera.
+  Enable Cloud reference in Model when you deliberately need scans/reference
+  meshes. Right-click a cloud > Work in Model mode enables this reference.
+- Hidden models cannot be picked, exported as the current highlight or removed
+  through the scan view. Model/cloud exchange and destination bundles remain.
+- Corrected drawing prompts and incomplete circle previews. Lines/circles drawn
+  on solid faces remain visible without flickering into the face.
+- Existing visual extrusion, modeless settings, Escape and separate tool windows
+  are retained. Face extrusion creates a new body, not a push/pull edit.
+
+CLEANING
+- Standard Extract tunnel surface behavior is preserved as the default.
+- Clean tunnel > Interior cleanup > More thorough checks additional inward
+  remnants, including floating points in limited areas of missing wall support.
+  Extra interior candidates have their own review group.
+- Near-wall candidates require two lining references to agree. The inward keep
+  band widens where voxel calibration or the angular profile is coarse, helping
+  preserve flat floors and real wall points behind or between pipes.
+- Find reflection artefacts adds a separate conservative detector. It combines
+  supported lining departure with approximate mirrored geometry, a known scanner
+  position and available intensity. Several cues must agree; weak evidence is
+  retained. Intensity alone does not remove points and missing data is not guessed.
+- Review the preview, keep real features you need, then create/export the cleaned
+  scan or apply the reviewed result. Every selected original point is classified;
+  original scan files and coordinates are not overwritten.
+
+CHECKED AND LIMITED
+Numerical, production UI and actual Chromium/WebGL checks cover the changed
+workflows. Synthetic cleaning cases include flat/rotated noisy floors, sparse
+wall behind pipes, floating remnants, mirrored ghosts and real outer recesses.
+The two supplied output screenshots were inspected; their original XYZ was not
+available. No field accuracy or zero-lag guarantee is implied. Windows/WebView2
+and physical multi-monitor behavior were not run on the user's computer.
+
+Close Tunnel Studio, extract the entire ZIP, run UPDATE_TUNNEL_STUDIO.bat,
+and confirm 0.14.2 in About. This is a cumulative desktop update.
+See READ_ME_FIRST.txt, METHODS_0_14_2.txt and tests/validation_0_14_2.json.

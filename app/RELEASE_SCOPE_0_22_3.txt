@@ -1,0 +1,45 @@
+Tunnel Studio 0.22.3
+6 November 2026
+
+Branded workspace and tool-window captions
+The main Windows workspace and detached tool windows now use a Tunnel Studio
+caption with the shared Light/Dark palette, version, clear minimise, maximise/
+restore and close controls. The caption is a native WinForms panel outside
+WebView2: opening an HTML modal does not disable its window controls.
+Double-click the caption to maximise/restore; drag its empty area to move.
+Windows retains the original sizing frame, taskbar identity and system menu.
+No WndProc override, native callback pointer or third-party window engine is
+introduced. Display scaling is calculated from the native window DPI.
+
+The new close button uses the same pywebview destruction route as the old one.
+Busy-operation protection and the project cleanup/exit review stay in place.
+Caption construction failures restore the original Windows style and content
+layout. Browser recovery keeps its normal application branding. Caption colours
+follow the resolved application theme; duplicate client branding is hidden only
+after the native panel reports ready. TUNNEL_STUDIO_NATIVE_FRAME=1 selects the
+original Windows caption as a recovery option.
+
+Refreshed Windows installer
+The installer uses custom Tunnel Studio tunnel artwork, a coordinated pale
+surface, dark teal typography and Segoe UI headings and navigation controls.
+Welcome and completion pages replace stock artwork. The installation page
+explains unpacking, component checks and activation. The existing staged,
+verified activation, rollback and protected-data rules remain unchanged.
+Native Windows file pickers and system error prompts retain their OS interface.
+
+Cumulative release
+Includes every delivered 0.22.2 change: Leica project discovery and honest title
+provenance, saved setup layouts and import review, selected registered-setup
+merging, named project previews and all prior cleaning, storage, registration,
+modelling and measurement functionality. Source point data is not modified by
+this appearance update.
+
+Validation scope
+Application/browser and installer lifecycle checks run on the build host.
+Native WinForms rendering, Windows DPI/monitor movement, snapping and native
+window-control interaction are not executed on the Linux build host. The
+fallback caption is retained if custom construction fails. Preview images use
+real application UI with synthetic/example projects; their native captions and
+installer frame are design illustrations, not Windows screenshots or a claim
+that the update is already installed. The complete user project remains unrun.
+See the supplied source/checks archive for completed checks and package hashes.

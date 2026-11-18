@@ -143,6 +143,9 @@ def project_cloud(meta,axis,destination,progress=lambda x:None,cancel=None,*,cov
         projected=project_cloud_parallel(meta,axis,destination,progress,cancel,coverage=coverage)
         __import__('storage_cleanup').record_projection(meta,axis,destination)
         return projected
+    original=meta
+    meta=__import__('copy').deepcopy(meta)
+    pose_revision=registration_pose.revision(meta)
     def stamp(info):return (info.st_dev,info.st_ino,info.st_size,info.st_mtime_ns,info.st_ctime_ns)
     destination=Path(destination)
     temporary=destination.with_name(destination.name+'.'+uuid.uuid4().hex+'.tmp')
@@ -151,14 +154,19 @@ def project_cloud(meta,axis,destination,progress=lambda x:None,cancel=None,*,cov
     extent={}
     try:
       with ExitStack() as files:
-        source=files.enter_context(open(meta['file'],'rb'))
-        excluded=files.enter_context(open(meta['mask_file'],'rb')) if meta.get('mask_file') else None
-        inputs=[(meta['file'],source,n*24)]+([(meta['mask_file'],excluded,n)] if excluded else [])
+        def open_input(name,size):
+            path=Path(meta[name])
+            before=stamp(path.stat())
+            stream=files.enter_context(path.open('rb'))
+            opened=stamp(os.fstat(stream.fileno()))
+            if opened[2]!=size:raise ValueError('A projection source cache is incomplete.')
+            # Compare path and file-handle timestamps independently on Windows.
+            if opened[:4]!=before[:4]:raise ValueError('A projection source changed before calculating chainages.')
+            revisions.append((path,stream,before,opened))
+            return stream
         revisions=[]
-        for path,stream,size in inputs:
-            info=os.fstat(stream.fileno())
-            if info.st_size!=size:raise ValueError('A projection source cache is incomplete.')
-            revisions.append((path,stamp(info)))
+        source=open_input('file',n*24)
+        excluded=open_input('mask_file',n) if meta.get('mask_file') else None
         out=files.enter_context(open(temporary,'wb'))
         def chunks():
           for start in range(0,n,CHUNK):
@@ -183,8 +191,11 @@ def project_cloud(meta,axis,destination,progress=lambda x:None,cancel=None,*,cov
             rows.astype('<f8').tofile(out)
             total=(n+CHUNK-1)//CHUNK
             progress(f'Calculating chainages: {int(100*ordinal/max(1,total))}% · {ordinal:,}/{total:,} chunks done')
-        if any(stamp(Path(path).stat())!=before for path,before in revisions):
+        if any(stamp(path.stat())!=before or stamp(os.fstat(stream.fileno()))!=opened
+               for path,stream,before,opened in revisions):
             raise ValueError('A projection source changed while calculating chainages.')
+      if registration_pose.revision(original)!=pose_revision or original.get('count')!=meta.get('count'):
+          raise ValueError('The scan pose or source changed while calculating chainages.')
       compute_runtime.check_cancel(cancel)
       os.replace(temporary,destination)
     finally:

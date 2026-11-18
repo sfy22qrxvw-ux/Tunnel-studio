@@ -1,0 +1,70 @@
+TUNNEL STUDIO 0.17.0 — GENERAL GEOMETRY
+
+Model > Geometry contains Create plane, Fit best plane and Fit best cylinder.
+Select the local measured surface first, preview the model, review its residuals,
+then Add model. Preview itself does not change the survey project. Added geometry
+is a normal editable named model with a visibility bulb, workspace Undo/Redo,
+project persistence, DXF/OBJ/Model JSON export and construction parameters.
+
+Create plane
+Enter its centre in project/world E/N/H metres, choose horizontal, vertical or a
+custom normal direction, and set its width/height. The normal is perpendicular
+to the plane. The finite rectangle contains two triangles and has an analytic
+plane definition. Moving or editing it does not move any measured point.
+
+Fit best plane
+All selected retained finite points contribute to a stable float64 covariance.
+The smallest-eigenvalue direction gives the orthogonal least-squares normal.
+A second full pass computes perpendicular RMS, mean absolute and maximum
+absolute residuals, plus the finite in-plane extents. Coincident or effectively
+linear selections are rejected. Substantial out-of-plane spread is reported.
+
+Fit best cylinder
+This is a general cylinder fit, independent of the tunnel alignment. A bounded
+16,000-point initialization sample and three principal-axis starts estimate a
+starting cylinder. A damped geometric least-squares refinement then uses every
+selected retained point in bounded chunks. The parameters are two transverse
+axis offsets, two axis-direction coordinates and radius. Full-data residuals
+and axial extent are computed after convergence. The implementation searches
+local least-squares solutions; it does not claim a guaranteed global optimum.
+
+Planar/linear selections, insufficient axial extent, angular coverage below
+approximately 45 degrees, poorly conditioned solutions, nonconvergence and RMS radial error
+above 5 percent of radius are rejected. Partial arcs below 120 degrees and RMS
+above 1 percent of radius receive a visible review note. These are operational
+quality checks, not a calibration certificate or survey acceptance tolerance.
+Angular coverage uses occupied 5-degree bins over all selected points; the
+display explicitly labels it approximate. The residual calculations are not
+binned and use every selected point.
+
+The resulting cylinder is a capped analytic model. Its unobserved side and end
+caps are model surfaces, not newly measured lining or repaired scan points.
+Fit residuals are radial distances to the cylinder side, whereas comparison
+against the saved finite solid also includes its end caps.
+
+Selection and scale
+Highlighted-point fitting uses the full 3D selection, original retained points,
+current masks and visible-point filters. Choosing Entire selected scan uses all
+retained points, including temporarily hidden ones; this is stated in the UI.
+Display density does not reduce the fit. Selected coordinates are streamed once
+to temporary disk storage as float64; subsequent fitting passes read bounded
+100,000-point chunks. A billion-point selection still takes substantial disk
+space and repeated processing. No 550-million-point timing or whole-desktop RAM
+guarantee is asserted by this implementation.
+
+Review and persistence
+Preview carries the captured source and CAD revisions. Apply rejects it if the
+source or modelling workspace changed. Cancellation and failed writes do not
+commit partial models. The original source files remain unchanged. Fit evidence
+stored with the object describes the original fit before later parameter edits.
+
+Validation in this release work
+The focused geometry suite has 21 unique tests: known rotated planes/cylinders
+at survey coordinates; noisy and partial cylinder surfaces; full-data refinement
+of points outside the initialization sample; all-point residuals; masks and
+spatial selection; degenerate/noncylindrical rejection; cancellation; stale
+source/CAD protection; failed-save rollback; Undo/Redo; source hashes; editable
+dimensions; analytic plane compatibility; DXF/OBJ/Model JSON; and actual portable
+project save/reopen with both fitted models and original scan bytes preserved.
+Six separate JavaScript event tests use the production tool UI with simulated
+HTTP/WebGL. They are not native Windows or GPU tests.

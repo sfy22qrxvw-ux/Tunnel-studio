@@ -1,0 +1,39 @@
+TUNNEL STUDIO 0.3.0 DEVELOPMENT MAP
+Copyright (c) 2026 Damian Gulczynski.
+
+core.py: alignment, tunnel projection, circular sections, ring checks and joints.
+pointio.py: chunked XYZ and I/R/G/B import, row-aligned float32 attribute sidecars.
+registration.py: fixed-scale rigid SVD fit, residuals, point transforms and checker fitting.
+workflows.py: project/registration/export HTTP handlers layered into server.py.
+projects.py: named immutable-cache snapshots and portable .tstudio archives.
+exchange.py: streaming E57/LAS/LAZ/PLY/PTS/XYZ/CSV writers.
+web/ribbon.js: command registry, project dialogs, shortcuts and ribbon state.
+web/registration-ui.js: target preview, matching, quality and apply workflow.
+web/ribbon.css: responsive ribbon and workspace layout.
+
+No new dependencies beyond the bundled NumPy/SciPy, pye57, laspy, lazrs and plyfile.
+Keep the working Windows runtime and fixed startup_support.py / desktop.py.
+Application-only updater lives in update/. Payload manifest contains SHA256 hashes;
+rollback preserves old/new-file identity and is tested with an injected write failure.
+
+State is local JSON; coordinates float64, attributes float32, missing attributes NaN.
+Save As snapshots use the same immutable data caches and independent JSON/edit masks.
+Exported .tstudio packages contain copies of referenced assets; no executable project
+scripts are loaded. Source scans are immutable. Attribute losses / conversions are
+explained in export notes. Re-import old XYZ-only caches to obtain intensity/RGB.
+
+Extend the ribbon command registry and add dedicated backend modules for new tools.
+Do not add nonfunctional menu items. Keep long jobs in start_job and bound memory.
+Add independent analytic/round-trip checks for geometry changes. Retain target check
+points outside the fit and invalidate solutions after edits to pairs or review limits.
+
+Design references supplied by the user: Leica Cyclone REGISTER 360 PLUS product
+brochure (03.23) and Cyclone WORKFLOW brochure (10.23). Workflow organisation is
+inspired by guided import, registration QC, preparation and export; no Leica code,
+logos, artwork or proprietary data formats are bundled.
+Primary format references:
+https://rcdocs.leica-geosystems.com/docs/cyclone-register-360-supported-file-formats
+https://cyclone3dr.leica-geosystems.com/help/2024.1/ImportC.html
+https://github.com/davidcaron/pye57
+https://laspy.readthedocs.io/
+https://rcdocs.leica-geosystems.com/v1/docs/cyclone-3dr-automatic-extraction-of-the-center-of-surveying-ta

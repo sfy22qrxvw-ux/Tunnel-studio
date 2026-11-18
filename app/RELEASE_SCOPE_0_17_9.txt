@@ -1,0 +1,10 @@
+Tunnel Studio 0.17.9 adds project-level storage management to Open Project.
+The objective is to let users permanently remove obsolete projects and release their exclusive caches safely without manual deletion from %LOCALAPPDATA%\TunnelStudio.
+
+Deletion safety:
+- other named projects protect shared files;
+- the current project protects its files unless it is the selected project being deleted;
+- startup recovery snapshots protect their referenced files;
+- review reports exclusive and shared/protected bytes before confirmation;
+- deletion stages exclusive assets on the same volume and rolls back staging failures;
+- orphan cleanup only considers known Tunnel Studio generated cache/result patterns not referenced by live project/recovery metadata.

@@ -1,0 +1,76 @@
+TUNNEL STUDIO 0.6.0 — CONSOLIDATED WORKSPACE UPDATE
+10 October 2026
+
+MAIN PURPOSE
+This release combines the 0.5.5 large-E57 stability work with the user-interface,
+point-cloud editing and surface-extraction improvements collected during testing.
+It is intentionally a larger consolidated update rather than a sequence of small hotfixes.
+
+JOB WORKSPACE
+- Viewport-first layout: reduced header/empty space so the 3D scan gets substantially more room.
+- Resizable/collapsible right-hand scan sidebar inspired by scan-registration software layouts.
+- Maximise 3D mode.
+- Reorderable main workspace tabs; left project panel can be resized with a splitter.
+- Right sidebar shows visibility, item type, full-data point/vertex count, RGB/intensity availability,
+  positioning state, point-edit state, cache size and coordinate extents.
+- Display detail is controlled as 1–100% rather than by typing a point count.
+- The percentage controls a safe display/detail budget; full-density survey data remains on disk.
+- Viewer budget can scale up to 1,000,000 displayed points/vertices while remaining bounded.
+- Real point RGB is used in the Job 3D viewer when a complete RGB triplet is present in the source.
+- Box-selection mode highlights the selected area directly in 3D.
+- Selected full-density scan areas can be hidden, isolated, deleted, separated into a new scan item,
+  and point deletion can be undone/redone.
+- Multiple E57 setups remain separate Job scan items.
+- Import completion no longer forces a heavy preview immediately; Refresh 3D is deliberate.
+
+IMPORT / WEBVIEW STABILITY
+- Large E57 work remains isolated in a separate Python worker process.
+- Large Job, Registration and Surface files have direct Windows Browse routes so their bytes are not
+  pushed through the embedded WebView.
+- Large browser-upload attempts are redirected to the safer Browse route.
+- E57 reading for Registration and alignment-based survey loading is isolated from the desktop UI.
+- Native Windows progress remains independent of WebView2 and includes cancellation.
+- A visible green application progress bar shows measurable progress/stage information in the app.
+- TunnelStudioBackend.exe is prepared where the bundled runtime supports the renamed backend;
+  otherwise the safe pythonw.exe fallback remains.
+- Shutdown/lock protection from 0.5.5 is retained.
+
+SURFACE EXTRACTION
+- Browse large scan opens the normal Windows file picker. Manual path entry is now only a fallback.
+- Source scan can be previewed before extraction.
+- Select area in 3D lets the user draw a rectangle over the visible scan; Tunnel Studio converts that
+  selection to a full-density 3D processing box and highlights it before extraction.
+- The UI shows an approximate full-density point count for the selected 3D area.
+- Whole retained scan is supported without asking the user to know coordinates or point count.
+- The old 300,000 / 750,000 TOTAL processing-area cap has been removed from the production workflow.
+  Every retained point in the selected area is processed. Large areas are automatically divided into
+  bounded internal processing blocks so memory use remains controlled.
+- The internal block size is no longer presented as a user processing cap.
+- Patch resolution is explicitly described as geometry grouping scale, not survey accuracy.
+- Technical extraction parameters remain under Advanced settings.
+- Results record how many automatic processing blocks were used and warn when block seams should be reviewed.
+
+RIBBON / ANALYSIS / MESSAGES
+- Job ribbon now exposes Browse, selection/edit, registration, surface extraction, survey analysis,
+  view controls, undo/redo and maximise controls instead of looking mostly empty.
+- Survey analysis prerequisite is clearer: a positioned scan still needs a design alignment CSV.
+- Important errors and required actions now open a centred message dialog instead of being easy to miss
+  in a small status strip. Where useful the dialog can offer the next action directly.
+- The old 'Move through the tunnel' wording is replaced/clarified as Section chainage and hidden when
+  an alignment-based section workflow is not relevant.
+- Darker workspace tabs and adjustable 3D background colour are retained.
+
+DATA / SAFETY
+- Full-density cached survey data is not replaced by the display sample.
+- Delete actions create reversible edit masks; source scan files remain unchanged.
+- Separate selection creates a new full-density scan item rather than a display-only copy.
+- Import preserves file coordinates; it does not silently register separate scans.
+
+KNOWN LIMITATIONS
+- 3D edit selection in 0.6.0 is rectangular screen selection converted to a full-depth XYZ box.
+  Lasso/paint selection is not yet included.
+- Workspace tabs can be reordered and panels resized/collapsed; they are not detachable operating-system windows.
+- Per-point RGB is supported when present. Scanner station panorama photographs are not rendered by this build.
+- Automatic block processing allows very large surface selections, but cluster IDs are independent across
+  block boundaries; review block seams before applying extraction results to survey data.
+- This remains an independent survey/research application. Validate project-critical results independently.

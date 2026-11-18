@@ -71,6 +71,7 @@ class Settings:
     irregular_sensitivity:float=50.
     irregular_patch_size:float=.20
     irregular_min_points:int=30
+    ray_interior_only:int=0
     ray_station_m:float=.25
     ray_angle_deg:float=3.
     ray_depth_mm:float=20.
@@ -95,12 +96,12 @@ class Settings:
         if c.lining_task not in ('all','bolts','seams','segments','non_lining','departures'):raise ValueError('Choose a lining analysis task.')
         if c.lining_detail not in ('fast','detailed','more_detailed'):raise ValueError('Choose Fast, Detailed or More detailed.')
         limits.update(irregular_sensitivity=(0,100),irregular_patch_size=(.05,2),irregular_min_points=(3,100000))
-        limits.update(ray_station_m=(.05,5),ray_angle_deg=(.5,30),ray_depth_mm=(2,100),ray_keep_mm=(5,500),ray_min_points=(1,1000),ray_inward_mm=(100,5000),ray_outward_mm=(20,2000))
+        limits.update(ray_interior_only=(0,1),ray_station_m=(.05,5),ray_angle_deg=(.5,30),ray_depth_mm=(2,100),ray_keep_mm=(5,500),ray_min_points=(1,1000),ray_inward_mm=(100,5000),ray_outward_mm=(20,2000))
         for name,(lo,hi) in limits.items():
             try:value=float(getattr(c,name))
             except (TypeError,ValueError):raise ValueError(f'{name} must be a number.')
             if not math.isfinite(value) or not lo<=value<=hi: raise ValueError(f'{name} must be between {lo} and {hi}.')
-            if name in ('lining_bolt_min_points','lining_sector_count','normal_neighbours','dbscan_min','edge_passes','max_points','noise_neighbours','noise_minimum','irregular_min_points','ray_min_points','gusac_min_support','tmatch_min_points'):
+            if name in ('lining_bolt_min_points','lining_sector_count','normal_neighbours','dbscan_min','edge_passes','max_points','noise_neighbours','noise_minimum','irregular_min_points','ray_interior_only','ray_min_points','gusac_min_support','tmatch_min_points'):
                 if int(value)!=value:raise ValueError(f'{name} must be a whole number.')
                 value=int(value)
             setattr(c,name,value)

@@ -1,0 +1,41 @@
+Tunnel Studio 0.21.5 | Local circular references in curved centreline frames
+
+The source and unchanged Windows runtime baseline is the delivered 0.21.4.
+section_circle.py is an independent mathematical circle-fit workflow. It uses
+local centreline projection, robust least-squares circles and overlapping fits;
+it is not a claim to reproduce a research paper or a trained semantic model.
+
+A bounded spatial sample supplies the initial scan-derived guide, or the user
+chooses the loaded project alignment. The initial guide is never written back
+to project alignment data. All source points are streamed again into sparse,
+disk-backed fitting cells. At most 12,000 actual representative observations
+per distance bin are retained for calibration. This is not an admission cap.
+Source coordinates are not replaced with fitted or voxel-centre coordinates.
+
+The 3D guide is projected with cKDTree seeds and bounded Newton refinement.
+Rotation-minimising perpendicular frames avoid a single global tunnel direction.
+Short thin sections refine only the guide before the final user-length circle
+fits. Existing finer guide geometry is preserved during refinement, including
+bends at the ends; coarse fitting anchors do not replace it. Final circle windows
+are 5 m by default at 2.5 m spacing. Centres/radii blend between windows; an
+unsupported neighbouring fit keeps the affected points unassessed.
+
+Circle support requires at least 240 degrees of measured angular coverage,
+adequate consensus, and fitted RMS no greater than 35% of the tighter user band.
+Unverified/non-circular/partial sections stay unselected; missing measurements
+are not reconstructed. RANSAC outlier trimming can still confuse real geometric
+features, so every outside-band group remains a candidate requiring review.
+No candidates are selected automatically. Inward means toward the circle centre;
+outward means away from it, independently of viewing direction.
+
+Classification checks every retained source observation in <=100k blocks,
+using 64-bit IDs. Only candidate IDs/labels/review flags are stored, not another
+copy of the whole cloud. Preview samples are bounded separately. Circle view
+clips the display to its fitting interval and draws its reference ring; this
+display does not change full-density group selection or source coordinates.
+
+Native Windows/WebView2 and Damian's 921-million-point project are not run here.
+Constructed tests check curved circular walls, tight bands, both signs, reversed
+viewing direction, rotated/translated coordinates, partial/oval uncertainty,
+>1 million observations, 64-bit IDs, cancellation and exact reversible edits.
+These establish implementation behaviour, not field recognition/survey accuracy.

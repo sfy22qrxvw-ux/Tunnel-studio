@@ -1,0 +1,53 @@
+Tunnel Studio 0.21.0
+4 November 2026
+
+Meshing > Reconstruct bolt gaps
+Inspect a tunnel lining mesh with open bolt footprints and create a repaired
+copy. The default opening diameter is 50–150 mm. Each accepted opening uses
+its surrounding wall to fit a local curved patch. New faces carry an estimated
+flag and the repair records their ranges and fit residuals. A recess already
+triangulated as a dent has no opening to repair. Keep the actual bolt gaps
+open during initial surface creation if this repair is needed.
+
+Measure > Tunnel volume
+Select the lining mesh and the alignment, then enter or pick the start and end
+chainages. The tool cuts the mesh at perpendicular section planes, creates
+temporary end caps and validates the resulting shell. The result includes
+enclosed tunnel volume in cubic metres and the selected reach. A wall opening,
+branched portal or inconsistent solid blocks the measurement.
+
+Analyse > Section convergence
+Fit a circle and ellipse to scan cross-sections at chosen chainages. Select
+a second survey epoch in the same checked datum to compare fitted diameters
+and centres. Positive closure means shortening. Angles are measured from local
+right towards the crown. Inadequately observed stations are identified in the
+report. The workflow follows the PCA, outlier review and circle-fitting ideas
+in Shen et al. (2021), https://doi.org/10.11947/j.JGGS.2021.0206. Ellipse fits
+and comparisons in a common alignment frame are Tunnel Studio adaptations.
+
+3D point display
+Point tiles outside the camera view can be skipped. In a wider view, distant
+tiles draw a stable subset. Point size also responds to distance. The spatial
+index is built in cancellable slices as a preview arrives.
+
+Lining analysis > Segments
+Between two detected ring boundaries, the selected panel layout can supply
+missing angular divisions. Measured longitudinal joints anchor the layout
+where available. When no side seams are available, the offset is measured from
+the fitted local frame's first radial axis towards its second. Review the
+sector count and offset against the installed ring design. Set the count to
+zero to use only measured boundaries. Confidence scores describe the evidence
+at the boundaries of each panel.
+
+  High (3)    Both ring ends and both side joints are supported by observations.
+  Medium (2)  Both ring ends and one side joint have measured support.
+  Low (1)     The ring ends have measured support. The two sides are inferred.
+
+The review provides a confidence filter, vivid panel colours, boundary guides,
+panel numbers and a summary of occupied panels and ring intervals.
+
+Save As > Save portable copy in...
+Choose a destination for a complete .tstudio copy. The save and storage dialogs
+show the named project record, the working data folder and free space on its
+drive. The desktop can open the working data folder in Explorer. Ordinary
+named saves continue to share the existing working caches.

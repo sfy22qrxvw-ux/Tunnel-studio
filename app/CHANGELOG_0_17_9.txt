@@ -1,0 +1,11 @@
+TUNNEL STUDIO 0.17.9 — PROJECT STORAGE / PERMANENT PROJECT DELETE
+
+- Open Project now shows a Delete… action beside each saved project.
+- Before deletion Tunnel Studio calculates data used only by that project versus data shared with another saved project or startup recovery snapshot.
+- Delete project permanently removes the named project plus its exclusive point-cloud caches, attributes, analysis results, old merged clouds and other referenced internal assets. Shared data is protected.
+- Deleting the currently open project switches to a new empty workspace after a successful transactional delete.
+- Large project assets are staged by same-volume rename before commit; failures roll back staged files rather than intentionally leaving a half-deleted project.
+- Open Project also includes Clean unreferenced data… for abandoned internal caches left by older operations/releases. It protects files referenced by the current project, any named project, or startup recovery metadata.
+- Orphan cleanup is review-first and refuses to continue if the reclaimable set changes between review and confirmation.
+- The cleanup recognises Tunnel Studio generated UUID caches and known temporary/result folders; unrelated user files are not swept generically.
+- 0.17.8 fast shared-runtime updater, 0.17.7 bulk permanent point deletion, and 0.17.6 transform-only virtual registration remain cumulative.

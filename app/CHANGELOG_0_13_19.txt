@@ -1,0 +1,67 @@
+TUNNEL STUDIO 0.13.19
+Viewport navigation and setup point display fixes
+14 October 2026
+
+INSTALL
+Save your project and close Tunnel Studio. Extract the whole ZIP into a new
+folder, run UPDATE_TUNNEL_STUDIO.bat, and restart. Confirm version 0.13.19.
+If using browser mode, refresh the page after restarting the application.
+The updater backs up application files; RESTORE_PREVIOUS_VERSION.bat restores
+them. Existing scans do not need to be imported again.
+
+SETUP VIEW: IMAGES AND POINTS
+Move the Images / Points slider towards Points to load the current setup's
+cloud. Photographs remain visible at full opacity during the first point load,
+and the setup bar shows loading progress. The latest slider position takes
+effect when the point preview is ready; each slider movement does not start
+another import or point load.
+
+After using More point detail here, turning or zooming away restores the
+retained whole-setup preview. Switching back from photographs to points no
+longer leaves only the old detailed patch in the previous direction. Late
+detail replies cannot replace the wider preview. The camera stays at the
+scanner position. Existing failure/retry messages and measured-point picking
+are retained.
+
+ZOOM OUT AND SEE THE WIDER SCAN
+The viewer retains a bounded overview of the visible scans. Zooming out or
+panning away from a detailed patch restores this overview immediately without
+another scan read when the overview is current. Fit also uses the full overview.
+The browser stops waiting for an obsolete detail request; a disk read already
+running on the backend may still finish. New detail is requested after normal
+navigation settles, rather than on every wheel movement.
+
+This works while drawing a polygon too: placed corners remain attached to
+their original selection plane, and the wider scan becomes visible again.
+Point edits, visibility, clipping, geometry and colour changes invalidate the
+relevant preview. Manual Load 3D preview requests fresh data. Unchanged mesh
+faces are reused during point-detail navigation. Unselected point previews
+also avoid an unnecessary full buffer copy.
+
+The overview is a display sample, not a replacement for the original scan.
+Full-density data, processing and deletion/restoration are unchanged. Detail
+100% still means the display budget, not all points of a multi-gigabyte scan.
+
+RIGHT-DRAG PANNING
+In normal 3D and Polygon select, right-drag or middle-drag stays in pan mode
+for the complete gesture, even if mouse button flags change. Shift-drag also
+keeps panning after Shift is released. A held right button takes precedence
+over left-button rotation. A drag does not leave an unwanted context menu;
+a new stationary right-click still opens the normal menu.
+Polygon corners stay in place while you pan. Release, Escape, lost capture,
+window focus loss and cancellation end the gesture. Left-drag rotation and
+Alt-drag polygon rotation remain available. In setup view, dragging continues
+to look around from the fixed scanner position.
+
+VALIDATION
+All 17 listed suites passed; see tests/validation_0_13_19.json and its logs.
+Includes 9 drag cases, 10 overview/navigation cases, 20 setup photograph/slider
+cases, picking, polygons, saved limit boxes, cleaning, measurements, geometry
+feedback, registered clouds, live clipping/analysis, HTTP asset delivery and
+installer dependency checks. JavaScript/Python syntax and ZIP payload hashes
+were checked. Earlier numerical and real-scan reports are historical.
+These tests use JSDOM, delayed API fixtures and captured WebGL calls/buffers.
+No actual Windows/WebView/GPU test or real-scan speed benchmark was available.
+
+Existing 0.13.18 registered merging, per-scan targets/connections, polygon
+selection, shared Deleted points and editable limit boxes are retained.

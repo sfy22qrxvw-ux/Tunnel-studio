@@ -1,0 +1,162 @@
+{
+  "version": "0.18.8",
+  "date_utc": "2026-11-02",
+  "baseline": {
+    "version": "0.18.7",
+    "installer_sha256": "a9feb955a05a5806d3444b211aed79553cba4f64ae17bb656218e86ce046ea7d",
+    "manifest_files": 20427,
+    "all_payload_hashes_match": true,
+    "archive_extra_files": [
+      "UninstallTunnelStudio.exe",
+      "runtime/mesh_engines/open3d/.Open3D.dll.FcaVRb"
+    ]
+  },
+  "application_tests": {
+    "tests_discovered": 449,
+    "tests_run": 449,
+    "seconds": 94.19356207300007,
+    "success": true,
+    "failures": [],
+    "errors": [],
+    "skipped": [],
+    "source_files_changed_during_tests": [],
+    "native_windows_execution": false
+  },
+  "syntax": {
+    "python_files": 189,
+    "javascript_files": 49,
+    "success": true,
+    "failures": []
+  },
+  "installer_tests": {
+    "tests_run": 83,
+    "success": true,
+    "platform": "linux",
+    "native_windows_execution": false
+  },
+  "browser_checks": {
+    "mesh_selection_result.json": {
+      "baseline": false,
+      "source": "/workspace/scratch/270bc034b4ff/recovery_work/next_update/app",
+      "scenarios": [
+        "Ribbon opens selected CAD surface; curves excluded",
+        "Selected CAD surface reaches real boundary inspection",
+        "Explorer-selected mesh reaches the same dialog",
+        "Switching source clears old inspection, canvas and repair selection",
+        "Multiple selected meshes require explicit source choice",
+        "No selection offers meshes instead of false selection error",
+        "Late response cannot replace a newer selected source",
+        "Unavailable source is reported; another source remains selectable",
+        "Chosen source produces the repaired copy; original topology remains unchanged",
+        "Repair undo removes the derived copy and updates the dialog"
+      ],
+      "errors": [],
+      "platform": "Linux Chromium with software WebGL; synthetic meshes and real application/API",
+      "status": "passed",
+      "browser": "153.0.8010.0"
+    },
+    "bolt_recess_ui_result.json": {
+      "baseline": false,
+      "source": "/workspace/scratch/270bc034b4ff/recovery_work/next_update/app",
+      "scenarios": [
+        "Selecting a centre guide highlights every retained original recess point in the main WebGL buffer",
+        "Ctrl-selection combines measured recess groups",
+        "Ctrl-selection deselects an unwanted candidate without changing scan points",
+        "Select all recess candidates selects point regions, with original point counts",
+        "Delete removes the complete chosen recess group into Deleted points and leaves coordinates unchanged",
+        "Workspace Undo restores the exact prior exclusion count",
+        "Late point-detail responses cannot replace a newer selected recess",
+        "Stale result selection is rejected",
+        "Failed detail loading disables point deletion; a fresh valid selection recovers"
+      ],
+      "errors": [],
+      "platform": "Linux Chromium/software WebGL; known full-density synthetic groups; production UI, API, delete and workspace Undo",
+      "status": "passed",
+      "browser": "153.0.8010.0"
+    },
+    "measure_live_ui_result.json": {
+      "baseline": false,
+      "source": "/workspace/scratch/270bc034b4ff/recovery_work/next_update/app",
+      "scenarios": [
+        "Picking three original plane points immediately draws a transparent filled plane before a measured point exists",
+        "Hover snaps to the front displayed point and clicking recovers exact float64 survey coordinates; result updates without Calculate",
+        "Cursor movement previews perpendicular distance; Escape preserves the last confirmed measurement",
+        "Editing coordinates automatically refreshes the validated result and Save state",
+        "Late calculation responses cannot overwrite newer input",
+        "The filled plane and perpendicular line reproject as the camera rotates",
+        "Repeated hovering uses the cached display index without scan-recovery requests; hidden cloud cannot snap",
+        "Live limit-box clipping excludes hidden points from hover snapping and restoring the view restores snapping",
+        "Perspective projection snaps to the same displayed scan point under the cursor",
+        "A selected planar CAD reference supports the same live filled-plane display",
+        "Saving retains the translucent plane after closing the tool",
+        "Saved transparent plane is restored when the workspace is reloaded",
+        "Coincident or collinear plane points show an error and cannot be saved"
+      ],
+      "errors": [],
+      "platform": "Linux Chromium/software WebGL; synthetic survey coordinates; original production UI and API",
+      "hover24MovesMs": 469,
+      "displayedPoints": 44105,
+      "status": "passed",
+      "browser": "153.0.8010.0"
+    },
+    "visual_registration_ui_result.json": {
+      "source": "/workspace/scratch/270bc034b4ff/recovery_work/next_update/app",
+      "scenarios": [
+        "Plan drag changes only horizontal moving-group placement",
+        "Switching side/front elevation preserves alignment; height-only drag changes Z without shifting plan",
+        "Tilt stays locked unless explicitly enabled; Undo reverses a tilt edit",
+        "Ctrl-pan and 3D orbit change only the camera, not registration",
+        "Pick pivot, rotation steps, local Undo and Redo work across view changes",
+        "Join and lock saves a manual link and moving pose, with fixed coordinates and original XYZ files unchanged",
+        "Workspace Undo restores previous poses and removes the manual link",
+        "Cancel discards the preview without saving a transform",
+        "Pair changes invalidate Apply; selecting the same setup is rejected",
+        "Registration ribbon opens the workspace; dark theme and smaller viewport retain accessible controls",
+        "Stale-position rejection keeps the draft visible and reports reload guidance"
+      ],
+      "errors": [],
+      "platform": "Linux Chromium/software WebGL; synthetic scans; real server and UI",
+      "status": "passed",
+      "browser": "153.0.8010.0"
+    }
+  },
+  "browser_scenarios": 43,
+  "excluded_incidental_runtime_type_stubs": [
+    "__init__.pyi",
+    "base.pyi",
+    "pasterapp.pyi",
+    "wsgiapp.pyi"
+  ],
+  "native_windows_execution": false,
+  "remaining_issues": [
+    "R0007 missing original .attr32 cache is not recovered.",
+    "Physical segment recognition/rendering relative to the research paper remains unresolved.",
+    "Field deletion timing and quality on the user multi-scan project have not been verified here."
+  ],
+  "installer_completion_record": "TunnelStudio_0.18.8_Release_Checks.json is created after final installer extraction and verification.",
+  "changed_application_sha256": {
+    "app/CHANGELOG_0_18_8.txt": "b01af785850b869f3901d91590a3de91f7fc7eb57d3e870f179e780fc745f0e4",
+    "app/RELEASE_SCOPE_0_18_8.txt": "12bf19ea7cde4bd31eb9f78b29a63ce44561c36823b82854025da2d830dadfab",
+    "app/measure_tools.py": "9c661948f5b312de24827a4e96b936c564d65088a8248ea686a326673d252375",
+    "app/mesh_repair.py": "68c15cbcb5d0fe6cb83186bb5f28b3429863217cb7f2270257a0658f4c8cb087",
+    "app/registration_workspace.py": "6282cb6294f1cd57efe76a38c38468fcc8dfe2f73549424565531cf80f789da2",
+    "app/release.py": "1ee99c25b7a69403f5148155d708448bf8352ef46bbe914a0035d886db9c4c9d",
+    "app/scene_objects.py": "273f07a8530a7c90e2cd7596621618508757d0d8328097cd71234132cbe60ed8",
+    "app/server.py": "e8826fb30a9bb8c4f9dd5a33f002e540e847943cf712a21c306193fde4289a86",
+    "app/surface_api.py": "e7fb8454bb12e29710d5cb27644e66a43e0709628c3cadddafe865cb5357aee3",
+    "app/visual_registration.py": "4501fd69ac56d9ac238351ffccbe8db8cfb6ab6f13e41f443ce3faa68de8d49d",
+    "app/web/cad-ui.js": "8bde349127d2e0f23e450e649206c7c481d942145809d201a1f2574e2e94573f",
+    "app/web/index.html": "11a1dff193cd305289a236eceace819911141d4d208fc9df2d3c72a92040f653",
+    "app/web/job-ui.js": "796be904fe6d288028eed188b6241b48e9ea411f4087515e46752c380f308a92",
+    "app/web/measure-tools-ui.js": "288808ce22fc082f614db01b8f706b51eecbedec09b2f48825ef1f75b0f9f5bd",
+    "app/web/mesh-repair-ui.js": "5d24298bc4b03108371b14e08dc953cd4d8996bceb36e7c194c7d6d362464116",
+    "app/web/ribbon-layout.js": "524182fe5f93bceee570bea10858c9c9eacedcdbbe9d9757e6c9c1929c22b22c",
+    "app/web/scan-registration-ui.js": "fdebe615648e6b2d66a3ce7e0ca792fc2a30e0a809a01672460b943ef43c0d3d",
+    "app/web/scene-objects-ui.js": "a8e544bcd5a6ff7fb3a99bcbbee267817f9a19c3bd4adad59e66d9cb61a8ec51",
+    "app/web/surface-ui.js": "285133b39a3aa58d12cb891b8bf178167c07f18671b07965e96df4e27adeeaf8",
+    "app/web/visual-registration-ui.css": "638c75bcae597590c87c9c98cf75145ea73e2cfcc63e73d2b1bc795dae0f58d8",
+    "app/web/visual-registration-ui.js": "d8565237436f612f42655f1cb3b9d8e627cea9abac9d9d086aa2c0584523102f",
+    "app/web/workspace-ui.js": "85aadb2020ee9255301af3a3b5463ebe1be93f0aa5ec5b1f8bd1a77823f5f79f",
+    "app/workspace_history.py": "a9ebd81c79f89f666beea1e576cc77c73d4c27437299c2ca86217347ee144a7c"
+  }
+}

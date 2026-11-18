@@ -1,0 +1,31 @@
+{
+  "version": "0.17.7",
+  "scope": "Bulk and faster permanent point removal over cumulative 0.17.6 virtual registration.",
+  "changes": [
+    "Multi-scan reviewed permanent-removal batch",
+    "1,000,000-point compaction blocks",
+    "Preview generated during the compaction pass; second full replacement-cloud read removed",
+    "Sequential per-scan atomic commits with bounded peak temporary storage"
+  ],
+  "tests": {
+    "passed": 28,
+    "environment_blocked": [
+      "test_jobs.JobTests.test_e57_setups_import_separately: pye57 is not installed on this Linux build host"
+    ],
+    "focused": [
+      "test_permanent_points_0177.py",
+      "test_registration_virtual_0176.py",
+      "test_registration_storage_0175.py",
+      "test_project_storage.py",
+      "test_update.py"
+    ],
+    "syntax": [
+      "python compile: scan_compaction.py, job_api.py, workspace_history.py, release.py",
+      "node --check permanent-points-ui.js"
+    ]
+  },
+  "limits": [
+    "Physical storage reclamation still requires one read/write pass over retained cache rows.",
+    "Windows/WebView2 runtime performance on the user laptop is not measured by this Linux build host."
+  ]
+}
