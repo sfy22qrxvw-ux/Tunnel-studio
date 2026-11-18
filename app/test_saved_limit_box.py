@@ -15,6 +15,7 @@ import inspection_api
 import jobdata
 import preview_index
 import registration_pose
+import scan_geometry
 import section_circle
 import shape_selection
 import shape_matching
@@ -62,6 +63,30 @@ class SavedLimitBoxTests(unittest.TestCase):
             self.item['limit_box']=None
             with self.assertRaisesRegex(ValueError,'saved limit box changed'):
                 shape_selection.preview(self.s,dict(source_id='merged',mode='circle',scope='limit'))
+
+    def test_align_limit_draft_uses_local_3d_tangent_at_a_bend(self):
+        start = np.array([100000., 400000., 30.])
+        axis = Alignment([dict(chainage=100+10*i, e=q[0], n=q[1], h=q[2], radius=4)
+                          for i, q in enumerate(start+[[0,0,0], [10,0,0], [16,8,2]])])
+        centre, tangent, right, up, _ = axis.at(115)
+        centre += .25 * right
+        draft = dict(mode='box', minimum=(centre-[3,5,5]).tolist(), maximum=(centre+[3,5,5]).tolist())
+        self.s.STATE['axis'] = axis
+        self.s.JOB = {'busy':False}
+        received = []
+        request = dict(action='align_limit_box', box=draft)
+        self.assertTrue(scan_geometry.post(self.s,SimpleNamespace(send=received.append),
+                                          '/api/scan-geometry',request))
+        aligned = received[0]
+        self.assertAlmostEqual(aligned['chainage'],115.)
+        box = jobdata.selection_spec(aligned['box'])
+        np.testing.assert_allclose(box['axes'],[tangent,-right,up],atol=1e-12)
+        np.testing.assert_allclose(box['centre'],centre)
+        np.testing.assert_allclose(box['half_size'],[3,5,5])
+        probes = np.array([centre+2.99*tangent, centre+3.01*tangent, centre-3.01*tangent,
+                           centre+2.99*tangent+4.9*up, centre+5.01*right])
+        np.testing.assert_array_equal(jobdata.selection_mask(probes,box),[True,False,False,True,False])
+        self.assertEqual(self.item['limit_box']['half_size'],[80.,1.,1.])
 
     def test_circle_view_scope_skips_hidden_blocks_and_reuses_visible_rows(self):
         self.item['limit_box'] = None

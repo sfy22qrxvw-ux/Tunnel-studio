@@ -159,6 +159,7 @@ class TiledDetector:
         for i,row in enumerate(self.rings,1):row['name']=f'Ring seam {i}'
         if task in ('all','segments','seams'):
             for interval,(left,right) in enumerate(zip(self.rings[:-1],self.rings[1:]),1):
+                if not lf.ring_width_matches(self.s, right['station_m']-left['station_m']):continue
                 lo=left['station_m']-np.linalg.norm(left['coefficients'][1:])
                 hi=right['station_m']+np.linalg.norm(right['coefficients'][1:])
                 start=max(0,math.floor((lo-self.t0)/self.cell)-self.halo)

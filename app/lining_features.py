@@ -13,6 +13,7 @@ from scipy.sparse import coo_matrix
 from scipy.sparse.csgraph import connected_components
 import tunnel_lining
 from combined_denoising import SAMPLER_VERSION, sample_originals
+from segment_panels import ring_width_matches
 
 PRESETS={'fast':dict(cell=.04,cap=80000,spacing=.04,trials=80),
          'detailed':dict(cell=.02,cap=160000,spacing=.02,trials=180),
@@ -86,10 +87,23 @@ def detection_summary(detector,task,occupied=None):
     result=dict(task=task,unoccupied_panel_sectors=unoccupied,segment_confidence_counts=bands,ring_boundaries=rings,longitudinal_boundaries=joints,segment_candidates=panels,
                 bolt_recess_candidates=pockets,raised_fitting_candidates=fittings,observed_ring_intervals=intervals,
                 intervals_with_segments=supported,ambiguous_segment_boundaries=ambiguous)
+    outside_width = 0
+    expected = detector.s.get('lining_ring_width_m', 0.)
+    if expected and task in ('all', 'seams', 'segments'):
+        checks = []
+        for interval, (left, right) in enumerate(zip(detector.rings, detector.rings[1:]), 1):
+            width = right['station_m'] - left['station_m']
+            matches = ring_width_matches(detector.s, width)
+            outside_width += int(not matches)
+            checks.append(dict(ring_interval=interval, width_m=width, within_tolerance=matches))
+        result.update(expected_ring_width_m=expected,
+                      ring_width_tolerance_mm=detector.s.get('lining_ring_tolerance_mm', 100.),
+                      ring_width_checks=checks)
     if task in ('all','segments'):
         if not panels:
             reason=('The proposed sectors contain no classified lining points.' if unoccupied else
                     'At least two supported ring boundaries are needed.' if rings<2 else
+                    'All observed gaps fall outside the specified ring width tolerance.' if outside_width==intervals else
                     'No between-segment boundaries passed the evidence checks.' if not joints else
                     'The detected boundaries do not enclose unambiguous panels.')
             result.update(status='no_segments',summary=f'No supported segment layout: {rings} ring-boundary and {joints} between-segment candidates. {reason} Original points remain available for review.')
@@ -341,9 +355,11 @@ class Detector:
             t=self.t0+(ii+.5)*self.cell;a=(jj+.5)*2*np.pi/self.na
             rng=np.random.default_rng(143);band=max(.025,1.5*self.cell)
         for rindex,(left,right) in enumerate(zip(self.rings[:-1],self.rings[1:]),1):
+            span=right['station_m']-left['station_m']
+            if not ring_width_matches(self.s,span):continue
             lo=ring_at(left['coefficients'],a);hi=ring_at(right['coefficients'],a)
             use=(t>lo+band*2)&(t<hi-band*2)&(self.grid_labels[ii,jj]==0)
-            ix=np.flatnonzero(use);span=right['station_m']-left['station_m'];mid=(right['station_m']+left['station_m'])/2
+            ix=np.flatnonzero(use);mid=(right['station_m']+left['station_m'])/2
             if span<.4 or len(ix)<10:continue
             pool_t=t[ix].copy();pool_a=a[ix].copy()
             # Bounded RANSAC on periodically unwrapped arc coordinates detects

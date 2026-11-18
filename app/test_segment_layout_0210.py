@@ -65,12 +65,31 @@ class SegmentLayoutTests(unittest.TestCase):
         for bad in (1,2.5,25,-3):
             with self.assertRaises(ValueError):Settings.read(dict(lining_sector_count=bad))
 
+    def test_expected_width_leaves_short_ring_candidates_unassigned(self):
+        d = self.detector()
+        positions = [2., 2.98, 4.59, 5.36, 7.358]
+        d.s.update(lining_ring_width_m=1.998, lining_ring_tolerance_mm=100.)
+        d.rings = [d.add('ring_seam', f'Candidate {i}', station_m=x, coefficients=[x, .08, -.03])
+                   for i,x in enumerate(positions)]
+        d.segment()
+        self.assertEqual({row['ring_interval'] for row,*_ in d.segments}, {4})
+        report = lf.detection_summary(d, 'segments')
+        checks = report['ring_width_checks']
+        np.testing.assert_allclose([r['width_m'] for r in checks], [.98, 1.61, .77, 1.998])
+        self.assertEqual([r['within_tolerance'] for r in checks], [False, False, False, True])
+        self.assertEqual(report['status'], 'partial')
+        middles = (np.asarray(positions[1:])+positions[:-1])/2
+        points = lf.world(middles, np.full(4, .5), d.m)
+        np.testing.assert_array_equal(d.classify(points)[:3], [0,0,0])
+        self.assertGreater(d.classify(points)[3], 0)
+
     def test_disk_backed_low_evidence_and_single_window_agree(self):
         m=model();a=np.arange(240)*2*np.pi/240;t=np.arange(.01,7.,.02)
         ts,angles=np.meshgrid(t,a,indexing='ij')
         p=lf.world(ts.ravel(),angles.ravel(),m)
-        intensity=np.where((abs(ts-2.)<.022)|(abs(ts-4.)<.022),20.,100.).ravel()
-        s=dict(lining_task='segments',lining_detail='detailed',lining_sector_count=5)
+        intensity=np.where((abs(ts-2.)<.022)|(abs(ts-4.)<.022)|(abs(ts-4.77)<.022),20.,100.).ravel()
+        s=dict(lining_task='segments',lining_detail='detailed',lining_sector_count=5,
+               lining_ring_width_m=1.998,lining_ring_tolerance_mm=100.)
         d=lf.Detector(m,(0.,7.),s,lambda _:None)
         d.accumulate(p,intensity);d.analyse()
         self.assertEqual(len(d.segments),5)
@@ -81,9 +100,13 @@ class SegmentLayoutTests(unittest.TestCase):
                 tiled.accumulate(p,intensity);tiled.analyse()
                 self.assertEqual(len(tiled.segments),5)
                 check=lf.world(np.full(239,3.),a[1:]+.0005,m)
+                short_gap=lf.world(np.full(239,4.4),a[1:]+.0005,m)
                 for detector in (d,tiled):
                     self.assertEqual(len(np.unique(detector.classify(check))),5)
-                    self.assertEqual(lf.detection_summary(detector,'segments')['segment_confidence_counts']['low'],5)
+                    np.testing.assert_array_equal(detector.classify(short_gap),0)
+                    report=lf.detection_summary(detector,'segments')
+                    self.assertEqual(report['segment_confidence_counts']['low'],5)
+                    self.assertEqual([r['within_tolerance'] for r in report['ring_width_checks']],[True,False])
             finally:tiled.close()
 
 if __name__=='__main__':unittest.main()

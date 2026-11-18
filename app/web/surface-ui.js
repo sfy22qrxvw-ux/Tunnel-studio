@@ -114,6 +114,14 @@
   const d=r.detection||r.statistics||{},bandCounts=d.segment_confidence_counts||counts;
   const message=`${rows.length} panels across ${Number(d.intervals_with_segments||0)} of ${Number(d.observed_ring_intervals||0)} ring intervals. ${bandCounts.high||0} high · ${bandCounts.medium||0} medium · ${bandCounts.low||0} low${counts.unrated?' · '+counts.unrated+' unrated':''}.`;
   $('surf-panel-summary').textContent=message+(minimum?` ${rows.length-lowConfidenceIds.size} panels pass the display filter.`:'');
+  const widthReport=$('surf-panel-width-report'),checks=d.ring_width_checks||[];
+  widthReport.hidden=!d.expected_ring_width_m;
+  if(d.expected_ring_width_m){
+   const unresolved=checks.filter(row=>!row.within_tolerance);
+   const examples=unresolved.slice(0,6).map(row=>`interval ${row.ring_interval} at ${fmt(row.width_m,3)} m`).join(', ');
+   widthReport.textContent=`Expected ${fmt(d.expected_ring_width_m,3)} m ± ${fmt(d.ring_width_tolerance_mm,0)} mm. ${checks.length-unresolved.length} of ${checks.length} measured gaps match.`+
+    (examples?` Unassigned ${examples}${unresolved.length>6?` and ${unresolved.length-6} more`:''}.`:'');
+  }
   const hidden=new Set([...lowConfidenceIds,...hiddenClusters]);const keep=kept();
   for(const row of rows){if((isolatedClusters&&!isolatedClusters.has(row.id))||($('surf-isolate').checked&&inspected!==null&&row.id!==inspected)||!(keep.has(row.id)?$('surf-show-kept'):$('surf-show-other')).checked)hidden.add(row.id);}
   panelRenderer.configure(r,hidden,new Set(selectedClusters));
